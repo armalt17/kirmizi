@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v3.0.1
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.0.0
 Çalışmalar | Uzmanlar | Hizmetler tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki üç Hostinger sayfasındaki Custom HTML/Embed
@@ -7,12 +7,16 @@ içeriğinin yerine BİREBİR AYNI şekilde yapıştırılır:
   /calisma   /uzmanlar   /hizmetler
 /profil, /calisma-detay, /hizmet-detay embed'lerine DOKUNULMAZ.
 
-v3.0: Referans tasarıma göre yeniden kurulan arayüz + Hostinger genişlik entegrasyonu.
-Genişlik: Dokümanlar/İş İlanları production yöntemi (parent wrapper zinciri işaretlenir,
-parent'a style#kisg-professional-width-v2 enjekte edilir, attribute: data-kisg-professional-width).
-v2.1'deki deneysel fullBleed mekanizması tamamen kaldırıldı.
-v3.0.1: Hostinger satır yerleşimi normalize edildi (iframe üstündeki boşluk giderildi).
-Router, history, snapshot, session, CRUD, sorgular ve pagination değişmedi.
+v4.0: Arayüz yeniden tasarlandı (sosyal/profesyonel platform deneyimi).
+ - Yeni tasarım sistemi: Inter tipografi, nötr yüzeyler, kontrollü Kırmızı İSG kırmızısı.
+ - Çalışmalar: canlı topluluk başlığı, kişisel kart (giriş/misafir), yeniden kurulan akış kartları
+   (ilk satır başlık hiyerarşisi, görsel yumuşak yükleme, beğeni etkileşimi), Hizmet yayınlama kartı.
+ - Uzmanlar/Hizmetler: yeni kart sistemi, mobilde ayrı liste kompozisyonu.
+ - Hareket: kayan sekme göstergesi, içerik ortaya çıkışı, buton/kart geri bildirimi,
+   canlı göreli zaman; prefers-reduced-motion'da tamamen kapanır.
+Supabase sorguları, RLS varsayımları, router, history, snapshot, session, CRUD, sayfalama,
+Hostinger genişlik/yükseklik entegrasyonu ve URL'ler v3.0.1 ile aynıdır.
+(Tek veri eki: kenar Uzmanlar sorgusu, Uzmanlar kataloğunun zaten okuduğu last_post_at alanını da okur.)
 
 Navigasyon modları (otomatik):
  - shell    : same-origin erişim varsa sekme geçişi yalnızca görünümü değiştirir (pushState).
@@ -21,24 +25,29 @@ Acil kapatma: CONFIG.historyRouting=false.
 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap">
 <div id="kisgApp" lang="tr" data-routing="pending">
 
 <nav class="ka-nav" aria-label="Profesyonel platform">
   <div class="ka-nav-inner">
     <div class="ka-tabs">
-      <a class="ka-tab" data-view-link="works" href="https://isgcalisanplatformu.com/calisma" target="_top">Çalışmalar</a>
-      <a class="ka-tab" data-view-link="experts" href="https://isgcalisanplatformu.com/uzmanlar" target="_top">Uzmanlar</a>
-      <a class="ka-tab" data-view-link="services" href="https://isgcalisanplatformu.com/hizmetler" target="_top">Hizmetler</a>
+      <a class="ka-tab" data-view-link="works" href="https://isgcalisanplatformu.com/calisma" target="_top"><span class="ka-tab-label">Çalışmalar</span></a>
+      <a class="ka-tab" data-view-link="experts" href="https://isgcalisanplatformu.com/uzmanlar" target="_top"><span class="ka-tab-label">Uzmanlar</span></a>
+      <a class="ka-tab" data-view-link="services" href="https://isgcalisanplatformu.com/hizmetler" target="_top"><span class="ka-tab-label">Hizmetler</span></a>
+      <span class="ka-tab-ink" aria-hidden="true"></span>
     </div>
     <div class="ka-account" data-state="loading">
       <span class="ka-account-placeholder" aria-hidden="true"></span>
       <button class="ka-login" type="button" data-action="login"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/></svg><span>Giriş Yap</span></button>
       <button class="ka-account-toggle" type="button" data-popover-trigger aria-label="Hesabım" aria-expanded="false" aria-controls="kaAccountMenu"><span class="k-avatar k-avatar-sm" data-me-avatar></span><span class="ka-me-name" data-me-name></span><svg class="ka-chevron" aria-hidden="true" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg></button>
       <div id="kaAccountMenu" class="k-popover ka-account-menu" hidden>
-        <a data-me-link="profile" target="_top">Profilim</a>
-        <a data-me-link="works" target="_top">Çalışmalarım</a>
-        <a data-me-link="services" target="_top">Hizmetlerim</a>
-        <button type="button" data-action="signout">Çıkış</button>
+        <a data-me-link="profile" target="_top"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/></svg>Profilim</a>
+        <a data-me-link="works" target="_top"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Çalışmalarım</a>
+        <a data-me-link="services" target="_top"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 12.5h18"/></svg>Hizmetlerim</a>
+        <span class="k-popover-sep" aria-hidden="true"></span>
+        <button type="button" data-action="signout"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10"/></svg>Çıkış</button>
       </div>
     </div>
   </div>
@@ -54,18 +63,43 @@ Acil kapatma: CONFIG.historyRouting=false.
         <h1 id="kwTitle">Çalışmalar</h1>
         <p class="kw-head-desc">Sahadaki deneyimleri, iyi uygulamaları ve mesleki paylaşımları keşfet.</p>
       </div>
+      <a class="kw-pulse" href="https://isgcalisanplatformu.com/uzmanlar" target="_top" data-view-link="experts" data-pulse hidden>
+        <span class="k-stack" data-pulse-stack aria-hidden="true"></span>
+        <span class="kw-pulse-copy"><strong data-pulse-names></strong><span>Sahadan paylaşan İSG profesyonelleri</span></span>
+        <svg class="kw-pulse-arrow" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
+      </a>
     </header>
 
     <aside class="kw-left" aria-labelledby="kwExpertsTitle">
-      <section class="kw-side">
-        <div class="kw-side-head"><h2 id="kwExpertsTitle">Uzmanlar</h2><a href="https://isgcalisanplatformu.com/uzmanlar" target="_top" data-view-link="experts">Tümü <span aria-hidden="true">→</span></a></div>
-        <div class="kw-people" data-side-experts aria-live="polite">
-          <div class="k-sk-person" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
-          <div class="k-sk-person" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
-          <div class="k-sk-person" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
-        </div>
-        <a class="kw-side-cta" href="https://isgcalisanplatformu.com/uzmanlar" target="_top" data-view-link="experts">Tüm uzmanları gör <span aria-hidden="true">→</span></a>
-      </section>
+      <div class="kw-stack">
+        <section class="kw-me" data-me-card data-state="loading" aria-label="Hesabın">
+          <div class="kw-me-loading" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
+          <div class="kw-me-guest">
+            <strong>Meslektaşlarınla aynı sahada ol</strong>
+            <p>Çalışmalarını paylaş, uzmanları keşfet, hizmetlerini yayınla.</p>
+            <button type="button" class="k-btn k-btn-primary k-btn-block" data-action="login">Giriş Yap</button>
+          </div>
+          <div class="kw-me-user">
+            <a class="kw-me-id" data-mecard-link="profile" target="_top">
+              <span class="k-avatar k-avatar-lg" data-mecard-avatar aria-hidden="true"></span>
+              <span class="kw-me-copy"><strong data-mecard-name></strong><span>Profilini görüntüle</span></span>
+            </a>
+            <nav class="kw-me-links" aria-label="Kısayollar">
+              <a data-mecard-link="works" target="_top"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg><span>Çalışmalarım</span><svg class="k-chev" aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></a>
+              <a data-mecard-link="services" target="_top"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 12.5h18"/></svg><span>Hizmetlerim</span><svg class="k-chev" aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></a>
+            </nav>
+          </div>
+        </section>
+        <section class="kw-side">
+          <div class="kw-side-head"><h2 id="kwExpertsTitle">Uzmanlar</h2><a href="https://isgcalisanplatformu.com/uzmanlar" target="_top" data-view-link="experts">Tümü <span aria-hidden="true">→</span></a></div>
+          <div class="kw-people" data-side-experts aria-live="polite">
+            <div class="k-sk-person" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
+            <div class="k-sk-person" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
+            <div class="k-sk-person" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
+          </div>
+          <a class="kw-side-cta" href="https://isgcalisanplatformu.com/uzmanlar" target="_top" data-view-link="experts">Tüm uzmanları gör <span aria-hidden="true">→</span></a>
+        </section>
+      </div>
     </aside>
 
     <div class="kw-feed">
@@ -75,29 +109,36 @@ Acil kapatma: CONFIG.historyRouting=false.
           <span class="kw-composer-field"><span class="kw-composer-desktop">Sahadaki bir çalışmanı, deneyimini veya gözlemini paylaş…</span><span class="kw-composer-mobile">Çalışma paylaş…</span></span>
         </button>
         <div class="kw-composer-tools">
-          <button type="button" class="kw-tool" data-composer data-composer-intent="photo" aria-label="Fotoğraflı Çalışma paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span>Fotoğraf<span class="kw-tool-long"> Ekle</span></span></button>
+          <button type="button" class="kw-tool" data-composer data-composer-intent="photo" aria-label="Fotoğraflı Çalışma paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span>Fotoğraf<span class="kw-tool-long"> Ekle</span></span></button>
           <button type="button" class="kw-tool" data-composer aria-label="Kategoriyle Çalışma paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6.5A1.5 1.5 0 0 1 5.5 5H10l2 2.5h6.5A1.5 1.5 0 0 1 20 9v8.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5Z"/></svg><span>Kategori<span class="kw-tool-long"> Seç</span></span></button>
           <button type="button" class="k-btn k-btn-primary kw-composer-cta" data-composer aria-label="Yeni Çalışma"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Yeni Çalışma</span></button>
         </div>
       </div>
-      <div class="kw-toolbar"><p class="kw-live" data-live hidden><span class="kw-live-dot" aria-hidden="true"></span><span data-live-text></span></p><span class="kw-sort">En yeni</span></div>
+      <div class="kw-toolbar"><p class="kw-live" data-live hidden><span class="kw-live-dot" aria-hidden="true"></span><span data-live-text></span></p><span class="kw-sort"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/></svg>En yeni</span></div>
       <div class="kw-notice" data-notice role="alert" hidden></div>
       <div class="kw-list" data-list aria-live="polite">
-        <div class="kw-post kw-sk" aria-hidden="true"><div class="kw-sk-head"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i><i class="k-sk k-sk-media"></i></div>
-        <div class="kw-post kw-sk" aria-hidden="true"><div class="kw-sk-head"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>
+        <div class="kw-post kw-sk" aria-hidden="true"><div class="kw-sk-head"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk k-sk-title"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i><i class="k-sk k-sk-media"></i></div>
+        <div class="kw-post kw-sk" aria-hidden="true"><div class="kw-sk-head"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk k-sk-title"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>
       </div>
       <button class="k-btn kw-load-more" type="button" data-more hidden>Daha fazla Çalışma göster</button>
     </div>
 
     <aside class="kw-right" aria-labelledby="kwServicesTitle">
-      <section class="kw-side">
-        <div class="kw-side-head"><h2 id="kwServicesTitle">Hizmetler</h2><a href="https://isgcalisanplatformu.com/hizmetler" target="_top" data-view-link="services">Tümü <span aria-hidden="true">→</span></a></div>
-        <div class="kw-offers" data-side-services aria-live="polite">
-          <div class="k-sk-offer" aria-hidden="true"><i class="k-sk k-sk-short"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>
-          <div class="k-sk-offer" aria-hidden="true"><i class="k-sk k-sk-short"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>
-        </div>
-        <a class="kw-side-cta" href="https://isgcalisanplatformu.com/hizmetler" target="_top" data-view-link="services" data-then="publish">Hizmetini Yayınla <span aria-hidden="true">→</span></a>
-      </section>
+      <div class="kw-stack">
+        <section class="kw-side">
+          <div class="kw-side-head"><h2 id="kwServicesTitle">Hizmetler</h2><a href="https://isgcalisanplatformu.com/hizmetler" target="_top" data-view-link="services">Tümü <span aria-hidden="true">→</span></a></div>
+          <div class="kw-offers" data-side-services aria-live="polite">
+            <div class="k-sk-offer" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk k-sk-short"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
+            <div class="k-sk-offer" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk k-sk-short"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
+          </div>
+        </section>
+        <a class="kw-publish" href="https://isgcalisanplatformu.com/hizmetler" target="_top" data-view-link="services" data-then="publish">
+          <span class="kw-publish-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 12.5h18"/></svg></span>
+          <strong>Uzmanlığını hizmete dönüştür</strong>
+          <span class="kw-publish-text">Hizmetini yayınla; meslektaşların ve firmalar seni kolayca bulsun.</span>
+          <span class="kw-publish-cta">Hizmetini Yayınla <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></span>
+        </a>
+      </div>
     </aside>
   </div>
 </section>
@@ -117,10 +158,10 @@ Acil kapatma: CONFIG.historyRouting=false.
     <div class="kc-results ke-grid" data-results aria-busy="true"></div>
     <aside class="ke-discovery" data-discovery hidden aria-labelledby="keDiscoveryTitle">
       <p><strong id="keDiscoveryTitle">Profilin burada görünmüyor.</strong> Meslektaşların seni Uzmanlar'da bulabilsin.</p>
-      <button type="button" class="k-text-button" data-discover>Uzmanlar'da görünür ol</button>
+      <button type="button" class="k-btn k-btn-outline" data-discover>Uzmanlar'da görünür ol</button>
     </aside>
-    <div class="k-empty" data-empty hidden><strong data-empty-text></strong><p>Aramayı genişletmeyi veya filtreleri kaldırmayı dene.</p><button type="button" class="k-btn" data-empty-reset>Filtreleri temizle</button></div>
-    <div class="k-empty" data-error role="alert" hidden><strong>Uzmanlar şu anda yüklenemedi.</strong><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" class="k-btn" data-retry>Yeniden dene</button></div>
+    <div class="k-empty" data-empty hidden><span class="k-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></span><strong data-empty-text></strong><p>Aramayı genişletmeyi veya filtreleri kaldırmayı dene.</p><button type="button" class="k-btn" data-empty-reset>Filtreleri temizle</button></div>
+    <div class="k-empty" data-error role="alert" hidden><span class="k-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/></svg></span><strong>Uzmanlar şu anda yüklenemedi.</strong><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" class="k-btn" data-retry>Yeniden dene</button></div>
     <button type="button" class="k-btn kc-more" data-more hidden>Daha fazla uzman göster</button>
     <datalist id="keListTitles"></datalist><datalist id="keListCities"></datalist><datalist id="keListSpecialties"></datalist>
   </div>
@@ -130,7 +171,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 <section class="ka-view kc" data-view="services" hidden aria-labelledby="ksTitle">
   <div class="k-page kc-page">
     <p class="kc-message" data-notice role="status" hidden></p>
-    <header class="kc-head"><div><h1 id="ksTitle">Hizmetler</h1><p>İSG profesyonellerinin uzmanlıklarını hizmete dönüştürdüğü yer.</p></div><button class="k-btn k-btn-outline kc-head-cta" type="button" data-publish><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Hizmetini Yayınla</span></button></header>
+    <header class="kc-head"><div><h1 id="ksTitle">Hizmetler</h1><p>İSG profesyonellerinin uzmanlıklarını hizmete dönüştürdüğü yer.</p></div><button class="k-btn k-btn-primary kc-head-cta" type="button" data-publish><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Hizmetini Yayınla</span></button></header>
     <div class="kc-controls" role="search">
       <label class="k-sr" for="ksSearch">Hizmet, açıklama, bölge veya sağlayıcı ara</label>
       <div class="kc-search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="ksSearch" data-search type="search" maxlength="120" placeholder="Hizmet, bölge veya uzman ara" data-short-placeholder="Hizmet, bölge, uzman" autocomplete="off"><button type="button" data-clear-search aria-label="Aramayı temizle" hidden>×</button></div>
@@ -139,8 +180,8 @@ Acil kapatma: CONFIG.historyRouting=false.
     </div>
     <div class="kc-results-head"><p data-status role="status" aria-live="polite">Hizmetler yükleniyor…</p><button type="button" class="k-text-button" data-reset hidden>Filtreleri temizle</button></div>
     <div class="kc-results ks-grid" data-results aria-busy="true"></div>
-    <div class="k-empty" data-empty hidden><strong data-empty-text></strong><p>İlk hizmeti sen yayınlayabilir ya da filtreleri değiştirebilirsin.</p><div class="k-empty-actions"><button type="button" class="k-btn" data-empty-reset>Filtreleri temizle</button><button type="button" class="k-btn k-btn-primary" data-empty-publish data-publish>Hizmetini Yayınla</button></div></div>
-    <div class="k-empty" data-error role="alert" hidden><strong>Hizmetler şu anda yüklenemedi.</strong><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" class="k-btn" data-retry>Yeniden dene</button></div>
+    <div class="k-empty" data-empty hidden><span class="k-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 12.5h18"/></svg></span><strong data-empty-text></strong><p>İlk hizmeti sen yayınlayabilir ya da filtreleri değiştirebilirsin.</p><div class="k-empty-actions"><button type="button" class="k-btn" data-empty-reset>Filtreleri temizle</button><button type="button" class="k-btn k-btn-primary" data-empty-publish data-publish>Hizmetini Yayınla</button></div></div>
+    <div class="k-empty" data-error role="alert" hidden><span class="k-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/></svg></span><strong>Hizmetler şu anda yüklenemedi.</strong><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" class="k-btn" data-retry>Yeniden dene</button></div>
     <button type="button" class="k-btn kc-more" data-more hidden>Daha fazla hizmet göster</button>
   </div>
 </section>
@@ -151,7 +192,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 <dialog id="kaLoginDialog" class="k-dialog k-dialog-sm k-login" aria-labelledby="kaLoginTitle">
   <form id="kaLoginForm" novalidate>
     <div class="k-login-top">
-      <span class="k-login-mark" aria-hidden="true">İSG</span>
+      <span class="k-login-mark" aria-hidden="true">isg</span>
       <button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button>
     </div>
     <div class="k-dialog-body">
@@ -170,17 +211,19 @@ Acil kapatma: CONFIG.historyRouting=false.
 
 <dialog id="kaPostDialog" class="k-dialog k-dialog-lg" aria-labelledby="kaPostTitle">
   <form id="kaPostForm">
-    <header class="k-dialog-head"><h2 id="kaPostTitle">Yeni Çalışma</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
+    <header class="k-dialog-head"><span class="k-grip" aria-hidden="true"></span><h2 id="kaPostTitle">Yeni Çalışma</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
     <div class="k-dialog-body">
+      <div class="k-composer-who"><span class="k-avatar k-avatar-md" data-dialog-avatar aria-hidden="true"></span><span><strong data-dialog-name></strong><span>Çalışmalar'da herkese açık paylaşılır</span></span></div>
       <label class="k-sr" for="kaPostContent">Çalışma metni</label>
       <textarea id="kaPostContent" class="k-input k-textarea k-composer-text" maxlength="5000" placeholder="Bugün sahada ne yaptın, ne gördün, ne öğrendin?"></textarea>
       <div id="kaPostPreview" class="k-image-preview" hidden><img alt="Seçilen görsel önizlemesi"><button type="button" data-remove-image>Fotoğrafı Kaldır</button></div>
       <div class="k-composer-row">
-        <label class="k-file-button"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span data-photo-label>Fotoğraf Ekle</span><input id="kaPostImage" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"></label>
+        <label class="k-file-button"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span data-photo-label>Fotoğraf Ekle</span><input id="kaPostImage" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"></label>
         <label class="k-sr" for="kaPostCategory">Çalışma Alanı</label>
         <select id="kaPostCategory" class="k-input k-select-inline"><option value="">Kategori seçme</option></select>
+        <span class="k-count" data-post-count aria-live="polite" hidden></span>
       </div>
-      <p class="k-hint">Metin veya bir görsel yeterli. Görsel, yüklemeden önce WebP’ye dönüştürülür ve küçültülür.</p>
+      <p class="k-hint">Metin veya bir görsel yeterli. İlk satırı kısa tutarsan akışta başlık olarak öne çıkar. Görsel, yüklemeden önce WebP’ye dönüştürülür ve küçültülür.</p>
       <div id="kaPostError" class="k-form-error" role="alert" hidden></div>
     </div>
     <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button id="kaPostSubmit" type="submit" class="k-btn k-btn-primary">Çalışmayı Yayınla</button></footer>
@@ -189,7 +232,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 
 <dialog id="kaServiceDialog" class="k-dialog" aria-labelledby="kaServiceDialogTitle">
   <form id="kaServiceForm">
-    <header class="k-dialog-head"><h2 id="kaServiceDialogTitle">Yeni Hizmet</h2><button type="button" class="k-icon-btn" data-close aria-label="Hizmet formunu kapat">×</button></header>
+    <header class="k-dialog-head"><span class="k-grip" aria-hidden="true"></span><h2 id="kaServiceDialogTitle">Yeni Hizmet</h2><button type="button" class="k-icon-btn" data-close aria-label="Hizmet formunu kapat">×</button></header>
     <div class="k-dialog-body">
       <label class="k-label" for="kaServiceTitle">Hizmet Başlığı *</label><input class="k-input" id="kaServiceTitle" required maxlength="160">
       <label class="k-label" for="kaServiceCategory">Kategori *</label><select class="k-input" id="kaServiceCategory" required><option value="">Seçin</option></select>
@@ -219,7 +262,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 
 <dialog id="kaFilterDialog" class="k-dialog k-dialog-sm" aria-labelledby="kaFilterTitle">
   <form id="kaFilterForm">
-    <header class="k-dialog-head"><h2 id="kaFilterTitle">Filtrele</h2><button type="button" class="k-icon-btn" data-close aria-label="Filtre panelini kapat">×</button></header>
+    <header class="k-dialog-head"><span class="k-grip" aria-hidden="true"></span><h2 id="kaFilterTitle">Filtrele</h2><button type="button" class="k-icon-btn" data-close aria-label="Filtre panelini kapat">×</button></header>
     <div class="k-dialog-body"><div class="kc-filters kc-filters-stack" data-filter-body></div></div>
     <footer class="k-dialog-foot k-dialog-foot-split"><button type="button" class="k-btn" data-filter-clear>Temizle</button><button type="submit" class="k-btn k-btn-primary">Sonuçları Göster</button></footer>
   </form>
@@ -229,59 +272,65 @@ Acil kapatma: CONFIG.historyRouting=false.
 </div>
 <style>
 /* =====================================================================
-   KIRMIZI İSG PROFESSIONAL — DESIGN SYSTEM v3.0
-   Referans: Kırmızı İSG Professional hedef tasarımı.
-   Tokenlar → temel → shell → Çalışmalar → Katalog → dialog → responsive
+   KIRMIZI İSG PROFESSIONAL — DESIGN SYSTEM v4.0
+   İlke: insanlar ve içerik önde; arayüz sessiz. Beyaz + nötr griler + koyu metin,
+   kırmızı yalnızca eylem, kimlik ve durum için.
+   Tokenlar → temel → shell → Çalışmalar → Katalog → dialog → hover → responsive → motion
    ===================================================================== */
 #kisgApp{
-  --red:#e30a17; --red-hover:#c70813; --red-text:#c7101b; --red-line:rgba(227,10,23,.28); --red-tint:#fff6f6;
-  --ink:#141a24; --text:#2a313d; --muted:#5d6878; --faint:#8791a0;
-  --line:#e6e9ee; --line-soft:#eff1f4; --line-strong:#d3d8df;
-  --canvas:#f4f5f7; --surface:#fff; --surface-2:#f7f8fa;
-  --shadow-card:0 1px 2px rgba(20,26,36,.04),0 2px 10px rgba(20,26,36,.035);
-  --shadow-hover:0 4px 18px rgba(20,26,36,.08);
-  --shadow-pop:0 12px 32px rgba(20,26,36,.14),0 2px 6px rgba(20,26,36,.06);
+  --red:#e30a17; --red-hover:#cc0914; --red-press:#b30812; --red-text:#c8101a; --red-line:rgba(227,10,23,.3); --red-ring:rgba(227,10,23,.2);
+  --ink:#0f1217; --text:#2b313b; --muted:#5a6472; --faint:#8a93a0;
+  --line:#e5e7eb; --line-soft:#eef0f2; --line-strong:#d2d6dc;
+  --canvas:#f4f5f7; --surface:#fff; --surface-2:#f5f6f8; --surface-3:#eceef1;
+  --shadow-1:0 1px 2px rgba(15,18,23,.04);
+  --shadow-2:0 1px 2px rgba(15,18,23,.04),0 8px 24px -12px rgba(15,18,23,.12);
+  --shadow-pop:0 20px 48px -16px rgba(15,18,23,.24),0 2px 8px rgba(15,18,23,.06);
   --page-max:1360px; --gutter:28px;
-  --col-left:272px; --col-right:304px; --col-gap:24px;
+  --col-left:280px; --col-right:320px; --col-gap:24px;
   --nav-h:56px; --pad:20px;
-  --r-sm:8px; --r-md:10px; --r-lg:14px; --r-pill:999px;
-  --ease:cubic-bezier(.2,.7,.2,1); --t-fast:120ms; --t:180ms;
+  --r-sm:8px; --r-md:10px; --r-lg:16px; --r-xl:20px; --r-pill:999px;
+  --ease:cubic-bezier(.22,1,.36,1); --ease-std:cubic-bezier(.2,0,0,1); --spring:cubic-bezier(.34,1.45,.64,1);
+  --t-fast:140ms; --t:220ms; --t-slow:420ms;
 
   display:flex;flex-direction:column;width:100%;max-width:none;min-width:0;min-height:var(--ka-available,100svh);
   background:var(--canvas);color:var(--text);
   font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  font-optical-sizing:auto;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;
 }
 #kisgApp *,#kisgApp *::before,#kisgApp *::after{box-sizing:border-box}
 #kisgApp [hidden]{display:none!important}
 #kisgApp a{color:inherit;text-decoration:none}
 #kisgApp :is(button,input,select,textarea){font:inherit;color:inherit;letter-spacing:inherit}
-#kisgApp :is(button,a){-webkit-tap-highlight-color:transparent}
+#kisgApp :is(button,a,label){-webkit-tap-highlight-color:transparent}
 #kisgApp button{cursor:pointer}
 #kisgApp button:disabled{cursor:progress;opacity:.55}
 #kisgApp :is(a,button,input,select,textarea,[tabindex]):focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:var(--r-sm)}
 #kisgApp :is(h1,h2,h3,p){margin:0}
 #kisgApp svg{flex:none}
+#kisgApp ::selection{background:rgba(227,10,23,.14)}
 #kisgApp .k-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 #kisgApp .k-page{width:min(var(--page-max),calc(100% - var(--gutter) * 2));margin-inline:auto}
 #kisgApp .k-ico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#kisgApp .k-chev{width:18px;height:18px;fill:none;stroke:var(--faint);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform var(--t-fast),stroke var(--t-fast)}
+#kisgApp .k-chev{width:18px;height:18px;fill:none;stroke:var(--faint);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform var(--t) var(--ease),stroke var(--t-fast)}
 #kisgApp .k-meta-item{display:inline-flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}
 
 /* ---------- Butonlar ---------- */
-#kisgApp .k-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 16px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface);color:var(--ink);font-size:14px;font-weight:600;line-height:1.2;white-space:nowrap;transition:background var(--t-fast),border-color var(--t-fast),color var(--t-fast),transform var(--t-fast)}
-#kisgApp .k-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
-#kisgApp .k-btn:active:not(:disabled){transform:translateY(1px)}
-#kisgApp .k-btn-primary{border-color:var(--red);background:var(--red);color:#fff}
+#kisgApp .k-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:9px 18px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface);color:var(--ink);font-size:14px;font-weight:650;line-height:1.2;letter-spacing:-.005em;white-space:nowrap;transition:background var(--t-fast),border-color var(--t-fast),color var(--t-fast),box-shadow var(--t-fast),transform var(--t-fast) var(--ease)}
+#kisgApp .k-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .k-btn:active:not(:disabled){transform:scale(.97)}
+#kisgApp .k-btn-primary{border-color:var(--red);background:var(--red);color:#fff;box-shadow:0 1px 2px rgba(179,8,18,.24),inset 0 1px 0 rgba(255,255,255,.12)}
+#kisgApp .k-btn-primary:active:not(:disabled){background:var(--red-press);border-color:var(--red-press)}
 #kisgApp .k-btn-outline{border-color:var(--red-line);background:#fff;color:var(--red-text)}
 #kisgApp .k-btn-danger{border-color:var(--ink);background:var(--ink);color:#fff}
 #kisgApp .k-btn-block{display:flex;width:100%}
-#kisgApp .k-btn-lg{min-height:48px;font-size:15px}
+#kisgApp .k-btn-lg{min-height:50px;font-size:15px}
 #kisgApp .k-text-button{padding:6px 0;border:0;background:transparent;color:var(--red-text);font-size:13.5px;font-weight:650}
-#kisgApp .k-icon-btn{display:grid;flex:none;width:40px;height:40px;place-items:center;padding:0;border:0;border-radius:var(--r-pill);background:transparent;color:var(--muted);font-size:24px;line-height:1;transition:background var(--t-fast),color var(--t-fast)}
+#kisgApp .k-icon-btn{display:grid;flex:none;width:40px;height:40px;place-items:center;padding:0;border:0;border-radius:var(--r-pill);background:transparent;color:var(--muted);font-size:24px;line-height:1;transition:background var(--t-fast),color var(--t-fast),transform var(--t-fast) var(--ease)}
+#kisgApp .k-icon-btn:active{transform:scale(.92)}
 
 /* ---------- Avatar ---------- */
-#kisgApp .k-avatar{position:relative;display:grid;place-items:center;overflow:hidden;flex:none;border-radius:50%;background:#e8ebf0;color:#4a5566;font-weight:650;line-height:1;box-shadow:inset 0 0 0 1px rgba(20,26,36,.06)}
+#kisgApp .k-avatar{position:relative;display:grid;place-items:center;overflow:hidden;flex:none;border-radius:50%;background:#e9ebef;color:#4a5465;font-weight:650;line-height:1;letter-spacing:-.01em;box-shadow:inset 0 0 0 1px rgba(15,18,23,.06)}
 #kisgApp .k-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #kisgApp .k-avatar>svg{width:52%;height:52%;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
 #kisgApp .k-avatar-xs{width:22px;height:22px;font-size:9.5px}
@@ -289,327 +338,454 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .k-avatar-md{width:40px;height:40px;font-size:14px}
 #kisgApp .k-avatar-lg{width:46px;height:46px;font-size:15.5px}
 #kisgApp .k-avatar-xl{width:60px;height:60px;font-size:19px}
+/* Son 3 günde paylaşım yapan kişi: ince kırmızı halka */
+#kisgApp .k-avatar.is-recent{overflow:visible;box-shadow:0 0 0 2px #fff,0 0 0 3.5px var(--red)}
+#kisgApp .k-avatar.is-recent img{border-radius:50%}
+/* Avatar yığını */
+#kisgApp .k-stack{display:flex;align-items:center;padding-left:8px}
+#kisgApp .k-stack .k-avatar{margin-left:-8px;box-shadow:0 0 0 2px #fff;transition:margin var(--t) var(--ease),transform var(--t) var(--ease)}
 
 /* ---------- Rozet / etiket ---------- */
-#kisgApp .k-badge{display:inline-flex;align-items:center;min-height:22px;padding:2px 9px;border:1px solid var(--red-line);border-radius:var(--r-pill);background:#fff;color:var(--red-text);font-size:10.5px;font-weight:750;letter-spacing:.07em;line-height:1;white-space:nowrap}
-#kisgApp .k-tag{display:inline-flex;align-items:center;min-height:26px;padding:3px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface-2);color:var(--muted);font-size:12.5px;font-weight:550;line-height:1.3;white-space:nowrap}
-#kisgApp .k-tag-cert{border-color:var(--line-strong);background:#fff;color:var(--ink);font-weight:650}
+#kisgApp .k-badge{display:inline-flex;align-items:center;min-height:20px;padding:2px 8px;border:1px solid var(--red-line);border-radius:var(--r-pill);background:#fff;color:var(--red-text);font-size:10px;font-weight:750;letter-spacing:.08em;line-height:1;white-space:nowrap}
+#kisgApp .k-tag{display:inline-flex;align-items:center;min-height:26px;padding:3px 10px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--surface-2);color:var(--muted);font-size:12.5px;font-weight:550;line-height:1.3;white-space:nowrap}
+#kisgApp .k-tag-cert{border-color:var(--ink);background:var(--ink);color:#fff;font-weight:650}
 
 /* ---------- Popover ---------- */
-#kisgApp .k-popover{position:absolute;z-index:30;right:0;top:calc(100% + 8px);min-width:200px;padding:6px;border:1px solid var(--line);border-radius:var(--r-md);background:#fff;box-shadow:var(--shadow-pop);animation:k-pop var(--t) var(--ease)}
-#kisgApp .k-popover :is(a,button){display:flex;align-items:center;width:100%;min-height:42px;padding:10px 12px;border:0;border-radius:var(--r-sm);background:transparent;color:var(--ink);text-align:left;font-size:14px;font-weight:500}
-@keyframes k-pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+#kisgApp .k-popover{position:absolute;z-index:30;right:0;top:calc(100% + 8px);min-width:216px;padding:6px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:var(--shadow-pop);transform-origin:top right;animation:k-pop var(--t) var(--ease)}
+#kisgApp .k-popover :is(a,button){display:flex;align-items:center;gap:10px;width:100%;min-height:42px;padding:10px 12px;border:0;border-radius:var(--r-sm);background:transparent;color:var(--ink);text-align:left;font-size:14px;font-weight:550;transition:background var(--t-fast)}
+#kisgApp .k-popover svg{width:18px;height:18px;fill:none;stroke:var(--muted);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .k-popover-sep{display:block;height:1px;margin:6px 4px;background:var(--line-soft)}
+@keyframes k-pop{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
 
 /* ---------- Skeleton / boş durum ---------- */
-#kisgApp .k-sk{display:block;height:12px;border-radius:6px;background:#eceef2;animation:k-pulse 1.4s ease-in-out infinite}
+#kisgApp .k-sk{display:block;height:12px;border-radius:6px;background:var(--surface-3);animation:k-pulse 1.6s ease-in-out infinite}
 #kisgApp .k-sk-short{width:55%}
+#kisgApp .k-sk-title{width:72%;height:16px}
 #kisgApp .k-sk-circle{width:46px;height:46px;border-radius:50%}
-#kisgApp .k-sk-media{height:240px;border-radius:12px}
-#kisgApp .k-sk-person{display:flex;align-items:center;gap:12px;padding:12px 0}
-#kisgApp .k-sk-person>span,#kisgApp .kw-sk-head>span{display:grid;flex:1;gap:8px}
-#kisgApp .k-sk-offer{display:grid;gap:8px;padding:14px 0}
-@keyframes k-pulse{50%{opacity:.55}}
+#kisgApp .k-sk-media{height:260px;border-radius:12px}
+#kisgApp .k-sk-person,#kisgApp .k-sk-offer{display:flex;align-items:center;gap:12px;padding:12px 0}
+#kisgApp :is(.k-sk-person,.k-sk-offer,.kw-me-loading)>span,#kisgApp .kw-sk-head>span{display:grid;flex:1;gap:8px}
+@keyframes k-pulse{50%{opacity:.5}}
 #kisgApp .k-empty{display:flex;flex-direction:column;align-items:center;gap:6px;padding:56px 20px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;text-align:center}
-#kisgApp .k-empty strong{color:var(--ink);font-size:16px;font-weight:700}
+#kisgApp .k-empty-ico{display:grid;width:52px;height:52px;margin-bottom:8px;place-items:center;border-radius:50%;background:var(--surface-2);color:var(--muted)}
+#kisgApp .k-empty-ico svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .k-empty strong{color:var(--ink);font-size:16.5px;font-weight:700;letter-spacing:-.01em}
 #kisgApp .k-empty p{max-width:420px;color:var(--muted);font-size:14px}
 #kisgApp .k-empty .k-btn,#kisgApp .k-empty-actions{margin-top:12px}
 #kisgApp .k-empty-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
 #kisgApp .k-empty-actions .k-btn{margin-top:0}
-#kisgApp .k-muted-note{padding:14px 0;color:var(--faint);font-size:13px}
+#kisgApp .k-muted-note{padding:14px 4px;color:var(--faint);font-size:13px}
 
 /* =====================================================================
-   SHELL: Professional navigation (sekmeler ortada, hesap sağda)
+   SHELL: sekmeler ortada, hesap sağda; kayan gösterge
    ===================================================================== */
 #kisgApp .ka-nav{position:relative;z-index:20;flex:none;background:#fff;border-bottom:1px solid var(--line)}
 #kisgApp .ka-nav-inner{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:16px;width:min(var(--page-max),calc(100% - var(--gutter) * 2));min-height:var(--nav-h);margin-inline:auto}
-#kisgApp .ka-tabs{grid-column:2;display:flex;align-items:stretch;gap:8px;min-width:0}
-#kisgApp .ka-tab{position:relative;display:flex;align-items:center;justify-content:center;padding:0 18px;color:var(--muted);font-size:14.5px;font-weight:600;white-space:nowrap;transition:color var(--t-fast)}
-#kisgApp .ka-tab::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2.5px;border-radius:2px 2px 0 0;background:var(--red);transform:scaleX(0);transition:transform var(--t) var(--ease)}
-#kisgApp .ka-tab.is-active{color:var(--ink)}
-#kisgApp .ka-tab.is-active::after{transform:scaleX(1)}
-#kisgApp .ka-tab:focus-visible{outline-offset:-4px}
+#kisgApp .ka-tabs{position:relative;grid-column:2;display:flex;align-items:stretch;gap:4px;min-width:0}
+#kisgApp .ka-tab{position:relative;display:flex;align-items:center;justify-content:center;padding:0 20px;color:var(--muted);font-size:14.5px;font-weight:600;letter-spacing:-.005em;white-space:nowrap;transition:color var(--t-fast)}
+#kisgApp .ka-tab-label{position:relative;padding:6px 0}
+#kisgApp .ka-tab.is-active{color:var(--ink);font-weight:650}
+#kisgApp .ka-tab:focus-visible{outline-offset:-6px}
+#kisgApp .ka-tab-ink{position:absolute;left:0;bottom:-1px;width:var(--ink-w,0);height:3px;border-radius:3px 3px 0 0;background:var(--red);transform:translateX(var(--ink-x,0));opacity:0;pointer-events:none}
+#kisgApp .ka-tabs.has-ink .ka-tab-ink{opacity:1}
+#kisgApp .ka-tabs.is-ready .ka-tab-ink{transition:transform var(--t-slow) var(--ease),width var(--t-slow) var(--ease)}
 #kisgApp .ka-account{grid-column:3;justify-self:end;position:relative;display:flex;align-items:center}
 #kisgApp .ka-account :is(.ka-login,.ka-account-toggle,.ka-account-placeholder){display:none}
-#kisgApp .ka-account[data-state="loading"] .ka-account-placeholder{display:block;width:104px;height:38px;border-radius:var(--r-pill);background:var(--line-soft)}
+#kisgApp .ka-account[data-state="loading"] .ka-account-placeholder{display:block;width:112px;height:40px;border-radius:var(--r-pill);background:var(--line-soft);animation:k-pulse 1.6s ease-in-out infinite}
 #kisgApp .ka-account[data-state="guest"] .ka-login{display:inline-flex}
 #kisgApp .ka-account[data-state="user"] .ka-account-toggle{display:inline-flex}
-#kisgApp .ka-login{align-items:center;gap:8px;min-height:38px;padding:6px 16px 6px 12px;border:1px solid var(--line-strong);border-radius:var(--r-pill);background:#fff;color:var(--ink);font-size:14px;font-weight:650;white-space:nowrap;transition:border-color var(--t-fast)}
+#kisgApp .ka-account>:is(.ka-login,.ka-account-toggle){animation:k-fade var(--t) var(--ease)}
+#kisgApp .ka-login{align-items:center;gap:8px;min-height:40px;padding:6px 16px 6px 12px;border:1px solid var(--line-strong);border-radius:var(--r-pill);background:#fff;color:var(--ink);font-size:14px;font-weight:650;white-space:nowrap;transition:border-color var(--t-fast),background var(--t-fast),transform var(--t-fast) var(--ease)}
+#kisgApp .ka-login:active{transform:scale(.97)}
 #kisgApp .ka-login svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
-#kisgApp .ka-account-toggle{align-items:center;gap:8px;min-height:42px;padding:4px 10px 4px 4px;border:1px solid transparent;border-radius:var(--r-pill);background:transparent;color:var(--ink);font-size:14px;font-weight:650;transition:background var(--t-fast),border-color var(--t-fast)}
+#kisgApp .ka-account-toggle{align-items:center;gap:8px;min-height:44px;padding:4px 10px 4px 4px;border:1px solid transparent;border-radius:var(--r-pill);background:transparent;color:var(--ink);font-size:14px;font-weight:650;transition:background var(--t-fast),border-color var(--t-fast)}
 #kisgApp .ka-account-toggle[aria-expanded="true"]{background:var(--surface-2);border-color:var(--line)}
+#kisgApp .ka-account-toggle[aria-expanded="true"] .ka-chevron{transform:rotate(180deg)}
 #kisgApp .ka-me-name{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #kisgApp .ka-me-name:empty{display:none}
-#kisgApp .ka-chevron{width:16px;height:16px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .ka-chevron{width:16px;height:16px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform var(--t) var(--ease)}
 #kisgApp .ka-main{flex:1;display:flex;flex-direction:column;min-width:0}
 #kisgApp .ka-view{flex:1;min-width:0}
-#kisgApp .ka-view.is-entering{animation:ka-enter var(--t) var(--ease)}
-@keyframes ka-enter{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+#kisgApp .ka-view.is-entering{animation:ka-enter var(--t-slow) var(--ease)}
+@keyframes ka-enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes k-fade{from{opacity:0}to{opacity:1}}
 
 /* =====================================================================
-   ÇALIŞMALAR — 3 kolon; feed görsel merkez
+   ÇALIŞMALAR — 3 kolon; akış görsel merkez
    ===================================================================== */
-#kisgApp .kw-layout{display:grid;grid-template-columns:var(--col-left) minmax(0,1fr) var(--col-right);grid-template-areas:"head head head" "left feed right";column-gap:var(--col-gap);align-items:start;padding:28px 0 64px}
-#kisgApp .kw-head{grid-area:head;padding:0 2px 20px}
-#kisgApp .kw-head h1{color:var(--ink);font-size:32px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
-#kisgApp .kw-head-desc{margin-top:8px;color:var(--muted);font-size:15px}
-#kisgApp .kw-left{grid-area:left}
-#kisgApp .kw-right{grid-area:right}
+#kisgApp .kw-layout{display:grid;grid-template-columns:var(--col-left) minmax(0,1fr) var(--col-right);grid-template-areas:"head head head" "left feed right";column-gap:var(--col-gap);align-items:start;padding:36px 0 72px}
+#kisgApp .kw-head{grid-area:head;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:0 2px 24px}
+#kisgApp .kw-head h1{color:var(--ink);font-size:40px;font-weight:800;letter-spacing:-.035em;line-height:1.05}
+#kisgApp .kw-head-desc{max-width:520px;margin-top:10px;color:var(--muted);font-size:16px;line-height:1.5}
+#kisgApp .kw-left{grid-area:left;min-width:0}
+#kisgApp .kw-right{grid-area:right;min-width:0}
 #kisgApp .kw-feed{grid-area:feed;min-width:0}
+#kisgApp .kw-stack{position:sticky;top:16px;display:grid;gap:16px}
 
-/* Keşif kartları (sol: Uzmanlar, sağ: Hizmetler) */
-#kisgApp .kw-side{position:sticky;top:16px;padding:18px 16px 16px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-card)}
+/* Canlı topluluk rozeti */
+#kisgApp .kw-pulse{display:inline-flex;align-items:center;gap:12px;flex:none;max-width:100%;padding:8px 14px 8px 8px;border:1px solid var(--line);border-radius:var(--r-pill);background:#fff;box-shadow:var(--shadow-1);animation:k-fade var(--t-slow) var(--ease);transition:border-color var(--t-fast),box-shadow var(--t) var(--ease),transform var(--t-fast) var(--ease)}
+#kisgApp .kw-pulse:active{transform:scale(.98)}
+#kisgApp .kw-pulse-copy{display:grid;min-width:0;line-height:1.3}
+#kisgApp .kw-pulse-copy strong{overflow:hidden;color:var(--ink);font-size:13.5px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .kw-pulse-copy span{overflow:hidden;color:var(--muted);font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .kw-pulse-arrow{width:18px;height:18px;fill:none;stroke:var(--faint);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform var(--t) var(--ease),stroke var(--t-fast)}
+
+/* Kart zemini (kenar kolonlar) */
+#kisgApp :is(.kw-side,.kw-me){padding:18px 16px 16px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-1)}
 #kisgApp .kw-side-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px 6px}
-#kisgApp .kw-side-head h2{color:var(--ink);font-size:18px;font-weight:750;letter-spacing:-.02em}
-#kisgApp .kw-side-head a{color:var(--ink);font-size:13px;font-weight:650;white-space:nowrap;transition:color var(--t-fast)}
-#kisgApp .kw-side-cta{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:44px;margin-top:12px;border:1px solid var(--red-line);border-radius:var(--r-md);background:#fff;color:var(--red-text);font-size:14px;font-weight:650;transition:background var(--t-fast),border-color var(--t-fast)}
+#kisgApp .kw-side-head h2{color:var(--ink);font-size:17px;font-weight:750;letter-spacing:-.02em}
+#kisgApp .kw-side-head a{display:inline-flex;align-items:center;gap:4px;margin:-6px -8px;padding:6px 8px;border-radius:var(--r-sm);color:var(--muted);font-size:13px;font-weight:650;white-space:nowrap;transition:color var(--t-fast),background var(--t-fast)}
+#kisgApp .kw-side-cta{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:42px;margin-top:10px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2);color:var(--ink);font-size:13.5px;font-weight:650;transition:background var(--t-fast),border-color var(--t-fast),transform var(--t-fast) var(--ease)}
+#kisgApp .kw-side-cta:active{transform:scale(.98)}
+
+/* Kişisel kart */
+#kisgApp .kw-me>div{display:none}
+#kisgApp .kw-me[data-state="loading"] .kw-me-loading,#kisgApp .kw-me[data-state="guest"] .kw-me-guest,#kisgApp .kw-me[data-state="user"] .kw-me-user{display:grid;animation:k-fade var(--t) var(--ease)}
+#kisgApp .kw-me-loading{grid-template-columns:auto 1fr;align-items:center;gap:12px}
+#kisgApp .kw-me-guest{gap:6px;padding:2px 4px}
+#kisgApp .kw-me-guest strong{color:var(--ink);font-size:16px;font-weight:750;letter-spacing:-.015em;line-height:1.3}
+#kisgApp .kw-me-guest p{color:var(--muted);font-size:13.5px;line-height:1.5}
+#kisgApp .kw-me-guest .k-btn{margin-top:10px}
+#kisgApp .kw-me-user{gap:10px}
+#kisgApp .kw-me-id{display:flex;align-items:center;gap:12px;min-width:0;margin:-6px;padding:6px;border-radius:var(--r-md);transition:background var(--t-fast)}
+#kisgApp .kw-me-copy{display:grid;min-width:0;line-height:1.3}
+#kisgApp .kw-me-copy strong{overflow:hidden;color:var(--ink);font-size:15.5px;font-weight:750;letter-spacing:-.01em;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .kw-me-copy span{margin-top:2px;color:var(--red-text);font-size:13px;font-weight:600}
+#kisgApp .kw-me-links{display:grid;padding-top:8px;border-top:1px solid var(--line-soft)}
+#kisgApp .kw-me-links a{display:flex;align-items:center;gap:10px;min-height:40px;margin:0 -6px;padding:0 6px;border-radius:var(--r-sm);color:var(--text);font-size:14px;font-weight:600;transition:background var(--t-fast),color var(--t-fast)}
+#kisgApp .kw-me-links a>span{flex:1}
+#kisgApp .kw-me-links svg:first-child{width:18px;height:18px;fill:none;stroke:var(--muted);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* Kişi / hizmet satırları */
 #kisgApp .kw-people,#kisgApp .kw-offers{display:grid}
-#kisgApp .kw-person,#kisgApp .kw-offer{display:flex;align-items:center;gap:12px;margin:0 -6px;padding:12px 6px;border-bottom:1px solid var(--line-soft);border-radius:var(--r-md);transition:background var(--t-fast)}
-#kisgApp .kw-person:last-child,#kisgApp .kw-offer:last-child{border-bottom:0}
+#kisgApp .kw-person,#kisgApp .kw-offer{position:relative;display:flex;align-items:center;gap:12px;margin:0 -8px;padding:11px 8px;border-radius:var(--r-md);transition:background var(--t-fast)}
+#kisgApp :is(.kw-person,.kw-offer)+:is(.kw-person,.kw-offer)::before{content:"";position:absolute;top:0;left:66px;right:8px;height:1px;background:var(--line-soft)}
 #kisgApp :is(.kw-person-copy,.kw-offer-copy){display:grid;gap:1px;flex:1;min-width:0}
-#kisgApp .kw-person-copy strong{overflow:hidden;color:var(--ink);font-size:14.5px;font-weight:700;line-height:1.35;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .kw-person-copy strong{overflow:hidden;color:var(--ink);font-size:14.5px;font-weight:700;line-height:1.35;letter-spacing:-.005em;text-overflow:ellipsis;white-space:nowrap}
 #kisgApp :is(.kw-person-role,.kw-offer-role){display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--muted);font-size:12.5px;line-height:1.4}
-#kisgApp .kw-person-meta{display:flex;color:var(--faint);font-size:12px;line-height:1.4}
+#kisgApp .kw-person-meta{display:flex;margin-top:1px;color:var(--faint);font-size:12px;line-height:1.4}
 #kisgApp .kw-offer{align-items:flex-start}
 #kisgApp .kw-offer .k-chev{margin-top:14px}
-#kisgApp .kw-offer-copy strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:14px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+#kisgApp .kw-offer-cat{overflow:hidden;color:var(--red-text);font-size:11.5px;font-weight:700;letter-spacing:.01em;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .kw-offer-copy strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:14px;font-weight:700;line-height:1.35;letter-spacing:-.005em;overflow-wrap:anywhere}
 #kisgApp .kw-offer-by{overflow:hidden;margin-top:2px;color:var(--text);font-size:12.5px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
 #kisgApp .kw-offer-meta{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px;color:var(--faint);font-size:12px}
 
+/* Hizmet yayınlama kartı */
+#kisgApp .kw-publish{position:relative;display:grid;gap:4px;padding:18px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-1);overflow:hidden;transition:border-color var(--t-fast),box-shadow var(--t) var(--ease),transform var(--t-fast) var(--ease)}
+#kisgApp .kw-publish:active{transform:scale(.985)}
+#kisgApp .kw-publish-ico{display:grid;width:40px;height:40px;margin-bottom:8px;place-items:center;border-radius:12px;background:var(--red);color:#fff;box-shadow:0 4px 12px -4px rgba(227,10,23,.5)}
+#kisgApp .kw-publish-ico svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .kw-publish strong{color:var(--ink);font-size:15.5px;font-weight:750;letter-spacing:-.015em;line-height:1.3}
+#kisgApp .kw-publish-text{color:var(--muted);font-size:13px;line-height:1.5}
+#kisgApp .kw-publish-cta{display:inline-flex;align-items:center;gap:6px;margin-top:8px;color:var(--red-text);font-size:13.5px;font-weight:700}
+#kisgApp .kw-publish-cta svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform var(--t) var(--ease)}
+
 /* Composer */
-#kisgApp .kw-composer{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:16px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-card)}
+#kisgApp .kw-composer{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:16px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-1)}
 #kisgApp .kw-composer-main{display:flex;align-items:center;gap:12px;flex:1 1 100%;min-width:0;padding:0;border:0;background:transparent;text-align:left}
-#kisgApp .kw-composer-field{display:flex;align-items:center;flex:1;min-width:0;min-height:46px;padding:0 16px;border:1px solid var(--line);border-radius:var(--r-md);background:#fff;color:var(--faint);font-size:14.5px;transition:border-color var(--t-fast)}
+#kisgApp .kw-composer-main .k-avatar{width:44px;height:44px}
+#kisgApp .kw-composer-field{display:flex;align-items:center;flex:1;min-width:0;min-height:48px;padding:0 18px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--surface-2);color:var(--faint);font-size:14.5px;transition:border-color var(--t-fast),background var(--t-fast),color var(--t-fast)}
+#kisgApp .kw-composer-main:active .kw-composer-field{background:var(--surface-3)}
 #kisgApp .kw-composer-field>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #kisgApp .kw-composer-mobile{display:none}
-#kisgApp .kw-composer-tools{display:flex;align-items:center;gap:8px;width:100%}
-#kisgApp .kw-tool{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2);color:var(--text);font-size:13.5px;font-weight:600;transition:background var(--t-fast),border-color var(--t-fast)}
-#kisgApp .kw-tool svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-#kisgApp .kw-composer-cta{margin-left:auto;min-height:40px;padding:8px 18px;border-radius:var(--r-md)}
-#kisgApp .kw-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:4px 2px}
-#kisgApp .kw-live{display:inline-flex;align-items:center;gap:8px;min-width:0;color:var(--muted);font-size:13px}
-#kisgApp .kw-live-dot{flex:none;width:7px;height:7px;border-radius:50%;background:#1f9d55;box-shadow:0 0 0 3px rgba(31,157,85,.14)}
-#kisgApp .kw-sort{flex:none;margin-left:auto;padding:5px 12px;border:1px solid var(--line);border-radius:var(--r-pill);background:#fff;color:var(--text);font-size:12.5px;font-weight:650}
+#kisgApp .kw-composer-tools{display:flex;align-items:center;gap:6px;width:100%;padding-left:56px}
+#kisgApp .kw-tool{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 12px;border:0;border-radius:var(--r-md);background:transparent;color:var(--text);font-size:13.5px;font-weight:600;transition:background var(--t-fast),color var(--t-fast),transform var(--t-fast) var(--ease)}
+#kisgApp .kw-tool:active{transform:scale(.96)}
+#kisgApp .kw-tool svg{width:19px;height:19px;fill:none;stroke:var(--muted);stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;transition:stroke var(--t-fast)}
+#kisgApp .kw-composer-cta{margin-left:auto;min-height:40px;padding:8px 18px 8px 14px}
+#kisgApp .kw-composer-cta svg{transition:transform var(--t) var(--ease)}
+#kisgApp .kw-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:6px 2px}
+#kisgApp .kw-live{display:inline-flex;align-items:center;gap:10px;min-width:0;color:var(--muted);font-size:13px;font-weight:500;animation:k-fade var(--t-slow) var(--ease)}
+#kisgApp .kw-live>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .kw-live-dot{position:relative;flex:none;width:8px;height:8px;border-radius:50%;background:#16a34a}
+#kisgApp .kw-live-dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:#16a34a;animation:k-ping 2.4s var(--ease-std) infinite}
+@keyframes k-ping{0%{opacity:.5;transform:scale(1)}70%,100%{opacity:0;transform:scale(2.6)}}
+#kisgApp .kw-sort{display:inline-flex;align-items:center;gap:6px;flex:none;margin-left:auto;min-height:32px;padding:0 12px;border:1px solid var(--line);border-radius:var(--r-pill);background:#fff;color:var(--ink);font-size:12.5px;font-weight:650}
+#kisgApp .kw-sort svg{width:14px;height:14px;fill:none;stroke:var(--muted);stroke-width:2.2;stroke-linecap:round}
 
 /* Çalışma kartı */
 #kisgApp .kw-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding:12px 16px;border:1px solid var(--line);border-radius:var(--r-md);background:#fff;font-size:14px}
-#kisgApp .kw-list{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;min-width:0}
-#kisgApp .kw-post{min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-card);transition:box-shadow var(--t),border-color var(--t)}
+#kisgApp .kw-list{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;min-width:0}
+#kisgApp .kw-post{position:relative;min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-1);transition:box-shadow var(--t) var(--ease),border-color var(--t)}
+#kisgApp .kw-post.is-fresh{border-color:var(--red-line);box-shadow:0 0 0 3px var(--red-ring);transition:box-shadow 1.6s var(--ease),border-color 1.6s var(--ease)}
 #kisgApp .kw-sk{display:grid;gap:12px;padding:var(--pad)}
 #kisgApp .kw-sk-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
 #kisgApp .kw-post-head{display:flex;align-items:flex-start;gap:12px;padding:var(--pad) var(--pad) 0}
-#kisgApp .kw-post-avatar{display:block;flex:none;border-radius:50%;transition:opacity var(--t-fast)}
-#kisgApp .kw-post-who{display:grid;flex:1;min-width:0;padding-top:1px}
+#kisgApp .kw-post-avatar{display:block;flex:none;border-radius:50%;transition:opacity var(--t-fast),transform var(--t-fast) var(--ease)}
+#kisgApp .kw-post-avatar:active{transform:scale(.95)}
+#kisgApp .kw-post-who{display:grid;flex:1;min-width:0;padding-top:2px}
 #kisgApp .kw-post-name-row{display:flex;align-items:center;gap:10px;min-width:0}
-#kisgApp .kw-post-author-link{overflow:hidden;color:var(--ink);font-size:16px;font-weight:750;line-height:1.3;letter-spacing:-.01em;text-overflow:ellipsis;white-space:nowrap;transition:color var(--t-fast)}
+#kisgApp .kw-post-author-link{overflow:hidden;color:var(--ink);font-size:15.5px;font-weight:700;line-height:1.3;letter-spacing:-.01em;text-overflow:ellipsis;white-space:nowrap;transition:color var(--t-fast)}
 #kisgApp .kw-post-sub{display:flex;align-items:baseline;min-width:0;margin-top:3px;color:var(--muted);font-size:13px;line-height:1.4}
 #kisgApp .kw-post-profession{overflow:hidden;min-width:0;text-overflow:ellipsis;white-space:nowrap}
-#kisgApp .kw-post-time{flex:none;white-space:nowrap}
+#kisgApp .kw-post-time{flex:none;color:var(--faint);white-space:nowrap}
 #kisgApp .kw-post-profession+.kw-post-time::before{content:"·";margin:0 6px}
 #kisgApp .kw-owner{position:relative;flex:none;margin:-6px -8px 0 0}
-#kisgApp .kw-more-btn{display:grid;width:40px;height:40px;place-items:center;border:0;border-radius:var(--r-pill);background:transparent;color:var(--muted);font-size:20px;line-height:1;letter-spacing:.05em;transition:background var(--t-fast)}
+#kisgApp .kw-more-btn{display:grid;width:40px;height:40px;place-items:center;border:0;border-radius:var(--r-pill);background:transparent;color:var(--muted);font-size:20px;font-weight:700;line-height:1;letter-spacing:.05em;transition:background var(--t-fast),color var(--t-fast),transform var(--t-fast) var(--ease)}
+#kisgApp .kw-more-btn:active{transform:scale(.9)}
+#kisgApp .kw-more-btn[aria-expanded="true"]{background:var(--surface-2);color:var(--ink)}
 #kisgApp .kw-menu{top:44px}
 #kisgApp .kw-menu button.is-danger{color:var(--red-text)}
 #kisgApp .kw-post-detail{display:block}
 #kisgApp .kw-post-body{padding:14px var(--pad) 0}
-#kisgApp .kw-post-content{color:var(--text);font-size:15.5px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
-#kisgApp .kw-post-content.is-clamped{display:-webkit-box;-webkit-line-clamp:8;-webkit-box-orient:vertical;overflow:hidden}
-#kisgApp .kw-more-link{display:inline-block;margin:6px var(--pad) 0;color:var(--ink);font-size:14px;font-weight:700}
+#kisgApp .kw-post-title{margin-bottom:6px;color:var(--ink);font-size:18.5px;font-weight:750;line-height:1.3;letter-spacing:-.02em;overflow-wrap:anywhere;transition:color var(--t-fast)}
+#kisgApp .kw-post-content{color:var(--text);font-size:15px;line-height:1.62;white-space:pre-wrap;overflow-wrap:anywhere}
+#kisgApp .kw-post-content.is-clamped{display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden}
+#kisgApp .kw-more-link{display:inline-flex;align-items:center;gap:4px;margin:6px var(--pad) 0;color:var(--ink);font-size:14px;font-weight:700;transition:color var(--t-fast)}
 #kisgApp .kw-post-tags{display:flex;flex-wrap:wrap;gap:6px;padding:12px var(--pad) 0}
-#kisgApp .kw-post-media{margin:14px var(--pad) 0;overflow:hidden;border-radius:12px;background:#eef0f3}
-#kisgApp .kw-post-image{display:block;width:100%;height:auto;max-height:420px;object-fit:cover;transition:transform .35s var(--ease)}
-#kisgApp .kw-post-actions{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-top:10px;padding:4px 10px 6px}
-#kisgApp .kw-post-actions>:is(button,a,span){display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 10px;border:0;border-radius:var(--r-md);background:transparent;color:var(--muted);font-size:14px;font-weight:600;white-space:nowrap;transition:background var(--t-fast),color var(--t-fast)}
-#kisgApp .kw-post-actions svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform var(--t) var(--ease)}
+#kisgApp .kw-post-media{position:relative;margin:14px var(--pad) 0;overflow:hidden;border-radius:12px;background:var(--surface-3)}
+#kisgApp .kw-post-media:not(.is-loaded){min-height:220px;animation:k-pulse 1.6s ease-in-out infinite}
+#kisgApp .kw-post-media::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(15,18,23,.06);pointer-events:none}
+#kisgApp .kw-post-image{display:block;width:100%;height:auto;max-height:480px;object-fit:cover;opacity:0;transform:scale(1.01);transition:opacity .45s var(--ease),transform .7s var(--ease)}
+#kisgApp .kw-post-media.is-loaded .kw-post-image{opacity:1;transform:none}
+#kisgApp .kw-post-actions{display:flex;align-items:center;gap:4px;margin:14px var(--pad) 0;padding:4px 0 6px;border-top:1px solid var(--line-soft)}
+#kisgApp .kw-post-actions>:is(button,a,span){display:inline-flex;flex:1 1 0;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:44px;padding:8px 10px;border:0;border-radius:var(--r-md);background:transparent;color:var(--muted);font-size:14px;font-weight:600;white-space:nowrap;transition:background var(--t-fast),color var(--t-fast),transform var(--t-fast) var(--ease)}
+#kisgApp .kw-post-actions>:is(button,a):active{transform:scale(.96)}
+#kisgApp .kw-post-actions svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform var(--t) var(--ease),fill var(--t-fast),stroke var(--t-fast)}
 #kisgApp .kw-like-num:empty{display:none}
-#kisgApp .kw-like-num,#kisgApp .kw-likes-static [data-like-count]{color:var(--ink);font-weight:650}
+#kisgApp .kw-like-num,#kisgApp .kw-likes-static [data-like-count]{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
 #kisgApp .kw-likes-static{cursor:default}
 #kisgApp .kw-likes-static svg{fill:var(--red);stroke:var(--red)}
+#kisgApp .kw-heart{position:relative;display:grid;place-items:center}
+#kisgApp .kw-heart::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid var(--red);opacity:0;transform:scale(.4);pointer-events:none}
 #kisgApp .kw-act-like.is-liked{color:var(--red-text)}
+#kisgApp .kw-act-like.is-liked .kw-like-num{color:var(--red-text)}
 #kisgApp .kw-act-like.is-liked svg{fill:var(--red);stroke:var(--red)}
-#kisgApp .kw-act-like.is-pop svg{animation:k-like .32s var(--ease)}
-#kisgApp .kw-post-actions>:is(button,a):active{transform:scale(.97)}
-@keyframes k-like{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(1)}}
-#kisgApp .kw-empty{display:grid;justify-items:center;gap:6px;padding:48px 24px;text-align:center}
-#kisgApp .kw-empty strong{color:var(--ink);font-size:17px;font-weight:700}
+#kisgApp .kw-act-like.is-pop svg{animation:k-like .5s var(--spring)}
+#kisgApp .kw-act-like.is-pop .kw-heart::after{animation:k-burst .5s var(--ease) forwards}
+@keyframes k-like{0%{transform:scale(1)}30%{transform:scale(.8)}60%{transform:scale(1.28)}100%{transform:scale(1)}}
+@keyframes k-burst{0%{opacity:.55;transform:scale(.4)}100%{opacity:0;transform:scale(1.35)}}
+#kisgApp .kw-empty{display:grid;justify-items:center;gap:6px;padding:52px 24px;text-align:center}
+#kisgApp .kw-empty strong{color:var(--ink);font-size:17px;font-weight:750;letter-spacing:-.01em}
 #kisgApp .kw-empty p{max-width:380px;color:var(--muted);font-size:14.5px}
-#kisgApp .kw-empty .k-btn{margin-top:10px}
-#kisgApp .kw-load-more{display:flex;width:100%;margin-top:16px;min-height:48px}
+#kisgApp .kw-empty .k-btn{margin-top:12px}
+#kisgApp .kw-load-more{display:flex;width:100%;margin-top:16px;min-height:48px;border-radius:var(--r-lg)}
 
-/* Feed içi keşif şeritleri (yan kolonlar gizlenince) */
-#kisgApp .kw-rail{display:none;padding:18px 0 16px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-card)}
+/* Akış içi keşif şeritleri (yan kolonlar gizlenince) */
+#kisgApp .kw-rail{display:none;padding:18px 0 16px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-1)}
 #kisgApp .kw-rail-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:0 var(--pad) 12px}
-#kisgApp .kw-rail-head h2{color:var(--ink);font-size:16.5px;font-weight:750;letter-spacing:-.015em}
-#kisgApp .kw-rail-head a{color:var(--ink);font-size:13.5px;font-weight:650;white-space:nowrap}
-#kisgApp .kw-rail-track{display:flex;gap:10px;overflow-x:auto;padding:2px var(--pad) 4px;scroll-snap-type:x mandatory;scroll-padding-inline:var(--pad);scrollbar-width:none;overscroll-behavior-x:contain}
+#kisgApp .kw-rail-head h2{color:var(--ink);font-size:16.5px;font-weight:750;letter-spacing:-.02em}
+#kisgApp .kw-rail-head a{color:var(--muted);font-size:13.5px;font-weight:650;white-space:nowrap}
+#kisgApp .kw-rail-track{position:relative;display:flex;gap:10px;overflow-x:auto;padding:4px var(--pad) 4px;scroll-snap-type:x mandatory;scroll-padding-inline:var(--pad);scrollbar-width:none;overscroll-behavior-x:contain}
 #kisgApp .kw-rail-track::-webkit-scrollbar{display:none}
-#kisgApp .kw-rail-expert{display:grid;justify-items:center;align-content:start;gap:3px;flex:0 0 152px;padding:16px 12px 14px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;text-align:center;scroll-snap-align:start}
-#kisgApp .kw-rail-expert .k-avatar{margin-bottom:8px}
+#kisgApp .kw-rail-expert{position:relative;display:grid;justify-items:center;align-content:start;gap:3px;flex:0 0 148px;padding:18px 12px 16px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;text-align:center;scroll-snap-align:start;transition:border-color var(--t-fast),transform var(--t-fast) var(--ease)}
+#kisgApp .kw-rail-expert:active,#kisgApp .kw-rail-service:active{transform:scale(.97)}
+#kisgApp .kw-rail-expert .k-avatar{margin-bottom:10px}
 #kisgApp .kw-rail-expert strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:14px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
-#kisgApp .kw-rail-expert span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--muted);font-size:12px;line-height:1.35}
-#kisgApp .kw-rail-service{display:grid;align-content:start;gap:4px;flex:0 0 240px;padding:14px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;scroll-snap-align:start;overflow-wrap:anywhere}
-#kisgApp .kw-rail-cat{color:var(--faint);font-size:12px;font-weight:600}
-#kisgApp .kw-rail-service strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:14.5px;font-weight:700;line-height:1.35}
-#kisgApp .kw-rail-by{display:flex;align-items:center;gap:8px;margin-top:4px;min-width:0;color:var(--text);font-size:12.5px;font-weight:600}
+#kisgApp .kw-rail-expert>span:not(.k-avatar){display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--muted);font-size:12px;line-height:1.35}
+#kisgApp .kw-rail-service{display:grid;align-content:start;gap:4px;flex:0 0 244px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;scroll-snap-align:start;overflow-wrap:anywhere;transition:border-color var(--t-fast),transform var(--t-fast) var(--ease)}
+#kisgApp .kw-rail-cat{color:var(--red-text);font-size:12px;font-weight:700}
+#kisgApp .kw-rail-service strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:14.5px;font-weight:700;line-height:1.35;letter-spacing:-.005em}
+#kisgApp .kw-rail-by{display:flex;align-items:center;gap:8px;margin-top:6px;min-width:0;color:var(--text);font-size:12.5px;font-weight:600}
 #kisgApp .kw-rail-by>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* =====================================================================
-   KATALOG — Uzmanlar (people discovery) + Hizmetler (service discovery)
+   KATALOG — Uzmanlar (kişi keşfi) + Hizmetler (hizmet keşfi)
    ===================================================================== */
-#kisgApp .kc-page{padding:28px 0 64px}
-#kisgApp .kc-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:20px}
-#kisgApp .kc-head h1{color:var(--ink);font-size:32px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
-#kisgApp .kc-head p{margin-top:8px;color:var(--muted);font-size:15px}
-#kisgApp .kc-head-cta{flex:none}
-#kisgApp .kc-message{margin-bottom:16px;padding:12px 16px;border:1px solid var(--line);border-radius:var(--r-md);background:#fff;font-size:14px;transition:opacity .25s}
+#kisgApp .kc-page{padding:36px 0 72px}
+#kisgApp .kc-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:22px}
+#kisgApp .kc-head h1{color:var(--ink);font-size:40px;font-weight:800;letter-spacing:-.035em;line-height:1.05}
+#kisgApp .kc-head p{max-width:560px;margin-top:10px;color:var(--muted);font-size:16px;line-height:1.5}
+#kisgApp .kc-head-cta{flex:none;min-height:44px;padding-inline:16px 20px}
+#kisgApp .kc-message{margin-bottom:16px;padding:12px 16px;border:1px solid var(--line);border-left:3px solid var(--ink);border-radius:var(--r-md);background:#fff;font-size:14px;animation:k-fade var(--t) var(--ease);transition:opacity .25s}
 #kisgApp .kc-message.is-hiding{opacity:0}
-#kisgApp .kc-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-card)}
-#kisgApp .kc-search{display:flex;align-items:center;gap:10px;flex:1 1 100%;min-height:50px;padding:0 8px 0 16px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;transition:border-color var(--t-fast),box-shadow var(--t-fast)}
-#kisgApp .kc-search:focus-within{border-color:var(--ink);box-shadow:0 0 0 3px rgba(20,26,36,.07)}
-#kisgApp .kc-search svg{width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:1.8;stroke-linecap:round}
-#kisgApp .kc-search input{flex:1;width:100%;min-width:0;height:48px;padding:0;border:0;background:transparent;color:var(--ink);font-size:16px;outline:none}
+#kisgApp .kc-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-1)}
+#kisgApp .kc-search{display:flex;align-items:center;gap:10px;flex:1 1 100%;min-height:52px;padding:0 8px 0 16px;border:1px solid transparent;border-radius:var(--r-md);background:var(--surface-2);transition:border-color var(--t-fast),box-shadow var(--t-fast),background var(--t-fast)}
+#kisgApp .kc-search:focus-within{border-color:var(--ink);background:#fff;box-shadow:0 0 0 4px rgba(15,18,23,.06)}
+#kisgApp .kc-search svg{width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:1.9;stroke-linecap:round;transition:stroke var(--t-fast)}
+#kisgApp .kc-search:focus-within svg{stroke:var(--ink)}
+#kisgApp .kc-search input{flex:1;width:100%;min-width:0;height:50px;padding:0;border:0;background:transparent;color:var(--ink);font-size:16px;outline:none}
+#kisgApp .kc-search input:focus-visible{outline:none}
 #kisgApp .kc-search input::placeholder{color:var(--faint)}
 #kisgApp .kc-search input::-webkit-search-cancel-button{-webkit-appearance:none}
-#kisgApp .kc-search button{display:grid;width:34px;height:34px;place-items:center;border:0;border-radius:50%;background:var(--surface-2);color:var(--muted);font-size:20px;line-height:1}
-#kisgApp .kc-filter-btn{display:none;align-items:center;gap:8px;flex:none;min-height:50px;padding:0 16px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;color:var(--ink);font-size:14px;font-weight:650}
+#kisgApp .kc-search button{display:grid;width:32px;height:32px;place-items:center;border:0;border-radius:50%;background:var(--surface-3);color:var(--muted);font-size:19px;line-height:1;animation:k-fade var(--t-fast) var(--ease);transition:background var(--t-fast),color var(--t-fast)}
+#kisgApp .kc-filter-btn{display:none;align-items:center;gap:8px;flex:none;min-height:52px;padding:0 16px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;color:var(--ink);font-size:14px;font-weight:650;transition:border-color var(--t-fast),transform var(--t-fast) var(--ease)}
+#kisgApp .kc-filter-btn:active{transform:scale(.97)}
 #kisgApp .kc-filter-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 #kisgApp .kc-filters{display:flex;flex-wrap:wrap;gap:8px}
 #kisgApp .kc-filters-inline{flex:1 1 100%}
 #kisgApp .kc-filters-inline .kc-flabel{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
-#kisgApp .kc-filters-inline :is(input,select){height:38px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--surface-2);color:var(--ink);font-size:13.5px;font-weight:600;transition:border-color var(--t-fast),background var(--t-fast)}
-#kisgApp .kc-filters-inline input{width:160px}
+#kisgApp .kc-filters-inline :is(input,select){height:38px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-pill);background:#fff;color:var(--ink);font-size:13.5px;font-weight:600;transition:border-color var(--t-fast),background var(--t-fast),color var(--t-fast)}
+#kisgApp .kc-filters-inline input{width:164px}
 #kisgApp .kc-filters-inline input::placeholder{color:var(--muted);font-weight:600}
-#kisgApp .kc-filters-inline select{padding-right:34px;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d6878' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:16px}
-#kisgApp .kc-filters-inline .is-set :is(input,select){border-color:var(--ink);background-color:#fff}
+#kisgApp .kc-filters-inline select{padding-right:34px;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235a6472' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:16px}
+#kisgApp .kc-filters-inline .is-set :is(input,select){border-color:var(--ink);background-color:var(--ink);color:#fff;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E")}
+#kisgApp .kc-filters-inline .is-set input{background-image:none}
+#kisgApp .kc-filters-inline .is-set select option{background:#fff;color:var(--ink)}
 #kisgApp .kc-filters-stack{display:grid;gap:16px}
 #kisgApp .kc-filters-stack .kc-field{display:grid;gap:6px}
 #kisgApp .kc-filters-stack .kc-flabel{color:var(--text);font-size:13px;font-weight:650}
-#kisgApp .kc-filters-stack :is(input,select){width:100%;min-height:48px;padding:0 14px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;font-size:16px}
-#kisgApp .kc-results-head{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin-top:6px;color:var(--muted);font-size:13.5px;font-weight:600}
-#kisgApp .kc-results{display:grid;gap:14px}
+#kisgApp .kc-filters-stack :is(input,select){width:100%;min-height:50px;padding:0 14px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;font-size:16px;transition:border-color var(--t-fast),box-shadow var(--t-fast)}
+#kisgApp .kc-filters-stack :is(input,select):focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 4px rgba(15,18,23,.06)}
+#kisgApp .kc-results-head{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;margin-top:4px;color:var(--muted);font-size:13.5px;font-weight:600}
+#kisgApp .kc-results{display:grid;gap:16px}
 #kisgApp .ke-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
 #kisgApp .ks-grid{grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
-#kisgApp .kc-card{position:relative;display:flex;flex-direction:column;min-width:0;padding:var(--pad);border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-card);overflow-wrap:anywhere;transition:border-color var(--t),transform var(--t) var(--ease),box-shadow var(--t)}
-#kisgApp .kc-more{display:flex;margin:24px auto 0;min-width:220px;min-height:48px}
-#kisgApp .kc-sk{display:grid;gap:12px;align-content:start;min-height:190px;padding:var(--pad);border:1px solid var(--line);border-radius:var(--r-lg);background:#fff}
+#kisgApp .kc-card{position:relative;isolation:isolate;display:flex;flex-direction:column;min-width:0;padding:var(--pad);border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-1);overflow-wrap:anywhere;transition:border-color var(--t),transform var(--t) var(--ease),box-shadow var(--t) var(--ease)}
+#kisgApp .kc-card:active{transform:scale(.99)}
+#kisgApp .kc-more{display:flex;margin:28px auto 0;min-width:240px;min-height:48px;border-radius:var(--r-pill)}
+#kisgApp .kc-sk{display:grid;gap:12px;align-content:start;min-height:196px;padding:var(--pad);border:1px solid var(--line);border-radius:var(--r-lg);background:#fff}
 #kisgApp .kc-sk-top{display:flex;align-items:center;gap:14px;margin-bottom:6px}
 #kisgApp .kc-sk-top .k-sk-circle{width:60px;height:60px}
 #kisgApp .kc-sk-top span{display:grid;flex:1;gap:8px}
 /* Uzman kartı */
 #kisgApp .ke-top{display:flex;align-items:flex-start;gap:14px;min-width:0}
 #kisgApp .ke-top .k-chev{margin-top:4px;margin-left:auto}
-#kisgApp .ke-id{display:grid;gap:3px;flex:1;min-width:0}
-#kisgApp .ke-id h2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:17px;font-weight:750;line-height:1.3;letter-spacing:-.01em}
+#kisgApp .ke-id{display:grid;gap:3px;flex:1;min-width:0;padding-top:2px}
+#kisgApp .ke-id h2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:17px;font-weight:750;line-height:1.3;letter-spacing:-.015em}
 #kisgApp .ke-role{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--muted);font-size:13.5px;line-height:1.4}
-#kisgApp .ke-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:4px;color:var(--faint);font-size:12.5px}
-#kisgApp .ke-meta .k-tag{min-height:22px;padding:1px 8px;font-size:12px}
-#kisgApp .ke-company{margin-top:14px;padding-left:74px;overflow:hidden;color:var(--text);font-size:13px;font-weight:550;text-overflow:ellipsis;white-space:nowrap}
-#kisgApp .ke-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;padding-left:74px}
+#kisgApp .ke-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:6px;color:var(--faint);font-size:12.5px}
+#kisgApp .ke-meta .k-tag{min-height:22px;padding:1px 9px;font-size:11.5px}
+#kisgApp .ke-company{display:flex;align-items:center;gap:6px;margin-top:14px;overflow:hidden;color:var(--text);font-size:13px;font-weight:600;white-space:nowrap}
+#kisgApp .ke-company span{overflow:hidden;text-overflow:ellipsis}
+#kisgApp .ke-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 #kisgApp .ke-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:14px}
-#kisgApp .ke-card>.ke-bottom{margin-top:16px;border-top:1px solid var(--line-soft)}
+#kisgApp .ke-card>.ke-bottom{border-top:1px solid var(--line-soft)}
+#kisgApp .ke-card>:nth-last-child(2){margin-bottom:16px}
 #kisgApp .ke-activity{color:var(--muted);font-size:12.5px;font-weight:600}
-#kisgApp .ke-cta{color:var(--ink);font-size:13.5px;font-weight:700;transition:color var(--t-fast)}
-#kisgApp .ke-discovery{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 16px;margin-top:16px;padding:12px 16px;border:1px dashed var(--line-strong);border-radius:var(--r-md);background:transparent;color:var(--muted);font-size:13.5px}
+#kisgApp :is(.ke-cta,.ks-cta){display:inline-flex;align-items:center;gap:4px;flex:none;color:var(--ink);font-size:13.5px;font-weight:700;transition:color var(--t-fast)}
+#kisgApp :is(.ke-cta,.ks-cta) [aria-hidden]{display:inline-block;transition:transform var(--t) var(--ease)}
+#kisgApp .ke-discovery{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-top:16px;padding:14px 16px;border:1px dashed var(--line-strong);border-radius:var(--r-lg);background:#fff;color:var(--muted);font-size:13.5px}
 #kisgApp .ke-discovery strong{color:var(--ink);font-weight:650}
 /* Hizmet kartı */
 #kisgApp .ks-card{gap:8px}
 #kisgApp .ks-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-#kisgApp .ks-category{color:var(--red-text);font-size:12.5px;font-weight:650}
-#kisgApp .ks-card h2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:18px;font-weight:750;line-height:1.3;letter-spacing:-.015em}
+#kisgApp .ks-category{display:inline-flex;align-items:center;gap:6px;color:var(--red-text);font-size:12.5px;font-weight:700}
+#kisgApp .ks-category::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--red)}
+#kisgApp .ks-card h2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:18px;font-weight:750;line-height:1.3;letter-spacing:-.02em}
 #kisgApp .ks-description{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--text);font-size:14px;line-height:1.55}
 #kisgApp .ks-meta{display:flex;flex-wrap:wrap;gap:4px 14px;color:var(--muted);font-size:13px}
 #kisgApp .ks-provider{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:14px;border-top:1px solid var(--line-soft);min-width:0}
 #kisgApp .ks-card>.ks-provider{margin-top:auto}
-#kisgApp .ks-card>.ks-meta+.ks-provider,#kisgApp .ks-card>.ks-description+.ks-provider{margin-top:auto}
+#kisgApp .ks-card>:is(.ks-meta,.ks-description,h2)+.ks-provider{margin-top:auto}
+#kisgApp .ks-card>:is(.ks-meta,.ks-description,h2){margin-bottom:6px}
 #kisgApp .ks-provider>div{flex:1;min-width:0}
 #kisgApp .ks-provider strong{display:block;overflow:hidden;color:var(--ink);font-size:13.5px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
 #kisgApp .ks-provider p{overflow:hidden;color:var(--muted);font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}
-#kisgApp .ks-cta{flex:none;color:var(--ink);font-size:13.5px;font-weight:700;transition:color var(--t-fast)}
 
 /* =====================================================================
    DİALOG / FORM / TOAST
    ===================================================================== */
-#kisgApp .k-dialog{position:fixed;inset:0;width:min(580px,calc(100% - 24px));max-height:calc(100dvh - 24px);margin:auto;padding:0;border:0;border-radius:18px;background:#fff;color:var(--text);overflow:auto;overscroll-behavior:contain;box-shadow:0 24px 64px rgba(20,26,36,.24)}
-#kisgApp .k-dialog[open]{animation:k-dialog var(--t) var(--ease)}
-#kisgApp .k-dialog::backdrop{background:rgba(20,26,36,.46)}
-@keyframes k-dialog{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+#kisgApp .k-dialog{position:fixed;inset:0;width:min(580px,calc(100% - 24px));max-height:calc(100dvh - 24px);margin:auto;padding:0;border:0;border-radius:var(--r-xl);background:#fff;color:var(--text);overflow:auto;overscroll-behavior:contain;box-shadow:0 32px 80px -20px rgba(15,18,23,.35),0 2px 8px rgba(15,18,23,.08)}
+#kisgApp .k-dialog[open]{animation:k-dialog var(--t-slow) var(--ease)}
+#kisgApp .k-dialog::backdrop{background:rgba(15,18,23,.44);animation:k-fade var(--t) var(--ease)}
+@keyframes k-dialog{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes k-sheet{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 #kisgApp .k-dialog-sm{width:min(440px,calc(100% - 24px))}
-#kisgApp .k-dialog-lg{width:min(620px,calc(100% - 24px))}
+#kisgApp .k-dialog-lg{width:min(640px,calc(100% - 24px))}
 #kisgApp .k-dialog form{margin:0}
-#kisgApp .k-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 12px 24px;border-bottom:1px solid var(--line-soft)}
-#kisgApp .k-dialog-head h2{color:var(--ink);font-size:18px;font-weight:750;letter-spacing:-.015em}
+#kisgApp .k-dialog-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 14px 24px;border-bottom:1px solid var(--line-soft)}
+#kisgApp .k-dialog-head h2{color:var(--ink);font-size:18px;font-weight:750;letter-spacing:-.02em}
+#kisgApp .k-grip{display:none}
 #kisgApp .k-dialog-body{padding:20px 24px}
 #kisgApp .k-dialog-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 24px 18px;border-top:1px solid var(--line-soft)}
 #kisgApp .k-dialog-foot-split{justify-content:space-between;padding-bottom:max(18px,env(safe-area-inset-bottom,0px))}
 #kisgApp .k-label{display:block;margin:16px 0 6px;color:var(--text);font-size:13px;font-weight:650}
 #kisgApp .k-label:first-child{margin-top:0}
-#kisgApp .k-input{display:block;width:100%;min-width:0;min-height:46px;padding:10px 14px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;color:var(--ink);font-size:16px;transition:border-color var(--t-fast),box-shadow var(--t-fast)}
-#kisgApp .k-input:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px rgba(20,26,36,.08)}
+#kisgApp .k-input{display:block;width:100%;min-width:0;min-height:48px;padding:10px 14px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;color:var(--ink);font-size:16px;transition:border-color var(--t-fast),box-shadow var(--t-fast)}
+#kisgApp .k-input:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 4px rgba(15,18,23,.06)}
 #kisgApp .k-textarea{min-height:150px;resize:vertical;line-height:1.55}
-#kisgApp .k-composer-text{min-height:170px;border:0;padding:4px 0;box-shadow:none!important;font-size:17px}
+#kisgApp .k-composer-who{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+#kisgApp .k-composer-who>span:last-child{display:grid;min-width:0;line-height:1.3}
+#kisgApp .k-composer-who strong{overflow:hidden;color:var(--ink);font-size:15px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .k-composer-who strong:empty{display:none}
+#kisgApp .k-composer-who>span:last-child>span{color:var(--muted);font-size:12.5px}
+#kisgApp .k-composer-text{min-height:180px;border:0;padding:4px 0;box-shadow:none!important;font-size:17px;line-height:1.6}
+#kisgApp .k-composer-text::placeholder{color:var(--faint)}
 #kisgApp .k-composer-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft)}
-#kisgApp .k-select-inline{width:auto;min-width:180px;flex:1;min-height:42px}
+#kisgApp .k-select-inline{width:auto;min-width:180px;flex:1;min-height:44px}
+#kisgApp .k-count{margin-left:auto;color:var(--muted);font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+#kisgApp .k-count.is-near{color:var(--red-text)}
 #kisgApp .k-two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 #kisgApp .k-hint{margin-top:12px;color:var(--muted);font-size:13px;line-height:1.55}
-#kisgApp .k-form-error{margin-top:12px;padding:10px 12px;border:1px solid var(--red-line);border-radius:var(--r-md);background:#fff;color:var(--red-text);font-size:13.5px;font-weight:600}
-#kisgApp .k-file-button{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 16px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;color:var(--ink);font-size:14px;font-weight:600;cursor:pointer}
+#kisgApp .k-form-error{margin-top:12px;padding:10px 12px;border:1px solid var(--red-line);border-radius:var(--r-md);background:#fff;color:var(--red-text);font-size:13.5px;font-weight:600;animation:k-shake .32s var(--ease)}
+@keyframes k-shake{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+#kisgApp .k-file-button{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;color:var(--ink);font-size:14px;font-weight:600;cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast),transform var(--t-fast) var(--ease)}
+#kisgApp .k-file-button:active{transform:scale(.97)}
 #kisgApp .k-file-button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 #kisgApp .k-file-button input{position:absolute;inset:0;width:100%;opacity:0;cursor:pointer}
 #kisgApp .k-file-button:focus-within{outline:2px solid var(--red);outline-offset:2px}
-#kisgApp .k-file-button.is-called{border-color:var(--ink)}
-#kisgApp .k-image-preview{position:relative;margin-top:8px;overflow:hidden;border-radius:var(--r-md);background:var(--surface-2)}
-#kisgApp .k-image-preview img{display:block;width:100%;max-height:280px;object-fit:contain}
-#kisgApp .k-image-preview button{position:absolute;top:8px;right:8px;min-height:32px;padding:0 12px;border:0;border-radius:var(--r-pill);background:rgba(20,26,36,.8);color:#fff;font-size:12.5px;font-weight:600}
-#kisgApp .k-login-top{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0 24px}
-#kisgApp .k-login-mark{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:12px;background:var(--red);color:#fff;font-size:13px;font-weight:800;letter-spacing:.02em}
-#kisgApp .k-login .k-dialog-body{padding:16px 24px 24px}
-#kisgApp .k-login h2{color:var(--ink);font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.25}
-#kisgApp .k-login-lead{margin:6px 0 20px;color:var(--muted);font-size:14.5px}
-#kisgApp #kaLoginSubmit{margin-top:20px}
-#kisgApp .k-login-foot{margin-top:16px;padding-top:16px;border-top:1px solid var(--line-soft);color:var(--muted);font-size:13px;line-height:1.55}
-#kisgApp .k-toast{position:fixed;inset:auto 24px 24px auto;z-index:2147483000;max-width:360px;margin:0;padding:12px 16px;border:0;border-radius:var(--r-md);background:var(--ink);color:#fff;box-shadow:var(--shadow-pop);font-size:14px;font-weight:600;line-height:1.4;animation:k-pop var(--t) var(--ease)}
+#kisgApp .k-file-button.is-called{border-color:var(--ink);box-shadow:0 0 0 4px rgba(15,18,23,.06)}
+#kisgApp .k-image-preview{position:relative;margin-top:8px;overflow:hidden;border-radius:12px;background:var(--surface-2);animation:k-fade var(--t) var(--ease)}
+#kisgApp .k-image-preview img{display:block;width:100%;max-height:300px;object-fit:contain}
+#kisgApp .k-image-preview button{position:absolute;top:10px;right:10px;min-height:32px;padding:0 12px;border:0;border-radius:var(--r-pill);background:rgba(15,18,23,.82);color:#fff;font-size:12.5px;font-weight:600}
+#kisgApp .k-login-top{display:flex;align-items:center;justify-content:space-between;padding:18px 16px 0 24px}
+#kisgApp .k-login-mark{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:13px;background:var(--red);color:#fff;font-size:17px;font-weight:800;font-style:italic;letter-spacing:-.04em;box-shadow:0 6px 16px -6px rgba(227,10,23,.55)}
+#kisgApp .k-login .k-dialog-body{padding:18px 24px 24px}
+#kisgApp .k-login h2{color:var(--ink);font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.2}
+#kisgApp .k-login-lead{margin:6px 0 22px;color:var(--muted);font-size:14.5px}
+#kisgApp #kaLoginSubmit{margin-top:22px}
+#kisgApp .k-login-foot{margin-top:18px;padding-top:16px;border-top:1px solid var(--line-soft);color:var(--muted);font-size:13px;line-height:1.55}
+#kisgApp .k-toast{position:fixed;inset:auto 24px 24px auto;z-index:2147483000;max-width:380px;margin:0;padding:13px 18px;border:0;border-radius:14px;background:var(--ink);color:#fff;box-shadow:var(--shadow-pop);font-size:14px;font-weight:600;line-height:1.4;animation:k-toast var(--t-slow) var(--ease)}
+@keyframes k-toast{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
 
 /* =====================================================================
    HOVER (yalnızca gerçek imleç)
    ===================================================================== */
 @media(hover:hover) and (pointer:fine){
   #kisgApp .k-btn:hover{border-color:var(--ink)}
-  #kisgApp .k-btn-primary:hover{background:var(--red-hover);border-color:var(--red-hover)}
-  #kisgApp .k-btn-outline:hover,#kisgApp .kw-side-cta:hover{border-color:var(--red);background:var(--red-tint)}
+  #kisgApp .k-btn-primary:hover{background:var(--red-hover);border-color:var(--red-hover);box-shadow:0 4px 14px -4px rgba(227,10,23,.45)}
+  #kisgApp .k-btn-outline:hover{border-color:var(--red);background:#fff}
   #kisgApp .k-btn-danger:hover{background:#000}
   #kisgApp :is(.k-icon-btn,.kw-more-btn):hover{background:var(--surface-2);color:var(--ink)}
   #kisgApp .k-popover :is(a,button):hover{background:var(--surface-2)}
   #kisgApp .ka-tab:hover{color:var(--ink)}
   #kisgApp .ka-login:hover{border-color:var(--ink)}
   #kisgApp .ka-account-toggle:hover{background:var(--surface-2)}
-  #kisgApp :is(.kw-person,.kw-offer):hover{background:var(--surface-2)}
-  #kisgApp :is(.kw-person,.kw-offer,.kc-card):hover .k-chev{stroke:var(--ink);transform:translateX(2px)}
-  #kisgApp .kw-side-head a:hover{color:var(--red-text)}
-  #kisgApp .kw-composer-main:hover .kw-composer-field{border-color:var(--line-strong)}
-  #kisgApp .kw-tool:hover{border-color:var(--line-strong);background:#fff}
+  #kisgApp :is(.kw-person,.kw-offer,.kw-me-id,.kw-me-links a):hover{background:var(--surface-2)}
+  #kisgApp :is(.kw-person,.kw-offer,.kc-card,.kw-me-links a):hover .k-chev{stroke:var(--ink);transform:translateX(3px)}
+  #kisgApp .kw-side-head a:hover{background:var(--surface-2);color:var(--ink)}
+  #kisgApp .kw-side-cta:hover{border-color:var(--line-strong);background:var(--surface-3)}
+  #kisgApp .kw-pulse:hover{border-color:var(--line-strong);box-shadow:var(--shadow-2)}
+  #kisgApp .kw-pulse:hover .k-stack .k-avatar{margin-left:-4px}
+  #kisgApp .kw-pulse:hover .kw-pulse-arrow{stroke:var(--ink);transform:translateX(3px)}
+  #kisgApp .kw-publish:hover{border-color:var(--line-strong);box-shadow:var(--shadow-2)}
+  #kisgApp .kw-publish:hover .kw-publish-cta svg{transform:translateX(4px)}
+  #kisgApp .kw-composer-main:hover .kw-composer-field{background:var(--surface-3);color:var(--muted)}
+  #kisgApp .kw-tool:hover{background:var(--surface-2);color:var(--ink)}
+  #kisgApp .kw-tool:hover svg{stroke:var(--ink)}
+  #kisgApp .kw-composer-cta:hover svg{transform:rotate(90deg)}
+  #kisgApp .kw-post:hover{border-color:var(--line-strong);box-shadow:var(--shadow-2)}
   #kisgApp .kw-post-author-link:hover{color:var(--red-text)}
-  #kisgApp .kw-post-avatar:hover{opacity:.88}
-  #kisgApp .kw-post-media:hover .kw-post-image{transform:scale(1.015)}
+  #kisgApp .kw-post-avatar:hover{opacity:.9}
+  #kisgApp .kw-post-body:hover .kw-post-title,#kisgApp .kw-more-link:hover{color:var(--red-text)}
+  #kisgApp .kw-post-media:hover .kw-post-image{transform:scale(1.02)}
   #kisgApp .kw-post-actions>:is(button,a):hover{background:var(--surface-2);color:var(--ink)}
-  #kisgApp .kw-post:hover{box-shadow:var(--shadow-hover)}
-  #kisgApp .kc-card:hover{border-color:var(--line-strong);transform:translateY(-2px);box-shadow:var(--shadow-hover)}
+  #kisgApp .kw-act-like:hover:not(.is-liked) svg{stroke:var(--red);transform:scale(1.08)}
+  #kisgApp .kw-post-actions>a:hover svg,#kisgApp .kw-post-actions>button[data-post-action="share"]:hover svg{transform:translateY(-1px)}
+  #kisgApp :is(.kw-rail-expert,.kw-rail-service):hover{border-color:var(--line-strong)}
+  #kisgApp .kc-card:hover{border-color:var(--line-strong);transform:translateY(-2px);box-shadow:var(--shadow-2)}
   #kisgApp .kc-card:hover :is(.ke-cta,.ks-cta){color:var(--red-text)}
+  #kisgApp .kc-card:hover :is(.ke-cta,.ks-cta) [aria-hidden]{transform:translateX(3px)}
   #kisgApp .kc-filters-inline :is(input,select):hover,#kisgApp .kc-filter-btn:hover{border-color:var(--ink)}
+  #kisgApp .kc-search:hover:not(:focus-within){background:var(--surface-3)}
+  #kisgApp .kc-search button:hover{background:var(--line-strong);color:var(--ink)}
+  #kisgApp .k-file-button:hover{border-color:var(--ink)}
 }
+
+/* =====================================================================
+   HAREKET: içerik ortaya çıkışı (yalnızca yeni eklenen öğeler)
+   ===================================================================== */
+#kisgApp .k-rise{animation:k-rise .52s var(--ease) backwards;animation-delay:calc(var(--i,0) * 55ms)}
+@keyframes k-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
 /* =====================================================================
    RESPONSIVE
    ===================================================================== */
-@media(max-width:1279px){#kisgApp{--col-left:248px;--col-right:288px;--col-gap:20px;--gutter:24px}}
+@media(max-width:1279px){#kisgApp{--col-left:256px;--col-right:296px;--col-gap:20px;--gutter:24px}}
 @media(max-width:1119px){
   #kisgApp .kw-layout{grid-template-columns:minmax(0,1fr) var(--col-right);grid-template-areas:"head head" "feed right"}
   #kisgApp .kw-left{display:none}
   #kisgApp .kw-rail-experts{display:block}
+  #kisgApp :is(.kw-head h1,.kc-head h1){font-size:36px}
 }
 @media(max-width:899px){
   #kisgApp{--gutter:20px}
   #kisgApp .kw-layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "feed";max-width:720px}
   #kisgApp .kw-right{display:none}
   #kisgApp .kw-rail-services{display:block}
+  #kisgApp .kw-head{flex-direction:column;align-items:flex-start;gap:16px}
   #kisgApp .kc-filters-inline{display:none}
   #kisgApp .kc-search{flex:1 1 0}
   #kisgApp .kc-filter-btn{display:inline-flex}
@@ -617,74 +793,99 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .ks-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
 }
 @media(max-width:640px){
-  /* Hostinger dış boşluğu parent tarafında kaldırılır; uygulamanın kendi gutter'ı 12px. */
-  #kisgApp{--gutter:12px;--nav-h:50px;--pad:16px}
+  /* Hostinger dış boşluğu parent tarafında kaldırılır; uygulamanın kendi gutter'ı 16px. */
+  #kisgApp{--gutter:16px;--nav-h:52px;--pad:16px}
   #kisgApp .ka-nav-inner{display:flex;width:100%;gap:0;padding:0 8px 0 0}
   #kisgApp .ka-tabs{flex:1;gap:0}
   #kisgApp .ka-tab{flex:1;min-width:0;padding:0 4px;font-size:14px}
-  #kisgApp .ka-tab::after{left:16%;right:16%}
   #kisgApp :is(.ka-me-name,.ka-chevron){display:none}
   #kisgApp .ka-account-toggle{padding:3px;min-height:44px}
-  #kisgApp .ka-login{min-height:34px;padding:4px 12px 4px 8px;font-size:13px;gap:6px}
+  #kisgApp .ka-login{min-height:36px;padding:4px 12px 4px 8px;font-size:13px;gap:6px}
   #kisgApp .ka-login svg{width:16px;height:16px}
-  #kisgApp .ka-account[data-state="loading"] .ka-account-placeholder{width:76px;height:32px}
+  #kisgApp .ka-account[data-state="loading"] .ka-account-placeholder{width:76px;height:34px}
 
-  /* Çalışmalar: başlık yok — nav bölümü söylüyor; composer hemen başlar */
-  #kisgApp .kw-layout{width:100%;padding:12px 0 40px}
-  #kisgApp .kw-head{display:none}
-  #kisgApp .kw-composer{margin:0 var(--gutter);padding:12px;gap:10px}
+  /* Çalışmalar (mobil): kısa kimlik başlığı → composer → kenardan kenara akış */
+  #kisgApp .kw-layout{width:100%;padding:20px 0 40px}
+  #kisgApp .kw-head{gap:14px;padding:0 var(--gutter) 16px}
+  #kisgApp .kw-head h1{font-size:30px;letter-spacing:-.03em}
+  #kisgApp .kw-head-desc{margin-top:6px;font-size:14.5px}
+  #kisgApp .kw-pulse{padding:0;border:0;background:transparent;box-shadow:none}
+  #kisgApp .kw-pulse-copy span{font-size:12px}
+  #kisgApp .kw-pulse-arrow{display:none}
+  #kisgApp .kw-composer{margin:0 var(--gutter);padding:12px;gap:10px;border-radius:var(--r-lg)}
   #kisgApp .kw-composer-main{gap:10px}
   #kisgApp .kw-composer-main .k-avatar{width:40px;height:40px}
-  #kisgApp .kw-composer-field{min-height:44px;padding:0 14px;font-size:15px}
+  #kisgApp .kw-composer-field{min-height:44px;padding:0 16px;font-size:15px}
   #kisgApp :is(.kw-composer-desktop,.kw-tool-long,.kw-composer-cta span){display:none}
   #kisgApp .kw-composer-mobile{display:inline}
-  #kisgApp .kw-tool{min-height:36px;padding:0 12px;font-size:13px}
+  #kisgApp .kw-composer-tools{padding-left:0;gap:4px}
+  #kisgApp .kw-tool{min-height:38px;padding:0 10px;font-size:13.5px}
   #kisgApp .kw-composer-cta{width:44px;min-height:44px;padding:0;border-radius:50%}
   #kisgApp .kw-composer-cta svg{width:22px;height:22px}
-  #kisgApp .kw-toolbar{min-height:40px;padding:2px var(--gutter)}
+  #kisgApp .kw-toolbar{min-height:48px;padding:4px var(--gutter)}
   #kisgApp .kw-live{font-size:12.5px}
   #kisgApp .kw-list{gap:8px}
   #kisgApp .kw-post,#kisgApp .kw-rail{border-inline:0;border-radius:0;box-shadow:none}
+  #kisgApp .kw-post.is-fresh{box-shadow:inset 3px 0 0 var(--red)}
   #kisgApp .kw-notice{margin:0 var(--gutter) 8px}
   #kisgApp .kw-post-head{gap:10px}
   #kisgApp .kw-post-avatar .k-avatar{width:44px;height:44px}
-  #kisgApp .kw-post-author-link{font-size:15.5px}
+  #kisgApp .kw-post-author-link{font-size:15px}
   #kisgApp .kw-post-sub{font-size:12.5px}
   #kisgApp .kw-post-name-row{gap:8px}
   #kisgApp .kw-post-body{padding-top:12px}
+  #kisgApp .kw-post-title{font-size:17px}
   #kisgApp .kw-post-content{font-size:15px;line-height:1.58}
-  #kisgApp .kw-post-media{margin:12px var(--pad) 0;border-radius:10px}
-  #kisgApp .kw-post-image{max-height:360px}
-  #kisgApp .kw-post-actions{padding:2px 6px 4px}
-  #kisgApp .kw-post-actions>:is(button,a,span){min-height:46px;padding:6px 8px;font-size:13.5px;gap:6px}
+  #kisgApp .kw-post-media{margin:12px 0 0;border-radius:0}
+  #kisgApp .kw-post-media::after{box-shadow:none}
+  #kisgApp .kw-post-image{max-height:420px}
+  #kisgApp .kw-post-actions{margin:6px 8px 0;padding:2px 0 4px}
+  #kisgApp .kw-post-media+.kw-post-actions{border-top:0}
+  #kisgApp .kw-post-actions>:is(button,a,span){min-height:46px;padding:6px 6px;font-size:13.5px;gap:6px}
   #kisgApp .kw-load-more{width:calc(100% - var(--gutter) * 2);margin:12px var(--gutter) 0}
+  #kisgApp .kw-rail-expert{flex-basis:140px}
 
-  /* Katalog: içerik önce */
-  #kisgApp .kc-page{width:100%;padding:12px 0 40px}
-  #kisgApp :is(.kc-head,.kc-controls,.kc-results-head,.kc-message,.kc-results,.ke-discovery,.k-empty){margin-inline:var(--gutter)}
-  #kisgApp .kc-head{align-items:center;gap:12px;margin-bottom:12px}
-  #kisgApp .kc-head h1{font-size:22px}
-  #kisgApp .kc-head p{display:none}
-  #kisgApp .kc-head-cta{min-height:36px;padding:6px 12px;font-size:13px}
+  /* Katalog (mobil): içerik önce */
+  #kisgApp .kc-page{width:100%;padding:20px 0 40px}
+  #kisgApp :is(.kc-head,.kc-controls,.kc-results-head,.kc-message,.ke-discovery,.k-empty){margin-inline:var(--gutter)}
+  #kisgApp .kc-head{align-items:flex-start;gap:12px;margin-bottom:14px}
+  #kisgApp .kc-head h1{font-size:30px;letter-spacing:-.03em}
+  #kisgApp .kc-head p{margin-top:6px;font-size:14px}
+  #kisgApp .kc-head-cta{margin-top:2px;min-height:38px;padding:6px 12px;font-size:13px}
+  #kisgApp .kc-head-cta svg{width:16px;height:16px}
   #kisgApp .kc-controls{flex-wrap:nowrap;padding:0;border:0;background:transparent;box-shadow:none}
-  #kisgApp .kc-search{min-height:46px;padding-left:14px}
-  #kisgApp .kc-search input{height:44px}
-  #kisgApp .kc-filter-btn{min-height:46px;padding:0 14px}
-  #kisgApp .kc-results-head{min-height:40px;margin-top:4px}
-  #kisgApp .kc-results{gap:10px}
-  #kisgApp .kc-card{padding:16px}
+  #kisgApp .kc-search{min-height:48px;padding-left:14px;border-color:var(--line);background:#fff}
+  #kisgApp .kc-search input{height:46px}
+  #kisgApp .kc-filter-btn{min-height:48px;padding:0 14px}
+  #kisgApp .kc-results-head{min-height:44px;margin-top:4px}
+  #kisgApp .kc-card{padding:16px var(--gutter)}
+  #kisgApp .kc-card:active{transform:none;background:var(--surface-2)}
+  /* Uzmanlar: yerel kişi listesi (satırlar, ince ayraçlar) */
+  #kisgApp .ke-grid{gap:0;border-block:1px solid var(--line);background:#fff}
+  #kisgApp .ke-grid>.kc-card,#kisgApp .ke-grid>.kc-sk{border:0;border-radius:0;box-shadow:none}
+  #kisgApp .ke-grid>*+*{border-top:1px solid var(--line-soft)!important}
+  #kisgApp .ke-grid>.kc-sk{min-height:0;padding:16px var(--gutter)}
   #kisgApp .ke-top{gap:12px}
-  #kisgApp .ke-top .k-avatar{width:54px;height:54px}
-  #kisgApp :is(.ke-company,.ke-chips){padding-left:66px}
-  #kisgApp .ke-company{margin-top:10px}
-  #kisgApp .ke-chips{margin-top:10px}
-  #kisgApp .ke-card>.ke-bottom{margin-top:12px;padding-top:12px}
+  #kisgApp .ke-top .k-avatar{width:52px;height:52px}
+  #kisgApp :is(.ke-company,.ke-chips){padding-left:64px}
+  #kisgApp .ke-company{margin-top:8px}
+  #kisgApp .ke-chips{margin-top:8px}
+  #kisgApp .ke-card>.ke-bottom{padding-top:0;padding-left:64px;border-top:0}
+  #kisgApp .ke-card>:nth-last-child(2){margin-bottom:10px}
+  /* Hizmetler: kenardan kenara kartlar */
+  #kisgApp .ks-grid{gap:8px}
+  #kisgApp .ks-grid>:is(.kc-card,.kc-sk){border-inline:0;border-radius:0;box-shadow:none}
   #kisgApp .ks-card h2{font-size:17px}
   #kisgApp .k-empty{padding:40px 16px}
   #kisgApp .kc-more{width:calc(100% - var(--gutter) * 2);margin:16px auto 0}
 
-  #kisgApp .k-dialog[data-place="sheet"]{inset:auto 0 0;width:100%;max-width:none;max-height:92dvh;margin:0;border-radius:20px 20px 0 0}
+  #kisgApp .k-dialog[data-place="sheet"]{inset:auto 0 0;width:100%;max-width:none;max-height:92dvh;margin:0;border-radius:22px 22px 0 0}
+  #kisgApp .k-dialog[data-place="sheet"][open]{animation:k-sheet var(--t-slow) var(--ease)}
+  #kisgApp .k-dialog[data-place="sheet"] .k-grip{display:block;position:absolute;top:7px;left:50%;width:36px;height:4px;margin-left:-18px;border-radius:4px;background:var(--line-strong)}
+  #kisgApp .k-dialog[data-place="sheet"] .k-dialog-head{padding-top:20px}
   #kisgApp :is(.k-dialog-head,.k-dialog-body,.k-dialog-foot){padding-left:16px;padding-right:16px}
+  #kisgApp .k-dialog[data-place="sheet"] .k-dialog-foot{padding-bottom:max(18px,env(safe-area-inset-bottom,0px))}
+  #kisgApp .k-dialog-foot .k-btn{flex:1}
   #kisgApp .k-login-top{padding-left:16px}
   #kisgApp .k-two{grid-template-columns:1fr}
   #kisgApp .k-toast{inset:auto 12px 12px 12px;max-width:none}
@@ -693,11 +894,11 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .ka-tab{font-size:13px}
   #kisgApp .ka-login span{display:none}
   #kisgApp .ka-login{width:36px;padding:0;justify-content:center}
-  #kisgApp .kw-post-actions>:is(button,a,span){font-size:12.5px;padding-inline:6px}
+  #kisgApp .kw-post-actions>:is(button,a,span){font-size:12.5px;padding-inline:4px}
   #kisgApp .kc-head-cta span{display:none}
-  #kisgApp .kc-head-cta{width:36px;padding:0}
+  #kisgApp .kc-head-cta{width:38px;padding:0}
 }
-@media(prefers-reduced-motion:reduce){#kisgApp *,#kisgApp *::before,#kisgApp *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media(prefers-reduced-motion:reduce){#kisgApp *,#kisgApp *::before,#kisgApp *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}#kisgApp .kw-post-image{opacity:1;transform:none}}
 </style>
 <script>
 (() => {
@@ -804,7 +1005,8 @@ const ICONS = {
   chev: '<svg class="k-chev" aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>',
   eye: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
   remote: '<svg class="k-ico" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8 20h8M12 16.5V20"/></svg>',
-  onsite: '<svg class="k-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-6h6v6"/></svg>'
+  onsite: '<svg class="k-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-6h6v6"/></svg>',
+  company: '<svg class="k-ico" aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M9 8h1.5M13.5 8H15M9 12h1.5M13.5 12H15M10 20.5V17h4v3.5"/></svg>'
 };
 const modeMeta = mode => (SERVICE_MODES[mode] ? `<span class="k-meta-item">${mode === 'remote' ? ICONS.remote : ICONS.onsite}${esc(SERVICE_MODES[mode])}</span>` : '');
 const placeMeta = text => (clean(text) ? `<span class="k-meta-item">${ICONS.pin}${esc(clean(text))}</span>` : '');
@@ -836,9 +1038,26 @@ const identity = {
   }
 };
 
-function avatar(profile, size = 'md') {
+function avatar(profile, size = 'md', extra = '') {
   const url = httpUrl(profile?.avatar_url), text = initials(profile?.full_name);
-  return `<span class="k-avatar k-avatar-${size}" data-initials="${esc(text)}" aria-hidden="true">${text ? esc(text) : ICONS.user}${url ? `<img src="${esc(url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ''}</span>`;
+  return `<span class="k-avatar k-avatar-${size}${extra ? ' ' + extra : ''}" data-initials="${esc(text)}" aria-hidden="true">${text ? esc(text) : ICONS.user}${url ? `<img src="${esc(url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ''}</span>`;
+}
+// Son 3 gün içinde Çalışma paylaşan kişi (yalnızca görsel sinyal; veri zaten okunuyor).
+const isRecent = value => { const t = new Date(value || 0).getTime(); return t > 0 && Date.now() - t < 3 * 864e5; };
+const recentNote = '<span class="k-sr"> (son günlerde paylaşım yaptı)</span>';
+// Sunum: kısa ilk satır, ardından metin devam ediyorsa başlık olarak vurgulanır. Veri değişmez.
+function splitHeadline(text) {
+  const t = String(text || ''), i = t.indexOf('\n');
+  if (i < 0) return { head: '', body: t };
+  const head = t.slice(0, i).trim(), body = t.slice(i + 1).replace(/^\s+/, '');
+  if (!body || head.length < 4 || head.length > 90 || /[.,;:]$/.test(head) || /^[-•*–]|^\d+[.)]/.test(head)) return { head: '', body: t };
+  return { head, body };
+}
+// İçerik ortaya çıkışı için gecikme sırası (i < 0 → animasyonsuz, ör. geri dönüş snapshot'ı).
+const rise = i => (i >= 0 ? ` k-rise" style="--i:${Math.min(i, 8)}` : '');
+// Akış görselleri yüklenince yumuşakça belirir; önbellekten gelenler hemen işaretlenir.
+function markMedia(scope) {
+  scope.querySelectorAll('.kw-post-media:not(.is-loaded) .kw-post-image').forEach(img => { if (img.complete && img.naturalWidth) img.closest('.kw-post-media').classList.add('is-loaded'); });
 }
 function navigateTop(url) {
   try { (host.win || window.top).location.href = url; } catch { window.open(url, '_top'); }
@@ -1182,7 +1401,7 @@ function meAvatarMarkup() {
   return `${text ? esc(text) : ICONS.user}${url ? `<img src="${esc(url)}" alt="" decoding="async" referrerpolicy="no-referrer">` : ''}`;
 }
 const authUI = (() => {
-  const account = $('.ka-account'), slot = $('[data-me-avatar]');
+  const account = $('.ka-account'), slot = $('[data-me-avatar]'), meCard = $('[data-me-card]');
   const dlg = $('#kaLoginDialog'), email = $('#kaLoginEmail'), password = $('#kaLoginPassword'), err = $('#kaLoginError'), submit = $('#kaLoginSubmit');
   let pending = null, busy = false;
 
@@ -1198,6 +1417,20 @@ const authUI = (() => {
       $('[data-me-link="works"]').href = p + '#calismalar';
       $('[data-me-link="services"]').href = p + '#hizmetler';
     }
+    renderMeCard();
+  }
+  // Çalışmalar sol kolonundaki kişisel kart: hesap menüsüyle aynı bağlantılar.
+  function renderMeCard() {
+    if (!meCard) return;
+    meCard.dataset.state = !session.known ? 'loading' : session.user ? 'user' : 'guest';
+    if (!session.user) return;
+    const p = urls.profile(session.user.id), av = $('[data-mecard-avatar]', meCard);
+    av.dataset.initials = initials(session.me?.full_name);
+    av.innerHTML = meAvatarMarkup();
+    $('[data-mecard-name]', meCard).textContent = clean(session.me?.full_name) || 'Profilin';
+    $('[data-mecard-link="profile"]', meCard).href = p;
+    $('[data-mecard-link="works"]', meCard).href = p + '#calismalar';
+    $('[data-mecard-link="services"]', meCard).href = p + '#hizmetler';
   }
   function open() {
     err.hidden = true;
@@ -1258,12 +1491,13 @@ function createWorksView() {
   const el = $('[data-view="works"]');
   const list = $('[data-list]', el), more = $('[data-more]', el), notice = $('[data-notice]', el);
   const sideExperts = $('[data-side-experts]', el), sideServices = $('[data-side-services]', el);
-  const composerAvatar = $('[data-composer-avatar]', el);
+  const composerAvatar = $('[data-composer-avatar]', el), pulse = $('[data-pulse]', el);
   const d = {
     root: $('#kaPostDialog'), form: $('#kaPostForm'), title: $('#kaPostTitle'), content: $('#kaPostContent'), file: $('#kaPostImage'),
     label: $('[data-photo-label]'), preview: $('#kaPostPreview'), category: $('#kaPostCategory'), error: $('#kaPostError'), submit: $('#kaPostSubmit')
   };
   const removeImageBtn = $('[data-remove-image]', d.preview);
+  const who = { avatar: $('[data-dialog-avatar]', d.root), name: $('[data-dialog-name]', d.root) }, counter = $('[data-post-count]', d.root);
   const POST_SELECT = 'id,user_id,content,image_path,profile_featured_order,created_at,updated_at,category:professional_post_categories(id,name),author:profiles!professional_posts_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company),likes:professional_post_likes(count)';
   const s = {
     mounted: false, posts: [], cursor: null, hasMore: true, loading: false, queuedReset: false,
@@ -1288,27 +1522,28 @@ function createWorksView() {
   function actions(p) {
     const like = isOwn(p)
       ? `<span class="kw-likes-static" data-like-static${p.like_count > 0 ? '' : ' hidden'}>${ICONS.heart}<span data-like-count>${likeNum(p)}</span><span class="k-sr"> beğeni</span></span>`
-      : `<button type="button" class="kw-act-like${p.liked ? ' is-liked' : ''}" data-post-action="like" aria-pressed="${p.liked}"${s.liking.has(p.id) ? ' disabled' : ''}>${ICONS.heart}<span class="kw-like-num" data-like-count>${likeNum(p)}</span><span>Beğen</span></button>`;
+      : `<button type="button" class="kw-act-like${p.liked ? ' is-liked' : ''}" data-post-action="like" aria-pressed="${p.liked}"${s.liking.has(p.id) ? ' disabled' : ''}><span class="kw-heart">${ICONS.heart}</span><span class="kw-like-num" data-like-count>${likeNum(p)}</span><span>Beğen</span></button>`;
     return `${like}<a class="kw-act" href="${esc(urls.work(p.id))}" target="_top">${ICONS.eye}<span>Çalışmayı Gör</span></a><button type="button" class="kw-act" data-post-action="share">${ICONS.share}<span>Paylaş</span></button>`;
   }
   // Uzun Çalışma feed'de kırpılır; tamamı Çalışma Detay'da okunur.
   const isLong = text => text.length > 520 || (text.match(/\n/g) || []).length > 9;
-  function card(p, eager = false) {
+  function card(p, eager = false, order = -1) {
     const a = p.author || {}, image = storageUrl(p.image_path), profile = urls.profile(p.user_id), work = urls.work(p.id), line = identity.feedLine(a);
     const long = p.content ? isLong(p.content) : false;
+    const { head, body } = splitHeadline(p.content);
     const edited = p.updated_at && p.updated_at !== p.created_at ? ' · düzenlendi' : '';
-    return `<article class="kw-post" data-post-id="${esc(p.id)}">`
+    return `<article class="kw-post${rise(order)}" data-post-id="${esc(p.id)}">`
       + `<header class="kw-post-head"><a class="kw-post-avatar" href="${esc(profile)}" target="_top" aria-label="${esc(a.full_name || 'Kullanıcı')} profiline git">${avatar(a, 'lg')}</a>`
       + `<div class="kw-post-who"><div class="kw-post-name-row"><a class="kw-post-author-link" href="${esc(profile)}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a><span class="k-badge">ÇALIŞMA</span></div>`
-      + `<div class="kw-post-sub">${line ? `<span class="kw-post-profession" title="${esc(line)}">${esc(line)}</span>` : ''}<span class="kw-post-time"><time datetime="${esc(p.created_at)}">${esc(relativeTime(p.created_at))}</time>${edited}</span></div></div>`
+      + `<div class="kw-post-sub">${line ? `<span class="kw-post-profession" title="${esc(line)}">${esc(line)}</span>` : ''}<span class="kw-post-time"><time datetime="${esc(p.created_at)}" data-rel>${esc(relativeTime(p.created_at))}</time>${edited}</span></div></div>`
       + `<div class="kw-owner" data-owner-slot>${ownerMenu(p)}</div></header>`
-      + (p.content ? `<a class="kw-post-detail kw-post-body" href="${esc(work)}" target="_top"><p class="kw-post-content${long ? ' is-clamped' : ''}">${esc(p.content)}</p></a>` : '')
-      + (long ? `<a class="kw-more-link" href="${esc(work)}" target="_top">Devamını oku</a>` : '')
+      + (p.content ? `<a class="kw-post-detail kw-post-body" href="${esc(work)}" target="_top">${head ? `<h3 class="kw-post-title">${esc(head)}</h3>` : ''}<p class="kw-post-content${long ? ' is-clamped' : ''}">${esc(body)}</p></a>` : '')
+      + (long ? `<a class="kw-more-link" href="${esc(work)}" target="_top">Devamını oku <span aria-hidden="true">→</span></a>` : '')
       + (p.category?.name ? `<div class="kw-post-tags"><span class="k-tag">${esc(p.category.name)}</span></div>` : '')
       + (image ? `<a class="kw-post-detail kw-post-media" href="${esc(work)}" target="_top"><img class="kw-post-image" src="${esc(image)}" alt="${esc((p.content || 'Çalışma görseli').slice(0, 120))}" loading="${eager ? 'eager' : 'lazy'}" decoding="async"></a>` : '')
       + `<div class="kw-post-actions" data-actions>${actions(p)}</div></article>`;
   }
-  const emptyMarkup = '<div class="kw-post kw-empty-card"><div class="kw-empty"><strong>Henüz Çalışma yok</strong><p>Sahada yaptığın bir uygulamayı, gözlemini veya öğrendiğin bir şeyi paylaşarak ilk Çalışmayı sen başlat.</p><button type="button" class="k-btn k-btn-primary" data-composer>İlk Çalışmayı paylaş</button></div></div>';
+  const emptyMarkup = '<div class="kw-post kw-empty-card k-rise"><div class="kw-empty"><span class="k-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><strong>Henüz Çalışma yok</strong><p>Sahada yaptığın bir uygulamayı, gözlemini veya öğrendiğin bir şeyi paylaşarak ilk Çalışmayı sen başlat.</p><button type="button" class="k-btn k-btn-primary" data-composer>İlk Çalışmayı paylaş</button></div></div>';
   function patchLike(p) {
     const c = cardOf(p.id); if (!c) return;
     const b = $('[data-post-action="like"]', c);
@@ -1324,8 +1559,9 @@ function createWorksView() {
     patchLike(p);
   }
   function renderAll(eager = false) {
-    list.innerHTML = s.posts.length ? s.posts.map(p => card(p, eager)).join('') : emptyMarkup;
-    placeRails(); renderLive();
+    // eager: geri dönüş snapshot'ı — içerik animasyonsuz, yerinde görünür.
+    list.innerHTML = s.posts.length ? s.posts.map((p, i) => card(p, eager, eager ? -1 : i)).join('') : emptyMarkup;
+    markMedia(list); placeRails(); renderLive();
     more.hidden = !s.hasMore || !s.posts.length;
   }
   function showNotice(text) {
@@ -1337,7 +1573,8 @@ function createWorksView() {
   function personRow(p) {
     const role = identity.role(p) || identity.feedLine(p);
     const cert = identity.certTag(p);
-    return `<a class="kw-person" href="${esc(urls.profile(p.id))}" target="_top">${avatar(p, 'lg')}<span class="kw-person-copy"><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>`
+    const recent = isRecent(p.last_post_at);
+    return `<a class="kw-person" href="${esc(urls.profile(p.id))}" target="_top">${avatar(p, 'lg', recent ? 'is-recent' : '')}<span class="kw-person-copy"><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}${recent ? recentNote : ''}</strong>`
       + (role || cert ? `<span class="kw-person-role">${esc(compact([role, cert]))}</span>` : '')
       + (clean(p.city) ? `<span class="kw-person-meta">${placeMeta(p.city)}</span>` : '')
       + `</span>${ICONS.chev}</a>`;
@@ -1345,6 +1582,7 @@ function createWorksView() {
   function offerRow(v) {
     const p = v.provider;
     return `<a class="kw-offer" href="${esc(urls.service(v.id))}" target="_top">${p ? avatar(p, 'lg') : '<span class="k-avatar k-avatar-lg" aria-hidden="true"></span>'}<span class="kw-offer-copy">`
+      + (v.category?.name ? `<span class="kw-offer-cat">${esc(v.category.name)}</span>` : '')
       + `<strong>${esc(v.title)}</strong>`
       + (p?.full_name ? `<span class="kw-offer-by">${esc(p.full_name)}</span>` : '')
       + (p && identity.role(p) ? `<span class="kw-offer-role">${esc(identity.role(p))}</span>` : '')
@@ -1356,10 +1594,21 @@ function createWorksView() {
       : `<div class="k-muted-note">${s.expertsFailed ? 'Uzmanlar şu anda görüntülenemiyor.' : 'Henüz görünür uzman yok.'}</div>`;
     sideServices.innerHTML = s.services.length ? s.services.map(offerRow).join('')
       : `<div class="k-muted-note">${s.servicesFailed ? 'Hizmetler şu anda görüntülenemiyor.' : 'Henüz yayınlanmış hizmet yok. İlk hizmeti sen yayınla.'}</div>`;
+    renderPulse();
+  }
+  // Başlıktaki canlı topluluk rozeti: kenar Uzmanlar verisinden (ek sorgu yok).
+  function renderPulse() {
+    const people = s.experts.filter(p => clean(p.full_name)).slice(0, 5);
+    if (!people.length) { pulse.hidden = true; return; }
+    const first = people.slice(0, 2).map(p => clean(p.full_name).split(/\s+/)[0]);
+    $('[data-pulse-stack]', pulse).innerHTML = people.map(p => avatar(p, 'sm')).join('');
+    $('[data-pulse-names]', pulse).textContent = people.length > 2 ? `${first.join(', ')} ve diğerleri` : first.join(' ve ');
+    pulse.hidden = false;
   }
   const railExperts = () => `<section class="kw-rail kw-rail-experts" aria-label="İSG profesyonellerini keşfet"><div class="kw-rail-head"><h2>İSG profesyonellerini keşfet</h2><a href="${esc(urls.view('experts'))}" target="_top" data-view-link="experts">Tümü →</a></div><div class="kw-rail-track">${s.experts.map(p => {
     const role = identity.role(p) || identity.feedLine(p), meta = compact([identity.certTag(p), clean(p.city)]);
-    return `<a class="kw-rail-expert" href="${esc(urls.profile(p.id))}" target="_top">${avatar(p, 'xl')}<strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${role ? `<span>${esc(role)}</span>` : ''}${meta ? `<span>${esc(meta)}</span>` : ''}</a>`;
+    const recent = isRecent(p.last_post_at);
+    return `<a class="kw-rail-expert" href="${esc(urls.profile(p.id))}" target="_top">${avatar(p, 'xl', recent ? 'is-recent' : '')}<strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}${recent ? recentNote : ''}</strong>${role ? `<span>${esc(role)}</span>` : ''}${meta ? `<span>${esc(meta)}</span>` : ''}</a>`;
   }).join('')}</div></section>`;
   const railServices = () => `<section class="kw-rail kw-rail-services" aria-label="Sunulan hizmetler"><div class="kw-rail-head"><h2>Sunulan hizmetler</h2><a href="${esc(urls.view('services'))}" target="_top" data-view-link="services">Tümü →</a></div><div class="kw-rail-track">${s.services.map(v => `<a class="kw-rail-service" href="${esc(urls.service(v.id))}" target="_top"><span class="kw-rail-cat">${esc(v.category?.name || 'Hizmet')}</span><strong>${esc(v.title)}</strong>${v.provider ? `<span class="kw-rail-by">${avatar(v.provider, 'xs')}<span>${esc(v.provider.full_name || '')}</span></span>` : ''}<span class="kw-offer-meta">${modeMeta(v.service_mode)}${placeMeta(v.service_region)}</span></a>`).join('')}</div></section>`;
   function renderLive() {
@@ -1381,7 +1630,7 @@ function createWorksView() {
     const jobs = [];
     if (experts) jobs.push((async () => {
       try {
-        const { data, error } = await db.from('profiles').select('id,full_name,avatar_url,profession,title,certificate_class,current_company,city').eq('is_discoverable', true).order('last_post_at', { ascending: false, nullsFirst: false }).limit(CONFIG.railExperts);
+        const { data, error } = await db.from('profiles').select('id,full_name,avatar_url,profession,title,certificate_class,current_company,city,last_post_at').eq('is_discoverable', true).order('last_post_at', { ascending: false, nullsFirst: false }).limit(CONFIG.railExperts);
         if (error) throw error; s.experts = data || []; s.expertsFailed = false;
       } catch { s.experts = []; s.expertsFailed = true; }
     })());
@@ -1419,8 +1668,8 @@ function createWorksView() {
       if (last) s.cursor = { created_at: last.created_at, id: last.id }; else if (reset) s.cursor = null;
       $('.kw-empty-card', list)?.remove();
       $$('.kw-sk', list).forEach(n => n.remove());
-      if (s.posts.length) list.insertAdjacentHTML('beforeend', fresh.map(p => card(p)).join('')); else list.innerHTML = emptyMarkup;
-      placeRails(); renderLive();
+      if (s.posts.length) list.insertAdjacentHTML('beforeend', fresh.map((p, i) => card(p, false, i)).join('')); else list.innerHTML = emptyMarkup;
+      markMedia(list); placeRails(); renderLive();
       more.hidden = !s.hasMore || !s.posts.length;
       notice.hidden = true;
       syncLikes(fresh.map(p => p.id));
@@ -1455,7 +1704,7 @@ function createWorksView() {
     const was = p.liked, old = p.like_count;
     s.liking.add(id); p._likeStamp = ++s.likeStamp;
     p.liked = !was; p.like_count = Math.max(0, old + (was ? -1 : 1)); patchLike(p);
-    if (p.liked) { const b = cardOf(id)?.querySelector('[data-post-action="like"]'); if (b) { b.classList.remove('is-pop'); void b.offsetWidth; b.classList.add('is-pop'); setTimeout(() => b.classList.remove('is-pop'), 400); } }
+    if (p.liked) { const b = cardOf(id)?.querySelector('[data-post-action="like"]'); if (b) { b.classList.remove('is-pop'); void b.offsetWidth; b.classList.add('is-pop'); setTimeout(() => b.classList.remove('is-pop'), 560); } }
     try {
       const { error } = await (was
         ? db.from('professional_post_likes').delete().eq('post_id', id).eq('user_id', user.id)
@@ -1543,6 +1792,7 @@ function createWorksView() {
     d.title.textContent = post ? 'Çalışmayı Düzenle' : 'Yeni Çalışma';
     d.submit.textContent = post ? 'Değişiklikleri Kaydet' : 'Çalışmayı Yayınla';
     d.content.value = post?.content || '';
+    renderWho(); updateCount();
     fillCategories(post?.category);
     d.category.value = post?.category?.id || '';
     formError('');
@@ -1590,12 +1840,15 @@ function createWorksView() {
         if (!fresh) { s.posts = s.posts.filter(p => p.id !== id); c?.remove(); if (!s.posts.length) renderAll(); else placeRails(); return; }
         fresh.liked = old?.liked || false;
         s.posts = s.posts.map(p => (p.id === id ? fresh : p));
-        if (c) c.outerHTML = card(fresh);
+        if (c) { c.outerHTML = card(fresh); markMedia(list); }
       } else if (fresh) {
         s.posts.unshift(fresh);
         $('.kw-empty-card', list)?.remove();
-        list.insertAdjacentHTML('afterbegin', card(fresh));
-        placeRails(); renderLive();
+        list.insertAdjacentHTML('afterbegin', card(fresh, true, 0));
+        markMedia(list); placeRails(); renderLive();
+        // Yeni yayınlanan Çalışma kısa bir vurguyla karşılanır.
+        const n = cardOf(fresh.id);
+        if (n) { n.classList.add('is-fresh'); setTimeout(() => n.classList.remove('is-fresh'), 2200); }
         more.hidden = !s.hasMore;
       }
       host.schedule();
@@ -1676,6 +1929,14 @@ function createWorksView() {
 
   function renderComposerAvatar() { composerAvatar.dataset.initials = initials(session.me?.full_name); composerAvatar.innerHTML = meAvatarMarkup(); }
   renderComposerAvatar();
+  function renderWho() { who.avatar.dataset.initials = initials(session.me?.full_name); who.avatar.innerHTML = meAvatarMarkup(); who.name.textContent = clean(session.me?.full_name); }
+  function updateCount() {
+    const n = d.content.value.length, max = Number(d.content.maxLength) || 5000;
+    counter.hidden = n < max * 0.8;
+    counter.textContent = `${new Intl.NumberFormat('tr-TR').format(n)} / ${new Intl.NumberFormat('tr-TR').format(max)}`;
+    counter.classList.toggle('is-near', n >= max * 0.95);
+  }
+  d.content.addEventListener('input', updateCount);
 
   /* ---- Görünüm arayüzü ---- */
   async function settleImages(timeout) {
@@ -1701,7 +1962,7 @@ function createWorksView() {
     await loadPosts({ reset: true });
   }
   function onSession(kind) {
-    renderComposerAvatar();
+    renderComposerAvatar(); renderWho();
     if (kind !== 'user' || !s.mounted) return;
     if (d.root.open && !s.saving) dialogs.close(d.root);
     s.posts.forEach(p => { p.liked = false; patchOwnership(p); });
@@ -1713,7 +1974,7 @@ function createWorksView() {
     const truncated = posts.length < s.posts.length, last = posts[posts.length - 1];
     return { posts, cursor: truncated ? { created_at: last.created_at, id: last.id } : s.cursor, hasMore: truncated || s.hasMore, experts: s.experts, services: s.services };
   }
-  return { name: 'works', el, mount, onSession, snapshot, isMounted: () => s.mounted };
+  return { name: 'works', el, mount, onSession, snapshot, isMounted: () => s.mounted, tick: () => { if (s.posts.length) renderLive(); } };
 }
 
 /* =========================================================================
@@ -1776,7 +2037,7 @@ function createCatalog(opt) {
       if (res.rows.length) s.page = res.page;
       if (!more) ui.results.innerHTML = '';
       const prev = ui.results.children.length;
-      ui.results.insertAdjacentHTML('beforeend', fresh.map(opt.card).join(''));
+      ui.results.insertAdjacentHTML('beforeend', fresh.map((r, i) => opt.card(r, i)).join(''));
       renderMeta();
       if (more && fresh.length) ui.results.children[prev]?.focus({ preventScroll: true });
     } catch (error) {
@@ -1841,7 +2102,7 @@ function createCatalog(opt) {
       if (snap && Array.isArray(snap.rows)) {
         s.rows = snap.rows; s.page = snap.page ?? null; s.more = !!snap.more; s.filters = { ...opt.blank(), ...(snap.filters || {}) }; s.search = snap.search || '';
         ui.search.value = s.search; writeValues(ui.filters, s.filters);
-        ui.results.innerHTML = s.rows.map(opt.card).join(''); ui.results.setAttribute('aria-busy', 'false');
+        ui.results.innerHTML = s.rows.map(r => opt.card(r, -1)).join(''); ui.results.setAttribute('aria-busy', 'false');
         renderMeta(); host.schedule();
         return Promise.resolve();
       }
@@ -1896,15 +2157,16 @@ function createExpertsView() {
     return qy.abortSignal(signal);
   }
   const countLabel = (v, label) => { const n = Array.isArray(v) ? v[0]?.count : undefined; return Number.isInteger(n) && n >= 0 ? new Intl.NumberFormat('tr-TR').format(n) + ' ' + label : ''; };
-  function card(p) {
+  function card(p, order = -1) {
     const sp = Array.isArray(p.specialties) ? p.specialties.filter(x => typeof x === 'string' && x.trim()) : [];
     const counts = [countLabel(p.posts, 'Çalışma'), countLabel(p.services, 'Hizmet')].filter(Boolean).join(' · ');
     const role = p.profession || p.title, cert = identity.certTag(p);
-    return `<a class="kc-card ke-card" href="${esc(urls.profile(p.id))}" target="_top">`
-      + `<div class="ke-top">${avatar(p, 'xl')}<div class="ke-id"><h2>${esc(p.full_name || 'Kırmızı İSG üyesi')}</h2>${role ? `<p class="ke-role">${esc(role)}</p>` : ''}`
+    const recent = isRecent(p.last_post_at);
+    return `<a class="kc-card ke-card${rise(order)}" href="${esc(urls.profile(p.id))}" target="_top">`
+      + `<div class="ke-top">${avatar(p, 'xl', recent ? 'is-recent' : '')}<div class="ke-id"><h2>${esc(p.full_name || 'Kırmızı İSG üyesi')}${recent ? recentNote : ''}</h2>${role ? `<p class="ke-role">${esc(role)}</p>` : ''}`
       + (cert || p.city ? `<p class="ke-meta">${cert ? `<span class="k-tag k-tag-cert">${esc(cert)}</span>` : ''}${placeMeta(p.city)}</p>` : '')
       + `</div>${ICONS.chev}</div>`
-      + (p.current_company ? `<p class="ke-company">${esc(p.current_company)}</p>` : '')
+      + (p.current_company ? `<p class="ke-company">${ICONS.company}<span>${esc(p.current_company)}</span></p>` : '')
       + (sp.length ? `<div class="ke-chips">${sp.slice(0, 3).map(x => `<span class="k-tag">${esc(x)}</span>`).join('')}${sp.length > 3 ? `<span class="k-tag">+${sp.length - 3}</span>` : ''}</div>` : '')
       + `<div class="ke-bottom">${counts ? `<span class="ke-activity">${esc(counts)}</span>` : '<span></span>'}<span class="ke-cta">Profili Gör<span aria-hidden="true"> →</span><span class="k-sr"> ${esc(p.full_name || '')}</span></span></div></a>`;
   }
@@ -1971,10 +2233,10 @@ function createServicesView() {
   const filterMarkup = prefix => `<label class="kc-field" for="${prefix}-category"><span class="kc-flabel">Kategori</span><select id="${prefix}-category" data-filter="category"><option value="">Tüm kategoriler</option>${options()}</select></label>`
     + `<label class="kc-field" for="${prefix}-mode"><span class="kc-flabel">Hizmet Şekli</span><select id="${prefix}-mode" data-filter="mode"><option value="">Tüm hizmet şekilleri</option>${Object.entries(SERVICE_MODES).map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>`
     + `<label class="kc-field" for="${prefix}-region"><span class="kc-flabel">Bölge</span><input id="${prefix}-region" data-filter="region" maxlength="120" placeholder="Bölge" autocomplete="off"></label>`;
-  function card(v) {
+  function card(v, order = -1) {
     const p = v.provider, role = p ? identity.role(p) : '';
     const meta = modeMeta(v.service_mode) + placeMeta(v.service_region);
-    return `<a class="kc-card ks-card" href="${esc(urls.service(v.id))}" target="_top">`
+    return `<a class="kc-card ks-card${rise(order)}" href="${esc(urls.service(v.id))}" target="_top">`
       + `<div class="ks-top">${v.category?.name ? `<span class="ks-category">${esc(v.category.name)}</span>` : '<span></span>'}${ICONS.chev}</div>`
       + `<h2>${esc(v.title)}</h2>`
       + (v.description ? `<p class="ks-description">${esc(v.description)}</p>` : '')
@@ -2106,6 +2368,18 @@ session.on(kind => {
 });
 authUI.render('init');
 
+/* Kayan sekme göstergesi: etkin sekmenin etiket genişliğine oturur, geçişte kayar. */
+function tabInk() {
+  const tabs = $('.ka-tabs'), active = $('.ka-tab.is-active .ka-tab-label');
+  if (!tabs || !active) return;
+  const pad = 10, w = active.offsetWidth + pad * 2;
+  if (!w) return;
+  tabs.style.setProperty('--ink-w', w + 'px');
+  tabs.style.setProperty('--ink-x', (active.offsetLeft + active.parentElement.offsetLeft - pad) + 'px');
+  tabs.classList.add('has-ink');
+  if (!tabs.classList.contains('is-ready')) requestAnimationFrame(() => requestAnimationFrame(() => tabs.classList.add('is-ready')));
+}
+
 /* =========================================================================
    13. Router: parent.history üzerinden /calisma | /uzmanlar | /hizmetler
    ========================================================================= */
@@ -2126,6 +2400,7 @@ const router = (() => {
       a.classList.toggle('is-active', on);
       if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
+    tabInk();
   }
   function titleFor(name) {
     const known = readJSON(local, TITLES_KEY) || {};
@@ -2278,10 +2553,14 @@ root.addEventListener('error', e => {
   const img = e.target; if (!(img instanceof HTMLImageElement)) return;
   const av = img.closest('.k-avatar');
   if (av) { img.remove(); if (!av.textContent.trim()) av.innerHTML = av.dataset.initials ? esc(av.dataset.initials) : ICONS.user; }
-  else img.hidden = true;
+  else { img.hidden = true; if (img.classList.contains('kw-post-image')) img.closest('.kw-post-media')?.setAttribute('hidden', ''); }
   host.schedule();
 }, true);
-root.addEventListener('load', () => host.schedule(), true);
+root.addEventListener('load', e => {
+  const img = e.target;
+  if (img instanceof HTMLImageElement && img.classList.contains('kw-post-image')) img.closest('.kw-post-media')?.classList.add('is-loaded');
+  host.schedule();
+}, true);
 // Hostinger blokları geç render edilebilir: genişlik işaretlemesi yüklemeden sonra bir kez daha (idempotent).
 try { (host.win || window).addEventListener('load', () => { host.installHostWidth(); host.schedule(); }); } catch {}
 setTimeout(() => { host.installHostWidth(); host.schedule(); }, 1200);
@@ -2297,7 +2576,17 @@ try {
     host.win.addEventListener('pagehide', () => snapshots.save());
   }
 } catch {}
-if ('ResizeObserver' in window) new ResizeObserver(() => host.schedule()).observe(root);
+if ('ResizeObserver' in window) {
+  new ResizeObserver(() => host.schedule()).observe(root);
+  new ResizeObserver(() => tabInk()).observe($('.ka-tabs'));
+}
+document.fonts?.ready?.then(() => tabInk()).catch(() => {});
+// Yaşayan zaman damgaları: "şimdi" → "3 dakika önce" sayfa açıkken kendiliğinden ilerler.
+setInterval(() => {
+  if (document.hidden) return;
+  $$('time[data-rel]').forEach(t => { const v = relativeTime(t.dateTime); if (v && t.textContent !== v) t.textContent = v; });
+  try { VIEWS.works.tick(); } catch {}
+}, 60000);
 
 /* =========================================================================
    16. Başlat
