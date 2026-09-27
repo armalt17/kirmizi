@@ -1,0 +1,2313 @@
+<!--
+KIRMIZI İSG — PROFESSIONAL APP SHELL v3.0.1
+Çalışmalar | Uzmanlar | Hizmetler tek uygulama.
+
+KURULUM: Bu dosyanın TAMAMI, aşağıdaki üç Hostinger sayfasındaki Custom HTML/Embed
+içeriğinin yerine BİREBİR AYNI şekilde yapıştırılır:
+  /calisma   /uzmanlar   /hizmetler
+/profil, /calisma-detay, /hizmet-detay embed'lerine DOKUNULMAZ.
+
+v3.0: Referans tasarıma göre yeniden kurulan arayüz + Hostinger genişlik entegrasyonu.
+Genişlik: Dokümanlar/İş İlanları production yöntemi (parent wrapper zinciri işaretlenir,
+parent'a style#kisg-professional-width-v2 enjekte edilir, attribute: data-kisg-professional-width).
+v2.1'deki deneysel fullBleed mekanizması tamamen kaldırıldı.
+v3.0.1: Hostinger satır yerleşimi normalize edildi (iframe üstündeki boşluk giderildi).
+Router, history, snapshot, session, CRUD, sorgular ve pagination değişmedi.
+
+Navigasyon modları (otomatik):
+ - shell    : same-origin erişim varsa sekme geçişi yalnızca görünümü değiştirir (pushState).
+ - document : erişim yoksa sekmeler normal tam sayfa linkidir.
+Acil kapatma: CONFIG.historyRouting=false.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<div id="kisgApp" lang="tr" data-routing="pending">
+
+<nav class="ka-nav" aria-label="Profesyonel platform">
+  <div class="ka-nav-inner">
+    <div class="ka-tabs">
+      <a class="ka-tab" data-view-link="works" href="https://isgcalisanplatformu.com/calisma" target="_top">Çalışmalar</a>
+      <a class="ka-tab" data-view-link="experts" href="https://isgcalisanplatformu.com/uzmanlar" target="_top">Uzmanlar</a>
+      <a class="ka-tab" data-view-link="services" href="https://isgcalisanplatformu.com/hizmetler" target="_top">Hizmetler</a>
+    </div>
+    <div class="ka-account" data-state="loading">
+      <span class="ka-account-placeholder" aria-hidden="true"></span>
+      <button class="ka-login" type="button" data-action="login"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/></svg><span>Giriş Yap</span></button>
+      <button class="ka-account-toggle" type="button" data-popover-trigger aria-label="Hesabım" aria-expanded="false" aria-controls="kaAccountMenu"><span class="k-avatar k-avatar-sm" data-me-avatar></span><span class="ka-me-name" data-me-name></span><svg class="ka-chevron" aria-hidden="true" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg></button>
+      <div id="kaAccountMenu" class="k-popover ka-account-menu" hidden>
+        <a data-me-link="profile" target="_top">Profilim</a>
+        <a data-me-link="works" target="_top">Çalışmalarım</a>
+        <a data-me-link="services" target="_top">Hizmetlerim</a>
+        <button type="button" data-action="signout">Çıkış</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="ka-main">
+
+<!-- ÇALIŞMALAR -->
+<section class="ka-view kw" data-view="works" hidden aria-labelledby="kwTitle">
+  <div class="k-page kw-layout">
+    <header class="kw-head">
+      <div class="kw-head-copy">
+        <h1 id="kwTitle">Çalışmalar</h1>
+        <p class="kw-head-desc">Sahadaki deneyimleri, iyi uygulamaları ve mesleki paylaşımları keşfet.</p>
+      </div>
+    </header>
+
+    <aside class="kw-left" aria-labelledby="kwExpertsTitle">
+      <section class="kw-side">
+        <div class="kw-side-head"><h2 id="kwExpertsTitle">Uzmanlar</h2><a href="https://isgcalisanplatformu.com/uzmanlar" target="_top" data-view-link="experts">Tümü <span aria-hidden="true">→</span></a></div>
+        <div class="kw-people" data-side-experts aria-live="polite">
+          <div class="k-sk-person" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
+          <div class="k-sk-person" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
+          <div class="k-sk-person" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
+        </div>
+        <a class="kw-side-cta" href="https://isgcalisanplatformu.com/uzmanlar" target="_top" data-view-link="experts">Tüm uzmanları gör <span aria-hidden="true">→</span></a>
+      </section>
+    </aside>
+
+    <div class="kw-feed">
+      <div class="kw-composer">
+        <button class="kw-composer-main" type="button" data-composer aria-label="Yeni Çalışma paylaş">
+          <span class="k-avatar k-avatar-md" data-composer-avatar aria-hidden="true"></span>
+          <span class="kw-composer-field"><span class="kw-composer-desktop">Sahadaki bir çalışmanı, deneyimini veya gözlemini paylaş…</span><span class="kw-composer-mobile">Çalışma paylaş…</span></span>
+        </button>
+        <div class="kw-composer-tools">
+          <button type="button" class="kw-tool" data-composer data-composer-intent="photo" aria-label="Fotoğraflı Çalışma paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span>Fotoğraf<span class="kw-tool-long"> Ekle</span></span></button>
+          <button type="button" class="kw-tool" data-composer aria-label="Kategoriyle Çalışma paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6.5A1.5 1.5 0 0 1 5.5 5H10l2 2.5h6.5A1.5 1.5 0 0 1 20 9v8.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5Z"/></svg><span>Kategori<span class="kw-tool-long"> Seç</span></span></button>
+          <button type="button" class="k-btn k-btn-primary kw-composer-cta" data-composer aria-label="Yeni Çalışma"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Yeni Çalışma</span></button>
+        </div>
+      </div>
+      <div class="kw-toolbar"><p class="kw-live" data-live hidden><span class="kw-live-dot" aria-hidden="true"></span><span data-live-text></span></p><span class="kw-sort">En yeni</span></div>
+      <div class="kw-notice" data-notice role="alert" hidden></div>
+      <div class="kw-list" data-list aria-live="polite">
+        <div class="kw-post kw-sk" aria-hidden="true"><div class="kw-sk-head"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i><i class="k-sk k-sk-media"></i></div>
+        <div class="kw-post kw-sk" aria-hidden="true"><div class="kw-sk-head"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>
+      </div>
+      <button class="k-btn kw-load-more" type="button" data-more hidden>Daha fazla Çalışma göster</button>
+    </div>
+
+    <aside class="kw-right" aria-labelledby="kwServicesTitle">
+      <section class="kw-side">
+        <div class="kw-side-head"><h2 id="kwServicesTitle">Hizmetler</h2><a href="https://isgcalisanplatformu.com/hizmetler" target="_top" data-view-link="services">Tümü <span aria-hidden="true">→</span></a></div>
+        <div class="kw-offers" data-side-services aria-live="polite">
+          <div class="k-sk-offer" aria-hidden="true"><i class="k-sk k-sk-short"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>
+          <div class="k-sk-offer" aria-hidden="true"><i class="k-sk k-sk-short"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>
+        </div>
+        <a class="kw-side-cta" href="https://isgcalisanplatformu.com/hizmetler" target="_top" data-view-link="services" data-then="publish">Hizmetini Yayınla <span aria-hidden="true">→</span></a>
+      </section>
+    </aside>
+  </div>
+</section>
+
+<!-- UZMANLAR -->
+<section class="ka-view kc" data-view="experts" hidden aria-labelledby="keTitle">
+  <div class="k-page kc-page">
+    <header class="kc-head"><div><h1 id="keTitle">Uzmanlar</h1><p>İSG profesyonellerini keşfet: kim ne yapıyor, kim hangi alanda uzman.</p></div></header>
+    <p class="kc-message" data-notice role="status" hidden></p>
+    <div class="kc-controls" role="search">
+      <label class="k-sr" for="keSearch">Uzman, şehir veya uzmanlık ara</label>
+      <div class="kc-search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="keSearch" data-search type="search" maxlength="120" placeholder="Uzman, şehir veya uzmanlık ara" data-short-placeholder="İsim, şehir, uzmanlık" autocomplete="off"><button type="button" data-clear-search aria-label="Aramayı temizle" hidden>×</button></div>
+      <button type="button" class="kc-filter-btn" data-open-filters aria-haspopup="dialog"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/></svg><span data-filter-label>Filtrele</span></button>
+      <div class="kc-filters kc-filters-inline" data-desktop-filters></div>
+    </div>
+    <div class="kc-results-head"><p data-status role="status" aria-live="polite">Uzmanlar yükleniyor…</p><button type="button" class="k-text-button" data-reset hidden>Filtreleri temizle</button></div>
+    <div class="kc-results ke-grid" data-results aria-busy="true"></div>
+    <aside class="ke-discovery" data-discovery hidden aria-labelledby="keDiscoveryTitle">
+      <p><strong id="keDiscoveryTitle">Profilin burada görünmüyor.</strong> Meslektaşların seni Uzmanlar'da bulabilsin.</p>
+      <button type="button" class="k-text-button" data-discover>Uzmanlar'da görünür ol</button>
+    </aside>
+    <div class="k-empty" data-empty hidden><strong data-empty-text></strong><p>Aramayı genişletmeyi veya filtreleri kaldırmayı dene.</p><button type="button" class="k-btn" data-empty-reset>Filtreleri temizle</button></div>
+    <div class="k-empty" data-error role="alert" hidden><strong>Uzmanlar şu anda yüklenemedi.</strong><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" class="k-btn" data-retry>Yeniden dene</button></div>
+    <button type="button" class="k-btn kc-more" data-more hidden>Daha fazla uzman göster</button>
+    <datalist id="keListTitles"></datalist><datalist id="keListCities"></datalist><datalist id="keListSpecialties"></datalist>
+  </div>
+</section>
+
+<!-- HİZMETLER -->
+<section class="ka-view kc" data-view="services" hidden aria-labelledby="ksTitle">
+  <div class="k-page kc-page">
+    <p class="kc-message" data-notice role="status" hidden></p>
+    <header class="kc-head"><div><h1 id="ksTitle">Hizmetler</h1><p>İSG profesyonellerinin uzmanlıklarını hizmete dönüştürdüğü yer.</p></div><button class="k-btn k-btn-outline kc-head-cta" type="button" data-publish><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Hizmetini Yayınla</span></button></header>
+    <div class="kc-controls" role="search">
+      <label class="k-sr" for="ksSearch">Hizmet, açıklama, bölge veya sağlayıcı ara</label>
+      <div class="kc-search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="ksSearch" data-search type="search" maxlength="120" placeholder="Hizmet, bölge veya uzman ara" data-short-placeholder="Hizmet, bölge, uzman" autocomplete="off"><button type="button" data-clear-search aria-label="Aramayı temizle" hidden>×</button></div>
+      <button type="button" class="kc-filter-btn" data-open-filters aria-haspopup="dialog"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/></svg><span data-filter-label>Filtrele</span></button>
+      <div class="kc-filters kc-filters-inline" data-desktop-filters></div>
+    </div>
+    <div class="kc-results-head"><p data-status role="status" aria-live="polite">Hizmetler yükleniyor…</p><button type="button" class="k-text-button" data-reset hidden>Filtreleri temizle</button></div>
+    <div class="kc-results ks-grid" data-results aria-busy="true"></div>
+    <div class="k-empty" data-empty hidden><strong data-empty-text></strong><p>İlk hizmeti sen yayınlayabilir ya da filtreleri değiştirebilirsin.</p><div class="k-empty-actions"><button type="button" class="k-btn" data-empty-reset>Filtreleri temizle</button><button type="button" class="k-btn k-btn-primary" data-empty-publish data-publish>Hizmetini Yayınla</button></div></div>
+    <div class="k-empty" data-error role="alert" hidden><strong>Hizmetler şu anda yüklenemedi.</strong><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" class="k-btn" data-retry>Yeniden dene</button></div>
+    <button type="button" class="k-btn kc-more" data-more hidden>Daha fazla hizmet göster</button>
+  </div>
+</section>
+
+</main>
+
+<!-- ORTAK DİALOGLAR -->
+<dialog id="kaLoginDialog" class="k-dialog k-dialog-sm k-login" aria-labelledby="kaLoginTitle">
+  <form id="kaLoginForm" novalidate>
+    <div class="k-login-top">
+      <span class="k-login-mark" aria-hidden="true">İSG</span>
+      <button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button>
+    </div>
+    <div class="k-dialog-body">
+      <h2 id="kaLoginTitle">Kırmızı İSG'ye giriş yap</h2>
+      <p class="k-login-lead">Çalışmalarını paylaş, meslektaşlarını keşfet, hizmetlerini yayınla.</p>
+      <label class="k-label" for="kaLoginEmail">E-posta</label>
+      <input class="k-input" id="kaLoginEmail" type="email" autocomplete="username" inputmode="email" required placeholder="ornek@firma.com">
+      <label class="k-label" for="kaLoginPassword">Şifre</label>
+      <input class="k-input" id="kaLoginPassword" type="password" autocomplete="current-password" required>
+      <p id="kaLoginError" class="k-form-error" role="alert" hidden></p>
+      <button id="kaLoginSubmit" class="k-btn k-btn-primary k-btn-block k-btn-lg" type="submit">Giriş Yap</button>
+      <p class="k-login-foot">Hesabın yok mu? Kırmızı İSG mobil uygulamasından ücretsiz hesap oluşturabilirsin. Aynı hesapla buradan giriş yaparsın.</p>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="kaPostDialog" class="k-dialog k-dialog-lg" aria-labelledby="kaPostTitle">
+  <form id="kaPostForm">
+    <header class="k-dialog-head"><h2 id="kaPostTitle">Yeni Çalışma</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
+    <div class="k-dialog-body">
+      <label class="k-sr" for="kaPostContent">Çalışma metni</label>
+      <textarea id="kaPostContent" class="k-input k-textarea k-composer-text" maxlength="5000" placeholder="Bugün sahada ne yaptın, ne gördün, ne öğrendin?"></textarea>
+      <div id="kaPostPreview" class="k-image-preview" hidden><img alt="Seçilen görsel önizlemesi"><button type="button" data-remove-image>Fotoğrafı Kaldır</button></div>
+      <div class="k-composer-row">
+        <label class="k-file-button"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span data-photo-label>Fotoğraf Ekle</span><input id="kaPostImage" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"></label>
+        <label class="k-sr" for="kaPostCategory">Çalışma Alanı</label>
+        <select id="kaPostCategory" class="k-input k-select-inline"><option value="">Kategori seçme</option></select>
+      </div>
+      <p class="k-hint">Metin veya bir görsel yeterli. Görsel, yüklemeden önce WebP’ye dönüştürülür ve küçültülür.</p>
+      <div id="kaPostError" class="k-form-error" role="alert" hidden></div>
+    </div>
+    <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button id="kaPostSubmit" type="submit" class="k-btn k-btn-primary">Çalışmayı Yayınla</button></footer>
+  </form>
+</dialog>
+
+<dialog id="kaServiceDialog" class="k-dialog" aria-labelledby="kaServiceDialogTitle">
+  <form id="kaServiceForm">
+    <header class="k-dialog-head"><h2 id="kaServiceDialogTitle">Yeni Hizmet</h2><button type="button" class="k-icon-btn" data-close aria-label="Hizmet formunu kapat">×</button></header>
+    <div class="k-dialog-body">
+      <label class="k-label" for="kaServiceTitle">Hizmet Başlığı *</label><input class="k-input" id="kaServiceTitle" required maxlength="160">
+      <label class="k-label" for="kaServiceCategory">Kategori *</label><select class="k-input" id="kaServiceCategory" required><option value="">Seçin</option></select>
+      <label class="k-label" for="kaServiceDescription">Açıklama *</label><textarea class="k-input k-textarea" id="kaServiceDescription" required maxlength="5000" rows="6"></textarea>
+      <div class="k-two">
+        <div><label class="k-label" for="kaServiceRegion">Hizmet Bölgesi</label><input class="k-input" id="kaServiceRegion" maxlength="160" placeholder="Örn. İstanbul, Kocaeli"></div>
+        <div><label class="k-label" for="kaServiceMode">Hizmet Şekli *</label><select class="k-input" id="kaServiceMode" required><option value="">Seçin</option><option value="onsite">Yerinde</option><option value="remote">Uzaktan</option><option value="both">Yerinde + Uzaktan</option></select></div>
+      </div>
+      <p class="k-hint">En fazla 5 aktif hizmet yayınlayabilirsiniz.</p>
+      <p id="kaServiceError" class="k-form-error" role="alert" hidden></p>
+    </div>
+    <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button type="submit" id="kaServiceSave" class="k-btn k-btn-primary">Hizmeti Yayınla</button></footer>
+  </form>
+</dialog>
+
+<dialog id="kaLimitDialog" class="k-dialog k-dialog-sm" aria-labelledby="kaLimitTitle">
+  <header class="k-dialog-head"><h2 id="kaLimitTitle">Aktif hizmet sınırı</h2><button type="button" class="k-icon-btn" data-close aria-label="Pencereyi kapat">×</button></header>
+  <div class="k-dialog-body"><p>En fazla 5 aktif hizmet yayınlayabilirsiniz.</p><p class="k-hint">Hizmetlerinden birini düzenleyebilir veya kaldırabilirsin.</p></div>
+  <footer class="k-dialog-foot"><a id="kaLimitManage" class="k-btn k-btn-primary" target="_top">Hizmetlerim</a></footer>
+</dialog>
+
+<dialog id="kaConfirmDialog" class="k-dialog k-dialog-sm" aria-labelledby="kaConfirmTitle">
+  <header class="k-dialog-head"><h2 id="kaConfirmTitle">Emin misiniz?</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
+  <div class="k-dialog-body"><p id="kaConfirmText"></p></div>
+  <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button type="button" id="kaConfirmOk" class="k-btn k-btn-danger">Onayla</button></footer>
+</dialog>
+
+<dialog id="kaFilterDialog" class="k-dialog k-dialog-sm" aria-labelledby="kaFilterTitle">
+  <form id="kaFilterForm">
+    <header class="k-dialog-head"><h2 id="kaFilterTitle">Filtrele</h2><button type="button" class="k-icon-btn" data-close aria-label="Filtre panelini kapat">×</button></header>
+    <div class="k-dialog-body"><div class="kc-filters kc-filters-stack" data-filter-body></div></div>
+    <footer class="k-dialog-foot k-dialog-foot-split"><button type="button" class="k-btn" data-filter-clear>Temizle</button><button type="submit" class="k-btn k-btn-primary">Sonuçları Göster</button></footer>
+  </form>
+</dialog>
+
+<div class="k-toast" data-toast role="status" aria-live="polite" popover="manual" hidden></div>
+</div>
+<style>
+/* =====================================================================
+   KIRMIZI İSG PROFESSIONAL — DESIGN SYSTEM v3.0
+   Referans: Kırmızı İSG Professional hedef tasarımı.
+   Tokenlar → temel → shell → Çalışmalar → Katalog → dialog → responsive
+   ===================================================================== */
+#kisgApp{
+  --red:#e30a17; --red-hover:#c70813; --red-text:#c7101b; --red-line:rgba(227,10,23,.28); --red-tint:#fff6f6;
+  --ink:#141a24; --text:#2a313d; --muted:#5d6878; --faint:#8791a0;
+  --line:#e6e9ee; --line-soft:#eff1f4; --line-strong:#d3d8df;
+  --canvas:#f4f5f7; --surface:#fff; --surface-2:#f7f8fa;
+  --shadow-card:0 1px 2px rgba(20,26,36,.04),0 2px 10px rgba(20,26,36,.035);
+  --shadow-hover:0 4px 18px rgba(20,26,36,.08);
+  --shadow-pop:0 12px 32px rgba(20,26,36,.14),0 2px 6px rgba(20,26,36,.06);
+  --page-max:1360px; --gutter:28px;
+  --col-left:272px; --col-right:304px; --col-gap:24px;
+  --nav-h:56px; --pad:20px;
+  --r-sm:8px; --r-md:10px; --r-lg:14px; --r-pill:999px;
+  --ease:cubic-bezier(.2,.7,.2,1); --t-fast:120ms; --t:180ms;
+
+  display:flex;flex-direction:column;width:100%;max-width:none;min-width:0;min-height:var(--ka-available,100svh);
+  background:var(--canvas);color:var(--text);
+  font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+}
+#kisgApp *,#kisgApp *::before,#kisgApp *::after{box-sizing:border-box}
+#kisgApp [hidden]{display:none!important}
+#kisgApp a{color:inherit;text-decoration:none}
+#kisgApp :is(button,input,select,textarea){font:inherit;color:inherit;letter-spacing:inherit}
+#kisgApp :is(button,a){-webkit-tap-highlight-color:transparent}
+#kisgApp button{cursor:pointer}
+#kisgApp button:disabled{cursor:progress;opacity:.55}
+#kisgApp :is(a,button,input,select,textarea,[tabindex]):focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:var(--r-sm)}
+#kisgApp :is(h1,h2,h3,p){margin:0}
+#kisgApp svg{flex:none}
+#kisgApp .k-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+#kisgApp .k-page{width:min(var(--page-max),calc(100% - var(--gutter) * 2));margin-inline:auto}
+#kisgApp .k-ico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .k-chev{width:18px;height:18px;fill:none;stroke:var(--faint);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform var(--t-fast),stroke var(--t-fast)}
+#kisgApp .k-meta-item{display:inline-flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}
+
+/* ---------- Butonlar ---------- */
+#kisgApp .k-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 16px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface);color:var(--ink);font-size:14px;font-weight:600;line-height:1.2;white-space:nowrap;transition:background var(--t-fast),border-color var(--t-fast),color var(--t-fast),transform var(--t-fast)}
+#kisgApp .k-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+#kisgApp .k-btn:active:not(:disabled){transform:translateY(1px)}
+#kisgApp .k-btn-primary{border-color:var(--red);background:var(--red);color:#fff}
+#kisgApp .k-btn-outline{border-color:var(--red-line);background:#fff;color:var(--red-text)}
+#kisgApp .k-btn-danger{border-color:var(--ink);background:var(--ink);color:#fff}
+#kisgApp .k-btn-block{display:flex;width:100%}
+#kisgApp .k-btn-lg{min-height:48px;font-size:15px}
+#kisgApp .k-text-button{padding:6px 0;border:0;background:transparent;color:var(--red-text);font-size:13.5px;font-weight:650}
+#kisgApp .k-icon-btn{display:grid;flex:none;width:40px;height:40px;place-items:center;padding:0;border:0;border-radius:var(--r-pill);background:transparent;color:var(--muted);font-size:24px;line-height:1;transition:background var(--t-fast),color var(--t-fast)}
+
+/* ---------- Avatar ---------- */
+#kisgApp .k-avatar{position:relative;display:grid;place-items:center;overflow:hidden;flex:none;border-radius:50%;background:#e8ebf0;color:#4a5566;font-weight:650;line-height:1;box-shadow:inset 0 0 0 1px rgba(20,26,36,.06)}
+#kisgApp .k-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#kisgApp .k-avatar>svg{width:52%;height:52%;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+#kisgApp .k-avatar-xs{width:22px;height:22px;font-size:9.5px}
+#kisgApp .k-avatar-sm{width:32px;height:32px;font-size:12px}
+#kisgApp .k-avatar-md{width:40px;height:40px;font-size:14px}
+#kisgApp .k-avatar-lg{width:46px;height:46px;font-size:15.5px}
+#kisgApp .k-avatar-xl{width:60px;height:60px;font-size:19px}
+
+/* ---------- Rozet / etiket ---------- */
+#kisgApp .k-badge{display:inline-flex;align-items:center;min-height:22px;padding:2px 9px;border:1px solid var(--red-line);border-radius:var(--r-pill);background:#fff;color:var(--red-text);font-size:10.5px;font-weight:750;letter-spacing:.07em;line-height:1;white-space:nowrap}
+#kisgApp .k-tag{display:inline-flex;align-items:center;min-height:26px;padding:3px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface-2);color:var(--muted);font-size:12.5px;font-weight:550;line-height:1.3;white-space:nowrap}
+#kisgApp .k-tag-cert{border-color:var(--line-strong);background:#fff;color:var(--ink);font-weight:650}
+
+/* ---------- Popover ---------- */
+#kisgApp .k-popover{position:absolute;z-index:30;right:0;top:calc(100% + 8px);min-width:200px;padding:6px;border:1px solid var(--line);border-radius:var(--r-md);background:#fff;box-shadow:var(--shadow-pop);animation:k-pop var(--t) var(--ease)}
+#kisgApp .k-popover :is(a,button){display:flex;align-items:center;width:100%;min-height:42px;padding:10px 12px;border:0;border-radius:var(--r-sm);background:transparent;color:var(--ink);text-align:left;font-size:14px;font-weight:500}
+@keyframes k-pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+/* ---------- Skeleton / boş durum ---------- */
+#kisgApp .k-sk{display:block;height:12px;border-radius:6px;background:#eceef2;animation:k-pulse 1.4s ease-in-out infinite}
+#kisgApp .k-sk-short{width:55%}
+#kisgApp .k-sk-circle{width:46px;height:46px;border-radius:50%}
+#kisgApp .k-sk-media{height:240px;border-radius:12px}
+#kisgApp .k-sk-person{display:flex;align-items:center;gap:12px;padding:12px 0}
+#kisgApp .k-sk-person>span,#kisgApp .kw-sk-head>span{display:grid;flex:1;gap:8px}
+#kisgApp .k-sk-offer{display:grid;gap:8px;padding:14px 0}
+@keyframes k-pulse{50%{opacity:.55}}
+#kisgApp .k-empty{display:flex;flex-direction:column;align-items:center;gap:6px;padding:56px 20px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;text-align:center}
+#kisgApp .k-empty strong{color:var(--ink);font-size:16px;font-weight:700}
+#kisgApp .k-empty p{max-width:420px;color:var(--muted);font-size:14px}
+#kisgApp .k-empty .k-btn,#kisgApp .k-empty-actions{margin-top:12px}
+#kisgApp .k-empty-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+#kisgApp .k-empty-actions .k-btn{margin-top:0}
+#kisgApp .k-muted-note{padding:14px 0;color:var(--faint);font-size:13px}
+
+/* =====================================================================
+   SHELL: Professional navigation (sekmeler ortada, hesap sağda)
+   ===================================================================== */
+#kisgApp .ka-nav{position:relative;z-index:20;flex:none;background:#fff;border-bottom:1px solid var(--line)}
+#kisgApp .ka-nav-inner{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:16px;width:min(var(--page-max),calc(100% - var(--gutter) * 2));min-height:var(--nav-h);margin-inline:auto}
+#kisgApp .ka-tabs{grid-column:2;display:flex;align-items:stretch;gap:8px;min-width:0}
+#kisgApp .ka-tab{position:relative;display:flex;align-items:center;justify-content:center;padding:0 18px;color:var(--muted);font-size:14.5px;font-weight:600;white-space:nowrap;transition:color var(--t-fast)}
+#kisgApp .ka-tab::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2.5px;border-radius:2px 2px 0 0;background:var(--red);transform:scaleX(0);transition:transform var(--t) var(--ease)}
+#kisgApp .ka-tab.is-active{color:var(--ink)}
+#kisgApp .ka-tab.is-active::after{transform:scaleX(1)}
+#kisgApp .ka-tab:focus-visible{outline-offset:-4px}
+#kisgApp .ka-account{grid-column:3;justify-self:end;position:relative;display:flex;align-items:center}
+#kisgApp .ka-account :is(.ka-login,.ka-account-toggle,.ka-account-placeholder){display:none}
+#kisgApp .ka-account[data-state="loading"] .ka-account-placeholder{display:block;width:104px;height:38px;border-radius:var(--r-pill);background:var(--line-soft)}
+#kisgApp .ka-account[data-state="guest"] .ka-login{display:inline-flex}
+#kisgApp .ka-account[data-state="user"] .ka-account-toggle{display:inline-flex}
+#kisgApp .ka-login{align-items:center;gap:8px;min-height:38px;padding:6px 16px 6px 12px;border:1px solid var(--line-strong);border-radius:var(--r-pill);background:#fff;color:var(--ink);font-size:14px;font-weight:650;white-space:nowrap;transition:border-color var(--t-fast)}
+#kisgApp .ka-login svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+#kisgApp .ka-account-toggle{align-items:center;gap:8px;min-height:42px;padding:4px 10px 4px 4px;border:1px solid transparent;border-radius:var(--r-pill);background:transparent;color:var(--ink);font-size:14px;font-weight:650;transition:background var(--t-fast),border-color var(--t-fast)}
+#kisgApp .ka-account-toggle[aria-expanded="true"]{background:var(--surface-2);border-color:var(--line)}
+#kisgApp .ka-me-name{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .ka-me-name:empty{display:none}
+#kisgApp .ka-chevron{width:16px;height:16px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .ka-main{flex:1;display:flex;flex-direction:column;min-width:0}
+#kisgApp .ka-view{flex:1;min-width:0}
+#kisgApp .ka-view.is-entering{animation:ka-enter var(--t) var(--ease)}
+@keyframes ka-enter{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* =====================================================================
+   ÇALIŞMALAR — 3 kolon; feed görsel merkez
+   ===================================================================== */
+#kisgApp .kw-layout{display:grid;grid-template-columns:var(--col-left) minmax(0,1fr) var(--col-right);grid-template-areas:"head head head" "left feed right";column-gap:var(--col-gap);align-items:start;padding:28px 0 64px}
+#kisgApp .kw-head{grid-area:head;padding:0 2px 20px}
+#kisgApp .kw-head h1{color:var(--ink);font-size:32px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+#kisgApp .kw-head-desc{margin-top:8px;color:var(--muted);font-size:15px}
+#kisgApp .kw-left{grid-area:left}
+#kisgApp .kw-right{grid-area:right}
+#kisgApp .kw-feed{grid-area:feed;min-width:0}
+
+/* Keşif kartları (sol: Uzmanlar, sağ: Hizmetler) */
+#kisgApp .kw-side{position:sticky;top:16px;padding:18px 16px 16px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-card)}
+#kisgApp .kw-side-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px 6px}
+#kisgApp .kw-side-head h2{color:var(--ink);font-size:18px;font-weight:750;letter-spacing:-.02em}
+#kisgApp .kw-side-head a{color:var(--ink);font-size:13px;font-weight:650;white-space:nowrap;transition:color var(--t-fast)}
+#kisgApp .kw-side-cta{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:44px;margin-top:12px;border:1px solid var(--red-line);border-radius:var(--r-md);background:#fff;color:var(--red-text);font-size:14px;font-weight:650;transition:background var(--t-fast),border-color var(--t-fast)}
+#kisgApp .kw-people,#kisgApp .kw-offers{display:grid}
+#kisgApp .kw-person,#kisgApp .kw-offer{display:flex;align-items:center;gap:12px;margin:0 -6px;padding:12px 6px;border-bottom:1px solid var(--line-soft);border-radius:var(--r-md);transition:background var(--t-fast)}
+#kisgApp .kw-person:last-child,#kisgApp .kw-offer:last-child{border-bottom:0}
+#kisgApp :is(.kw-person-copy,.kw-offer-copy){display:grid;gap:1px;flex:1;min-width:0}
+#kisgApp .kw-person-copy strong{overflow:hidden;color:var(--ink);font-size:14.5px;font-weight:700;line-height:1.35;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp :is(.kw-person-role,.kw-offer-role){display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--muted);font-size:12.5px;line-height:1.4}
+#kisgApp .kw-person-meta{display:flex;color:var(--faint);font-size:12px;line-height:1.4}
+#kisgApp .kw-offer{align-items:flex-start}
+#kisgApp .kw-offer .k-chev{margin-top:14px}
+#kisgApp .kw-offer-copy strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:14px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+#kisgApp .kw-offer-by{overflow:hidden;margin-top:2px;color:var(--text);font-size:12.5px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .kw-offer-meta{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px;color:var(--faint);font-size:12px}
+
+/* Composer */
+#kisgApp .kw-composer{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:16px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-card)}
+#kisgApp .kw-composer-main{display:flex;align-items:center;gap:12px;flex:1 1 100%;min-width:0;padding:0;border:0;background:transparent;text-align:left}
+#kisgApp .kw-composer-field{display:flex;align-items:center;flex:1;min-width:0;min-height:46px;padding:0 16px;border:1px solid var(--line);border-radius:var(--r-md);background:#fff;color:var(--faint);font-size:14.5px;transition:border-color var(--t-fast)}
+#kisgApp .kw-composer-field>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .kw-composer-mobile{display:none}
+#kisgApp .kw-composer-tools{display:flex;align-items:center;gap:8px;width:100%}
+#kisgApp .kw-tool{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2);color:var(--text);font-size:13.5px;font-weight:600;transition:background var(--t-fast),border-color var(--t-fast)}
+#kisgApp .kw-tool svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .kw-composer-cta{margin-left:auto;min-height:40px;padding:8px 18px;border-radius:var(--r-md)}
+#kisgApp .kw-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:4px 2px}
+#kisgApp .kw-live{display:inline-flex;align-items:center;gap:8px;min-width:0;color:var(--muted);font-size:13px}
+#kisgApp .kw-live-dot{flex:none;width:7px;height:7px;border-radius:50%;background:#1f9d55;box-shadow:0 0 0 3px rgba(31,157,85,.14)}
+#kisgApp .kw-sort{flex:none;margin-left:auto;padding:5px 12px;border:1px solid var(--line);border-radius:var(--r-pill);background:#fff;color:var(--text);font-size:12.5px;font-weight:650}
+
+/* Çalışma kartı */
+#kisgApp .kw-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding:12px 16px;border:1px solid var(--line);border-radius:var(--r-md);background:#fff;font-size:14px}
+#kisgApp .kw-list{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;min-width:0}
+#kisgApp .kw-post{min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-card);transition:box-shadow var(--t),border-color var(--t)}
+#kisgApp .kw-sk{display:grid;gap:12px;padding:var(--pad)}
+#kisgApp .kw-sk-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+#kisgApp .kw-post-head{display:flex;align-items:flex-start;gap:12px;padding:var(--pad) var(--pad) 0}
+#kisgApp .kw-post-avatar{display:block;flex:none;border-radius:50%;transition:opacity var(--t-fast)}
+#kisgApp .kw-post-who{display:grid;flex:1;min-width:0;padding-top:1px}
+#kisgApp .kw-post-name-row{display:flex;align-items:center;gap:10px;min-width:0}
+#kisgApp .kw-post-author-link{overflow:hidden;color:var(--ink);font-size:16px;font-weight:750;line-height:1.3;letter-spacing:-.01em;text-overflow:ellipsis;white-space:nowrap;transition:color var(--t-fast)}
+#kisgApp .kw-post-sub{display:flex;align-items:baseline;min-width:0;margin-top:3px;color:var(--muted);font-size:13px;line-height:1.4}
+#kisgApp .kw-post-profession{overflow:hidden;min-width:0;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .kw-post-time{flex:none;white-space:nowrap}
+#kisgApp .kw-post-profession+.kw-post-time::before{content:"·";margin:0 6px}
+#kisgApp .kw-owner{position:relative;flex:none;margin:-6px -8px 0 0}
+#kisgApp .kw-more-btn{display:grid;width:40px;height:40px;place-items:center;border:0;border-radius:var(--r-pill);background:transparent;color:var(--muted);font-size:20px;line-height:1;letter-spacing:.05em;transition:background var(--t-fast)}
+#kisgApp .kw-menu{top:44px}
+#kisgApp .kw-menu button.is-danger{color:var(--red-text)}
+#kisgApp .kw-post-detail{display:block}
+#kisgApp .kw-post-body{padding:14px var(--pad) 0}
+#kisgApp .kw-post-content{color:var(--text);font-size:15.5px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+#kisgApp .kw-post-content.is-clamped{display:-webkit-box;-webkit-line-clamp:8;-webkit-box-orient:vertical;overflow:hidden}
+#kisgApp .kw-more-link{display:inline-block;margin:6px var(--pad) 0;color:var(--ink);font-size:14px;font-weight:700}
+#kisgApp .kw-post-tags{display:flex;flex-wrap:wrap;gap:6px;padding:12px var(--pad) 0}
+#kisgApp .kw-post-media{margin:14px var(--pad) 0;overflow:hidden;border-radius:12px;background:#eef0f3}
+#kisgApp .kw-post-image{display:block;width:100%;height:auto;max-height:420px;object-fit:cover;transition:transform .35s var(--ease)}
+#kisgApp .kw-post-actions{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-top:10px;padding:4px 10px 6px}
+#kisgApp .kw-post-actions>:is(button,a,span){display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 10px;border:0;border-radius:var(--r-md);background:transparent;color:var(--muted);font-size:14px;font-weight:600;white-space:nowrap;transition:background var(--t-fast),color var(--t-fast)}
+#kisgApp .kw-post-actions svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform var(--t) var(--ease)}
+#kisgApp .kw-like-num:empty{display:none}
+#kisgApp .kw-like-num,#kisgApp .kw-likes-static [data-like-count]{color:var(--ink);font-weight:650}
+#kisgApp .kw-likes-static{cursor:default}
+#kisgApp .kw-likes-static svg{fill:var(--red);stroke:var(--red)}
+#kisgApp .kw-act-like.is-liked{color:var(--red-text)}
+#kisgApp .kw-act-like.is-liked svg{fill:var(--red);stroke:var(--red)}
+#kisgApp .kw-act-like.is-pop svg{animation:k-like .32s var(--ease)}
+#kisgApp .kw-post-actions>:is(button,a):active{transform:scale(.97)}
+@keyframes k-like{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(1)}}
+#kisgApp .kw-empty{display:grid;justify-items:center;gap:6px;padding:48px 24px;text-align:center}
+#kisgApp .kw-empty strong{color:var(--ink);font-size:17px;font-weight:700}
+#kisgApp .kw-empty p{max-width:380px;color:var(--muted);font-size:14.5px}
+#kisgApp .kw-empty .k-btn{margin-top:10px}
+#kisgApp .kw-load-more{display:flex;width:100%;margin-top:16px;min-height:48px}
+
+/* Feed içi keşif şeritleri (yan kolonlar gizlenince) */
+#kisgApp .kw-rail{display:none;padding:18px 0 16px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-card)}
+#kisgApp .kw-rail-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:0 var(--pad) 12px}
+#kisgApp .kw-rail-head h2{color:var(--ink);font-size:16.5px;font-weight:750;letter-spacing:-.015em}
+#kisgApp .kw-rail-head a{color:var(--ink);font-size:13.5px;font-weight:650;white-space:nowrap}
+#kisgApp .kw-rail-track{display:flex;gap:10px;overflow-x:auto;padding:2px var(--pad) 4px;scroll-snap-type:x mandatory;scroll-padding-inline:var(--pad);scrollbar-width:none;overscroll-behavior-x:contain}
+#kisgApp .kw-rail-track::-webkit-scrollbar{display:none}
+#kisgApp .kw-rail-expert{display:grid;justify-items:center;align-content:start;gap:3px;flex:0 0 152px;padding:16px 12px 14px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;text-align:center;scroll-snap-align:start}
+#kisgApp .kw-rail-expert .k-avatar{margin-bottom:8px}
+#kisgApp .kw-rail-expert strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:14px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+#kisgApp .kw-rail-expert span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--muted);font-size:12px;line-height:1.35}
+#kisgApp .kw-rail-service{display:grid;align-content:start;gap:4px;flex:0 0 240px;padding:14px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;scroll-snap-align:start;overflow-wrap:anywhere}
+#kisgApp .kw-rail-cat{color:var(--faint);font-size:12px;font-weight:600}
+#kisgApp .kw-rail-service strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:14.5px;font-weight:700;line-height:1.35}
+#kisgApp .kw-rail-by{display:flex;align-items:center;gap:8px;margin-top:4px;min-width:0;color:var(--text);font-size:12.5px;font-weight:600}
+#kisgApp .kw-rail-by>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* =====================================================================
+   KATALOG — Uzmanlar (people discovery) + Hizmetler (service discovery)
+   ===================================================================== */
+#kisgApp .kc-page{padding:28px 0 64px}
+#kisgApp .kc-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:20px}
+#kisgApp .kc-head h1{color:var(--ink);font-size:32px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+#kisgApp .kc-head p{margin-top:8px;color:var(--muted);font-size:15px}
+#kisgApp .kc-head-cta{flex:none}
+#kisgApp .kc-message{margin-bottom:16px;padding:12px 16px;border:1px solid var(--line);border-radius:var(--r-md);background:#fff;font-size:14px;transition:opacity .25s}
+#kisgApp .kc-message.is-hiding{opacity:0}
+#kisgApp .kc-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-card)}
+#kisgApp .kc-search{display:flex;align-items:center;gap:10px;flex:1 1 100%;min-height:50px;padding:0 8px 0 16px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;transition:border-color var(--t-fast),box-shadow var(--t-fast)}
+#kisgApp .kc-search:focus-within{border-color:var(--ink);box-shadow:0 0 0 3px rgba(20,26,36,.07)}
+#kisgApp .kc-search svg{width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:1.8;stroke-linecap:round}
+#kisgApp .kc-search input{flex:1;width:100%;min-width:0;height:48px;padding:0;border:0;background:transparent;color:var(--ink);font-size:16px;outline:none}
+#kisgApp .kc-search input::placeholder{color:var(--faint)}
+#kisgApp .kc-search input::-webkit-search-cancel-button{-webkit-appearance:none}
+#kisgApp .kc-search button{display:grid;width:34px;height:34px;place-items:center;border:0;border-radius:50%;background:var(--surface-2);color:var(--muted);font-size:20px;line-height:1}
+#kisgApp .kc-filter-btn{display:none;align-items:center;gap:8px;flex:none;min-height:50px;padding:0 16px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;color:var(--ink);font-size:14px;font-weight:650}
+#kisgApp .kc-filter-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+#kisgApp .kc-filters{display:flex;flex-wrap:wrap;gap:8px}
+#kisgApp .kc-filters-inline{flex:1 1 100%}
+#kisgApp .kc-filters-inline .kc-flabel{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+#kisgApp .kc-filters-inline :is(input,select){height:38px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--surface-2);color:var(--ink);font-size:13.5px;font-weight:600;transition:border-color var(--t-fast),background var(--t-fast)}
+#kisgApp .kc-filters-inline input{width:160px}
+#kisgApp .kc-filters-inline input::placeholder{color:var(--muted);font-weight:600}
+#kisgApp .kc-filters-inline select{padding-right:34px;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d6878' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:16px}
+#kisgApp .kc-filters-inline .is-set :is(input,select){border-color:var(--ink);background-color:#fff}
+#kisgApp .kc-filters-stack{display:grid;gap:16px}
+#kisgApp .kc-filters-stack .kc-field{display:grid;gap:6px}
+#kisgApp .kc-filters-stack .kc-flabel{color:var(--text);font-size:13px;font-weight:650}
+#kisgApp .kc-filters-stack :is(input,select){width:100%;min-height:48px;padding:0 14px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;font-size:16px}
+#kisgApp .kc-results-head{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;margin-top:6px;color:var(--muted);font-size:13.5px;font-weight:600}
+#kisgApp .kc-results{display:grid;gap:14px}
+#kisgApp .ke-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+#kisgApp .ks-grid{grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
+#kisgApp .kc-card{position:relative;display:flex;flex-direction:column;min-width:0;padding:var(--pad);border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-card);overflow-wrap:anywhere;transition:border-color var(--t),transform var(--t) var(--ease),box-shadow var(--t)}
+#kisgApp .kc-more{display:flex;margin:24px auto 0;min-width:220px;min-height:48px}
+#kisgApp .kc-sk{display:grid;gap:12px;align-content:start;min-height:190px;padding:var(--pad);border:1px solid var(--line);border-radius:var(--r-lg);background:#fff}
+#kisgApp .kc-sk-top{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+#kisgApp .kc-sk-top .k-sk-circle{width:60px;height:60px}
+#kisgApp .kc-sk-top span{display:grid;flex:1;gap:8px}
+/* Uzman kartı */
+#kisgApp .ke-top{display:flex;align-items:flex-start;gap:14px;min-width:0}
+#kisgApp .ke-top .k-chev{margin-top:4px;margin-left:auto}
+#kisgApp .ke-id{display:grid;gap:3px;flex:1;min-width:0}
+#kisgApp .ke-id h2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:17px;font-weight:750;line-height:1.3;letter-spacing:-.01em}
+#kisgApp .ke-role{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--muted);font-size:13.5px;line-height:1.4}
+#kisgApp .ke-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:4px;color:var(--faint);font-size:12.5px}
+#kisgApp .ke-meta .k-tag{min-height:22px;padding:1px 8px;font-size:12px}
+#kisgApp .ke-company{margin-top:14px;padding-left:74px;overflow:hidden;color:var(--text);font-size:13px;font-weight:550;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .ke-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;padding-left:74px}
+#kisgApp .ke-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:14px}
+#kisgApp .ke-card>.ke-bottom{margin-top:16px;border-top:1px solid var(--line-soft)}
+#kisgApp .ke-activity{color:var(--muted);font-size:12.5px;font-weight:600}
+#kisgApp .ke-cta{color:var(--ink);font-size:13.5px;font-weight:700;transition:color var(--t-fast)}
+#kisgApp .ke-discovery{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 16px;margin-top:16px;padding:12px 16px;border:1px dashed var(--line-strong);border-radius:var(--r-md);background:transparent;color:var(--muted);font-size:13.5px}
+#kisgApp .ke-discovery strong{color:var(--ink);font-weight:650}
+/* Hizmet kartı */
+#kisgApp .ks-card{gap:8px}
+#kisgApp .ks-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#kisgApp .ks-category{color:var(--red-text);font-size:12.5px;font-weight:650}
+#kisgApp .ks-card h2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:18px;font-weight:750;line-height:1.3;letter-spacing:-.015em}
+#kisgApp .ks-description{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--text);font-size:14px;line-height:1.55}
+#kisgApp .ks-meta{display:flex;flex-wrap:wrap;gap:4px 14px;color:var(--muted);font-size:13px}
+#kisgApp .ks-provider{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:14px;border-top:1px solid var(--line-soft);min-width:0}
+#kisgApp .ks-card>.ks-provider{margin-top:auto}
+#kisgApp .ks-card>.ks-meta+.ks-provider,#kisgApp .ks-card>.ks-description+.ks-provider{margin-top:auto}
+#kisgApp .ks-provider>div{flex:1;min-width:0}
+#kisgApp .ks-provider strong{display:block;overflow:hidden;color:var(--ink);font-size:13.5px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .ks-provider p{overflow:hidden;color:var(--muted);font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .ks-cta{flex:none;color:var(--ink);font-size:13.5px;font-weight:700;transition:color var(--t-fast)}
+
+/* =====================================================================
+   DİALOG / FORM / TOAST
+   ===================================================================== */
+#kisgApp .k-dialog{position:fixed;inset:0;width:min(580px,calc(100% - 24px));max-height:calc(100dvh - 24px);margin:auto;padding:0;border:0;border-radius:18px;background:#fff;color:var(--text);overflow:auto;overscroll-behavior:contain;box-shadow:0 24px 64px rgba(20,26,36,.24)}
+#kisgApp .k-dialog[open]{animation:k-dialog var(--t) var(--ease)}
+#kisgApp .k-dialog::backdrop{background:rgba(20,26,36,.46)}
+@keyframes k-dialog{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+#kisgApp .k-dialog-sm{width:min(440px,calc(100% - 24px))}
+#kisgApp .k-dialog-lg{width:min(620px,calc(100% - 24px))}
+#kisgApp .k-dialog form{margin:0}
+#kisgApp .k-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 12px 24px;border-bottom:1px solid var(--line-soft)}
+#kisgApp .k-dialog-head h2{color:var(--ink);font-size:18px;font-weight:750;letter-spacing:-.015em}
+#kisgApp .k-dialog-body{padding:20px 24px}
+#kisgApp .k-dialog-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 24px 18px;border-top:1px solid var(--line-soft)}
+#kisgApp .k-dialog-foot-split{justify-content:space-between;padding-bottom:max(18px,env(safe-area-inset-bottom,0px))}
+#kisgApp .k-label{display:block;margin:16px 0 6px;color:var(--text);font-size:13px;font-weight:650}
+#kisgApp .k-label:first-child{margin-top:0}
+#kisgApp .k-input{display:block;width:100%;min-width:0;min-height:46px;padding:10px 14px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;color:var(--ink);font-size:16px;transition:border-color var(--t-fast),box-shadow var(--t-fast)}
+#kisgApp .k-input:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px rgba(20,26,36,.08)}
+#kisgApp .k-textarea{min-height:150px;resize:vertical;line-height:1.55}
+#kisgApp .k-composer-text{min-height:170px;border:0;padding:4px 0;box-shadow:none!important;font-size:17px}
+#kisgApp .k-composer-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft)}
+#kisgApp .k-select-inline{width:auto;min-width:180px;flex:1;min-height:42px}
+#kisgApp .k-two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+#kisgApp .k-hint{margin-top:12px;color:var(--muted);font-size:13px;line-height:1.55}
+#kisgApp .k-form-error{margin-top:12px;padding:10px 12px;border:1px solid var(--red-line);border-radius:var(--r-md);background:#fff;color:var(--red-text);font-size:13.5px;font-weight:600}
+#kisgApp .k-file-button{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 16px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;color:var(--ink);font-size:14px;font-weight:600;cursor:pointer}
+#kisgApp .k-file-button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .k-file-button input{position:absolute;inset:0;width:100%;opacity:0;cursor:pointer}
+#kisgApp .k-file-button:focus-within{outline:2px solid var(--red);outline-offset:2px}
+#kisgApp .k-file-button.is-called{border-color:var(--ink)}
+#kisgApp .k-image-preview{position:relative;margin-top:8px;overflow:hidden;border-radius:var(--r-md);background:var(--surface-2)}
+#kisgApp .k-image-preview img{display:block;width:100%;max-height:280px;object-fit:contain}
+#kisgApp .k-image-preview button{position:absolute;top:8px;right:8px;min-height:32px;padding:0 12px;border:0;border-radius:var(--r-pill);background:rgba(20,26,36,.8);color:#fff;font-size:12.5px;font-weight:600}
+#kisgApp .k-login-top{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0 24px}
+#kisgApp .k-login-mark{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:12px;background:var(--red);color:#fff;font-size:13px;font-weight:800;letter-spacing:.02em}
+#kisgApp .k-login .k-dialog-body{padding:16px 24px 24px}
+#kisgApp .k-login h2{color:var(--ink);font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.25}
+#kisgApp .k-login-lead{margin:6px 0 20px;color:var(--muted);font-size:14.5px}
+#kisgApp #kaLoginSubmit{margin-top:20px}
+#kisgApp .k-login-foot{margin-top:16px;padding-top:16px;border-top:1px solid var(--line-soft);color:var(--muted);font-size:13px;line-height:1.55}
+#kisgApp .k-toast{position:fixed;inset:auto 24px 24px auto;z-index:2147483000;max-width:360px;margin:0;padding:12px 16px;border:0;border-radius:var(--r-md);background:var(--ink);color:#fff;box-shadow:var(--shadow-pop);font-size:14px;font-weight:600;line-height:1.4;animation:k-pop var(--t) var(--ease)}
+
+/* =====================================================================
+   HOVER (yalnızca gerçek imleç)
+   ===================================================================== */
+@media(hover:hover) and (pointer:fine){
+  #kisgApp .k-btn:hover{border-color:var(--ink)}
+  #kisgApp .k-btn-primary:hover{background:var(--red-hover);border-color:var(--red-hover)}
+  #kisgApp .k-btn-outline:hover,#kisgApp .kw-side-cta:hover{border-color:var(--red);background:var(--red-tint)}
+  #kisgApp .k-btn-danger:hover{background:#000}
+  #kisgApp :is(.k-icon-btn,.kw-more-btn):hover{background:var(--surface-2);color:var(--ink)}
+  #kisgApp .k-popover :is(a,button):hover{background:var(--surface-2)}
+  #kisgApp .ka-tab:hover{color:var(--ink)}
+  #kisgApp .ka-login:hover{border-color:var(--ink)}
+  #kisgApp .ka-account-toggle:hover{background:var(--surface-2)}
+  #kisgApp :is(.kw-person,.kw-offer):hover{background:var(--surface-2)}
+  #kisgApp :is(.kw-person,.kw-offer,.kc-card):hover .k-chev{stroke:var(--ink);transform:translateX(2px)}
+  #kisgApp .kw-side-head a:hover{color:var(--red-text)}
+  #kisgApp .kw-composer-main:hover .kw-composer-field{border-color:var(--line-strong)}
+  #kisgApp .kw-tool:hover{border-color:var(--line-strong);background:#fff}
+  #kisgApp .kw-post-author-link:hover{color:var(--red-text)}
+  #kisgApp .kw-post-avatar:hover{opacity:.88}
+  #kisgApp .kw-post-media:hover .kw-post-image{transform:scale(1.015)}
+  #kisgApp .kw-post-actions>:is(button,a):hover{background:var(--surface-2);color:var(--ink)}
+  #kisgApp .kw-post:hover{box-shadow:var(--shadow-hover)}
+  #kisgApp .kc-card:hover{border-color:var(--line-strong);transform:translateY(-2px);box-shadow:var(--shadow-hover)}
+  #kisgApp .kc-card:hover :is(.ke-cta,.ks-cta){color:var(--red-text)}
+  #kisgApp .kc-filters-inline :is(input,select):hover,#kisgApp .kc-filter-btn:hover{border-color:var(--ink)}
+}
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media(max-width:1279px){#kisgApp{--col-left:248px;--col-right:288px;--col-gap:20px;--gutter:24px}}
+@media(max-width:1119px){
+  #kisgApp .kw-layout{grid-template-columns:minmax(0,1fr) var(--col-right);grid-template-areas:"head head" "feed right"}
+  #kisgApp .kw-left{display:none}
+  #kisgApp .kw-rail-experts{display:block}
+}
+@media(max-width:899px){
+  #kisgApp{--gutter:20px}
+  #kisgApp .kw-layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "feed";max-width:720px}
+  #kisgApp .kw-right{display:none}
+  #kisgApp .kw-rail-services{display:block}
+  #kisgApp .kc-filters-inline{display:none}
+  #kisgApp .kc-search{flex:1 1 0}
+  #kisgApp .kc-filter-btn{display:inline-flex}
+  #kisgApp .ke-grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+  #kisgApp .ks-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+}
+@media(max-width:640px){
+  /* Hostinger dış boşluğu parent tarafında kaldırılır; uygulamanın kendi gutter'ı 12px. */
+  #kisgApp{--gutter:12px;--nav-h:50px;--pad:16px}
+  #kisgApp .ka-nav-inner{display:flex;width:100%;gap:0;padding:0 8px 0 0}
+  #kisgApp .ka-tabs{flex:1;gap:0}
+  #kisgApp .ka-tab{flex:1;min-width:0;padding:0 4px;font-size:14px}
+  #kisgApp .ka-tab::after{left:16%;right:16%}
+  #kisgApp :is(.ka-me-name,.ka-chevron){display:none}
+  #kisgApp .ka-account-toggle{padding:3px;min-height:44px}
+  #kisgApp .ka-login{min-height:34px;padding:4px 12px 4px 8px;font-size:13px;gap:6px}
+  #kisgApp .ka-login svg{width:16px;height:16px}
+  #kisgApp .ka-account[data-state="loading"] .ka-account-placeholder{width:76px;height:32px}
+
+  /* Çalışmalar: başlık yok — nav bölümü söylüyor; composer hemen başlar */
+  #kisgApp .kw-layout{width:100%;padding:12px 0 40px}
+  #kisgApp .kw-head{display:none}
+  #kisgApp .kw-composer{margin:0 var(--gutter);padding:12px;gap:10px}
+  #kisgApp .kw-composer-main{gap:10px}
+  #kisgApp .kw-composer-main .k-avatar{width:40px;height:40px}
+  #kisgApp .kw-composer-field{min-height:44px;padding:0 14px;font-size:15px}
+  #kisgApp :is(.kw-composer-desktop,.kw-tool-long,.kw-composer-cta span){display:none}
+  #kisgApp .kw-composer-mobile{display:inline}
+  #kisgApp .kw-tool{min-height:36px;padding:0 12px;font-size:13px}
+  #kisgApp .kw-composer-cta{width:44px;min-height:44px;padding:0;border-radius:50%}
+  #kisgApp .kw-composer-cta svg{width:22px;height:22px}
+  #kisgApp .kw-toolbar{min-height:40px;padding:2px var(--gutter)}
+  #kisgApp .kw-live{font-size:12.5px}
+  #kisgApp .kw-list{gap:8px}
+  #kisgApp .kw-post,#kisgApp .kw-rail{border-inline:0;border-radius:0;box-shadow:none}
+  #kisgApp .kw-notice{margin:0 var(--gutter) 8px}
+  #kisgApp .kw-post-head{gap:10px}
+  #kisgApp .kw-post-avatar .k-avatar{width:44px;height:44px}
+  #kisgApp .kw-post-author-link{font-size:15.5px}
+  #kisgApp .kw-post-sub{font-size:12.5px}
+  #kisgApp .kw-post-name-row{gap:8px}
+  #kisgApp .kw-post-body{padding-top:12px}
+  #kisgApp .kw-post-content{font-size:15px;line-height:1.58}
+  #kisgApp .kw-post-media{margin:12px var(--pad) 0;border-radius:10px}
+  #kisgApp .kw-post-image{max-height:360px}
+  #kisgApp .kw-post-actions{padding:2px 6px 4px}
+  #kisgApp .kw-post-actions>:is(button,a,span){min-height:46px;padding:6px 8px;font-size:13.5px;gap:6px}
+  #kisgApp .kw-load-more{width:calc(100% - var(--gutter) * 2);margin:12px var(--gutter) 0}
+
+  /* Katalog: içerik önce */
+  #kisgApp .kc-page{width:100%;padding:12px 0 40px}
+  #kisgApp :is(.kc-head,.kc-controls,.kc-results-head,.kc-message,.kc-results,.ke-discovery,.k-empty){margin-inline:var(--gutter)}
+  #kisgApp .kc-head{align-items:center;gap:12px;margin-bottom:12px}
+  #kisgApp .kc-head h1{font-size:22px}
+  #kisgApp .kc-head p{display:none}
+  #kisgApp .kc-head-cta{min-height:36px;padding:6px 12px;font-size:13px}
+  #kisgApp .kc-controls{flex-wrap:nowrap;padding:0;border:0;background:transparent;box-shadow:none}
+  #kisgApp .kc-search{min-height:46px;padding-left:14px}
+  #kisgApp .kc-search input{height:44px}
+  #kisgApp .kc-filter-btn{min-height:46px;padding:0 14px}
+  #kisgApp .kc-results-head{min-height:40px;margin-top:4px}
+  #kisgApp .kc-results{gap:10px}
+  #kisgApp .kc-card{padding:16px}
+  #kisgApp .ke-top{gap:12px}
+  #kisgApp .ke-top .k-avatar{width:54px;height:54px}
+  #kisgApp :is(.ke-company,.ke-chips){padding-left:66px}
+  #kisgApp .ke-company{margin-top:10px}
+  #kisgApp .ke-chips{margin-top:10px}
+  #kisgApp .ke-card>.ke-bottom{margin-top:12px;padding-top:12px}
+  #kisgApp .ks-card h2{font-size:17px}
+  #kisgApp .k-empty{padding:40px 16px}
+  #kisgApp .kc-more{width:calc(100% - var(--gutter) * 2);margin:16px auto 0}
+
+  #kisgApp .k-dialog[data-place="sheet"]{inset:auto 0 0;width:100%;max-width:none;max-height:92dvh;margin:0;border-radius:20px 20px 0 0}
+  #kisgApp :is(.k-dialog-head,.k-dialog-body,.k-dialog-foot){padding-left:16px;padding-right:16px}
+  #kisgApp .k-login-top{padding-left:16px}
+  #kisgApp .k-two{grid-template-columns:1fr}
+  #kisgApp .k-toast{inset:auto 12px 12px 12px;max-width:none}
+}
+@media(max-width:359px){
+  #kisgApp .ka-tab{font-size:13px}
+  #kisgApp .ka-login span{display:none}
+  #kisgApp .ka-login{width:36px;padding:0;justify-content:center}
+  #kisgApp .kw-post-actions>:is(button,a,span){font-size:12.5px;padding-inline:6px}
+  #kisgApp .kc-head-cta span{display:none}
+  #kisgApp .kc-head-cta{width:36px;padding:0}
+}
+@media(prefers-reduced-motion:reduce){#kisgApp *,#kisgApp *::before,#kisgApp *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+<script>
+(() => {
+'use strict';
+const root = document.getElementById('kisgApp');
+if (!root || root.dataset.ready) return;
+root.dataset.ready = 'true';
+
+/* =========================================================================
+   1. Yapılandırma
+   ========================================================================= */
+const CONFIG = Object.freeze({
+  supabaseUrl: 'https://twaptpofhbnnfciowoig.supabase.co',
+  supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
+  sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
+  siteUrl: 'https://isgcalisanplatformu.com',
+  siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
+  historyRouting: true,
+  // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
+  hostWidthDesktopMax: 1480,
+  routes: { works: '/calisma', experts: '/uzmanlar', services: '/hizmetler' },
+  defaultView: 'works',
+  returnPaths: ['/calisma-detay', '/hizmet-detay', '/profil'],
+  snapshotMaxAgeMs: 15 * 60 * 1000,
+  postsPageSize: 10,
+  catalogPageSize: 18,
+  railExperts: 6,
+  railServices: 3,
+  maxActiveServices: 5,
+  debounceMs: 350,
+  imageBucket: 'professional-posts',
+  imageMaxEdge: 1600,
+  imageTargetBytes: 500 * 1024,
+  imageHardLimitBytes: 1024 * 1024,
+  // WebP üretemeyen tarayıcılarda JPEG yüklemek için bucket'ın image/jpeg kabul ettiği doğrulanmalı.
+  allowJpegFallback: false
+});
+const LABELS = { works: 'Çalışmalar', experts: 'Uzmanlar', services: 'Hizmetler' };
+const SERVICE_MODES = { onsite: 'Yerinde', remote: 'Uzaktan', both: 'Yerinde + Uzaktan' };
+
+/* =========================================================================
+   2. Yardımcılar
+   ========================================================================= */
+const $ = (sel, scope = root) => scope.querySelector(sel);
+const $$ = (sel, scope = root) => [...scope.querySelectorAll(sel)];
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clean = v => (typeof v === 'string' ? v.trim() : '');
+const compact = (values, sep = ' · ') => values.filter(Boolean).join(sep);
+// PostgREST mantıksal ifadeleri için ayrı tırnaklama (URL kodlamasından bağımsız).
+const quote = v => '"' + String(v).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+const likePattern = v => '%' + String(v).replace(/\\/g, '\\\\').replace(/[%_*]/g, c => '\\' + c) + '%';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function httpUrl(value) {
+  if (!value) return '';
+  try { const u = new URL(String(value), CONFIG.siteUrl); return u.protocol === 'https:' || u.protocol === 'http:' ? u.href : ''; } catch { return ''; }
+}
+function initials(name) {
+  return clean(String(name || '')).split(/\s+/).filter(Boolean).slice(0, 2).map(w => Array.from(w)[0]).join('').toLocaleUpperCase('tr-TR');
+}
+function newId() {
+  if (window.crypto?.randomUUID) return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16)); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+function relativeTime(value) {
+  const t = new Date(value).getTime(), delta = t - Date.now(), abs = Math.abs(delta);
+  if (!Number.isFinite(delta)) return '';
+  const rtf = new Intl.RelativeTimeFormat('tr', { numeric: 'auto' });
+  if (abs < 60e3) return 'şimdi';
+  if (abs < 36e5) return rtf.format(Math.round(delta / 60e3), 'minute');
+  if (abs < 864e5) return rtf.format(Math.round(delta / 36e5), 'hour');
+  if (abs < 6048e5) return rtf.format(Math.round(delta / 864e5), 'day');
+  return new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value));
+}
+function idle(fn) { (window.requestIdleCallback || (cb => setTimeout(cb, 500)))(() => { try { fn(); } catch (e) { console.error(e); } }); }
+function webStorage(kind) { try { const s = window[kind]; s.setItem('__kisg', '1'); s.removeItem('__kisg'); return s; } catch { return null; } }
+const local = webStorage('localStorage'), sessionStore = webStorage('sessionStorage');
+const readJSON = (store, key) => { try { const v = store?.getItem(key); return v ? JSON.parse(v) : null; } catch { return null; } };
+const writeJSON = (store, key, value) => { try { store?.setItem(key, JSON.stringify(value)); } catch {} };
+const removeKey = (store, key) => { try { store?.removeItem(key); } catch {} };
+function setBusy(button, busy, label) {
+  if (!button) return;
+  button.disabled = busy;
+  if (busy && label) { button.dataset.label ??= button.textContent; button.textContent = label; }
+  else if (!busy && button.dataset.label != null) { button.textContent = button.dataset.label; delete button.dataset.label; }
+}
+function errorText(error, fallback) {
+  const m = String(error?.message || '');
+  if (/row-level security|JWT|not authenticated/i.test(m)) return 'Bu işlem için giriş yapmalısınız.';
+  if (/duplicate key/i.test(m)) return 'Bu işlem zaten yapılmış.';
+  if (/maximum|en fazla|profile_featured_order/i.test(m)) return 'En fazla 3 Çalışmayı öne çıkarabilirsiniz.';
+  return fallback || 'İşlem tamamlanamadı. Lütfen tekrar deneyin.';
+}
+const readValues = box => Object.fromEntries($$('[data-filter]', box).map(i => [i.dataset.filter, i.value.trim()]));
+const writeValues = (box, values) => $$('[data-filter]', box).forEach(i => { i.value = values?.[i.dataset.filter] || ''; });
+
+const ICONS = {
+  user: '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg>',
+  heart: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.7-7.5 1.1-1.1a5.5 5.5 0 0 0 0-7.8Z"/></svg>',
+  share: '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/></svg>',
+  pin: '<svg class="k-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/></svg>',
+  chev: '<svg class="k-chev" aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>',
+  eye: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  remote: '<svg class="k-ico" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8 20h8M12 16.5V20"/></svg>',
+  onsite: '<svg class="k-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-6h6v6"/></svg>'
+};
+const modeMeta = mode => (SERVICE_MODES[mode] ? `<span class="k-meta-item">${mode === 'remote' ? ICONS.remote : ICONS.onsite}${esc(SERVICE_MODES[mode])}</span>` : '');
+const placeMeta = text => (clean(text) ? `<span class="k-meta-item">${ICONS.pin}${esc(clean(text))}</span>` : '');
+
+const urls = {
+  profile: id => `${CONFIG.siteUrl}/profil?id=${encodeURIComponent(id)}`,
+  work: id => `${CONFIG.siteUrl}/calisma-detay?id=${encodeURIComponent(id)}`,
+  service: id => `${CONFIG.siteUrl}/hizmet-detay?id=${encodeURIComponent(id)}`,
+  view: name => CONFIG.siteUrl + CONFIG.routes[name]
+};
+
+/* Profil kimliği: mevcut sayfalardaki fallback kuralları birebir korunur. */
+const identity = {
+  // Çalışmalar feed'i: profession||title · certificate_class · current_company
+  // Alan önceliği aynı; yalnızca meslek metninde zaten yazan belge sınıfı tekrar edilmez.
+  feedLine: p => compact([p?.profession || p?.title, identity.certTag(p), p?.current_company]),
+  // Hizmetler / profil: profession, yoksa title
+  role: p => clean(p?.profession) || clean(p?.title),
+  // Profil sayfasıyla aynı kural: dolu certificate_class belirleyici, boşsa title'daki "A Sınıfı".
+  cert(p) {
+    const v = clean(p?.certificate_class);
+    if (v) return /^[ABC](?:\s|$)/i.test(v) ? v[0].toUpperCase() : '';
+    return clean(p?.title).match(/^([ABC])\s+Sınıfı(?:\s|$)/iu)?.[1]?.toUpperCase() || '';
+  },
+  // Rol metninde zaten geçmiyorsa gösterilecek kısa belge sinyali.
+  certTag(p) {
+    const c = identity.cert(p); if (!c) return '';
+    return identity.role(p).toLocaleUpperCase('tr-TR').includes(`${c} SINIFI`) ? '' : `${c} Sınıfı`;
+  }
+};
+
+function avatar(profile, size = 'md') {
+  const url = httpUrl(profile?.avatar_url), text = initials(profile?.full_name);
+  return `<span class="k-avatar k-avatar-${size}" data-initials="${esc(text)}" aria-hidden="true">${text ? esc(text) : ICONS.user}${url ? `<img src="${esc(url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ''}</span>`;
+}
+function navigateTop(url) {
+  try { (host.win || window.top).location.href = url; } catch { window.open(url, '_top'); }
+}
+
+/* =========================================================================
+   3. Host (Hostinger iframe) geometrisi
+   Uygulama iframe içindeyse sayfanın asıl scroll'u üst dokümandadır.
+   ========================================================================= */
+const host = (() => {
+  const framed = window.parent !== window;
+  let win = null, frame = null;
+  if (!framed) win = window;
+  else {
+    try { const p = window.parent; if (p.document && typeof p.location.href === 'string') { win = p; frame = window.frameElement || null; } }
+    catch { win = null; }
+  }
+  const fallbackViewport = window.innerHeight;
+  const floating = new Set();
+  let raf = 0, lastHeight = 0;
+  // Kendi iframe dokümanımızda html/body boşlukları sıfırlanır (Dokümanlar embed'iyle aynı).
+  if (framed) {
+    try {
+      const de = document.documentElement, body = document.body;
+      [de, body].forEach(n => { n.style.setProperty('margin', '0', 'important'); n.style.setProperty('padding', '0', 'important'); n.style.setProperty('height', 'auto', 'important'); n.style.setProperty('min-height', '0px', 'important'); });
+    } catch {}
+  }
+
+  /* Hostinger genişlik entegrasyonu — Dokümanlar installHostMobileWidth() yönteminin
+     Professional uyarlaması. Same-origin srcdoc iframe'den parent dokümana erişilir,
+     iframe'in ata zinciri (element wrapper → grid/layout → .block-layout → SECTION)
+     data-kisg-professional-width ile işaretlenir ve parent'a tek bir style enjekte edilir.
+     Mobil (≤920px): wrapper padding/margin/max-width kaldırılır, grid tek minmax(0,1fr) kolon olur.
+     Desktop (≥921px): .block-layout Hostinger'ın dar kolonundan çıkarılır; asıl içerik genişliğini
+     uygulamanın kendi --page-max token'ı (1360px) belirler. */
+  function installHostWidth() {
+    try {
+      if (!framed || !win || !frame) return;
+      const doc = win.document, A = 'data-kisg-professional-width', styleId = 'kisg-professional-width-v2';
+      if (!doc.getElementById(styleId)) {
+        const style = doc.createElement('style');
+        style.id = styleId;
+        style.textContent =
+          // Satır/yükseklik normalizasyonu: Hostinger tasarım satırları (grid-template-rows) ve alt satıra
+          // yerleşim, genişlik düzeltmesinden sonra iframe'in üstünde boş alan bırakmasın.
+          `[${A}="section"],[${A}="desktop-layout"],[${A}="layout"]{min-height:0!important;height:auto!important}`
+          + `[${A}="desktop-layout"],[${A}="layout"]{grid-template-rows:auto!important;grid-auto-rows:auto!important;row-gap:0!important;align-content:start!important;align-items:start!important}`
+          + `[${A}="desktop-layout"]>[${A}],[${A}="layout"]>[${A}]{grid-row:1/2!important;align-self:start!important}`
+          + `[${A}="element"],[${A}="wrapper"]{margin-top:0!important;margin-bottom:0!important;top:auto!important;bottom:auto!important;height:auto!important;min-height:0!important}`
+          + `@media (max-width:920px){[${A}]{box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:none!important;margin-left:0!important;margin-right:0!important;padding-left:0!important;padding-right:0!important}`
+          + `[${A}="layout"],[${A}="desktop-layout"]{grid-template-columns:minmax(0,1fr)!important;column-gap:0!important}`
+          + `[${A}="element"],[${A}="layout"]>[${A}],[${A}="desktop-layout"]>[${A}]{grid-column:1/-1!important;justify-self:stretch!important}`
+          + `iframe[${A}="frame"]{display:block!important;border:0!important}}`
+          + `@media (min-width:921px){[${A}="section"]{overflow:visible!important}`
+          + `[${A}="desktop-layout"]{box-sizing:border-box!important;width:min(${CONFIG.hostWidthDesktopMax}px,calc(100vw - 32px))!important;max-width:none!important;margin-left:auto!important;margin-right:auto!important;padding-left:0!important;padding-right:0!important;grid-template-columns:minmax(0,1fr)!important}`
+          // Hostinger elemanları 12 kolonluk grid'e grid-area ile yerleşir; tek kolona indirilen grid'de örtük kolona düşmesinler.
+          + `[${A}="desktop-layout"]>[${A}],[${A}="layout"]>[${A}]{grid-column:1/-1!important;justify-self:stretch!important}`
+          + `[${A}="desktop-layout"] [${A}="wrapper"],[${A}="desktop-layout"] [${A}="layout"],[${A}="desktop-layout"] [${A}="element"],iframe[${A}="frame"]{box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:none!important;margin-left:0!important;margin-right:0!important;padding-left:0!important;padding-right:0!important}}`;
+        doc.head.appendChild(style);
+      }
+      frame.setAttribute(A, 'frame');
+      let node = frame.parentElement, depth = 0;
+      while (node && node !== doc.body && depth < 8) {
+        const isSection = node.tagName === 'SECTION';
+        const isDesktopLayout = node.classList && node.classList.contains('block-layout');
+        const role = isSection ? 'section' : isDesktopLayout ? 'desktop-layout' : (win.getComputedStyle(node).display === 'grid' ? 'layout' : depth === 0 ? 'element' : 'wrapper');
+        node.setAttribute(A, role);
+        depth++;
+        if (isSection) break;
+        node = node.parentElement;
+      }
+    } catch {}
+  }
+  installHostWidth();
+
+  function url() {
+    try { if (win) return new URL(win.location.href); } catch {}
+    try { if (document.referrer) return new URL(document.referrer); } catch {}
+    try { if (/^https?:/.test(location.href)) return new URL(location.href); } catch {}
+    return new URL(CONFIG.siteUrl);
+  }
+  const scrollY = () => (win || window).scrollY;
+  function scrollTo(y, smooth = false) {
+    const w = win || window, top = Math.max(0, Math.round(y));
+    try { w.scrollTo({ top, left: w.scrollX, behavior: smooth ? 'smooth' : 'instant' }); } catch { w.scrollTo(w.scrollX, top); }
+  }
+  const frameRect = () => { try { return frame ? frame.getBoundingClientRect() : null; } catch { return null; } };
+  function shellTop() {
+    const inner = root.getBoundingClientRect().top + window.scrollY;
+    if (!framed) return inner;
+    const r = frameRect();
+    return r && win ? r.top + win.scrollY + inner : inner;
+  }
+  // İframe dokümanı koordinatlarında görünen alan. Çerçevesiz kullanımda null (CSS yeterli).
+  function visible() {
+    if (!framed || !win) return null;
+    const r = frameRect(); if (!r) return null;
+    const vh = win.visualViewport?.height || win.innerHeight;
+    const top = Math.max(0, -r.top);
+    return { top, height: Math.max(240, Math.min(window.innerHeight - top, vh - Math.max(0, r.top))) };
+  }
+  function place(el) {
+    if (!el.isConnected || (el.tagName === 'DIALOG' && !el.open)) return;
+    const box = visible();
+    if (!box) { ['top', 'bottom', 'maxHeight', 'marginTop'].forEach(k => { el.style[k] = ''; }); return; }
+    if (el.dataset.place === 'toast') { el.style.bottom = 'auto'; el.style.top = (box.top + box.height - el.offsetHeight - 16) + 'px'; return; }
+    el.style.bottom = 'auto'; el.style.marginTop = '0';
+    el.style.maxHeight = Math.max(220, box.height - 24) + 'px';
+    const h = el.getBoundingClientRect().height;
+    const sheet = el.dataset.place === 'sheet' && window.matchMedia('(max-width:640px)').matches;
+    el.style.top = (box.top + (sheet ? Math.max(12, box.height - h) : Math.max(12, (box.height - h) / 2))) + 'px';
+  }
+  function available() {
+    let viewport, top, footer = 0;
+    const r = frameRect();
+    if (framed && r && win) { viewport = win.visualViewport?.height || win.innerHeight; top = r.top + win.scrollY; }
+    else if (!framed) { viewport = window.visualViewport?.height || window.innerHeight; top = root.getBoundingClientRect().top + window.scrollY; }
+    else { viewport = fallbackViewport; top = 0; }
+    try {
+      const w = win || window, f = w.document.querySelector('footer');
+      if (f && !root.contains(f)) { const st = w.getComputedStyle(f); if (st.position !== 'fixed' && st.position !== 'absolute') footer = f.getBoundingClientRect().height; }
+    } catch {}
+    root.style.setProperty('--ka-available', Math.max(240, viewport - Math.max(0, top) - footer) + 'px');
+  }
+  // Yalnızca doğal root yüksekliği ölçülür; viewport'tan türetilmez (geri besleme döngüsü olmaz).
+  function sync() {
+    available();
+    if (framed) {
+      const h = Math.ceil(root.getBoundingClientRect().bottom + window.scrollY + (parseFloat(getComputedStyle(document.body).marginBottom) || 0));
+      if (h > 0 && h !== lastHeight) {
+        lastHeight = h;
+        try { frame?.style.setProperty('height', h + 'px', 'important'); } catch {}
+        try { window.parent.postMessage({ type: 'KISG_EMBED_HEIGHT', source: 'kisg-professional-app-v3', height: h }, CONFIG.siteUrl); } catch {}
+      }
+    }
+    floating.forEach(place);
+  }
+  function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; sync(); }); }
+  function float(el, on) { if (on) { floating.add(el); place(el); } else floating.delete(el); }
+  return { framed, win, installHostWidth, doc: win ? win.document : null, canRoute: !!win && typeof win.history?.pushState === 'function', url, scrollY, scrollTo, shellTop, sync, schedule, float, place, repositionFloating: () => floating.forEach(place) };
+})();
+
+/* =========================================================================
+   4. Tek Supabase client (SDK yüklemesi render'ı bloklamaz)
+   ========================================================================= */
+let db = null;
+const dbReady = (async () => {
+  let client = window.kisgProfessionalSupabaseClient;
+  if (!client) {
+    if (!window.supabase?.createClient) {
+      window.kisgProfessionalSdkReady ||= new Promise((resolve, reject) => {
+        const s = document.createElement('script'); s.src = CONFIG.sdkUrl; s.async = true; s.onload = resolve; s.onerror = reject; document.head.append(s);
+      });
+      try { await window.kisgProfessionalSdkReady; } catch (e) { window.kisgProfessionalSdkReady = null; throw e; }
+    }
+    client = window.kisgProfessionalSupabaseClient ||= window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+  }
+  db = client;
+  return client;
+})();
+dbReady.catch(() => {});
+const storageUrl = path => (path && db ? db.storage.from(CONFIG.imageBucket).getPublicUrl(path).data.publicUrl : '');
+
+/* =========================================================================
+   5. Oturum: tek yaşam döngüsü + ortak "ben" profili
+   ========================================================================= */
+const session = (() => {
+  const ME_KEY = 'kisg:me:v1';
+  const listeners = new Set();
+  let resolveReady;
+  const api = { user: null, me: null, known: false, revision: 0, writes: 0, ready: new Promise(r => { resolveReady = r; }) };
+  const emit = kind => listeners.forEach(fn => { try { fn(kind); } catch (e) { console.error(e); } });
+  const cachedMe = id => { const v = readJSON(local, ME_KEY); return v && v.id === id ? v : null; };
+
+  function apply(user) {
+    const next = user?.id || null;
+    const changed = !api.known || (api.user?.id || null) !== next;
+    api.user = user || null;
+    api.known = true;
+    if (!changed) return;
+    api.revision++;
+    // Önbellek yalnızca aynı kullanıcı kimliğiyle eşleşirse kullanılır; başka kullanıcıya sızmaz.
+    api.me = next ? cachedMe(next) : null;
+    if (!next) removeKey(local, ME_KEY);
+    emit('user');
+    if (next) refreshMe(next, api.revision);
+  }
+  async function refreshMe(id, rev) {
+    try {
+      const { data, error } = await db.from('profiles').select('id,full_name,avatar_url,is_discoverable').eq('id', id).maybeSingle();
+      if (error || rev !== api.revision) return;
+      api.me = { id, full_name: data?.full_name || '', avatar_url: data?.avatar_url || '', is_discoverable: data ? data.is_discoverable : null };
+      writeJSON(local, ME_KEY, api.me);
+      emit('me');
+    } catch {}
+  }
+  async function start() {
+    db.auth.onAuthStateChange((_event, s) => { setTimeout(() => apply(s?.user || null), 0); });
+    try { const { data } = await db.auth.getSession(); apply(data.session?.user || null); }
+    catch { apply(null); }
+    finally { resolveReady(); }
+  }
+  function fail() { apply(null); resolveReady(); }
+  async function signIn(email, password) {
+    const { data, error } = await db.auth.signInWithPassword({ email, password });
+    if (error || !data.session?.user) throw error || new Error('login');
+    apply(data.session.user);
+    return data.session.user;
+  }
+  async function signOut() {
+    const { error } = await db.auth.signOut({ scope: 'local' });
+    if (error) throw error;
+    removeKey(local, ME_KEY);
+    apply(null);
+  }
+  // Yazma işlemlerinden önce sunucu tarafında doğrulanmış kullanıcı.
+  async function verified() {
+    const { data, error } = await db.auth.getUser();
+    if (error || !data.user) { apply(null); return null; }
+    if (api.user?.id !== data.user.id) apply(data.user);
+    return data.user;
+  }
+  Object.assign(api, { on: fn => listeners.add(fn), start, fail, signIn, signOut, verified, refreshMe: () => api.user && refreshMe(api.user.id, api.revision) });
+  return api;
+})();
+
+/* =========================================================================
+   6. UI temel parçaları: toast, dialog, popover, onay, filtre paneli
+   ========================================================================= */
+const toastEl = $('[data-toast]');
+const toastPopover = typeof toastEl.showPopover === 'function';
+if (toastPopover) toastEl.removeAttribute('hidden'); else toastEl.removeAttribute('popover');
+toastEl.dataset.place = 'toast';
+function toast(message) {
+  clearTimeout(toast.timer);
+  toastEl.textContent = message;
+  if (toastPopover) { try { toastEl.hidePopover(); } catch {} try { toastEl.showPopover(); } catch {} } else toastEl.hidden = false;
+  host.float(toastEl, true);
+  toast.timer = setTimeout(() => {
+    if (toastPopover) { try { toastEl.hidePopover(); } catch {} } else toastEl.hidden = true;
+    host.float(toastEl, false);
+  }, 3000);
+}
+
+const dialogs = {
+  triggers: new WeakMap(),
+  open(d, place = 'center') {
+    if (d.open) return;
+    $$('dialog[open]').forEach(x => { if (x !== d) this.close(x); });
+    this.triggers.set(d, document.activeElement);
+    d.dataset.place = place;
+    d.showModal();
+    host.float(d, true);
+  },
+  close(d) { if (!d.open || d.dataset.locked === 'true') return false; d.close(); return true; },
+  lock(d, on) { d.dataset.locked = on ? 'true' : 'false'; }
+};
+$$('dialog').forEach(d => {
+  d.addEventListener('cancel', e => { e.preventDefault(); dialogs.close(d); });
+  d.addEventListener('close', () => {
+    host.float(d, false);
+    ['top', 'bottom', 'maxHeight', 'marginTop'].forEach(k => { d.style[k] = ''; });
+    const t = dialogs.triggers.get(d); if (t?.isConnected) t.focus({ preventScroll: true });
+  });
+  d.addEventListener('click', e => {
+    if (e.target !== d) return;
+    const r = d.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) dialogs.close(d);
+  });
+});
+
+root.addEventListener('click', e => {
+  const btn = e.target instanceof Element ? e.target.closest('[data-close]') : null;
+  const d = btn?.closest('dialog');
+  if (d) dialogs.close(d);
+});
+
+function closePopovers(except) {
+  $$('.k-popover:not([hidden])').forEach(p => {
+    if (p === except) return;
+    p.hidden = true;
+    p.previousElementSibling?.setAttribute('aria-expanded', 'false');
+  });
+}
+function togglePopover(trigger) {
+  const pop = trigger.nextElementSibling; if (!pop) return;
+  const open = pop.hidden;
+  closePopovers(pop);
+  pop.hidden = !open;
+  trigger.setAttribute('aria-expanded', String(open));
+}
+
+const confirmBox = (() => {
+  const d = $('#kaConfirmDialog'), ok = $('#kaConfirmOk');
+  let resolver = null;
+  ok.addEventListener('click', () => { const r = resolver; resolver = null; d.close(); r?.(true); });
+  d.addEventListener('close', () => { const r = resolver; resolver = null; r?.(false); });
+  return ({ title, text, confirm = 'Onayla' }) => new Promise(resolve => {
+    $('#kaConfirmTitle').textContent = title; $('#kaConfirmText').textContent = text; ok.textContent = confirm;
+    resolver = resolve; dialogs.open(d);
+  });
+})();
+
+const filterSheet = (() => {
+  const d = $('#kaFilterDialog'), body = $('[data-filter-body]', d);
+  let current = null;
+  $('#kaFilterForm').addEventListener('submit', e => { e.preventDefault(); const v = readValues(body); const c = current; dialogs.close(d); c?.apply(v); });
+  $('[data-filter-clear]', d).addEventListener('click', () => writeValues(body, current?.blank || {}));
+  return {
+    open({ title, markup, values, blank, apply }) {
+      current = { blank, apply };
+      $('#kaFilterTitle').textContent = title;
+      body.innerHTML = markup;
+      writeValues(body, values);
+      dialogs.open(d, 'sheet');
+    }
+  };
+})();
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch {}
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;width:1px;height:1px';
+  const active = document.activeElement; root.append(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch {}
+  ta.remove(); active?.focus?.({ preventScroll: true });
+  return ok;
+}
+async function shareLink({ url, title, text, copied = 'Bağlantı kopyalandı.' }) {
+  if (navigator.share) { try { await navigator.share({ title, text, url }); return; } catch (e) { if (e?.name === 'AbortError') return; } }
+  toast((await copyText(url)) ? copied : 'Bağlantı kopyalanamadı.');
+}
+
+/* =========================================================================
+   7. Hesap alanı + giriş
+   ========================================================================= */
+function meAvatarMarkup() {
+  const me = session.me;
+  if (!session.user) return ICONS.user;
+  const url = httpUrl(me?.avatar_url), text = initials(me?.full_name);
+  return `${text ? esc(text) : ICONS.user}${url ? `<img src="${esc(url)}" alt="" decoding="async" referrerpolicy="no-referrer">` : ''}`;
+}
+const authUI = (() => {
+  const account = $('.ka-account'), slot = $('[data-me-avatar]');
+  const dlg = $('#kaLoginDialog'), email = $('#kaLoginEmail'), password = $('#kaLoginPassword'), err = $('#kaLoginError'), submit = $('#kaLoginSubmit');
+  let pending = null, busy = false;
+
+  function render(kind) {
+    account.dataset.state = !session.known ? 'loading' : session.user ? 'user' : 'guest';
+    if (kind === 'user') closePopovers();
+    slot.dataset.initials = initials(session.me?.full_name);
+    slot.innerHTML = meAvatarMarkup();
+    $('[data-me-name]').textContent = session.user ? (clean(session.me?.full_name).split(/\s+/)[0] || '') : '';
+    if (session.user) {
+      const p = urls.profile(session.user.id);
+      $('[data-me-link="profile"]').href = p;
+      $('[data-me-link="works"]').href = p + '#calismalar';
+      $('[data-me-link="services"]').href = p + '#hizmetler';
+    }
+  }
+  function open() {
+    err.hidden = true;
+    dialogs.open(dlg);
+    setTimeout(() => email.focus({ preventScroll: true }), 30);
+  }
+  // Oturum hazır olunca kullanıcıyı döndürür; yoksa giriş açar ve başarıdan sonra resume çalışır.
+  async function require(resume) {
+    await session.ready;
+    if (session.user) return session.user;
+    pending = typeof resume === 'function' ? resume : null;
+    open();
+    return null;
+  }
+  $('#kaLoginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (busy) return;
+    if (!email.value.trim() || !password.value) { err.textContent = 'E-posta ve şifrenizi girin.'; err.hidden = false; return; }
+    busy = true; err.hidden = true; dialogs.lock(dlg, true); setBusy(submit, true, 'Giriş yapılıyor...');
+    let ok = false;
+    try {
+      await dbReady;
+      await session.signIn(email.value.trim(), password.value);
+      ok = true;
+    } catch (error) {
+      err.textContent = error?.code === 'email_not_confirmed' ? 'Giriş yapmadan önce e-posta adresinizi doğrulayın.'
+        : error?.status === 429 ? 'Çok fazla deneme yapıldı. Biraz sonra tekrar deneyin.'
+        : 'Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.';
+      err.hidden = false;
+    } finally { busy = false; dialogs.lock(dlg, false); setBusy(submit, false); }
+    if (!ok) return;
+    const resume = pending; pending = null;
+    password.value = '';
+    dialogs.close(dlg);
+    if (resume) { try { await resume(); } catch { toast('Giriş yapıldı. Lütfen yapmak istediğiniz işleme tekrar basın.'); } }
+  });
+  dlg.addEventListener('close', () => { password.value = ''; if (!busy) pending = null; });
+
+  root.addEventListener('click', async e => {
+    const t = e.target instanceof Element ? e.target : null; if (!t) return;
+    if (t.closest('[data-action="login"]')) { await session.ready; if (!session.user) open(); return; }
+    const out = t.closest('[data-action="signout"]');
+    if (out) {
+      if (session.writes > 0) { toast('Kayıt tamamlandıktan sonra çıkış yapabilirsiniz.'); return; }
+      setBusy(out, true, 'Çıkılıyor...');
+      try { await session.signOut(); toast('Çıkış yapıldı.'); } catch { toast('Çıkış yapılamadı. Lütfen tekrar deneyin.'); }
+      finally { setBusy(out, false); }
+    }
+  });
+  return { render, require, open };
+})();
+const requireUser = resume => authUI.require(resume);
+
+/* =========================================================================
+   8. Görünüm: Çalışmalar
+   ========================================================================= */
+function createWorksView() {
+  const el = $('[data-view="works"]');
+  const list = $('[data-list]', el), more = $('[data-more]', el), notice = $('[data-notice]', el);
+  const sideExperts = $('[data-side-experts]', el), sideServices = $('[data-side-services]', el);
+  const composerAvatar = $('[data-composer-avatar]', el);
+  const d = {
+    root: $('#kaPostDialog'), form: $('#kaPostForm'), title: $('#kaPostTitle'), content: $('#kaPostContent'), file: $('#kaPostImage'),
+    label: $('[data-photo-label]'), preview: $('#kaPostPreview'), category: $('#kaPostCategory'), error: $('#kaPostError'), submit: $('#kaPostSubmit')
+  };
+  const removeImageBtn = $('[data-remove-image]', d.preview);
+  const POST_SELECT = 'id,user_id,content,image_path,profile_featured_order,created_at,updated_at,category:professional_post_categories(id,name),author:profiles!professional_posts_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company),likes:professional_post_likes(count)';
+  const s = {
+    mounted: false, posts: [], cursor: null, hasMore: true, loading: false, queuedReset: false,
+    experts: [], services: [], expertsFailed: false, servicesFailed: false,
+    categories: [], categoriesReady: false, categoriesPromise: null,
+    liking: new Set(), likeStamp: 0, ownerBusy: false, edit: null, file: null, previewUrl: null, saving: false
+  };
+  const find = id => s.posts.find(p => p.id === id);
+  const cardOf = id => list.querySelector(`[data-post-id="${CSS.escape(id)}"]`);
+  const isOwn = p => !!session.user && p.user_id === session.user.id;
+  const normalize = row => ({ ...row, liked: false, like_count: Math.max(0, Number(row.likes?.[0]?.count) || 0) });
+
+  /* ---- Render ---- */
+  function ownerMenu(p) {
+    if (!isOwn(p)) return '';
+    return `<button type="button" class="kw-more-btn" data-popover-trigger aria-label="Çalışma seçenekleri" aria-expanded="false">···</button><div class="k-popover kw-menu" hidden>`
+      + `<button type="button" data-post-action="edit">Düzenle</button>`
+      + `<button type="button" data-post-action="feature">${p.profile_featured_order ? 'Öne çıkandan kaldır' : 'Profilde öne çıkar'}</button>`
+      + `<button type="button" class="is-danger" data-post-action="delete">Sil</button></div>`;
+  }
+  const likeNum = p => (p.like_count > 0 ? String(p.like_count) : '');
+  function actions(p) {
+    const like = isOwn(p)
+      ? `<span class="kw-likes-static" data-like-static${p.like_count > 0 ? '' : ' hidden'}>${ICONS.heart}<span data-like-count>${likeNum(p)}</span><span class="k-sr"> beğeni</span></span>`
+      : `<button type="button" class="kw-act-like${p.liked ? ' is-liked' : ''}" data-post-action="like" aria-pressed="${p.liked}"${s.liking.has(p.id) ? ' disabled' : ''}>${ICONS.heart}<span class="kw-like-num" data-like-count>${likeNum(p)}</span><span>Beğen</span></button>`;
+    return `${like}<a class="kw-act" href="${esc(urls.work(p.id))}" target="_top">${ICONS.eye}<span>Çalışmayı Gör</span></a><button type="button" class="kw-act" data-post-action="share">${ICONS.share}<span>Paylaş</span></button>`;
+  }
+  // Uzun Çalışma feed'de kırpılır; tamamı Çalışma Detay'da okunur.
+  const isLong = text => text.length > 520 || (text.match(/\n/g) || []).length > 9;
+  function card(p, eager = false) {
+    const a = p.author || {}, image = storageUrl(p.image_path), profile = urls.profile(p.user_id), work = urls.work(p.id), line = identity.feedLine(a);
+    const long = p.content ? isLong(p.content) : false;
+    const edited = p.updated_at && p.updated_at !== p.created_at ? ' · düzenlendi' : '';
+    return `<article class="kw-post" data-post-id="${esc(p.id)}">`
+      + `<header class="kw-post-head"><a class="kw-post-avatar" href="${esc(profile)}" target="_top" aria-label="${esc(a.full_name || 'Kullanıcı')} profiline git">${avatar(a, 'lg')}</a>`
+      + `<div class="kw-post-who"><div class="kw-post-name-row"><a class="kw-post-author-link" href="${esc(profile)}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a><span class="k-badge">ÇALIŞMA</span></div>`
+      + `<div class="kw-post-sub">${line ? `<span class="kw-post-profession" title="${esc(line)}">${esc(line)}</span>` : ''}<span class="kw-post-time"><time datetime="${esc(p.created_at)}">${esc(relativeTime(p.created_at))}</time>${edited}</span></div></div>`
+      + `<div class="kw-owner" data-owner-slot>${ownerMenu(p)}</div></header>`
+      + (p.content ? `<a class="kw-post-detail kw-post-body" href="${esc(work)}" target="_top"><p class="kw-post-content${long ? ' is-clamped' : ''}">${esc(p.content)}</p></a>` : '')
+      + (long ? `<a class="kw-more-link" href="${esc(work)}" target="_top">Devamını oku</a>` : '')
+      + (p.category?.name ? `<div class="kw-post-tags"><span class="k-tag">${esc(p.category.name)}</span></div>` : '')
+      + (image ? `<a class="kw-post-detail kw-post-media" href="${esc(work)}" target="_top"><img class="kw-post-image" src="${esc(image)}" alt="${esc((p.content || 'Çalışma görseli').slice(0, 120))}" loading="${eager ? 'eager' : 'lazy'}" decoding="async"></a>` : '')
+      + `<div class="kw-post-actions" data-actions>${actions(p)}</div></article>`;
+  }
+  const emptyMarkup = '<div class="kw-post kw-empty-card"><div class="kw-empty"><strong>Henüz Çalışma yok</strong><p>Sahada yaptığın bir uygulamayı, gözlemini veya öğrendiğin bir şeyi paylaşarak ilk Çalışmayı sen başlat.</p><button type="button" class="k-btn k-btn-primary" data-composer>İlk Çalışmayı paylaş</button></div></div>';
+  function patchLike(p) {
+    const c = cardOf(p.id); if (!c) return;
+    const b = $('[data-post-action="like"]', c);
+    if (b) { b.classList.toggle('is-liked', p.liked); b.setAttribute('aria-pressed', String(p.liked)); b.disabled = s.liking.has(p.id); }
+    $$('[data-like-count]', c).forEach(n => { n.textContent = likeNum(p); });
+    const st = $('[data-like-static]', c); if (st) st.hidden = p.like_count <= 0;
+  }
+  // Kimlik değişince yalnızca sahiplik bölgeleri yenilenir; görseller ve metin yeniden kurulmaz.
+  function patchOwnership(p) {
+    const c = cardOf(p.id); if (!c) return;
+    $('[data-owner-slot]', c).innerHTML = ownerMenu(p);
+    $('[data-actions]', c).innerHTML = actions(p);
+    patchLike(p);
+  }
+  function renderAll(eager = false) {
+    list.innerHTML = s.posts.length ? s.posts.map(p => card(p, eager)).join('') : emptyMarkup;
+    placeRails(); renderLive();
+    more.hidden = !s.hasMore || !s.posts.length;
+  }
+  function showNotice(text) {
+    notice.innerHTML = `<span>${esc(text)}</span><button type="button" class="k-btn" data-retry>Yeniden dene</button>`;
+    notice.hidden = false;
+  }
+
+  /* ---- Keşif alanları (masaüstü kenar + mobil şerit) ---- */
+  function personRow(p) {
+    const role = identity.role(p) || identity.feedLine(p);
+    const cert = identity.certTag(p);
+    return `<a class="kw-person" href="${esc(urls.profile(p.id))}" target="_top">${avatar(p, 'lg')}<span class="kw-person-copy"><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>`
+      + (role || cert ? `<span class="kw-person-role">${esc(compact([role, cert]))}</span>` : '')
+      + (clean(p.city) ? `<span class="kw-person-meta">${placeMeta(p.city)}</span>` : '')
+      + `</span>${ICONS.chev}</a>`;
+  }
+  function offerRow(v) {
+    const p = v.provider;
+    return `<a class="kw-offer" href="${esc(urls.service(v.id))}" target="_top">${p ? avatar(p, 'lg') : '<span class="k-avatar k-avatar-lg" aria-hidden="true"></span>'}<span class="kw-offer-copy">`
+      + `<strong>${esc(v.title)}</strong>`
+      + (p?.full_name ? `<span class="kw-offer-by">${esc(p.full_name)}</span>` : '')
+      + (p && identity.role(p) ? `<span class="kw-offer-role">${esc(identity.role(p))}</span>` : '')
+      + `<span class="kw-offer-meta">${modeMeta(v.service_mode)}${placeMeta(v.service_region)}</span>`
+      + `</span>${ICONS.chev}</a>`;
+  }
+  function renderSide() {
+    sideExperts.innerHTML = s.experts.length ? s.experts.map(personRow).join('')
+      : `<div class="k-muted-note">${s.expertsFailed ? 'Uzmanlar şu anda görüntülenemiyor.' : 'Henüz görünür uzman yok.'}</div>`;
+    sideServices.innerHTML = s.services.length ? s.services.map(offerRow).join('')
+      : `<div class="k-muted-note">${s.servicesFailed ? 'Hizmetler şu anda görüntülenemiyor.' : 'Henüz yayınlanmış hizmet yok. İlk hizmeti sen yayınla.'}</div>`;
+  }
+  const railExperts = () => `<section class="kw-rail kw-rail-experts" aria-label="İSG profesyonellerini keşfet"><div class="kw-rail-head"><h2>İSG profesyonellerini keşfet</h2><a href="${esc(urls.view('experts'))}" target="_top" data-view-link="experts">Tümü →</a></div><div class="kw-rail-track">${s.experts.map(p => {
+    const role = identity.role(p) || identity.feedLine(p), meta = compact([identity.certTag(p), clean(p.city)]);
+    return `<a class="kw-rail-expert" href="${esc(urls.profile(p.id))}" target="_top">${avatar(p, 'xl')}<strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${role ? `<span>${esc(role)}</span>` : ''}${meta ? `<span>${esc(meta)}</span>` : ''}</a>`;
+  }).join('')}</div></section>`;
+  const railServices = () => `<section class="kw-rail kw-rail-services" aria-label="Sunulan hizmetler"><div class="kw-rail-head"><h2>Sunulan hizmetler</h2><a href="${esc(urls.view('services'))}" target="_top" data-view-link="services">Tümü →</a></div><div class="kw-rail-track">${s.services.map(v => `<a class="kw-rail-service" href="${esc(urls.service(v.id))}" target="_top"><span class="kw-rail-cat">${esc(v.category?.name || 'Hizmet')}</span><strong>${esc(v.title)}</strong>${v.provider ? `<span class="kw-rail-by">${avatar(v.provider, 'xs')}<span>${esc(v.provider.full_name || '')}</span></span>` : ''}<span class="kw-offer-meta">${modeMeta(v.service_mode)}${placeMeta(v.service_region)}</span></a>`).join('')}</div></section>`;
+  function renderLive() {
+    const live = $('[data-live]', el), first = s.posts[0];
+    if (!first) { live.hidden = true; return; }
+    $('[data-live-text]', live).textContent = `Son Çalışma ${relativeTime(first.created_at)} paylaşıldı`;
+    live.hidden = false;
+  }
+  function placeRails() {
+    $$('.kw-rail', list).forEach(n => n.remove());
+    const cards = $$('[data-post-id]', list); if (!cards.length) return;
+    const ei = Math.min(3, cards.length) - 1;
+    const si = Math.min(Math.max(ei + 3, 6), cards.length) - 1;
+    if (s.services.length) cards[si].insertAdjacentHTML('afterend', railServices());
+    if (s.experts.length) cards[ei].insertAdjacentHTML('afterend', railExperts());
+  }
+  async function loadRails({ experts = true, services = true } = {}) {
+    try { await dbReady; } catch { s.expertsFailed = s.servicesFailed = true; renderSide(); return; }
+    const jobs = [];
+    if (experts) jobs.push((async () => {
+      try {
+        const { data, error } = await db.from('profiles').select('id,full_name,avatar_url,profession,title,certificate_class,current_company,city').eq('is_discoverable', true).order('last_post_at', { ascending: false, nullsFirst: false }).limit(CONFIG.railExperts);
+        if (error) throw error; s.experts = data || []; s.expertsFailed = false;
+      } catch { s.experts = []; s.expertsFailed = true; }
+    })());
+    if (services) jobs.push((async () => {
+      try {
+        const { data, error } = await db.from('professional_services').select('id,title,service_region,service_mode,category:professional_service_categories(name),provider:profiles!professional_services_user_id_fkey(full_name,avatar_url,profession,title,certificate_class)').eq('status', 'active').order('created_at', { ascending: false }).limit(CONFIG.railServices);
+        if (error) throw error; s.services = data || []; s.servicesFailed = false;
+      } catch { s.services = []; s.servicesFailed = true; }
+    })());
+    await Promise.all(jobs);
+    renderSide(); placeRails(); host.schedule();
+  }
+
+  /* ---- Feed: public sorgu oturumu beklemeden başlar ---- */
+  async function loadPosts({ reset = false } = {}) {
+    if (s.loading) { if (reset) s.queuedReset = true; return; }
+    if (!reset && !s.hasMore) return;
+    s.loading = true; setBusy(more, true, 'Yükleniyor...');
+    if (reset) notice.hidden = true;
+    try {
+      await dbReady;
+      const cursor = reset ? null : s.cursor;
+      let q = db.from('professional_posts').select(POST_SELECT).eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(CONFIG.postsPageSize);
+      if (cursor) q = q.or(`created_at.lt.${quote(cursor.created_at)},and(created_at.eq.${quote(cursor.created_at)},id.lt.${quote(cursor.id)})`);
+      const { data, error } = await q;
+      if (error) throw error;
+      await session.ready; // sahiplik doğru çizilsin; sorgu zaten paralel çalıştı
+      const page = (data || []).map(normalize);
+      if (reset) { s.posts = []; list.innerHTML = ''; }
+      const known = new Set(s.posts.map(p => p.id));
+      const fresh = page.filter(p => !known.has(p.id));
+      s.posts.push(...fresh);
+      s.hasMore = page.length === CONFIG.postsPageSize;
+      const last = page[page.length - 1];
+      if (last) s.cursor = { created_at: last.created_at, id: last.id }; else if (reset) s.cursor = null;
+      $('.kw-empty-card', list)?.remove();
+      $$('.kw-sk', list).forEach(n => n.remove());
+      if (s.posts.length) list.insertAdjacentHTML('beforeend', fresh.map(p => card(p)).join('')); else list.innerHTML = emptyMarkup;
+      placeRails(); renderLive();
+      more.hidden = !s.hasMore || !s.posts.length;
+      notice.hidden = true;
+      syncLikes(fresh.map(p => p.id));
+    } catch {
+      $$('.kw-sk', list).forEach(n => n.remove());
+      showNotice('Çalışmalar şu anda yüklenemedi.');
+    } finally {
+      s.loading = false; setBusy(more, false); host.schedule();
+      if (s.queuedReset) { s.queuedReset = false; loadPosts({ reset: true }); }
+    }
+  }
+  async function syncLikes(ids) {
+    const uid = session.user?.id; if (!uid || !ids.length) return;
+    const rev = session.revision, stamp = s.likeStamp;
+    try {
+      const liked = new Set();
+      for (let i = 0; i < ids.length; i += 100) {
+        const { data, error } = await db.from('professional_post_likes').select('post_id').eq('user_id', uid).in('post_id', ids.slice(i, i + 100));
+        if (error) throw error;
+        (data || []).forEach(r => liked.add(r.post_id));
+      }
+      if (rev !== session.revision) return;
+      ids.forEach(id => { const p = find(id); if (p && !s.liking.has(id) && !(p._likeStamp > stamp)) { p.liked = liked.has(id); patchLike(p); } });
+    } catch {}
+  }
+
+  /* ---- Beğeni ---- */
+  async function toggleLike(id) {
+    const p = find(id); if (!p) return;
+    const user = await requireUser(() => likeAfterLogin(id)); if (!user) return;
+    if (p.user_id === user.id || s.liking.has(id)) return;
+    const was = p.liked, old = p.like_count;
+    s.liking.add(id); p._likeStamp = ++s.likeStamp;
+    p.liked = !was; p.like_count = Math.max(0, old + (was ? -1 : 1)); patchLike(p);
+    if (p.liked) { const b = cardOf(id)?.querySelector('[data-post-action="like"]'); if (b) { b.classList.remove('is-pop'); void b.offsetWidth; b.classList.add('is-pop'); setTimeout(() => b.classList.remove('is-pop'), 400); } }
+    try {
+      const { error } = await (was
+        ? db.from('professional_post_likes').delete().eq('post_id', id).eq('user_id', user.id)
+        : db.from('professional_post_likes').insert({ post_id: id, user_id: user.id }));
+      if (error) throw error;
+    } catch (e) {
+      p.like_count = old; if (session.user?.id === user.id) p.liked = was;
+      toast(errorText(e));
+    } finally { s.liking.delete(id); patchLike(p); }
+  }
+  // Girişten sonra: zaten beğenilmişse geri almaz, yalnızca beğenilmemişse beğenir.
+  async function likeAfterLogin(id) {
+    const p = find(id), uid = session.user?.id;
+    if (!p || !uid) return;
+    if (p.user_id === uid) { patchOwnership(p); return; }
+    const { data, error } = await db.from('professional_post_likes').select('post_id').eq('post_id', id).eq('user_id', uid).maybeSingle();
+    if (error) { toast('Beğeni durumu alınamadı. Lütfen tekrar deneyin.'); return; }
+    if (session.user?.id !== uid) return;
+    p.liked = Boolean(data); patchLike(p);
+    if (!p.liked) await toggleLike(id);
+  }
+
+  /* ---- Sahip işlemleri ---- */
+  async function setFeatured(p) {
+    if (!isOwn(p) || s.ownerBusy) return;
+    s.ownerBusy = true; const uid = session.user.id;
+    try {
+      let value = null;
+      if (!p.profile_featured_order) {
+        const { data, error } = await db.from('professional_posts').select('profile_featured_order').eq('user_id', uid).eq('status', 'active').not('profile_featured_order', 'is', null);
+        if (error) throw error;
+        const used = new Set((data || []).map(r => r.profile_featured_order));
+        value = [1, 2, 3].find(o => !used.has(o));
+        if (!value) { toast('En fazla 3 Çalışmayı öne çıkarabilirsiniz.'); return; }
+      }
+      const { error } = await db.from('professional_posts').update({ profile_featured_order: value }).eq('id', p.id).eq('user_id', uid).eq('status', 'active').select('id').single();
+      if (error) throw error;
+      p.profile_featured_order = value; patchOwnership(p);
+      toast(value ? 'Çalışma profilinizde öne çıkarıldı.' : 'Çalışma öne çıkandan kaldırıldı.');
+    } catch (e) { toast(errorText(e)); } finally { s.ownerBusy = false; }
+  }
+  async function deletePost(p) {
+    if (!isOwn(p) || s.ownerBusy) return;
+    if (!(await confirmBox({ title: 'Çalışmayı sil', text: 'Bu Çalışmayı silmek istediğinize emin misiniz?', confirm: 'Sil' }))) return;
+    if (!isOwn(p)) return;
+    s.ownerBusy = true;
+    try {
+      const { error } = await db.from('professional_posts').update({ status: 'deleted', profile_featured_order: null }).eq('id', p.id).eq('user_id', session.user.id).select('id').single();
+      if (error) throw error;
+      s.posts = s.posts.filter(x => x.id !== p.id);
+      cardOf(p.id)?.remove();
+      if (!s.posts.length) renderAll(); else { placeRails(); renderLive(); }
+      toast('Çalışma silindi.'); host.schedule();
+    } catch (e) { toast(errorText(e, 'Çalışma silinemedi.')); } finally { s.ownerBusy = false; }
+  }
+
+  /* ---- Kategoriler + yayınlama ---- */
+  function fillCategories(extra) {
+    const selected = d.category.value;
+    d.category.innerHTML = '<option value="">Kategori seçme</option>' + s.categories.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+    if (extra?.id && !s.categories.some(c => c.id === extra.id)) d.category.add(new Option(extra.name || 'Mevcut kategori', extra.id));
+    d.category.value = selected;
+  }
+  function ensureCategories() {
+    if (s.categoriesReady) return Promise.resolve();
+    s.categoriesPromise ||= (async () => {
+      await dbReady;
+      const { data, error } = await db.from('professional_post_categories').select('id,name').eq('is_active', true).order('sort_order').order('name');
+      if (error) throw error;
+      s.categories = data || []; s.categoriesReady = true;
+    })().finally(() => { s.categoriesPromise = null; });
+    return s.categoriesPromise;
+  }
+  function showPreview(url) { $('img', d.preview).src = url; d.preview.hidden = false; d.label.textContent = 'Fotoğrafı Değiştir'; }
+  function clearPreview() {
+    if (s.previewUrl) URL.revokeObjectURL(s.previewUrl);
+    s.previewUrl = null; d.preview.hidden = true; $('img', d.preview).removeAttribute('src'); d.file.value = '';
+    d.label.textContent = 'Fotoğraf Ekle';
+  }
+  function formError(text) { d.error.textContent = text; d.error.hidden = !text; }
+  async function openComposer(post = null, intent = '') {
+    const user = await requireUser(() => openComposer(post, intent)); if (!user) return;
+    if (s.saving || d.root.open || (post && post.user_id !== user.id)) return;
+    s.edit = post; s.file = null; clearPreview();
+    d.title.textContent = post ? 'Çalışmayı Düzenle' : 'Yeni Çalışma';
+    d.submit.textContent = post ? 'Değişiklikleri Kaydet' : 'Çalışmayı Yayınla';
+    d.content.value = post?.content || '';
+    fillCategories(post?.category);
+    d.category.value = post?.category?.id || '';
+    formError('');
+    if (post?.image_path) showPreview(storageUrl(post.image_path));
+    dialogs.open(d.root, 'sheet');
+    const fileLabel = d.file.closest('.k-file-button');
+    fileLabel.classList.toggle('is-called', intent === 'photo');
+    setTimeout(() => (intent === 'photo' ? d.file : d.content).focus({ preventScroll: true }), 30);
+    if (!s.categoriesReady) {
+      d.category.disabled = true;
+      ensureCategories().then(() => { fillCategories(s.edit?.category); if (s.edit?.category?.id && !d.category.value) d.category.value = s.edit.category.id; d.category.disabled = false; })
+        .catch(() => toast('Çalışma alanları yüklenemedi; mevcut kategori korunacak.'));
+    }
+  }
+  async function compressImage(file) {
+    const fail = m => Object.assign(new Error(m), { userMessage: m });
+    if (!file.type.startsWith('image/') && !/\.(heic|heif)$/i.test(file.name)) throw fail('Lütfen geçerli bir görsel seçin.');
+    let bitmap;
+    try { bitmap = await createImageBitmap(file); } catch { throw fail('Görsel açılamadı. Lütfen JPEG, PNG veya WebP seçin.'); }
+    const scale = Math.min(1, CONFIG.imageMaxEdge / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale)); canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    try { canvas.getContext('2d', { alpha: false }).drawImage(bitmap, 0, 0, canvas.width, canvas.height); } finally { bitmap.close?.(); }
+    const encode = async type => { let quality = 0.86, blob; do { blob = await new Promise(r => canvas.toBlob(r, type, quality)); quality -= 0.08; } while (blob && blob.size > CONFIG.imageTargetBytes && quality >= 0.46); return blob; };
+    let blob = await encode('image/webp'), ext = 'webp';
+    if (!blob || blob.type !== 'image/webp') {
+      if (!CONFIG.allowJpegFallback) throw fail('Görsel dönüştürülemedi.');
+      blob = await encode('image/jpeg'); ext = 'jpg';
+      if (!blob || blob.type !== 'image/jpeg') throw fail('Görsel dönüştürülemedi.');
+    }
+    if (blob.size > CONFIG.imageHardLimitBytes) throw fail('Görsel 1 MB sınırının altına indirilemedi. Daha küçük bir görsel seçin.');
+    return { blob, ext, type: blob.type };
+  }
+  async function fetchPost(id) {
+    const { data, error } = await db.from('professional_posts').select(POST_SELECT).eq('id', id).eq('status', 'active').maybeSingle();
+    if (error) throw error;
+    return data ? normalize(data) : null;
+  }
+  // Kaydedilen Çalışma feed'e yerinde yansıtılır; tüm liste yeniden yüklenmez, scroll kaymaz.
+  async function reflectSaved(id, previous) {
+    try {
+      const fresh = await fetchPost(id);
+      if (previous) {
+        const old = find(id), c = cardOf(id);
+        if (!fresh) { s.posts = s.posts.filter(p => p.id !== id); c?.remove(); if (!s.posts.length) renderAll(); else placeRails(); return; }
+        fresh.liked = old?.liked || false;
+        s.posts = s.posts.map(p => (p.id === id ? fresh : p));
+        if (c) c.outerHTML = card(fresh);
+      } else if (fresh) {
+        s.posts.unshift(fresh);
+        $('.kw-empty-card', list)?.remove();
+        list.insertAdjacentHTML('afterbegin', card(fresh));
+        placeRails(); renderLive();
+        more.hidden = !s.hasMore;
+      }
+      host.schedule();
+    } catch { loadPosts({ reset: true }); }
+  }
+  async function savePost(e) {
+    e.preventDefault();
+    if (s.saving) return;
+    if (!session.user) { formError('Bu işlem için giriş yapmalısınız.'); return; }
+    const current = s.edit;
+    const content = d.content.value.trim();
+    const categoryId = s.categoriesReady ? (d.category.value || null) : (current?.category?.id || null);
+    const removingExisting = !!current?.image_path && d.preview.hidden && !s.file;
+    if (!content && !s.file && (!current?.image_path || removingExisting)) { formError('Çalışma için metin veya görsel ekleyin.'); return; }
+    const userId = session.user.id, file = s.file;
+    s.saving = true; session.writes++; dialogs.lock(d.root, true);
+    d.file.disabled = true; removeImageBtn.disabled = true; formError('');
+    setBusy(d.submit, true, current ? 'Kaydediliyor...' : 'Yayınlanıyor...');
+    let newPath = current?.image_path || null, uploaded = false, committed = false, savedId = null;
+    try {
+      const postId = current?.id || newId();
+      if (file) {
+        const img = await compressImage(file);
+        newPath = `${userId}/${postId}-${newId()}.${img.ext}`;
+        if (session.user?.id !== userId) throw new Error('Oturum değişti.');
+        const { error } = await db.storage.from(CONFIG.imageBucket).upload(newPath, img.blob, { contentType: img.type, upsert: false });
+        if (error) throw error;
+        uploaded = true;
+      } else if (removingExisting) newPath = null;
+      if (session.user?.id !== userId) throw new Error('Oturum değişti.');
+      const payload = { content: content || null, category_id: categoryId, image_path: newPath };
+      const result = current
+        ? await db.from('professional_posts').update(payload).eq('id', current.id).eq('user_id', userId).eq('status', 'active').select('id').single()
+        : await db.from('professional_posts').insert({ id: postId, user_id: userId, ...payload, status: 'active' }).select('id').single();
+      if (result.error) throw result.error;
+      committed = true; savedId = result.data.id;
+      if (current?.image_path && current.image_path !== newPath) { try { await db.storage.from(CONFIG.imageBucket).remove([current.image_path]); } catch {} }
+    } catch (err) {
+      console.warn('Çalışma kaydedilemedi:', err?.code || err?.message || err);
+      if (uploaded && !committed && newPath) { try { await db.storage.from(CONFIG.imageBucket).remove([newPath]); } catch {} }
+      formError(err?.userMessage || errorText(err, 'Çalışma kaydedilemedi.'));
+    } finally {
+      s.saving = false; session.writes--; dialogs.lock(d.root, false);
+      d.file.disabled = false; removeImageBtn.disabled = false; setBusy(d.submit, false);
+    }
+    if (!committed) return;
+    dialogs.close(d.root);
+    toast(current ? 'Çalışma güncellendi.' : 'Çalışma yayınlandı.');
+    await reflectSaved(savedId, current);
+    loadRails({ experts: true, services: false });
+  }
+
+  /* ---- Olaylar ---- */
+  el.addEventListener('click', e => {
+    const t = e.target instanceof Element ? e.target : null; if (!t) return;
+    const composer = t.closest('[data-composer]'); if (composer) { openComposer(null, composer.dataset.composerIntent || ''); return; }
+    if (t.closest('[data-more]')) { loadPosts(); return; }
+    if (t.closest('[data-retry]')) { loadPosts({ reset: !s.posts.length }); return; }
+    const act = t.closest('[data-post-action]'); if (!act) return;
+    const c = act.closest('[data-post-id]'), p = c && find(c.dataset.postId); if (!p) return;
+    closePopovers();
+    switch (act.dataset.postAction) {
+      case 'like': toggleLike(p.id); break;
+      case 'share': shareLink({ url: urls.work(p.id), title: 'Kırmızı İSG Çalışma', text: (p.content || 'Kırmızı İSG’de bir Çalışma').slice(0, 160), copied: 'Çalışma bağlantısı kopyalandı.' }); break;
+      case 'edit': openComposer(p); break;
+      case 'feature': setFeatured(p); break;
+      case 'delete': deletePost(p); break;
+    }
+  });
+  d.form.addEventListener('submit', savePost);
+  d.root.addEventListener('close', () => { s.edit = null; s.file = null; clearPreview(); formError(''); d.category.disabled = false; });
+  d.file.addEventListener('change', e => {
+    const f = e.target.files?.[0]; if (!f) return;
+    s.file = f; if (s.previewUrl) URL.revokeObjectURL(s.previewUrl);
+    s.previewUrl = URL.createObjectURL(f); showPreview(s.previewUrl);
+  });
+  removeImageBtn.addEventListener('click', () => { s.file = null; clearPreview(); });
+
+  function renderComposerAvatar() { composerAvatar.dataset.initials = initials(session.me?.full_name); composerAvatar.innerHTML = meAvatarMarkup(); }
+  renderComposerAvatar();
+
+  /* ---- Görünüm arayüzü ---- */
+  async function settleImages(timeout) {
+    const pending = $$('img', list).filter(i => !i.complete);
+    if (!pending.length) return;
+    await Promise.race([Promise.all(pending.map(i => new Promise(r => { i.addEventListener('load', r, { once: true }); i.addEventListener('error', r, { once: true }); }))), new Promise(r => setTimeout(r, timeout))]);
+  }
+  async function mount(snap) {
+    s.mounted = true;
+    if (snap && Array.isArray(snap.posts)) {
+      try { await dbReady; } catch { showNotice('Bağlantı kurulamadı.'); return; }
+      await session.ready;
+      s.posts = snap.posts; s.cursor = snap.cursor || null; s.hasMore = !!snap.hasMore;
+      s.experts = snap.experts || []; s.services = snap.services || [];
+      renderSide(); renderAll(true);
+      syncLikes(s.posts.map(p => p.id));
+      idle(() => ensureCategories().catch(() => {}));
+      await settleImages(1500);
+      return;
+    }
+    loadRails();
+    idle(() => ensureCategories().catch(() => {}));
+    await loadPosts({ reset: true });
+  }
+  function onSession(kind) {
+    renderComposerAvatar();
+    if (kind !== 'user' || !s.mounted) return;
+    if (d.root.open && !s.saving) dialogs.close(d.root);
+    s.posts.forEach(p => { p.liked = false; patchOwnership(p); });
+    syncLikes(s.posts.map(p => p.id));
+  }
+  function snapshot() {
+    if (!s.mounted || !s.posts.length) return null;
+    const posts = s.posts.slice(0, 60).map(({ liked, _likeStamp, ...rest }) => ({ ...rest, liked: false }));
+    const truncated = posts.length < s.posts.length, last = posts[posts.length - 1];
+    return { posts, cursor: truncated ? { created_at: last.created_at, id: last.id } : s.cursor, hasMore: truncated || s.hasMore, experts: s.experts, services: s.services };
+  }
+  return { name: 'works', el, mount, onSession, snapshot, isMounted: () => s.mounted };
+}
+
+/* =========================================================================
+   9. Ortak katalog davranışı (Uzmanlar + Hizmetler)
+   arama, debounce, masaüstü filtre, mobil filtre paneli, sayfalama, iptal, snapshot
+   ========================================================================= */
+function createCatalog(opt) {
+  const el = opt.el, q = sel => $(sel, el);
+  const ui = {
+    results: q('[data-results]'), status: q('[data-status]'), more: q('[data-more]'), empty: q('[data-empty]'), emptyText: q('[data-empty-text]'),
+    emptyReset: q('[data-empty-reset]'), error: q('[data-error]'), search: q('[data-search]'), clear: q('[data-clear-search]'),
+    filters: q('[data-desktop-filters]'), filterLabel: q('[data-filter-label]'), reset: q('[data-reset]'), notice: q('[data-notice]')
+  };
+  const s = { mounted: false, rows: [], page: null, more: false, busy: false, revision: 0, controller: null, filters: opt.blank(), search: '', timer: 0, composing: false, failedMore: false };
+  const skeleton = () => Array.from({ length: opt.skeletonCount || 6 }, opt.skeleton).join('');
+  const filtered = () => Boolean(s.search || Object.values(s.filters).some(Boolean));
+
+  function renderFilters() {
+    // DOM'daki (henüz debounce edilmemiş) değer öncelikli; boşsa state'teki değer korunur.
+    const dom = readValues(ui.filters), merged = { ...s.filters };
+    Object.entries(dom).forEach(([k, v]) => { if (v) merged[k] = v; });
+    ui.filters.innerHTML = opt.filterMarkup('d-' + opt.name);
+    writeValues(ui.filters, merged);
+  }
+  function filterUI() {
+    const n = Object.values(s.filters).filter(Boolean).length;
+    ui.filterLabel.textContent = n ? `Filtrele (${n})` : 'Filtrele';
+    ui.reset.hidden = !(n || s.search);
+    ui.clear.hidden = !ui.search.value;
+    $$('.kc-field', ui.filters).forEach(f => f.classList.toggle('is-set', Boolean(f.querySelector('[data-filter]')?.value)));
+  }
+  function renderMeta() {
+    const f = filtered();
+    ui.emptyText.textContent = f ? opt.text.emptyFiltered : opt.text.empty;
+    ui.emptyReset.hidden = !f;
+    opt.onEmptyState?.(f);
+    ui.empty.hidden = s.rows.length > 0;
+    ui.more.hidden = !s.more;
+    ui.status.textContent = s.rows.length ? opt.text.count(s.rows.length) : '';
+    filterUI();
+    opt.afterRender?.(s.rows);
+  }
+  async function load(more = false) {
+    if (more && s.busy) return;
+    s.controller?.abort();
+    const controller = new AbortController(); s.controller = controller;
+    const rev = ++s.revision;
+    s.busy = true; s.failedMore = more;
+    ui.error.hidden = true; ui.empty.hidden = true; ui.more.disabled = true; ui.results.setAttribute('aria-busy', 'true');
+    if (!more) { s.page = null; s.rows = []; s.more = false; ui.results.innerHTML = skeleton(); ui.more.hidden = true; }
+    ui.status.textContent = more ? opt.text.loadingMore : opt.text.loading;
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    try {
+      await dbReady;
+      const res = await opt.fetchPage({ search: s.search, filters: s.filters, page: s.page, signal: controller.signal });
+      if (rev !== s.revision) return;
+      s.more = res.more;
+      const seen = new Set(s.rows.map(r => r.id)), fresh = res.rows.filter(r => !seen.has(r.id));
+      s.rows.push(...fresh);
+      if (res.rows.length) s.page = res.page;
+      if (!more) ui.results.innerHTML = '';
+      const prev = ui.results.children.length;
+      ui.results.insertAdjacentHTML('beforeend', fresh.map(opt.card).join(''));
+      renderMeta();
+      if (more && fresh.length) ui.results.children[prev]?.focus({ preventScroll: true });
+    } catch (error) {
+      if (rev !== s.revision) return;
+      if (!more) ui.results.innerHTML = '';
+      ui.error.hidden = false; ui.more.hidden = true;
+      ui.status.textContent = s.rows.length ? opt.text.count(s.rows.length) : '';
+      console.warn(`${LABELS[opt.name]} yüklenemedi:`, error?.code || error?.message || 'network');
+    } finally {
+      clearTimeout(timeout);
+      if (rev === s.revision) { s.busy = false; ui.more.disabled = false; ui.results.setAttribute('aria-busy', 'false'); host.schedule(); }
+    }
+  }
+  function schedule() {
+    clearTimeout(s.timer); s.controller?.abort(); s.revision++; s.busy = false; s.more = false; ui.more.hidden = true;
+    s.timer = setTimeout(() => { s.search = ui.search.value.trim(); s.filters = readValues(ui.filters); filterUI(); load(); }, CONFIG.debounceMs);
+  }
+  function resetAll() {
+    clearTimeout(s.timer); s.filters = opt.blank(); s.search = ''; ui.search.value = '';
+    writeValues(ui.filters, s.filters); filterUI(); load();
+  }
+  let timerNotice = 0, timerHide = 0;
+  function notice(text, autoHide = false) {
+    if (!ui.notice) return;
+    clearTimeout(timerNotice); clearTimeout(timerHide);
+    ui.notice.classList.remove('is-hiding'); ui.notice.textContent = text; ui.notice.hidden = !text; host.schedule();
+    if (text && autoHide) timerNotice = setTimeout(() => {
+      ui.notice.classList.add('is-hiding');
+      timerHide = setTimeout(() => { ui.notice.hidden = true; ui.notice.classList.remove('is-hiding'); host.schedule(); }, 250);
+    }, 4000);
+  }
+
+  ui.search.addEventListener('compositionstart', () => { s.composing = true; clearTimeout(s.timer); });
+  ui.search.addEventListener('compositionend', () => { s.composing = false; schedule(); });
+  ui.search.addEventListener('input', () => { filterUI(); if (!s.composing) schedule(); });
+  ui.filters.addEventListener('input', () => { filterUI(); schedule(); });
+  ui.clear.addEventListener('click', () => { ui.search.value = ''; schedule(); ui.search.focus(); });
+  ui.reset.addEventListener('click', resetAll);
+  ui.emptyReset.addEventListener('click', resetAll);
+  ui.more.addEventListener('click', () => load(true));
+  q('[data-retry]').addEventListener('click', () => (db ? load(s.failedMore) : (host.win || window).location.reload()));
+  q('[data-open-filters]').addEventListener('click', () => {
+    clearTimeout(s.timer); s.search = ui.search.value.trim();
+    filterSheet.open({
+      title: opt.sheetTitle, markup: opt.filterMarkup('m-' + opt.name), values: s.filters, blank: opt.blank(),
+      apply: values => { clearTimeout(s.timer); s.filters = values; s.search = ui.search.value.trim(); writeValues(ui.filters, values); filterUI(); load(); }
+    });
+  });
+
+  // Dar ekranda kısa arama ipucu (kesik placeholder yerine).
+  const longHint = ui.search.placeholder, shortHint = ui.search.dataset.shortPlaceholder || longHint;
+  const narrow = window.matchMedia('(max-width:640px)');
+  const syncHint = () => { ui.search.placeholder = narrow.matches ? shortHint : longHint; };
+  narrow.addEventListener?.('change', syncHint); syncHint();
+
+  renderFilters();
+  return {
+    state: s, ui, load, notice, renderFilters, renderMeta,
+    isMounted: () => s.mounted,
+    mount(snap) {
+      s.mounted = true;
+      if (snap && Array.isArray(snap.rows)) {
+        s.rows = snap.rows; s.page = snap.page ?? null; s.more = !!snap.more; s.filters = { ...opt.blank(), ...(snap.filters || {}) }; s.search = snap.search || '';
+        ui.search.value = s.search; writeValues(ui.filters, s.filters);
+        ui.results.innerHTML = s.rows.map(opt.card).join(''); ui.results.setAttribute('aria-busy', 'false');
+        renderMeta(); host.schedule();
+        return Promise.resolve();
+      }
+      return load();
+    },
+    snapshot() {
+      if (!s.mounted || s.busy || !s.rows.length) return null;
+      return { rows: s.rows.slice(0, 90), page: s.rows.length > 90 ? opt.pageOf(s.rows[89]) : s.page, more: s.rows.length > 90 || s.more, filters: s.filters, search: s.search };
+    }
+  };
+}
+
+/* =========================================================================
+   10. Görünüm: Uzmanlar (mevcut /uzmanlar V1 davranışı korunur)
+   ========================================================================= */
+function createExpertsView() {
+  const el = $('[data-view="experts"]');
+  const discovery = $('[data-discovery]', el), discoverBtn = $('[data-discover]', el);
+  const BASE = 'id,full_name,profession,title,avatar_url,city,certificate_class,current_company,specialties,last_post_at';
+  const COUNTS = ',posts:professional_posts!professional_posts_user_id_fkey(count),services:professional_services!professional_services_user_id_fkey(count)';
+  let withCounts = true;
+  const fields = [['title', 'Meslek', 'keListTitles', 'Meslek'], ['certificate_class', 'Belge Sınıfı'], ['city', 'Şehir', 'keListCities', 'Şehir'], ['specialties', 'Uzmanlık', 'keListSpecialties', 'Uzmanlık']];
+  const filterMarkup = prefix => fields.map(([key, label, listId, placeholder]) => `<label class="kc-field" for="${prefix}-${key}"><span class="kc-flabel">${label}</span>${key === 'certificate_class'
+    ? `<select id="${prefix}-${key}" data-filter="${key}"><option value="">Tüm belge sınıfları</option><option value="A">A Sınıfı</option><option value="B">B Sınıfı</option><option value="C">C Sınıfı</option></select>`
+    : `<input id="${prefix}-${key}" data-filter="${key}" type="text" maxlength="120" list="${listId}" autocomplete="off" placeholder="${placeholder}">`}</label>`).join('');
+  // specialties text[]: tam dizi öğesi eşleşmesi (cs), büyük/küçük harf varyantlarıyla.
+  const variants = v => [...new Set([v, v.toLocaleLowerCase('tr-TR'), v.toLocaleUpperCase('tr-TR'), v.toLocaleLowerCase('tr-TR').replace(/(^|\s)\S/g, x => x.toLocaleUpperCase('tr-TR'))])];
+  const specialty = v => variants(v).map(x => 'specialties.cs.{' + quote(x) + '}');
+  function conditions(search, f, cursor) {
+    const c = [];
+    if (search) { const p = quote(likePattern(search)); c.push('or(' + ['full_name.ilike.' + p, 'profession.ilike.' + p, 'title.ilike.' + p, 'city.ilike.' + p, ...specialty(search)].join(',') + ')'); }
+    if (f.title) { const p = quote(likePattern(f.title)); c.push('or(profession.ilike.' + p + ',and(or(profession.is.null,profession.eq.""),title.ilike.' + p + '))'); }
+    if (f.city) c.push('city.ilike.' + quote(likePattern(f.city)));
+    if (f.certificate_class) {
+      const k = f.certificate_class;
+      // Dolu certificate_class belirleyicidir; null/boşsa title'a bakılır (mobil profiller).
+      const match = field => [field + '.ilike.' + quote(k), field + '.ilike.' + quote(k + ' Sınıfı'), field + '.ilike.' + quote(k + ' Sınıfı %')].join(',');
+      c.push('or(' + match('certificate_class') + ',and(or(certificate_class.is.null,certificate_class.eq.""),or(' + match('title') + ')))');
+    }
+    if (f.specialties) c.push('or(' + specialty(f.specialties).join(',') + ')');
+    if (cursor) {
+      const { id, last_post_at: t } = cursor;
+      c.push(t ? `or(last_post_at.lt.${quote(t)},and(last_post_at.eq.${quote(t)},id.lt.${quote(id)}),last_post_at.is.null)` : `and(last_post_at.is.null,id.lt.${quote(id)})`);
+    }
+    return c.length ? 'and(' + c.join(',') + ')' : '';
+  }
+  function build(signal, search, filters, cursor) {
+    let qy = db.from('profiles').select(BASE + (withCounts ? COUNTS : '')).eq('is_discoverable', true)
+      .order('last_post_at', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(CONFIG.catalogPageSize + 1);
+    if (withCounts) qy = qy.eq('posts.status', 'active').eq('services.status', 'active');
+    const cond = conditions(search, filters, cursor); if (cond) qy = qy.or(cond);
+    return qy.abortSignal(signal);
+  }
+  const countLabel = (v, label) => { const n = Array.isArray(v) ? v[0]?.count : undefined; return Number.isInteger(n) && n >= 0 ? new Intl.NumberFormat('tr-TR').format(n) + ' ' + label : ''; };
+  function card(p) {
+    const sp = Array.isArray(p.specialties) ? p.specialties.filter(x => typeof x === 'string' && x.trim()) : [];
+    const counts = [countLabel(p.posts, 'Çalışma'), countLabel(p.services, 'Hizmet')].filter(Boolean).join(' · ');
+    const role = p.profession || p.title, cert = identity.certTag(p);
+    return `<a class="kc-card ke-card" href="${esc(urls.profile(p.id))}" target="_top">`
+      + `<div class="ke-top">${avatar(p, 'xl')}<div class="ke-id"><h2>${esc(p.full_name || 'Kırmızı İSG üyesi')}</h2>${role ? `<p class="ke-role">${esc(role)}</p>` : ''}`
+      + (cert || p.city ? `<p class="ke-meta">${cert ? `<span class="k-tag k-tag-cert">${esc(cert)}</span>` : ''}${placeMeta(p.city)}</p>` : '')
+      + `</div>${ICONS.chev}</div>`
+      + (p.current_company ? `<p class="ke-company">${esc(p.current_company)}</p>` : '')
+      + (sp.length ? `<div class="ke-chips">${sp.slice(0, 3).map(x => `<span class="k-tag">${esc(x)}</span>`).join('')}${sp.length > 3 ? `<span class="k-tag">+${sp.length - 3}</span>` : ''}</div>` : '')
+      + `<div class="ke-bottom">${counts ? `<span class="ke-activity">${esc(counts)}</span>` : '<span></span>'}<span class="ke-cta">Profili Gör<span aria-hidden="true"> →</span><span class="k-sr"> ${esc(p.full_name || '')}</span></span></div></a>`;
+  }
+  function suggestions(rows) {
+    for (const [key, id] of [['title', 'keListTitles'], ['city', 'keListCities'], ['specialties', 'keListSpecialties']]) {
+      const values = [...new Set(rows.flatMap(p => key === 'title' ? [p.profession || p.title] : Array.isArray(p[key]) ? p[key] : [p[key]]).filter(v => typeof v === 'string' && v.trim()))].sort((a, b) => a.localeCompare(b, 'tr')).slice(0, 150);
+      $('#' + id).innerHTML = values.map(v => `<option value="${esc(v)}"></option>`).join('');
+    }
+  }
+  const catalog = createCatalog({
+    name: 'experts', el, sheetTitle: 'Uzmanları Filtrele', filterMarkup,
+    blank: () => ({ title: '', certificate_class: '', city: '', specialties: '' }),
+    text: { loading: 'Uzmanlar yükleniyor…', loadingMore: 'Diğer uzmanlar yükleniyor…', count: n => `${n} uzman`, empty: 'Henüz görünür uzman yok.', emptyFiltered: 'Bu filtrelere uygun uzman bulunamadı.' },
+    card, afterRender: suggestions, skeletonCount: 6,
+    skeleton: () => '<div class="kc-sk" aria-hidden="true"><div class="kc-sk-top"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk k-sk-short"></i><i class="k-sk"></i></div>',
+    pageOf: r => ({ id: r.id, last_post_at: r.last_post_at }),
+    async fetchPage({ search, filters, page, signal }) {
+      let res = await build(signal, search, filters, page);
+      // Sayaçlar opsiyoneldir; FK/count sorunu dizini gizlememeli.
+      if (res.error && withCounts && ['PGRST200', 'PGRST201', 'PGRST123', '42703'].includes(res.error.code)) { withCounts = false; res = await build(signal, search, filters, page); }
+      if (res.error) throw res.error;
+      const data = res.data || [], rows = data.slice(0, CONFIG.catalogPageSize), last = rows[rows.length - 1];
+      return { rows, more: data.length > CONFIG.catalogPageSize, page: last ? { id: last.id, last_post_at: last.last_post_at } : page };
+    }
+  });
+
+  function renderDiscovery() { discovery.hidden = !(session.user && session.me && session.me.id === session.user.id && session.me.is_discoverable === false); host.schedule(); }
+  async function becomeVisible() {
+    setBusy(discoverBtn, true); catalog.notice('');
+    try {
+      await dbReady;
+      const user = await session.verified();
+      if (!user) { setBusy(discoverBtn, false); requireUser(() => becomeVisible()); return; }
+      const { data, error } = await db.from('profiles').update({ is_discoverable: true }).eq('id', user.id).select('id,is_discoverable').single();
+      if (error || !data?.is_discoverable) throw error || new Error('not_updated');
+      if (session.me) session.me.is_discoverable = true;
+      session.refreshMe();
+      renderDiscovery();
+      catalog.notice("Profilin artık Uzmanlar'da görünür.", true);
+      catalog.load();
+    } catch { catalog.notice('Görünürlük güncellenemedi. Lütfen tekrar deneyin.'); }
+    finally { setBusy(discoverBtn, false); }
+  }
+  discoverBtn.addEventListener('click', becomeVisible);
+
+  return {
+    name: 'experts', el,
+    mount: snap => { renderDiscovery(); return catalog.mount(snap); },
+    onSession(kind) { if (kind === 'user') catalog.notice(''); renderDiscovery(); },
+    snapshot: catalog.snapshot, isMounted: catalog.isMounted
+  };
+}
+
+/* =========================================================================
+   11. Görünüm: Hizmetler (mevcut /hizmetler V1 davranışı korunur)
+   ========================================================================= */
+function createServicesView() {
+  const el = $('[data-view="services"]');
+  const SELECT = 'id,user_id,title,category_id,description,service_region,service_mode,status,created_at,updated_at,category:professional_service_categories(id,name,slug),provider:profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company)';
+  const ed = { root: $('#kaServiceDialog'), form: $('#kaServiceForm'), title: $('#kaServiceTitle'), category: $('#kaServiceCategory'), description: $('#kaServiceDescription'), region: $('#kaServiceRegion'), mode: $('#kaServiceMode'), error: $('#kaServiceError'), save: $('#kaServiceSave') };
+  const limit = { root: $('#kaLimitDialog'), manage: $('#kaLimitManage') };
+  const st = { categories: [], categoriesReady: false, categoriesPromise: null, publishing: false, writing: false, editingUser: null, invalidated: false };
+  const options = () => st.categories.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  const filterMarkup = prefix => `<label class="kc-field" for="${prefix}-category"><span class="kc-flabel">Kategori</span><select id="${prefix}-category" data-filter="category"><option value="">Tüm kategoriler</option>${options()}</select></label>`
+    + `<label class="kc-field" for="${prefix}-mode"><span class="kc-flabel">Hizmet Şekli</span><select id="${prefix}-mode" data-filter="mode"><option value="">Tüm hizmet şekilleri</option>${Object.entries(SERVICE_MODES).map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>`
+    + `<label class="kc-field" for="${prefix}-region"><span class="kc-flabel">Bölge</span><input id="${prefix}-region" data-filter="region" maxlength="120" placeholder="Bölge" autocomplete="off"></label>`;
+  function card(v) {
+    const p = v.provider, role = p ? identity.role(p) : '';
+    const meta = modeMeta(v.service_mode) + placeMeta(v.service_region);
+    return `<a class="kc-card ks-card" href="${esc(urls.service(v.id))}" target="_top">`
+      + `<div class="ks-top">${v.category?.name ? `<span class="ks-category">${esc(v.category.name)}</span>` : '<span></span>'}${ICONS.chev}</div>`
+      + `<h2>${esc(v.title)}</h2>`
+      + (v.description ? `<p class="ks-description">${esc(v.description)}</p>` : '')
+      + (meta ? `<p class="ks-meta">${meta}</p>` : '')
+      + `<div class="ks-provider">${p ? `${avatar(p, 'md')}<div>${p.full_name ? `<strong>${esc(p.full_name)}</strong>` : ''}${role ? `<p>${esc(role)}</p>` : ''}</div>` : '<div></div>'}<span class="ks-cta">Hizmeti Gör<span aria-hidden="true"> →</span></span></div></a>`;
+  }
+
+  const catalog = createCatalog({
+    name: 'services', el, sheetTitle: 'Hizmetleri Filtrele', filterMarkup,
+    blank: () => ({ category: '', mode: '', region: '' }),
+    text: { loading: 'Hizmetler yükleniyor…', loadingMore: 'Diğer hizmetler yükleniyor…', count: n => `${n} hizmet`, empty: 'Henüz yayınlanmış hizmet yok.', emptyFiltered: 'Bu filtrelere uygun hizmet bulunamadı.' },
+    card, skeletonCount: 6,
+    skeleton: () => '<div class="kc-sk" aria-hidden="true"><i class="k-sk k-sk-short"></i><i class="k-sk"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i><div class="kc-sk-top"><i class="k-sk k-sk-circle" style="width:32px;height:32px"></i><span><i class="k-sk k-sk-short"></i></span></div></div>',
+    onEmptyState: filtered => { $('[data-empty-publish]', el).hidden = filtered; },
+    pageOf: r => ({ created_at: r.created_at, id: r.id }),
+    async fetchPage({ search, filters, page, signal }) {
+      let qy = db.from('professional_services').select(SELECT + (search ? ',search_provider:profiles!professional_services_user_id_fkey()' : '')).eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(CONFIG.catalogPageSize + 1);
+      const clauses = [];
+      if (search) { const p = quote(likePattern(search)); qy = qy.ilike('search_provider.full_name', likePattern(search)); clauses.push('or(title.ilike.' + p + ',description.ilike.' + p + ',service_region.ilike.' + p + ',search_provider.not.is.null)'); }
+      if (filters.category) qy = qy.eq('category_id', filters.category);
+      if (filters.mode) qy = qy.eq('service_mode', filters.mode);
+      if (filters.region) qy = qy.ilike('service_region', likePattern(filters.region));
+      if (page) clauses.push(`or(created_at.lt.${quote(page.created_at)},and(created_at.eq.${quote(page.created_at)},id.lt.${quote(page.id)}))`);
+      if (clauses.length) qy = qy.or('and(' + clauses.join(',') + ')');
+      const { data, error } = await qy.abortSignal(signal);
+      if (error) throw error;
+      const rows = (data || []).slice(0, CONFIG.catalogPageSize), last = rows[rows.length - 1];
+      return { rows, more: (data || []).length > CONFIG.catalogPageSize, page: last ? { created_at: last.created_at, id: last.id } : page };
+    }
+  });
+
+  // Kategoriler sonuç sorgusunu bloklamaz; hazır olunca filtre seçenekleri doldurulur.
+  function loadCategories() {
+    if (st.categoriesReady) return Promise.resolve();
+    st.categoriesPromise ||= (async () => {
+      await dbReady;
+      const { data, error } = await db.from('professional_service_categories').select('id,name,slug,sort_order,is_active').eq('is_active', true).order('sort_order', { ascending: true }).order('id', { ascending: true });
+      if (error) throw error;
+      st.categories = data || []; st.categoriesReady = true;
+      catalog.renderFilters();
+      ed.category.innerHTML = '<option value="">Seçin</option>' + options();
+    })().finally(() => { st.categoriesPromise = null; });
+    return st.categoriesPromise;
+  }
+  async function activeCount(userId) {
+    const { count, error } = await db.from('professional_services').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'active');
+    if (error || count === null) throw error || new Error('count');
+    return count;
+  }
+  const formError = text => { ed.error.textContent = text; ed.error.hidden = !text; host.schedule(); };
+  const setPublishDisabled = on => $$('[data-publish]', el).forEach(b => { b.disabled = on; });
+  function openEditor(user) {
+    st.editingUser = user.id;
+    ed.form.reset();
+    ed.category.innerHTML = '<option value="">Seçin</option>' + options();
+    formError('');
+    dialogs.open(ed.root, 'sheet');
+    setTimeout(() => ed.title.focus({ preventScroll: true }), 30);
+  }
+  async function publish() {
+    if (st.publishing) return;
+    const known = await requireUser(() => publish()); if (!known) return;
+    st.publishing = true; setPublishDisabled(true);
+    try {
+      await dbReady;
+      const user = await session.verified();
+      if (!user) { requireUser(() => publish()); return; }
+      if (await activeCount(user.id) >= CONFIG.maxActiveServices) { limit.manage.href = urls.profile(user.id) + '#hizmetler'; dialogs.open(limit.root); return; }
+      await loadCategories();
+      if (session.user?.id === user.id) openEditor(user);
+    } catch { catalog.notice('Hizmet formu şu anda açılamadı. Lütfen yeniden deneyin.'); }
+    finally { st.publishing = false; setPublishDisabled(false); }
+  }
+  function writeBusy(on) {
+    st.writing = on; session.writes += on ? 1 : -1; dialogs.lock(ed.root, on);
+    $$('input,select,textarea,button', ed.form).forEach(n => { n.disabled = on; });
+  }
+  async function save(e) {
+    e.preventDefault();
+    if (st.writing || !ed.form.reportValidity()) return;
+    const expected = st.editingUser;
+    const payload = { title: ed.title.value.trim(), category_id: ed.category.value, description: ed.description.value.trim(), service_region: ed.region.value.trim() || null, service_mode: ed.mode.value };
+    if (!payload.title || !payload.description || !payload.category_id || !SERVICE_MODES[payload.service_mode]) { formError('Başlık, kategori, açıklama ve hizmet şeklini doldurun.'); return; }
+    writeBusy(true); formError('');
+    let saved = null;
+    try {
+      const user = await session.verified();
+      if (!user || user.id !== expected) throw new Error('identity');
+      if (await activeCount(user.id) >= CONFIG.maxActiveServices) { formError('En fazla 5 aktif hizmet yayınlayabilirsiniz. Hizmetlerim bölümünden bir hizmeti kaldırabilirsiniz.'); return; }
+      const result = await db.from('professional_services').insert({ ...payload, user_id: user.id, status: 'active' }).select('id').single();
+      if (result.error || !result.data) throw result.error || new Error('unchanged');
+      saved = result.data.id;
+    } catch (error) {
+      let text = 'Hizmet kaydedilemedi. Lütfen yeniden deneyin.';
+      if (error?.message === 'identity' || error?.code === '42501') text = 'Oturumunuz veya işlem yetkiniz değişti. Tekrar giriş yapıp deneyin.';
+      else if (/(?:5|max|limit).*(?:active|aktif|service|hizmet)|(?:active|aktif|service|hizmet).*(?:5|max|limit)/i.test(error?.message || '')) text = 'En fazla 5 aktif hizmet yayınlayabilirsiniz.';
+      formError(text);
+    } finally { writeBusy(false); }
+    if (!saved) return;
+    dialogs.close(ed.root);
+    catalog.notice('Hizmet yayınlandı.');
+    st.invalidated = true; // geri dönüldüğünde katalog tazeden yüklenir
+    navigateTop(urls.service(saved));
+  }
+  ed.form.addEventListener('submit', save);
+  ed.root.addEventListener('close', () => { st.editingUser = null; });
+  el.addEventListener('click', e => { if (e.target instanceof Element && e.target.closest('[data-publish]')) publish(); });
+
+  return {
+    name: 'services', el, publish,
+    mount(snap) { loadCategories().catch(() => {}); return catalog.mount(st.invalidated ? null : snap); },
+    onSession(kind) {
+      if (kind !== 'user') return;
+      if (!st.writing) { if (ed.root.open) dialogs.close(ed.root); if (limit.root.open) dialogs.close(limit.root); }
+    },
+    snapshot: () => (st.invalidated ? null : catalog.snapshot()),
+    isMounted: catalog.isMounted
+  };
+}
+
+/* =========================================================================
+   12. Görünümler + oturum aboneliği
+   ========================================================================= */
+const VIEWS = { works: createWorksView(), experts: createExpertsView(), services: createServicesView() };
+session.on(kind => {
+  authUI.render(kind);
+  Object.values(VIEWS).forEach(v => { try { v.onSession?.(kind); } catch (e) { console.error(e); } });
+  host.schedule();
+});
+authUI.render('init');
+
+/* =========================================================================
+   13. Router: parent.history üzerinden /calisma | /uzmanlar | /hizmetler
+   ========================================================================= */
+const router = (() => {
+  const bootId = newId();
+  const TITLES_KEY = 'kisg:titles:v1';
+  const scroll = {};
+  const mounts = {};
+  let current = null, enabled = false, pending = {};
+
+  const viewFromPath = pathname => {
+    const p = String(pathname || '/').replace(/\/+$/, '').toLowerCase() || '/';
+    return Object.keys(CONFIG.routes).find(k => CONFIG.routes[k] === p) || null;
+  };
+  function setTabs(name) {
+    $$('.ka-tab').forEach(a => {
+      const on = a.dataset.viewLink === name;
+      a.classList.toggle('is-active', on);
+      if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+  }
+  function titleFor(name) {
+    const known = readJSON(local, TITLES_KEY) || {};
+    if (known[name]) return known[name];
+    const base = host.doc?.title || '';
+    if (current && base.includes(LABELS[current])) return base.replace(LABELS[current], LABELS[name]);
+    return `${LABELS[name]} | Kırmızı İSG`;
+  }
+  function ensureMounted(name) {
+    if (!mounts[name]) {
+      const snap = pending[name] || null; delete pending[name];
+      mounts[name] = Promise.resolve().then(() => VIEWS[name].mount(snap)).catch(e => console.error(e));
+    }
+    return mounts[name];
+  }
+  function show(name) {
+    Object.entries(VIEWS).forEach(([k, v]) => { v.el.hidden = k !== name; });
+    root.dataset.activeView = name;
+    setTabs(name);
+    const el = VIEWS[name].el;
+    el.classList.remove('is-entering'); void el.offsetWidth; el.classList.add('is-entering');
+    ensureMounted(name);
+  }
+  function activate(name, { mode = 'push' } = {}) {
+    if (!VIEWS[name]) return;
+    if (name === current) {
+      if (mode === 'push') { const top = host.shellTop(); if (host.scrollY() > top + 4) host.scrollTo(top, true); }
+      return;
+    }
+    const prev = current;
+    if (prev) scroll[prev] = host.scrollY();
+    closePopovers();
+    $$('dialog[open]').forEach(d => dialogs.close(d));
+    show(name);
+    current = name;
+    if (mode === 'push' && enabled) {
+      try { host.win.history.pushState({ kisgShell: { view: name, doc: bootId } }, '', CONFIG.routes[name]); }
+      catch { navigateTop(urls.view(name)); return; }
+    }
+    if (enabled) { try { host.doc.title = titleFor(name); } catch {} }
+    host.sync();
+    // Daha önce ziyaret edildiyse kaldığı yer; değilse sekme çubuğu görünür kalacak şekilde.
+    const from = prev && scroll[prev] != null ? scroll[prev] : host.scrollY();
+    const target = scroll[name] != null ? scroll[name] : Math.min(from, host.shellTop());
+    host.scrollTo(target);
+  }
+  // Capture fazında: yalnızca bu dokümana ait shell kayıtlarını işler, diğer dinleyicilere sızdırmaz
+  // (Hostinger'ın kendi router'ı varsa aynı sayfa içindeki sekme geçişine karışmasın).
+  function onPop(e) {
+    const st = e.state && e.state.kisgShell;
+    if (!st || st.doc !== bootId || !VIEWS[st.view]) return;
+    e.stopImmediatePropagation();
+    activate(st.view, { mode: 'pop' });
+  }
+  function init() {
+    const url = host.url();
+    const fromPath = viewFromPath(url.pathname);
+    const initial = fromPath || (VIEWS[root.dataset.initialView] ? root.dataset.initialView : CONFIG.defaultView);
+    enabled = Boolean(CONFIG.historyRouting && host.canRoute && fromPath && CONFIG.siteOrigins.includes(url.origin));
+    if (enabled) {
+      try {
+        const w = host.win;
+        const state = w.history.state && typeof w.history.state === 'object' ? w.history.state : {};
+        w.history.replaceState({ ...state, kisgShell: { view: initial, doc: bootId } }, '');
+        if ('scrollRestoration' in w.history) w.history.scrollRestoration = 'manual';
+        w.addEventListener('popstate', onPop, true);
+        window.addEventListener('pagehide', e => { if (!e.persisted) { try { w.removeEventListener('popstate', onPop, true); } catch {} } });
+        const titles = readJSON(local, TITLES_KEY) || {};
+        if (w.document.title) { titles[initial] = w.document.title; writeJSON(local, TITLES_KEY, titles); }
+      } catch { enabled = false; }
+    }
+    root.dataset.routing = enabled ? 'shell' : 'document';
+    return initial;
+  }
+  async function start(initial, snap) {
+    if (snap) { pending = { ...(snap.views || {}) }; Object.assign(scroll, snap.scroll || {}); }
+    current = initial;
+    show(initial);
+    const target = snap?.scroll?.[initial];
+    delete scroll[initial];
+    if (target != null) {
+      await ensureMounted(initial);
+      host.sync();
+      host.scrollTo(target);
+    }
+  }
+  return {
+    init, start, activate,
+    get enabled() { return enabled; },
+    get current() { return current; },
+    scrollMap: () => ({ ...scroll, ...(current ? { [current]: host.scrollY() } : {}) })
+  };
+})();
+
+/* =========================================================================
+   14. Geri dönüş snapshot'ı (detay/profil sayfasından geri gelince liste + konum)
+   Yalnızca public veri saklanır (beğeni/kimlik saklanmaz), sessionStorage, 15 dk.
+   ========================================================================= */
+const snapshots = {
+  KEY: 'kisg:shell:snapshot:v2',
+  save() {
+    if (!router.current) return;
+    const data = { v: 2, t: Date.now(), scroll: router.scrollMap(), views: {} };
+    Object.entries(VIEWS).forEach(([k, v]) => { if (v.isMounted()) { const s = v.snapshot(); if (s) data.views[k] = s; } });
+    writeJSON(sessionStore, this.KEY, data);
+  },
+  take() {
+    const d = readJSON(sessionStore, this.KEY);
+    removeKey(sessionStore, this.KEY);
+    if (!d || d.v !== 2 || Date.now() - d.t > CONFIG.snapshotMaxAgeMs) return null;
+    let returning = false;
+    try {
+      const w = host.win || window;
+      const nav = w.performance?.getEntriesByType?.('navigation')?.[0];
+      if (nav?.type === 'back_forward') returning = true;
+      const ref = w.document.referrer ? new URL(w.document.referrer) : null;
+      if (ref && CONFIG.siteOrigins.includes(ref.origin) && CONFIG.returnPaths.includes(ref.pathname.replace(/\/+$/, ''))) returning = true;
+    } catch {}
+    return returning ? d : null;
+  }
+};
+
+/* =========================================================================
+   15. Global olaylar
+   ========================================================================= */
+root.addEventListener('click', e => {
+  const t = e.target instanceof Element ? e.target : null; if (!t) return;
+  const trigger = t.closest('[data-popover-trigger]');
+  if (trigger) { togglePopover(trigger); return; }
+  const link = t.closest('a[data-view-link]');
+  if (link) {
+    if (!router.enabled || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) { snapshots.save(); return; }
+    e.preventDefault();
+    router.activate(link.dataset.viewLink, { mode: 'push' });
+    if (link.dataset.then === 'publish' && link.dataset.viewLink === 'services') VIEWS.services.publish();
+    return;
+  }
+  // Uygulamadan çıkan linkler (detay, profil): dönüşte liste ve konum geri gelsin.
+  const out = t.closest('a[target="_top"][href]');
+  if (out) snapshots.save();
+});
+document.addEventListener('click', e => { if (!(e.target instanceof Element) || !e.target.closest('.k-popover,[data-popover-trigger]')) closePopovers(); });
+root.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const open = $('.k-popover:not([hidden])');
+  if (open) { closePopovers(); open.previousElementSibling?.focus(); }
+});
+// Kırık avatar: baş harflere dön. Kırık içerik görseli: gizle.
+root.addEventListener('error', e => {
+  const img = e.target; if (!(img instanceof HTMLImageElement)) return;
+  const av = img.closest('.k-avatar');
+  if (av) { img.remove(); if (!av.textContent.trim()) av.innerHTML = av.dataset.initials ? esc(av.dataset.initials) : ICONS.user; }
+  else img.hidden = true;
+  host.schedule();
+}, true);
+root.addEventListener('load', () => host.schedule(), true);
+// Hostinger blokları geç render edilebilir: genişlik işaretlemesi yüklemeden sonra bir kez daha (idempotent).
+try { (host.win || window).addEventListener('load', () => { host.installHostWidth(); host.schedule(); }); } catch {}
+setTimeout(() => { host.installHostWidth(); host.schedule(); }, 1200);
+window.addEventListener('pagehide', () => snapshots.save());
+window.addEventListener('resize', () => host.schedule(), { passive: true });
+window.visualViewport?.addEventListener('resize', () => host.schedule(), { passive: true });
+try {
+  if (host.framed && host.win) {
+    host.win.addEventListener('resize', () => host.schedule(), { passive: true });
+    host.win.visualViewport?.addEventListener('resize', () => host.schedule(), { passive: true });
+    host.win.addEventListener('scroll', () => host.repositionFloating(), { passive: true });
+    host.win.addEventListener('pageshow', e => { if (e.persisted) host.schedule(); });
+    host.win.addEventListener('pagehide', () => snapshots.save());
+  }
+} catch {}
+if ('ResizeObserver' in window) new ResizeObserver(() => host.schedule()).observe(root);
+
+/* =========================================================================
+   16. Başlat
+   ========================================================================= */
+const initialView = router.init();
+router.start(initialView, snapshots.take());
+host.sync();
+dbReady.then(() => session.start()).catch(() => {
+  session.fail();
+  toast('Bağlantı kurulamadı. Lütfen sayfayı yenileyin.');
+});
+})();
+</script>
