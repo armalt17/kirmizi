@@ -1,12 +1,17 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.4.1
-Çalışmalar | Uzmanlar | Hizmetler | Profil (Kişi Kartı) tek uygulama.
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.5.0
+Çalışmalar | Uzmanlar | Hizmetler | Profil (Kişi Kartı) | Çalışma Detay tek uygulama.
 
-KURULUM: Bu dosyanın TAMAMI, aşağıdaki DÖRT Hostinger sayfasındaki Custom HTML/Embed
+KURULUM: Bu dosyanın TAMAMI, aşağıdaki BEŞ Hostinger sayfasındaki Custom HTML/Embed
 içeriğinin yerine BİREBİR AYNI şekilde yapıştırılır:
-  /calisma   /uzmanlar   /hizmetler   /profil
-(/profil'deki eski "PROFİL V1" embed'inin yerine bu dosya gelir.)
-/calisma-detay ve /hizmet-detay embed'lerine DOKUNULMAZ.
+  /calisma   /uzmanlar   /hizmetler   /profil   /calisma-detay
+(/profil'deki "PROFİL V1" ve /calisma-detay'daki "ÇALIŞMA DETAY V1" embed'lerinin yerine bu dosya gelir.)
+/hizmet-detay embed'ine DOKUNULMAZ.
+
+v4.5: Çalışma Detay — /calisma-detay?id={post_id} App Shell route'u. Akıştan geçiş pushState ile
+ (reload yok), geri tuşunda akışın durumu ve scroll konumu korunur; doğrudan URL ile de açılır.
+ Detay, akıştaki ortak kart sistemini kullanır: tam metin, görsel + görüntüleyici, beğeni, yorumlar ve
+ yorum beğenileri (açık gelir), paylaşım, sahip menüsü (Düzenle / öne çıkar / Sil — soft-delete).
 
 v4.4.1: Mobil görsel görüntüleyici (X / dışarı dokunma / geri tuşu / nav altında tam ekran),
  modal açıkken arka plan scroll kilidi, mobilde PDF teslimi (paylaş / üst dokümandan indirme),
@@ -166,6 +171,15 @@ Acil kapatma: CONFIG.historyRouting=false.
     <div class="k-empty" data-empty hidden><strong data-empty-text></strong><p>İlk hizmeti sen yayınlayabilir ya da filtreleri değiştirebilirsin.</p><div class="k-empty-actions"><button type="button" class="k-btn" data-empty-reset>Filtreleri temizle</button><button type="button" class="k-btn k-btn-primary" data-empty-publish data-publish>Hizmetini Yayınla</button></div></div>
     <div class="k-empty" data-error role="alert" hidden><strong>Hizmetler şu anda yüklenemedi.</strong><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" class="k-btn" data-retry>Yeniden dene</button></div>
     <button type="button" class="k-btn kc-more" data-more hidden>Daha fazla hizmet göster</button>
+  </div>
+</section>
+
+<!-- ÇALIŞMA DETAY (/calisma-detay?id=) -->
+<section class="ka-view kd" data-view="work" hidden aria-label="Çalışma Detay">
+  <div class="k-page kd-page">
+    <a class="kd-back" href="https://isgcalisanplatformu.com/calisma" target="_top" data-view-link="works"><span aria-hidden="true">←</span> Çalışmalara Dön</a>
+    <div class="k-empty kd-state" data-work-status role="status" hidden></div>
+    <div class="kw-sheet kd-sheet" data-work-sheet hidden><div class="kw-list" data-work-post aria-live="polite"></div></div>
   </div>
 </section>
 
@@ -713,6 +727,19 @@ Acil kapatma: CONFIG.historyRouting=false.
 @keyframes k-toast{from{opacity:0;transform:translateY(8px)}}
 
 /* =====================================================================
+   ÇALIŞMA DETAY — akıştaki Çalışma kartının tam okuma hâli
+   ===================================================================== */
+#kisgApp .kd-page{max-width:760px;padding:18px 0 72px}
+#kisgApp .kd-back{display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-bottom:8px;color:var(--muted);font-size:14px;font-weight:650;transition:color var(--t-fast)}
+#kisgApp .kd-state{min-height:36vh;justify-content:center}
+#kisgApp .kd .kw-post{cursor:auto;padding-top:22px}
+#kisgApp .kd .kw-post:hover{background:#fff}
+#kisgApp .kd .kw-post-content{font-size:17px;line-height:1.75}
+#kisgApp .kd{--media-max:80vh}
+#kisgApp .kd-profile{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px var(--pad);border-top:1px solid var(--line-soft);color:var(--ink);font-size:14px;font-weight:700}
+#kisgApp .kd-profile span:first-child{overflow:hidden;min-width:0;color:var(--muted);font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+
+/* =====================================================================
    PROFİL — Kırmızı İSG Kişi Kartı
    Masaüstü: solda kişi kartı, sağda Çalışmalar | Verdiği Hizmetler.
    Mobil: kartın kendi kompozisyonu (yatay kimlik, kompakt bilgi, eylem satırı), kenardan kenara içerik.
@@ -791,6 +818,8 @@ Acil kapatma: CONFIG.historyRouting=false.
    ===================================================================== */
 @media(hover:hover) and (pointer:fine){
   #kisgApp .kp-social:hover{background:var(--surface-2);color:var(--ink)}
+  #kisgApp .kd-back:hover{color:var(--ink)}
+  #kisgApp .kd-profile:hover{background:var(--surface-2)}
   #kisgApp .kp-av-edit:hover{background:#000}
   #kisgApp .kp-tabs [role="tab"]:hover{color:var(--ink)}
   #kisgApp .kp-phone:hover{box-shadow:inset 0 0 0 1px var(--line-strong)}
@@ -911,6 +940,12 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .k-media-dialog{width:100%;max-width:none;height:100dvh;max-height:none;margin:0;border-radius:0}
   #kisgApp .k-media-stage{max-height:none}
   #kisgApp .k-toast{inset:auto 12px 12px 12px;max-width:none}
+  #kisgApp .kd-page{width:100%;padding:0 0 40px}
+  #kisgApp .kd-back{margin:4px var(--gutter) 0}
+  #kisgApp .kd-sheet{border:0;border-top:1px solid var(--line-soft);border-radius:0}
+  #kisgApp .kd .kw-post{padding-top:16px}
+  #kisgApp .kd .kw-post-content{font-size:16px;line-height:1.7}
+  #kisgApp .kd-state{margin-inline:var(--gutter)}
   /* Profil (telefon): kart kenardan kenara, kimlik yatay, bilgiler kompakt, eylemler tek satır */
   #kisgApp .kp-page{width:100%;padding:0 0 40px}
   #kisgApp .kp-layout{row-gap:0}
@@ -972,7 +1007,7 @@ const CONFIG = Object.freeze({
   historyRouting: true,
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
-  routes: { works: '/calisma', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil' },
+  routes: { works: '/calisma', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay' },
   defaultView: 'works',
   returnPaths: ['/calisma-detay', '/hizmet-detay', '/profil'],
   snapshotMaxAgeMs: 15 * 60 * 1000,
@@ -992,7 +1027,7 @@ const CONFIG = Object.freeze({
   // WebKit (iPhone/Safari) canvas'tan WebP üretemez; bu cihazlarda aynı yola JPEG yüklenir.
   allowJpegFallback: true
 });
-const LABELS = { works: 'Çalışmalar', experts: 'Uzmanlar', services: 'Hizmetler', profile: 'Profil' };
+const LABELS = { works: 'Çalışmalar', experts: 'Uzmanlar', services: 'Hizmetler', profile: 'Profil', work: 'Çalışma' };
 // Mesleki Belge / Statü: [certificate_class değeri, etiket]. A/B/C mevcut veriyle aynı (tek harf) yazılır.
 const STATUS_OPTIONS = [['A', 'A Sınıfı'], ['B', 'B Sınıfı'], ['C', 'C Sınıfı'], ['İşyeri Hekimi', 'İşyeri Hekimi'], ['DSP', 'DSP (Diğer Sağlık Personeli)']];
 const SERVICE_MODES = { onsite: 'Yerinde', remote: 'Uzaktan', both: 'Yerinde + Uzaktan' };
@@ -1901,7 +1936,8 @@ const mediaViewer = (() => {
   };
 })();
 
-function createPostFeed({ scope, onRemoved, onFeatured }) {
+// detail=true: Çalışma Detay görünümü — metin kırpılmaz, kart kendine bağlanmaz, tam tarih gösterilir.
+function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
   const f = { posts: [], liking: new Set(), likeStamp: 0, ownerBusy: false };
   const find = id => f.posts.find(p => p.id === id);
   const cardOf = id => scope.querySelector(`[data-post-id="${CSS.escape(id)}"]`);
@@ -1927,15 +1963,16 @@ function createPostFeed({ scope, onRemoved, onFeatured }) {
   const isLong = text => text.length > 520 || (text.match(/\n/g) || []).length > 9;
   function card(p, eager = false) {
     const a = p.author || {}, image = storageUrl(p.image_path), profile = urls.profile(p.user_id), work = urls.work(p.id), line = identity.feedLine(a);
-    const long = p.content ? isLong(p.content) : false;
+    const long = !detail && p.content ? isLong(p.content) : false;
     const edited = p.updated_at && p.updated_at !== p.created_at ? ' · düzenlendi' : '';
+    const when = detail ? new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(p.created_at)) : relativeTime(p.created_at);
     return `<article class="kw-post" data-post-id="${esc(p.id)}">`
       + `<a class="kw-post-avatar" href="${esc(profile)}" target="_top" aria-label="${esc(a.full_name || 'Kullanıcı')} profiline git">${avatar(a, 'lg')}</a>`
       + `<header class="kw-post-head"><div class="kw-post-who"><div class="kw-post-name-row"><a class="kw-post-author-link" href="${esc(profile)}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a></div>`
-      + `<div class="kw-post-sub">${line ? `<span class="kw-post-profession" title="${esc(line)}">${esc(line)}</span>` : ''}<span class="kw-post-time"><time datetime="${esc(p.created_at)}">${esc(relativeTime(p.created_at))}</time>${edited}</span></div></div>`
+      + `<div class="kw-post-sub">${line ? `<span class="kw-post-profession" title="${esc(line)}">${esc(line)}</span>` : ''}<span class="kw-post-time"><time datetime="${esc(p.created_at)}">${esc(when)}</time>${edited}</span></div></div>`
       + `<div class="kw-owner" data-owner-slot>${ownerMenu(p)}</div></header>`
       + `<div class="kw-post-body">`
-      + (p.content ? `<a class="kw-post-detail kw-post-text" href="${esc(work)}" target="_top"><p class="kw-post-content${long ? ' is-clamped' : ''}">${esc(p.content)}</p></a>` : '')
+      + (p.content ? (detail ? `<div class="kw-post-text"><p class="kw-post-content">${esc(p.content)}</p></div>` : `<a class="kw-post-detail kw-post-text" href="${esc(work)}" target="_top"><p class="kw-post-content${long ? ' is-clamped' : ''}">${esc(p.content)}</p></a>`) : '')
       + (long ? `<a class="kw-more-link" href="${esc(work)}" target="_top">Devamını oku</a>` : '')
       + (image ? `<button type="button" class="kw-media" data-media="${esc(image)}" data-work="${esc(work)}" aria-label="Görseli tam boyut aç"><img class="kw-post-image" src="${esc(image)}" alt="${esc((p.content || 'Çalışma görseli').slice(0, 120))}" loading="${eager ? 'eager' : 'lazy'}" decoding="async"><span class="kw-media-more" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4h5v5M9 20H4v-5M20 4l-6 6M4 20l6-6"/></svg>Tamamını gör</span></button>` : '')
       + (p.category?.name ? `<div class="kw-post-tags"><span class="k-tag">${esc(p.category.name)}</span></div>` : '')
@@ -2152,6 +2189,12 @@ function createPostFeed({ scope, onRemoved, onFeatured }) {
       } catch { toast('Yorumlar yüklenemedi. Tekrar dene.'); }
       finally { t.loading = false; render(id); }
     }
+    // Detay: yorumlar açık gelir, ilk sayfa yüklenir; klavye açılmasın diye odak verilmez.
+    async function expand(id) {
+      const t = get(id), p = post(id);
+      t.open = true;
+      if (!t.full && p?.comment_count !== 0) { render(id); await loadMore(id); } else render(id);
+    }
     async function open(id) {
       const t = get(id), p = post(id);
       t.open = !t.open;
@@ -2219,7 +2262,7 @@ function createPostFeed({ scope, onRemoved, onFeatured }) {
     function rerenderAll() { map.forEach((_, id) => render(id)); }
     function reset() { map.clear(); }
     const avatarChanged = (uid, url) => { const p = profiles.get(uid); if (p) p.avatar_url = url; };
-    return { preview, open, loadMore, submit, saveEdit, remove, like, get, render, onUser, rerenderAll, reset, autosize, avatarChanged, isOpen: id => map.get(id)?.open };
+    return { preview, open, expand, loadMore, submit, saveEdit, remove, like, get, render, onUser, rerenderAll, reset, autosize, avatarChanged, isOpen: id => map.get(id)?.open };
   })();
 
   /* ---- Olaylar (kapsam: bu akışın kök elemanı) ---- */
@@ -2255,10 +2298,11 @@ function createPostFeed({ scope, onRemoved, onFeatured }) {
       return;
     }
     // Kartın boş alanına tıklama Çalışma Detay'a götürür (etkileşimli öğeler ve metin seçimi hariç).
-    if (card0 && !t.closest('a,button,input,textarea,select,label,form,.k-popover,[data-owner-slot]')) {
+    // Uygulama içinde /calisma-detay route'u açılır (reload yok); yönlendirme yoksa tam sayfa.
+    if (card0 && !detail && !t.closest('a,button,input,textarea,select,label,form,.k-popover,[data-owner-slot]')) {
       if (String(window.getSelection?.() || '').trim()) return;
-      shellHooks.leave();
-      navigateTop(urls.work(pid));
+      if (router.enabled) router.activate('work', { mode: 'push', params: { id: pid } });
+      else { shellHooks.leave(); navigateTop(urls.work(pid)); }
       return;
     }
     const media = t.closest('[data-media]');
@@ -3858,9 +3902,87 @@ function createProfileView() {
 }
 
 /* =========================================================================
+   11c. Görünüm: Çalışma Detay (/calisma-detay?id={post_id})
+   Akıştaki kart sistemi detay modunda: tam metin, görsel + görüntüleyici, beğeni, yorumlar ve
+   yorum beğenileri (açık gelir), paylaşım, sahip menüsü (Düzenle / öne çıkar / Sil). Veri ve
+   yetki kuralları akışla aynı (RLS; yazmalar sahiplik filtresiyle, silme soft-delete).
+   ========================================================================= */
+function createWorkView() {
+  const el = $('[data-view="work"]');
+  const statusBox = $('[data-work-status]', el), sheet = $('[data-work-sheet]', el), box = $('[data-work-post]', el);
+  const s = { id: '', rev: 0, mounted: false };
+  const feed = createPostFeed({
+    scope: el, detail: true,
+    onRemoved: id => { if (id === s.id) showStatus('Bu Çalışma silindi', 'Çalışma yayından kaldırıldı.', false, true); }
+  });
+  const F = feed.f;
+  function showStatus(title, text = '', retry = false, back = false) {
+    statusBox.innerHTML = title ? `<strong>${esc(title)}</strong>${text ? `<p>${esc(text)}</p>` : ''}${retry ? '<button type="button" class="k-btn" data-work-retry>Yeniden dene</button>' : ''}${back ? `<a class="k-btn" href="${esc(urls.view('works'))}" target="_top" data-view-link="works">Çalışmalara Dön</a>` : ''}` : '';
+    statusBox.hidden = !title; sheet.hidden = !!title;
+    host.schedule();
+  }
+  function render() {
+    const p = F.posts[0]; if (!p) return;
+    const a = p.author || {};
+    box.innerHTML = feed.card(p, true) + `<a class="kd-profile" href="${esc(urls.profile(p.user_id))}" target="_top"><span>${esc(a.full_name || 'Kırmızı İSG üyesi')}</span><span>Profili Gör <span aria-hidden="true">→</span></span></a>`;
+    feed.threads.rerenderAll();
+    host.schedule();
+  }
+  function setDocTitle() {
+    const p = F.posts[0];
+    if (!router.enabled || router.current !== 'work' || !p) return;
+    try { host.doc.title = `${p.author?.full_name ? p.author.full_name + ' — ' : ''}Çalışma | Kırmızı İSG`; } catch {}
+  }
+  async function load(id) {
+    const rev = ++s.rev;
+    s.id = id; F.posts = []; feed.threads.reset(); box.innerHTML = '';
+    if (!UUID_RE.test(id)) { showStatus('Çalışma bulunamadı', '', false, true); return; }
+    statusBox.hidden = true; sheet.hidden = false;
+    box.innerHTML = '<div class="kw-post kw-sk" aria-hidden="true"><div class="kw-sk-head"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>';
+    host.schedule();
+    try {
+      await dbReady;
+      const p = await postData.fetch(id);
+      if (rev !== s.rev) return;
+      if (!p) { showStatus('Çalışma bulunamadı', 'Bu Çalışma kaldırılmış veya artık yayında olmayabilir.', false, true); return; }
+      await session.ready;
+      if (rev !== s.rev) return;
+      F.posts = [p];
+      render(); setDocTitle();
+      feed.syncLikes([p.id]);
+      feed.threads.expand(p.id);
+    } catch {
+      if (rev === s.rev) showStatus('Çalışma şu anda yüklenemedi', 'Bağlantını kontrol edip yeniden dene.', true);
+    }
+  }
+  async function route(params = {}) {
+    const id = clean(params.id);
+    if (id && id === s.id && (F.posts.length || s.rev)) { setDocTitle(); return; }
+    await load(id);
+  }
+  // Düzenleyiciden gelen kayıt: açık detay yerinde güncellenir.
+  postBus.add((kind, x) => {
+    if (kind !== 'saved' || !x.previous || x.id !== s.id || !F.posts.length) return;
+    if (x.failed) { load(s.id); return; }
+    if (!x.fresh) { F.posts = []; showStatus('Çalışma bulunamadı', 'Bu Çalışma kaldırılmış veya artık yayında olmayabilir.', false, true); return; }
+    const old = F.posts[0];
+    F.posts = [{ ...x.fresh, liked: old.liked, comment_count: x.fresh.comment_count ?? old.comment_count ?? null }];
+    render();
+  });
+  el.addEventListener('click', e => { if (e.target?.nodeType === 1 && e.target.closest('[data-work-retry]')) load(s.id); });
+  shellHooks.avatarChanged = ((prev) => (uid, url) => { prev(uid, url); feed.avatarChanged(uid, url); })(shellHooks.avatarChanged);
+  return {
+    name: 'work', el, route,
+    mount() { s.mounted = true; return Promise.resolve(); },
+    onSession(kind) { if (kind === 'user' && F.posts.length) feed.onSession(kind); },
+    snapshot: () => null, isMounted: () => s.mounted
+  };
+}
+
+/* =========================================================================
    12. Görünümler + oturum aboneliği
    ========================================================================= */
-const VIEWS = { works: createWorksView(), experts: createExpertsView(), services: createServicesView(), profile: createProfileView() };
+const VIEWS = { works: createWorksView(), experts: createExpertsView(), services: createServicesView(), profile: createProfileView(), work: createWorkView() };
 session.on(kind => {
   authUI.render(kind);
   if (kind === 'user') composer.onSession();
@@ -3886,10 +4008,14 @@ const router = (() => {
   // Profil: /profil?id={user_id}#calismalar|#hizmetler. Scroll konumu profil kimliği başına tutulur.
   const tabOf = hash => (/^#?hizmetler$/i.test(hash || '') ? 'hizmetler' : /^#?calismalar$/i.test(hash || '') ? 'calismalar' : '');
   const paramsOf = url => ({ id: url.searchParams.get('id') || '', tab: tabOf(url.hash) });
-  const keyOf = (name, p = {}) => (name === 'profile' ? `profile:${p.id || ''}` : name);
-  const pathOf = (name, p = {}) => (name === 'profile' ? `${CONFIG.routes.profile}${p.id ? `?id=${encodeURIComponent(p.id)}` : ''}${p.tab ? '#' + p.tab : ''}` : CONFIG.routes[name]);
+  // Kimlik parametreli görünümler: Profil (/profil?id=) ve Çalışma Detay (/calisma-detay?id=).
+  const PARAM_VIEWS = ['profile', 'work'];
+  const keyOf = (name, p = {}) => (PARAM_VIEWS.includes(name) ? `${name}:${p.id || ''}` : name);
+  const pathOf = (name, p = {}) => (PARAM_VIEWS.includes(name) ? `${CONFIG.routes[name]}${p.id ? `?id=${encodeURIComponent(p.id)}` : ''}${name === 'profile' && p.tab ? '#' + p.tab : ''}` : CONFIG.routes[name]);
+  const paramsFor = (name, p = {}) => (name === 'profile' ? { id: clean(p.id), tab: tabOf(p.tab) } : name === 'work' ? { id: clean(p.id) } : {});
   const stateOf = () => ({ kisgShell: { view: current, doc: bootId, params: { ...params } } });
   function setTabs(name) {
+    if (name === 'work') name = 'works';   // detay, Çalışmalar sekmesinin parçası
     navEl.querySelectorAll('.ka-tab').forEach(a => {
       const on = a.dataset.viewLink === name;
       a.classList.toggle('is-active', on);
@@ -3920,11 +4046,14 @@ const router = (() => {
     el.classList.remove('is-entering'); void el.offsetWidth; el.classList.add('is-entering');
     ensureMounted(name);
     if (name === 'profile') VIEWS.profile.route({ ...params });
+    if (name === 'work') VIEWS.work.route({ ...params });
   }
   function activate(name, { mode = 'push', params: next = {} } = {}) {
     if (!VIEWS[name]) return;
-    const nextParams = name === 'profile' ? { id: clean(next.id), tab: tabOf(next.tab) } : {};
+    const nextParams = paramsFor(name, next);
     if (name === current && keyOf(name, nextParams) === keyOf(current, params)) {
+      closePopovers();
+      $$('dialog[open]').forEach(d => dialogs.close(d));
       if (name === 'profile' && nextParams.tab) { replaceHash(nextParams.tab); VIEWS.profile.route({ ...params }); }
       else if (mode === 'push') { const top = host.shellTop(); if (host.scrollY() > top + 4) host.scrollTo(top, true); }
       return;
@@ -3936,7 +4065,8 @@ const router = (() => {
     current = name; params = nextParams;
     show(name);
     if (mode === 'push' && enabled) {
-      try { host.win.history.pushState(stateOf(), '', pathOf(name, params)); }
+      // Görüntüleyicinin geçmiş kaydı üstündeyken (ör. "Çalışmayı Gör") o kayıt yeni route ile değiştirilir.
+      try { const h = host.win.history; if (h.state?.kisgModal) { modalBack = null; h.replaceState(stateOf(), '', pathOf(name, params)); } else h.pushState(stateOf(), '', pathOf(name, params)); }
       catch { navigateTop(CONFIG.siteUrl + pathOf(name, params)); return; }
     }
     if (enabled) { try { host.doc.title = titleFor(name); } catch {} }
@@ -3978,7 +4108,7 @@ const router = (() => {
     const url = host.url();
     const fromPath = viewFromPath(url.pathname);
     const initial = fromPath || (VIEWS[root.dataset.initialView] ? root.dataset.initialView : CONFIG.defaultView);
-    if (initial === 'profile') params = paramsOf(url);
+    if (PARAM_VIEWS.includes(initial)) params = paramsFor(initial, paramsOf(url));
     enabled = Boolean(CONFIG.historyRouting && host.canRoute && fromPath && CONFIG.siteOrigins.includes(url.origin));
     if (enabled) {
       try {
@@ -4008,17 +4138,17 @@ const router = (() => {
       host.scrollTo(target);
     }
   }
-  // Uygulama içi profil bağlantısı: /profil?id=… (aynı origin, geçerli kimlik) → {id, tab}
-  function profileTarget(href) {
+  // Uygulama içi bağlantı: /profil?id=… veya /calisma-detay?id=… (aynı origin, geçerli kimlik) → {view, params}
+  function linkTarget(href) {
     try {
-      const u = new URL(href, CONFIG.siteUrl);
-      if (!CONFIG.siteOrigins.includes(u.origin) || viewFromPath(u.pathname) !== 'profile') return null;
-      const p = paramsOf(u);
-      return UUID_RE.test(p.id) ? p : null;
+      const u = new URL(href, CONFIG.siteUrl), view = viewFromPath(u.pathname);
+      if (!CONFIG.siteOrigins.includes(u.origin) || !PARAM_VIEWS.includes(view)) return null;
+      const p = paramsFor(view, paramsOf(u));
+      return UUID_RE.test(p.id) ? { view, params: p } : null;
     } catch { return null; }
   }
   return {
-    init, start, activate, replaceHash, profileTarget, pushModal, popModal,
+    init, start, activate, replaceHash, linkTarget, pushModal, popModal,
     get enabled() { return enabled; },
     get current() { return current; },
     pendingSnapshot: name => pending[name] || null,
@@ -4073,13 +4203,13 @@ onShellClick(e => {
     if (link.dataset.then === 'publish' && link.dataset.viewLink === 'services') VIEWS.services.publish();
     return;
   }
-  // Çalışma/Uzman/Hizmet/yorum/hesap menüsündeki profil bağlantıları shell içinde açılır (reload yok).
+  // Profil ve Çalışma Detay bağlantıları (kart, yorum, hesap menüsü, görüntüleyici) shell içinde açılır (reload yok).
   const anchor = t.closest('a[href]');
-  const target = anchor && router.enabled && !e.defaultPrevented && e.button === 0 && !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) ? router.profileTarget(anchor.href) : null;
+  const target = anchor && router.enabled && !e.defaultPrevented && e.button === 0 && !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) ? router.linkTarget(anchor.href) : null;
   if (target) {
     e.preventDefault();
     closePopovers();
-    router.activate('profile', { mode: 'push', params: target });
+    router.activate(target.view, { mode: 'push', params: target.params });
     return;
   }
   // Uygulamadan çıkan linkler (detay, profil, ekosistem): dönüşte liste ve konum geri gelsin.
@@ -4133,7 +4263,8 @@ const appChrome = (() => {
     if (compact === on) return;
     compact = on;
     navEl.classList.toggle('is-compact', on);
-    if (on) closePopovers();
+    // Yalnız nav menüleri kapanır; kart/yorum menüleri kaydırırken açık kalır (mobilde "···" → Düzenle).
+    if (on) navEl.querySelectorAll('.k-popover:not([hidden])').forEach(p => { p.hidden = true; p.previousElementSibling?.setAttribute('aria-expanded', 'false'); });
   }
   function headerBottom() {
     if (!header) return 0;
