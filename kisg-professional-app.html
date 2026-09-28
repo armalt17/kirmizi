@@ -1,11 +1,22 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.3.0
-Çalışmalar | Uzmanlar | Hizmetler tek uygulama.
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.4.0
+Çalışmalar | Uzmanlar | Hizmetler | Profil (Kişi Kartı) tek uygulama.
 
-KURULUM: Bu dosyanın TAMAMI, aşağıdaki üç Hostinger sayfasındaki Custom HTML/Embed
+KURULUM: Bu dosyanın TAMAMI, aşağıdaki DÖRT Hostinger sayfasındaki Custom HTML/Embed
 içeriğinin yerine BİREBİR AYNI şekilde yapıştırılır:
-  /calisma   /uzmanlar   /hizmetler
-/profil, /calisma-detay, /hizmet-detay embed'lerine DOKUNULMAZ.
+  /calisma   /uzmanlar   /hizmetler   /profil
+(/profil'deki eski "PROFİL V1" embed'inin yerine bu dosya gelir.)
+/calisma-detay ve /hizmet-detay embed'lerine DOKUNULMAZ.
+
+v4.4: Profil Detay V2 — /profil?id={user_id} App Shell route'u olarak çalışır.
+ - Uygulama içinden profile geçiş pushState ile olur (iframe/shell yeniden yüklenmez);
+   geri tuşunda önceki görünümün feed/filtre/arama durumu ve scroll konumu korunur.
+ - Profil V1 veri, telefon gizliliği, sosyal bağlantı ve kayıt kuralları korunur;
+   title/specialties/job_role yazılmaz, yalnız değişen alanlar gönderilir.
+ - Çalışma kartı sistemi (beğeni, yorum, yorum beğenisi, paylaşım, sahip menüsü) akış ile ortak.
+ - "PDF Olarak İndir": ayrı tasarlanmış A4 Kişi Kartı + canlı profile QR (kütüphaneler tıklanınca yüklenir).
+ - Şema varsayımı: profiles.experience_range (yoksa alan otomatik gizlenir);
+   certificate_class için "İşyeri Hekimi"/"DSP" değerlerini DB kısıtı reddederse kullanıcıya açık hata gösterilir.
 
 v3.0: Referans tasarıma göre yeniden kurulan arayüz + Hostinger genişlik entegrasyonu.
 Genişlik: Dokümanlar/İş İlanları production yöntemi (parent wrapper zinciri işaretlenir,
@@ -155,6 +166,38 @@ Acil kapatma: CONFIG.historyRouting=false.
   </div>
 </section>
 
+<!-- PROFİL / KİŞİ KARTI -->
+<section class="ka-view kp" data-view="profile" hidden aria-label="Profil">
+  <div class="k-page kp-page">
+    <div class="k-empty kp-state" data-profile-status role="status" hidden></div>
+    <div class="kp-layout" data-profile-main>
+      <aside class="kp-side" data-profile-card aria-label="Kişi kartı"></aside>
+      <div class="kp-main">
+        <div class="kp-tabs" role="tablist" aria-label="Profil içerikleri">
+          <button type="button" role="tab" id="kpTabWorks" aria-controls="kpPanelWorks" aria-selected="true" data-profile-tab="calismalar">Çalışmalar<span class="kp-count" data-count></span></button>
+          <button type="button" role="tab" id="kpTabServices" aria-controls="kpPanelServices" aria-selected="false" tabindex="-1" data-profile-tab="hizmetler">Verdiği Hizmetler<span class="kp-count" data-count></span></button>
+        </div>
+        <div class="kp-panel" id="kpPanelWorks" role="tabpanel" aria-labelledby="kpTabWorks" data-profile-panel="calismalar">
+          <div class="kw-sheet kp-sheet">
+            <div class="kw-composer kp-compose" data-profile-compose hidden>
+              <button class="kw-composer-main" type="button" data-profile-action="compose" aria-label="Yeni Çalışma paylaş">
+                <span class="k-avatar k-avatar-md" data-profile-compose-avatar aria-hidden="true"></span>
+                <span class="kw-composer-field"><span>Sahada ne yaptın? Bir Çalışma paylaş…</span></span>
+              </button>
+              <button type="button" class="kw-tool" data-profile-action="compose" data-intent="photo" aria-label="Fotoğraflı Çalışma paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span>Fotoğraf</span></button>
+            </div>
+            <div class="kw-list" data-profile-posts aria-live="polite"></div>
+            <button class="kw-load-more" type="button" data-profile-posts-more hidden>Daha fazla Çalışma göster</button>
+          </div>
+        </div>
+        <div class="kp-panel" id="kpPanelServices" role="tabpanel" aria-labelledby="kpTabServices" data-profile-panel="hizmetler" hidden>
+          <div data-profile-services aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <!-- ORTAK DİALOGLAR -->
@@ -252,6 +295,32 @@ Acil kapatma: CONFIG.historyRouting=false.
     <label class="k-btn av-pick"><input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" data-av-file><span data-av-pick-label>Fotoğraf seç</span></label>
     <button type="button" class="k-btn k-btn-primary" data-av-save hidden>Kaydet</button>
   </footer>
+</dialog>
+
+<dialog id="kaProfileDialog" class="k-dialog k-dialog-lg" aria-labelledby="kaProfileTitle">
+  <form id="kaProfileForm" novalidate>
+    <header class="k-dialog-head"><h2 id="kaProfileTitle">Profili Düzenle</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
+    <div class="k-dialog-body">
+      <div class="kpe-grid">
+        <div class="kpe-wide"><label class="k-label" for="kaPe_full_name">Ad Soyad *</label><input class="k-input" id="kaPe_full_name" maxlength="120" autocomplete="name" required></div>
+        <div class="kpe-wide"><label class="k-label" for="kaPe_profession">Meslek / Unvan</label><input class="k-input" id="kaPe_profession" maxlength="160" placeholder="Örn. İş Güvenliği Uzmanı"></div>
+        <div><label class="k-label" for="kaPe_certificate_class">Mesleki Belge / Statü</label><select class="k-input" id="kaPe_certificate_class"></select></div>
+        <div><label class="k-label" for="kaPe_city">Şehir</label><select class="k-input" id="kaPe_city"></select></div>
+        <div data-pe-exp><label class="k-label" for="kaPe_experience_range">Mesleki Deneyim</label><select class="k-input" id="kaPe_experience_range"></select></div>
+        <div><label class="k-label" for="kaPe_current_company">Çalıştığı Firma</label><input class="k-input" id="kaPe_current_company" maxlength="180" autocomplete="organization"></div>
+        <div class="kpe-wide"><label class="k-label" for="kaPe_phone">Telefon Numarası</label><input class="k-input" id="kaPe_phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="40" placeholder="+90 5xx xxx xx xx"></div>
+        <div class="kpe-wide"><label class="k-label" for="kaPe_about">Hakkında</label><textarea class="k-input k-textarea" id="kaPe_about" maxlength="5000" rows="5" placeholder="Uzmanlık alanların, çalıştığın sektörler, yaklaşımın…"></textarea></div>
+      </div>
+      <fieldset class="kpe-set"><legend>Sosyal bağlantılar</legend><div class="kpe-socials" data-pe-socials></div><button type="button" class="k-btn" data-pe-add-social>+ Bağlantı ekle</button></fieldset>
+      <fieldset class="kpe-set"><legend>Görünürlük</legend>
+        <label class="kpe-check"><input type="checkbox" id="kaPeDiscoverable">Uzmanlar'da görünür ol</label>
+        <label class="kpe-check"><input type="checkbox" id="kaPePhonePublic">Telefonumu profilimde göster</label>
+        <p class="k-hint">Telefon ve WhatsApp bağlantısı yalnız bu seçenek açıkken herkese gösterilir.</p>
+      </fieldset>
+      <p id="kaPeError" class="k-form-error" role="alert" hidden></p>
+    </div>
+    <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button type="submit" id="kaPeSave" class="k-btn k-btn-primary">Değişiklikleri Kaydet</button></footer>
+  </form>
 </dialog>
 
 <dialog id="kaMediaDialog" class="k-dialog k-media-dialog" aria-label="Çalışma görseli">
@@ -565,6 +634,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .ks-by strong{display:block;overflow:hidden;color:var(--ink);font-size:14px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
 #kisgApp .ks-by p{overflow:hidden;color:var(--muted);font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}
 #kisgApp .ks-card h2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:14px;color:var(--ink);font-size:18.5px;font-weight:750;line-height:1.3;letter-spacing:-.015em}
+#kisgApp .ks-card>h2:first-child{margin-top:0}
 #kisgApp .ks-description{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:6px;color:var(--text);font-size:14px;line-height:1.55}
 #kisgApp .ks-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:auto -20px 0;padding:12px 20px;border-top:1px solid var(--line-soft)}
 #kisgApp .ks-card>.ks-foot{margin-top:16px}
@@ -637,9 +707,87 @@ Acil kapatma: CONFIG.historyRouting=false.
 @keyframes k-toast{from{opacity:0;transform:translateY(8px)}}
 
 /* =====================================================================
+   PROFİL — Kırmızı İSG Kişi Kartı
+   Masaüstü: solda kişi kartı, sağda Çalışmalar | Verdiği Hizmetler.
+   Mobil: kartın kendi kompozisyonu (yatay kimlik, kompakt bilgi, eylem satırı), kenardan kenara içerik.
+   ===================================================================== */
+#kisgApp .kp-page{padding:28px 0 72px}
+#kisgApp .kp-layout{display:grid;grid-template-columns:minmax(0,368px) minmax(0,1fr);column-gap:32px;align-items:start;max-width:1160px;margin-inline:auto}
+#kisgApp .kp-state{min-height:40vh;justify-content:center}
+#kisgApp .kp-card{position:relative;display:flex;flex-direction:column;gap:18px;padding:22px 22px 20px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:0 1px 2px rgba(20,26,36,.03);overflow-wrap:anywhere;animation:ka-enter .24s var(--ease)}
+#kisgApp .kp-card::before{content:"";position:absolute;left:22px;top:0;width:44px;height:3px;border-radius:0 0 3px 3px;background:var(--red)}
+#kisgApp .kp-kicker .k-badge{font-size:9.5px}
+#kisgApp .kp-head{display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+#kisgApp .kp-av{position:relative;flex:none}
+#kisgApp .k-avatar-profile{width:104px;height:104px;font-size:32px;box-shadow:0 0 0 1px var(--line),0 0 0 5px #fff,0 0 0 6px var(--line-soft)}
+#kisgApp .kp-av-edit{position:absolute;right:-4px;bottom:-2px;display:grid;width:36px;height:36px;place-items:center;padding:0;border:2px solid #fff;border-radius:50%;background:var(--ink);color:#fff;transition:transform var(--t-fast),background var(--t-fast)}
+#kisgApp .kp-av-edit svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
+#kisgApp .kp-av-edit:active{transform:scale(.92)}
+#kisgApp .kp-idn{min-width:0}
+#kisgApp .kp-idn h1{color:var(--ink);font-size:25px;font-weight:800;line-height:1.2;letter-spacing:-.025em}
+#kisgApp .kp-role{margin-top:5px;color:var(--text);font-size:15px;font-weight:550;line-height:1.4}
+#kisgApp .kp-cert{margin-top:10px}
+#kisgApp .kp-cert .k-tag{gap:7px;min-height:28px;padding:4px 11px;white-space:normal;text-align:left}
+#kisgApp .kp-cert .k-tag i{flex:none;width:6px;height:6px;border-radius:50%;background:var(--red)}
+#kisgApp .kp-facts{display:grid;gap:2px;margin:0;padding:12px 0 0;border-top:1px solid var(--line-soft);list-style:none}
+#kisgApp .kp-fact{display:flex;align-items:flex-start;gap:12px;padding:6px 0}
+#kisgApp .kp-fact>svg{width:18px;height:18px;margin-top:3px;color:var(--muted)}
+#kisgApp .kp-fact span{display:grid;min-width:0}
+#kisgApp .kp-fact small{color:var(--faint);font-size:11.5px;font-weight:650;line-height:1.3}
+#kisgApp .kp-fact b{color:var(--ink);font-size:14px;font-weight:650;line-height:1.4}
+#kisgApp .kp-contact{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+#kisgApp .kp-phone{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px 0 10px;border-radius:var(--r-pill);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);font-size:14px;font-weight:650;font-variant-numeric:tabular-nums}
+#kisgApp .kp-phone svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
+#kisgApp .kp-socials{display:flex;flex-wrap:wrap;gap:2px}
+#kisgApp .kp-social{display:grid;width:40px;height:40px;place-items:center;border-radius:10px;color:var(--muted);transition:background var(--t-fast),color var(--t-fast)}
+#kisgApp .kp-social svg{width:20px;height:20px;fill:currentColor}
+#kisgApp .kp-about{padding-top:14px;border-top:1px solid var(--line-soft)}
+#kisgApp .kp-about h2{color:var(--ink);font-size:13px;font-weight:750}
+#kisgApp .kp-about-text{margin-top:6px;color:var(--text);font-size:14px;line-height:1.65;white-space:pre-wrap}
+#kisgApp .kp-about-text.is-clamped{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+#kisgApp .kp-about-more{margin-top:4px}
+#kisgApp .kp-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#kisgApp .kp-actions .k-btn{min-width:0;padding-inline:12px;font-size:13.5px}
+#kisgApp .kp-actions .k-btn span{overflow:hidden;text-overflow:ellipsis}
+#kisgApp .kp-actions .k-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .kp-act-main{grid-column:1/-1}
+#kisgApp .kp-hint{padding:10px 12px;border-radius:12px;background:var(--surface-2);color:var(--muted);font-size:13px;line-height:1.5}
+#kisgApp .kp-hint .k-text-button{padding:0;font-size:13px}
+#kisgApp .kp-card-sk{gap:14px}
+#kisgApp .kp-card-sk::before{display:none}
+#kisgApp .kp-sk-av{width:104px;height:104px;border-radius:50%}
+#kisgApp .kp-sk-lines{display:grid;gap:10px;width:70%}
+#kisgApp .kp-main{min-width:0}
+#kisgApp .kp-tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+#kisgApp .kp-tabs [role="tab"]{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 14px;border:0;background:transparent;color:var(--muted);font-size:15px;font-weight:700;box-shadow:inset 0 -3px transparent;transition:color var(--t-fast),box-shadow var(--t)}
+#kisgApp .kp-tabs [aria-selected="true"]{color:var(--ink);box-shadow:inset 0 -3px var(--red)}
+#kisgApp .kp-count{color:var(--faint);font-size:13px;font-weight:650;font-variant-numeric:tabular-nums}
+#kisgApp .kp-count:empty{display:none}
+#kisgApp .kp-sec{padding:14px var(--pad) 4px;color:var(--muted);font-size:12px;font-weight:750;letter-spacing:.04em;text-transform:uppercase}
+#kisgApp .kp-services-head{display:flex;justify-content:flex-end;margin-bottom:12px}
+#kisgApp .kp-publish{height:44px}
+#kisgApp .kp-services{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+#kisgApp .kpe-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+#kisgApp .kpe-grid .k-label{margin-top:14px}
+#kisgApp .kpe-wide{grid-column:1/-1}
+#kisgApp .kpe-grid>:first-child .k-label{margin-top:0}
+#kisgApp .kpe-set{min-width:0;margin:22px 0 0;padding:16px 0 0;border:0;border-top:1px solid var(--line-soft)}
+#kisgApp .kpe-set legend{padding:0 10px 0 0;color:var(--ink);font-size:14px;font-weight:750}
+#kisgApp .kpe-socials{display:grid;gap:8px;margin-bottom:10px}
+#kisgApp .kpe-socials:empty{display:none}
+#kisgApp .kpe-social{display:grid;grid-template-columns:150px minmax(0,1fr) 40px;gap:8px;align-items:center}
+#kisgApp .kpe-social .k-input{min-height:44px}
+#kisgApp .kpe-check{display:flex;align-items:center;gap:10px;min-height:44px;color:var(--ink);font-size:14.5px;cursor:pointer}
+#kisgApp .kpe-check input{width:19px;height:19px;accent-color:var(--red)}
+
+/* =====================================================================
    HOVER (yalnızca gerçek imleç)
    ===================================================================== */
 @media(hover:hover) and (pointer:fine){
+  #kisgApp .kp-social:hover{background:var(--surface-2);color:var(--ink)}
+  #kisgApp .kp-av-edit:hover{background:#000}
+  #kisgApp .kp-tabs [role="tab"]:hover{color:var(--ink)}
+  #kisgApp .kp-phone:hover{box-shadow:inset 0 0 0 1px var(--line-strong)}
   #kisgApp .k-btn:hover{border-color:var(--ink)}
   #kisgApp .k-btn-primary:hover{background:var(--red-hover);border-color:var(--red-hover)}
   #kisgApp .k-btn-outline:hover{background:var(--red-tint)}
@@ -675,6 +823,16 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .kw-layout{grid-template-columns:minmax(0,1fr) var(--col-right)}
   #kisgApp .kw-left{display:none}
   #kisgApp .kw-rail-experts{display:block}
+  #kisgApp .kp-layout{grid-template-columns:minmax(0,320px) minmax(0,1fr);column-gap:24px}
+}
+/* Tablet dikey: kişi kartı üstte, yatay kimlik; içerik altta */
+@media(max-width:899px){
+  #kisgApp .kp-layout{grid-template-columns:minmax(0,1fr);max-width:680px;row-gap:20px}
+  #kisgApp .kp-head{flex-direction:row;align-items:center;gap:18px}
+  #kisgApp .k-avatar-profile{width:96px;height:96px;font-size:30px}
+  #kisgApp .kp-facts{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));column-gap:16px}
+  #kisgApp .kp-actions{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  #kisgApp .kp-act-main{grid-column:auto}
 }
 /* Tablet dikey: tek feed, keşif şeritleri feed içinde */
 @media(max-width:899px){
@@ -747,6 +905,40 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .k-media-dialog{width:100%;max-width:none;height:100dvh;max-height:none;margin:0;border-radius:0}
   #kisgApp .k-media-stage{max-height:calc(100dvh - 58px)}
   #kisgApp .k-toast{inset:auto 12px 12px 12px;max-width:none}
+  /* Profil (telefon): kart kenardan kenara, kimlik yatay, bilgiler kompakt, eylemler tek satır */
+  #kisgApp .kp-page{width:100%;padding:0 0 40px}
+  #kisgApp .kp-layout{row-gap:0}
+  #kisgApp .kp-state{margin-inline:var(--gutter)}
+  #kisgApp .kp-card{gap:14px;padding:18px var(--pad) 16px;border:0;border-bottom:8px solid var(--surface-2);border-radius:0;box-shadow:none}
+  #kisgApp .kp-card::before{left:var(--pad)}
+  #kisgApp .kp-head{gap:14px;align-items:center}
+  #kisgApp .k-avatar-profile{width:76px;height:76px;font-size:24px;box-shadow:0 0 0 1px var(--line),0 0 0 3px #fff,0 0 0 4px var(--line-soft)}
+  #kisgApp .kp-av-edit{width:30px;height:30px;right:-6px;bottom:-4px}
+  #kisgApp .kp-av-edit svg{width:15px;height:15px}
+  #kisgApp .kp-idn h1{font-size:21px}
+  #kisgApp .kp-role{margin-top:3px;font-size:14px}
+  #kisgApp .kp-cert{margin-top:7px}
+  #kisgApp .kp-cert .k-tag{min-height:24px;padding:3px 9px;font-size:12px}
+  #kisgApp .kp-facts{display:flex;flex-wrap:wrap;gap:4px 14px;padding-top:10px}
+  #kisgApp .kp-fact{align-items:center;gap:6px;padding:2px 0}
+  #kisgApp .kp-fact>svg{width:15px;height:15px;margin:0}
+  #kisgApp .kp-fact small{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+  #kisgApp .kp-fact b{font-size:13.5px;font-weight:600;color:var(--text)}
+  #kisgApp .kp-about-text{font-size:14.5px}
+  #kisgApp .kp-about-text.is-clamped{-webkit-line-clamp:4}
+  #kisgApp .kp-actions{display:flex;gap:8px}
+  #kisgApp .kp-actions .k-btn{flex:1 1 0;min-height:44px;padding-inline:8px;font-size:13px}
+  #kisgApp .kp-actions .k-btn:not(.kp-act-keep){position:relative;flex:0 0 44px;width:44px;padding:0}
+  #kisgApp .kp-actions .k-btn:not(.kp-act-keep) span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+  #kisgApp .kp-tabs{position:relative;gap:0;margin-bottom:0;background:#fff}
+  #kisgApp .kp-tabs [role="tab"]{flex:1;justify-content:center;min-height:50px;padding:0 6px;font-size:14.5px}
+  #kisgApp .kp-sheet{border:0;border-radius:0}
+  #kisgApp .kp-panel .k-empty,#kisgApp .kp-services-head,#kisgApp .kp-services,#kisgApp .kp-panel>div>.kc-sk{margin-inline:var(--gutter)}
+  #kisgApp .kp-services-head{margin-top:12px}
+  #kisgApp .kp-services{grid-template-columns:minmax(0,1fr);margin-top:12px}
+  #kisgApp .kpe-grid{grid-template-columns:1fr}
+  #kisgApp .kpe-social{grid-template-columns:minmax(0,1fr) 40px}
+  #kisgApp .kpe-social select{grid-column:1/-1}
 }
 @media(max-width:359px){
   #kisgApp :is(.kw-act,.kw-likes-static){font-size:12.5px;padding-inline:8px}
@@ -774,7 +966,7 @@ const CONFIG = Object.freeze({
   historyRouting: true,
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
-  routes: { works: '/calisma', experts: '/uzmanlar', services: '/hizmetler' },
+  routes: { works: '/calisma', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil' },
   defaultView: 'works',
   returnPaths: ['/calisma-detay', '/hizmet-detay', '/profil'],
   snapshotMaxAgeMs: 15 * 60 * 1000,
@@ -794,7 +986,9 @@ const CONFIG = Object.freeze({
   // WebKit (iPhone/Safari) canvas'tan WebP üretemez; bu cihazlarda aynı yola JPEG yüklenir.
   allowJpegFallback: true
 });
-const LABELS = { works: 'Çalışmalar', experts: 'Uzmanlar', services: 'Hizmetler' };
+const LABELS = { works: 'Çalışmalar', experts: 'Uzmanlar', services: 'Hizmetler', profile: 'Profil' };
+// Mesleki Belge / Statü: [certificate_class değeri, etiket]. A/B/C mevcut veriyle aynı (tek harf) yazılır.
+const STATUS_OPTIONS = [['A', 'A Sınıfı'], ['B', 'B Sınıfı'], ['C', 'C Sınıfı'], ['İşyeri Hekimi', 'İşyeri Hekimi'], ['DSP', 'DSP (Diğer Sağlık Personeli)']];
 const SERVICE_MODES = { onsite: 'Yerinde', remote: 'Uzaktan', both: 'Yerinde + Uzaktan' };
 
 /* =========================================================================
@@ -1029,16 +1223,23 @@ const identity = {
   feedLine: p => compact([p?.profession || p?.title, identity.certTag(p), p?.current_company]),
   // Hizmetler / profil: profession, yoksa title
   role: p => clean(p?.profession) || clean(p?.title),
-  // Profil sayfasıyla aynı kural: dolu certificate_class belirleyici, boşsa title'daki "A Sınıfı".
-  cert(p) {
+  // Mesleki Belge / Statü: dolu certificate_class belirleyici (A/B/C, İşyeri Hekimi, DSP);
+  // boşsa title'daki "A Sınıfı" (mobil profiller) — Profil V1 kuralı.
+  statusKey(p) {
     const v = clean(p?.certificate_class);
-    if (v) return /^[ABC](?:\s|$)/i.test(v) ? v[0].toUpperCase() : '';
+    if (v) {
+      if (/^[ABC](?:\s|$)/i.test(v)) return v[0].toUpperCase();
+      return STATUS_OPTIONS.find(([k]) => k.length > 1 && k.toLocaleLowerCase('tr-TR') === v.toLocaleLowerCase('tr-TR'))?.[0] || '';
+    }
     return clean(p?.title).match(/^([ABC])\s+Sınıfı(?:\s|$)/iu)?.[1]?.toUpperCase() || '';
   },
+  cert: p => (/^[ABC]$/.test(identity.statusKey(p)) ? identity.statusKey(p) : ''),
+  statusShort: p => { const k = identity.statusKey(p); return /^[ABC]$/.test(k) ? `${k} Sınıfı` : k; },
+  statusLong: p => { const k = identity.statusKey(p); return /^[ABC]$/.test(k) ? `${k} Sınıfı İş Güvenliği Uzmanı` : k === 'DSP' ? 'Diğer Sağlık Personeli (DSP)' : k; },
   // Rol metninde zaten geçmiyorsa gösterilecek kısa belge sinyali.
   certTag(p) {
-    const c = identity.cert(p); if (!c) return '';
-    return identity.role(p).toLocaleUpperCase('tr-TR').includes(`${c} SINIFI`) ? '' : `${c} Sınıfı`;
+    const c = identity.statusShort(p); if (!c) return '';
+    return identity.role(p).toLocaleUpperCase('tr-TR').includes(c.toLocaleUpperCase('tr-TR')) ? '' : c;
   }
 };
 
@@ -1619,44 +1820,55 @@ const avatarManager = (() => {
 })();
 
 /* =========================================================================
-   8. Görünüm: Çalışmalar
+   8. Çalışma kart sistemi — Çalışmalar akışı ve Profil aynı kartı, beğeniyi, yorumları,
+   sahip menüsünü ve düzenleyiciyi paylaşır. Akışlar arası tutarlılık postBus ile sağlanır
+   (bir yerde beğeni/silme/öne çıkarma diğer açık akışa da anında yansır).
    ========================================================================= */
-function createWorksView() {
-  const el = $('[data-view="works"]');
-  const list = $('[data-list]', el), more = $('[data-more]', el), notice = $('[data-notice]', el);
-  const sideExperts = $('[data-side-experts]', el), sideServices = $('[data-side-services]', el);
-  const composerAvatar = $('[data-composer-avatar]', el);
-  const d = {
-    root: $('#kaPostDialog'), form: $('#kaPostForm'), title: $('#kaPostTitle'), content: $('#kaPostContent'), file: $('#kaPostImage'),
-    label: $('[data-photo-label]'), preview: $('#kaPostPreview'), category: $('#kaPostCategory'), error: $('#kaPostError'), submit: $('#kaPostSubmit')
-  };
-  const removeImageBtn = $('[data-remove-image]', d.preview);
-  const POST_SELECT = 'id,user_id,content,image_path,profile_featured_order,created_at,updated_at,category:professional_post_categories(id,name),author:profiles!professional_posts_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company),likes:professional_post_likes(count)';
-  const s = {
-    mounted: false, posts: [], cursor: null, hasMore: true, loading: false, queuedReset: false,
-    experts: [], services: [], expertsFailed: false, servicesFailed: false,
-    categories: [], categoriesReady: false, categoriesPromise: null,
-    liking: new Set(), likeStamp: 0, ownerBusy: false, edit: null, file: null, previewUrl: null, saving: false
-  };
-  const find = id => s.posts.find(p => p.id === id);
-  const cardOf = id => list.querySelector(`[data-post-id="${CSS.escape(id)}"]`);
-  const isOwn = p => !!session.user && p.user_id === session.user.id;
+const POST_SELECT = 'id,user_id,content,image_path,profile_featured_order,created_at,updated_at,category:professional_post_categories(id,name),author:profiles!professional_posts_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company),likes:professional_post_likes(count)';
+const postData = (() => {
   const COMMENT_COUNT = ',comments:professional_post_comments(count)';
   let withCommentCount = true;
-  const postQuery = () => {
+  const query = () => {
     let q = db.from('professional_posts').select(POST_SELECT + (withCommentCount ? COMMENT_COUNT : ''));
     if (withCommentCount) q = q.eq('comments.status', 'active');
     return q;
   };
-  // Embedded yorum sayısı desteklenmiyorsa (ilişki/adlandırma farkı) feed yorum sayısız çalışmaya devam eder.
-  async function runPostQuery(build) {
-    let res = await build(postQuery());
+  // Embedded yorum sayısı desteklenmiyorsa (ilişki/adlandırma farkı) akış yorum sayısız çalışmaya devam eder.
+  async function run(build) {
+    let res = await build(query());
     if (res.error && withCommentCount && /PGRST2\d\d|42703|relationship|could not find/i.test(`${res.error.code} ${res.error.message}`)) {
-      withCommentCount = false; res = await build(postQuery());
+      withCommentCount = false; res = await build(query());
     }
     return res;
   }
   const normalize = row => ({ ...row, liked: false, like_count: Math.max(0, Number(row.likes?.[0]?.count) || 0), comment_count: Array.isArray(row.comments) ? Math.max(0, Number(row.comments[0]?.count) || 0) : null });
+  async function fetch(id) {
+    const { data, error } = await run(q => q.eq('id', id).eq('status', 'active').maybeSingle());
+    if (error) throw error;
+    return data ? normalize(data) : null;
+  }
+  return { run, normalize, fetch };
+})();
+const postBus = new Set();
+const emitPost = (kind, payload) => postBus.forEach(fn => { try { fn(kind, payload); } catch (e) { console.error(e); } });
+
+const mediaViewer = (() => {
+  const d = $('#kaMediaDialog'), img = $('[data-media-img]', d), link = $('[data-media-work]', d);
+  d.addEventListener('close', () => { img.removeAttribute('src'); });
+  return {
+    open(src, work, alt) {
+      img.src = src; img.alt = alt; link.href = work;
+      dialogs.open(d, 'center');
+      d.querySelector('.k-media-stage').scrollTop = 0;
+    }
+  };
+})();
+
+function createPostFeed({ scope, onRemoved, onFeatured }) {
+  const f = { posts: [], liking: new Set(), likeStamp: 0, ownerBusy: false };
+  const find = id => f.posts.find(p => p.id === id);
+  const cardOf = id => scope.querySelector(`[data-post-id="${CSS.escape(id)}"]`);
+  const isOwn = p => !!session.user && p.user_id === session.user.id;
 
   /* ---- Render ---- */
   function ownerMenu(p) {
@@ -1670,11 +1882,11 @@ function createWorksView() {
   function actions(p) {
     const like = isOwn(p)
       ? `<span class="kw-likes-static" data-like-static${p.like_count > 0 ? '' : ' hidden'}>${ICONS.heart}<span data-like-count>${likeNum(p)}</span><span class="k-sr"> beğeni</span></span>`
-      : `<button type="button" class="kw-act kw-act-like${p.liked ? ' is-liked' : ''}" data-post-action="like" aria-pressed="${p.liked}"${s.liking.has(p.id) ? ' disabled' : ''}><span class="kw-act-ico">${ICONS.heart}</span><span class="kw-like-num" data-like-count>${likeNum(p)}</span><span class="kw-act-label">Beğen</span></button>`;
+      : `<button type="button" class="kw-act kw-act-like${p.liked ? ' is-liked' : ''}" data-post-action="like" aria-pressed="${p.liked}"${f.liking.has(p.id) ? ' disabled' : ''}><span class="kw-act-ico">${ICONS.heart}</span><span class="kw-like-num" data-like-count>${likeNum(p)}</span><span class="kw-act-label">Beğen</span></button>`;
     const cc = p.comment_count > 0 ? String(p.comment_count) : '';
     return `${like}<button type="button" class="kw-act kw-act-comment" data-post-action="comment" aria-expanded="${!!threads.isOpen(p.id)}"><span class="kw-act-ico">${ICONS.comment}</span><span class="kw-like-num" data-comment-count>${cc}</span><span class="kw-act-label">Yorum Yap</span></button><button type="button" class="kw-act kw-act-share" data-post-action="share"><span class="kw-act-ico">${ICONS.send}</span><span class="kw-act-label">Paylaş</span></button>`;
   }
-  // Uzun Çalışma feed'de kırpılır; tamamı Çalışma Detay'da okunur.
+  // Uzun Çalışma kartta kırpılır; tamamı Çalışma Detay'da okunur.
   const isLong = text => text.length > 520 || (text.match(/\n/g) || []).length > 9;
   function card(p, eager = false) {
     const a = p.author || {}, image = storageUrl(p.image_path), profile = urls.profile(p.user_id), work = urls.work(p.id), line = identity.feedLine(a);
@@ -1692,11 +1904,10 @@ function createWorksView() {
       + (p.category?.name ? `<div class="kw-post-tags"><span class="k-tag">${esc(p.category.name)}</span></div>` : '')
       + `<div class="kw-post-actions" data-actions>${actions(p)}</div><div class="kw-thread" data-thread hidden></div></div></article>`;
   }
-  const emptyMarkup = '<div class="kw-post kw-empty-card"><div class="kw-empty"><img class="kw-empty-art" src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/erferf.png" alt="" aria-hidden="true"><strong>Henüz Çalışma yok</strong><p>Sahada yaptığın bir uygulamayı, gözlemini veya öğrendiğin bir şeyi paylaşarak ilk Çalışmayı sen başlat.</p><button type="button" class="k-btn k-btn-primary" data-composer>İlk Çalışmayı paylaş</button></div></div>';
   function patchLike(p) {
     const c = cardOf(p.id); if (!c) return;
     const b = $('[data-post-action="like"]', c);
-    if (b) { b.classList.toggle('is-liked', p.liked); b.setAttribute('aria-pressed', String(p.liked)); b.disabled = s.liking.has(p.id); }
+    if (b) { b.classList.toggle('is-liked', p.liked); b.setAttribute('aria-pressed', String(p.liked)); b.disabled = f.liking.has(p.id); }
     $$('[data-like-count]', c).forEach(n => { n.textContent = likeNum(p); });
     const st = $('[data-like-static]', c); if (st) st.hidden = p.like_count <= 0;
   }
@@ -1707,121 +1918,11 @@ function createWorksView() {
     $('[data-actions]', c).innerHTML = actions(p);
     patchLike(p);
   }
-  function renderAll(eager = false) {
-    list.innerHTML = s.posts.length ? s.posts.map(p => card(p, eager)).join('') : emptyMarkup;
-    placeRails(); renderLive();
-    threads.rerenderAll();
-    more.hidden = !s.hasMore || !s.posts.length;
-  }
-  function showNotice(text) {
-    notice.innerHTML = `<span>${esc(text)}</span><button type="button" class="k-btn" data-retry>Yeniden dene</button>`;
-    notice.hidden = false;
-  }
 
-  /* ---- Keşif alanları (masaüstü kenar + mobil şerit) ---- */
-  function personRow(p) {
-    const role = identity.role(p) || identity.feedLine(p);
-    const cert = identity.certTag(p);
-    return `<a class="kw-person" href="${esc(urls.profile(p.id))}" target="_top">${avatar(p, 'lg')}<span class="kw-person-copy"><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>`
-      + (role || cert ? `<span class="kw-person-role">${esc(compact([role, cert]))}</span>` : '')
-      + (clean(p.city) ? `<span class="kw-person-meta">${placeMeta(p.city)}</span>` : '')
-      + `</span>${ICONS.chev}</a>`;
-  }
-  function offerRow(v) {
-    const p = v.provider;
-    return `<a class="kw-offer" href="${esc(urls.service(v.id))}" target="_top">${p ? avatar(p, 'lg') : '<span class="k-avatar k-avatar-lg" aria-hidden="true"></span>'}<span class="kw-offer-copy">`
-      + `<strong>${esc(v.title)}</strong>`
-      + (p?.full_name ? `<span class="kw-offer-by">${esc(p.full_name)}</span>` : '')
-      + (p && identity.role(p) ? `<span class="kw-offer-role">${esc(identity.role(p))}</span>` : '')
-      + `<span class="kw-offer-meta">${modeMeta(v.service_mode)}${placeMeta(v.service_region)}</span>`
-      + `</span>${ICONS.chev}</a>`;
-  }
-  function renderSide() {
-    sideExperts.innerHTML = s.experts.length ? s.experts.map(personRow).join('')
-      : `<div class="k-muted-note">${s.expertsFailed ? 'Uzmanlar şu anda görüntülenemiyor.' : 'Henüz görünür uzman yok.'}</div>`;
-    sideServices.innerHTML = s.services.length ? s.services.map(offerRow).join('')
-      : `<div class="k-muted-note">${s.servicesFailed ? 'Hizmetler şu anda görüntülenemiyor.' : 'Henüz yayınlanmış hizmet yok. İlk hizmeti sen yayınla.'}</div>`;
-  }
-  const railExperts = () => `<section class="kw-rail kw-rail-experts" aria-label="İSG profesyonellerini keşfet"><div class="kw-rail-head"><h2>İSG profesyonellerini keşfet</h2><a href="${esc(urls.view('experts'))}" target="_top" data-view-link="experts">Tümü →</a></div><div class="kw-rail-track">${s.experts.map(p => {
-    const role = identity.role(p) || identity.feedLine(p), meta = compact([identity.certTag(p), clean(p.city)]);
-    return `<a class="kw-rail-expert" href="${esc(urls.profile(p.id))}" target="_top">${avatar(p, 'xl')}<strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${role ? `<span>${esc(role)}</span>` : ''}${meta ? `<span>${esc(meta)}</span>` : ''}</a>`;
-  }).join('')}</div></section>`;
-  const railServices = () => `<section class="kw-rail kw-rail-services" aria-label="Sunulan hizmetler"><div class="kw-rail-head"><h2>Sunulan hizmetler</h2><a href="${esc(urls.view('services'))}" target="_top" data-view-link="services">Tümü →</a></div><div class="kw-rail-track">${s.services.map(v => `<a class="kw-rail-service" href="${esc(urls.service(v.id))}" target="_top"><span class="kw-rail-cat">${esc(v.category?.name || 'Hizmet')}</span><strong>${esc(v.title)}</strong>${v.provider ? `<span class="kw-rail-by">${avatar(v.provider, 'xs')}<span>${esc(v.provider.full_name || '')}</span></span>` : ''}<span class="kw-offer-meta">${modeMeta(v.service_mode)}${placeMeta(v.service_region)}</span></a>`).join('')}</div></section>`;
-  function renderLive() {
-    const live = $('[data-live]', el), first = s.posts[0];
-    if (!first) { live.hidden = true; return; }
-    $('[data-live-text]', live).textContent = `Son Çalışma · ${relativeTime(first.created_at)}`;
-    live.hidden = false;
-  }
-  function placeRails() {
-    $$('.kw-rail', list).forEach(n => n.remove());
-    const cards = $$('[data-post-id]', list); if (!cards.length) return;
-    const ei = Math.min(3, cards.length) - 1;
-    const si = Math.min(Math.max(ei + 3, 6), cards.length) - 1;
-    if (s.services.length) cards[si].insertAdjacentHTML('afterend', railServices());
-    if (s.experts.length) cards[ei].insertAdjacentHTML('afterend', railExperts());
-  }
-  async function loadRails({ experts = true, services = true } = {}) {
-    try { await dbReady; } catch { s.expertsFailed = s.servicesFailed = true; renderSide(); return; }
-    const jobs = [];
-    if (experts) jobs.push((async () => {
-      try {
-        const { data, error } = await db.from('profiles').select('id,full_name,avatar_url,profession,title,certificate_class,current_company,city').eq('is_discoverable', true).order('last_post_at', { ascending: false, nullsFirst: false }).limit(CONFIG.railExperts);
-        if (error) throw error; s.experts = data || []; s.expertsFailed = false;
-      } catch { s.experts = []; s.expertsFailed = true; }
-    })());
-    if (services) jobs.push((async () => {
-      try {
-        const { data, error } = await db.from('professional_services').select('id,title,service_region,service_mode,category:professional_service_categories(name),provider:profiles!professional_services_user_id_fkey(full_name,avatar_url,profession,title,certificate_class)').eq('status', 'active').order('created_at', { ascending: false }).limit(CONFIG.railServices);
-        if (error) throw error; s.services = data || []; s.servicesFailed = false;
-      } catch { s.services = []; s.servicesFailed = true; }
-    })());
-    await Promise.all(jobs);
-    renderSide(); placeRails(); host.schedule();
-  }
-
-  /* ---- Feed: public sorgu oturumu beklemeden başlar ---- */
-  async function loadPosts({ reset = false } = {}) {
-    if (s.loading) { if (reset) s.queuedReset = true; return; }
-    if (!reset && !s.hasMore) return;
-    s.loading = true; setBusy(more, true, 'Yükleniyor...');
-    if (reset) notice.hidden = true;
-    try {
-      await dbReady;
-      const cursor = reset ? null : s.cursor;
-      const { data, error } = await runPostQuery(q => {
-        q = q.eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(CONFIG.postsPageSize);
-        return cursor ? q.or(`created_at.lt.${quote(cursor.created_at)},and(created_at.eq.${quote(cursor.created_at)},id.lt.${quote(cursor.id)})`) : q;
-      });
-      if (error) throw error;
-      await session.ready; // sahiplik doğru çizilsin; sorgu zaten paralel çalıştı
-      const page = (data || []).map(normalize);
-      if (reset) { s.posts = []; list.innerHTML = ''; }
-      const known = new Set(s.posts.map(p => p.id));
-      const fresh = page.filter(p => !known.has(p.id));
-      s.posts.push(...fresh);
-      s.hasMore = page.length === CONFIG.postsPageSize;
-      const last = page[page.length - 1];
-      if (last) s.cursor = { created_at: last.created_at, id: last.id }; else if (reset) s.cursor = null;
-      $('.kw-empty-card', list)?.remove();
-      $$('.kw-sk', list).forEach(n => n.remove());
-      if (s.posts.length) list.insertAdjacentHTML('beforeend', fresh.map(p => card(p)).join('')); else list.innerHTML = emptyMarkup;
-      placeRails(); renderLive();
-      more.hidden = !s.hasMore || !s.posts.length;
-      notice.hidden = true;
-      syncLikes(fresh.map(p => p.id));
-      threads.preview(fresh);
-    } catch {
-      $$('.kw-sk', list).forEach(n => n.remove());
-      showNotice('Çalışmalar şu anda yüklenemedi.');
-    } finally {
-      s.loading = false; setBusy(more, false); host.schedule();
-      if (s.queuedReset) { s.queuedReset = false; loadPosts({ reset: true }); }
-    }
-  }
+  /* ---- Beğeni ---- */
   async function syncLikes(ids) {
     const uid = session.user?.id; if (!uid || !ids.length) return;
-    const rev = session.revision, stamp = s.likeStamp;
+    const rev = session.revision, stamp = f.likeStamp;
     try {
       const liked = new Set();
       for (let i = 0; i < ids.length; i += 100) {
@@ -1830,28 +1931,29 @@ function createWorksView() {
         (data || []).forEach(r => liked.add(r.post_id));
       }
       if (rev !== session.revision) return;
-      ids.forEach(id => { const p = find(id); if (p && !s.liking.has(id) && !(p._likeStamp > stamp)) { p.liked = liked.has(id); patchLike(p); } });
+      ids.forEach(id => { const p = find(id); if (p && !f.liking.has(id) && !(p._likeStamp > stamp)) { p.liked = liked.has(id); patchLike(p); } });
     } catch {}
   }
-
-  /* ---- Beğeni ---- */
   async function toggleLike(id) {
     const p = find(id); if (!p) return;
     const user = await requireUser(() => likeAfterLogin(id)); if (!user) return;
-    if (p.user_id === user.id || s.liking.has(id)) return;
+    if (p.user_id === user.id || f.liking.has(id)) return;
     const was = p.liked, old = p.like_count;
-    s.liking.add(id); p._likeStamp = ++s.likeStamp;
+    f.liking.add(id); p._likeStamp = ++f.likeStamp;
     p.liked = !was; p.like_count = Math.max(0, old + (was ? -1 : 1)); patchLike(p);
     if (p.liked) { const b = cardOf(id)?.querySelector('[data-post-action="like"]'); if (b) { b.classList.remove('is-pop'); void b.offsetWidth; b.classList.add('is-pop'); setTimeout(() => b.classList.remove('is-pop'), 400); } }
+    let ok = false;
     try {
       const { error } = await (was
         ? db.from('professional_post_likes').delete().eq('post_id', id).eq('user_id', user.id)
         : db.from('professional_post_likes').insert({ post_id: id, user_id: user.id }));
       if (error) throw error;
+      ok = true;
     } catch (e) {
       p.like_count = old; if (session.user?.id === user.id) p.liked = was;
       toast(errorText(e));
-    } finally { s.liking.delete(id); patchLike(p); }
+    } finally { f.liking.delete(id); patchLike(p); }
+    if (ok) emitPost('liked', { id, liked: p.liked, like_count: p.like_count });
   }
   // Girişten sonra: zaten beğenilmişse geri almaz, yalnızca beğenilmemişse beğenir.
   async function likeAfterLogin(id) {
@@ -1867,8 +1969,8 @@ function createWorksView() {
 
   /* ---- Sahip işlemleri ---- */
   async function setFeatured(p) {
-    if (!isOwn(p) || s.ownerBusy) return;
-    s.ownerBusy = true; const uid = session.user.id;
+    if (!isOwn(p) || f.ownerBusy) return;
+    f.ownerBusy = true; const uid = session.user.id;
     try {
       let value = null;
       if (!p.profile_featured_order) {
@@ -1880,26 +1982,296 @@ function createWorksView() {
       }
       const { error } = await db.from('professional_posts').update({ profile_featured_order: value }).eq('id', p.id).eq('user_id', uid).eq('status', 'active').select('id').single();
       if (error) throw error;
-      p.profile_featured_order = value; patchOwnership(p);
+      emitPost('featured', { id: p.id, value, post: p });
       toast(value ? 'Çalışma profilinizde öne çıkarıldı.' : 'Çalışma öne çıkandan kaldırıldı.');
-    } catch (e) { toast(errorText(e)); } finally { s.ownerBusy = false; }
+    } catch (e) { toast(errorText(e)); } finally { f.ownerBusy = false; }
   }
   async function deletePost(p) {
-    if (!isOwn(p) || s.ownerBusy) return;
+    if (!isOwn(p) || f.ownerBusy) return;
     if (!(await confirmBox({ title: 'Çalışmayı sil', text: 'Bu Çalışmayı silmek istediğinize emin misiniz?', confirm: 'Sil' }))) return;
     if (!isOwn(p)) return;
-    s.ownerBusy = true;
+    f.ownerBusy = true;
     try {
       const { error } = await db.from('professional_posts').update({ status: 'deleted', profile_featured_order: null }).eq('id', p.id).eq('user_id', session.user.id).select('id').single();
       if (error) throw error;
-      s.posts = s.posts.filter(x => x.id !== p.id);
-      cardOf(p.id)?.remove();
-      if (!s.posts.length) renderAll(); else { placeRails(); renderLive(); }
+      emitPost('removed', { id: p.id });
       toast('Çalışma silindi.'); host.schedule();
-    } catch (e) { toast(errorText(e, 'Çalışma silinemedi.')); } finally { s.ownerBusy = false; }
+    } catch (e) { toast(errorText(e, 'Çalışma silinemedi.')); } finally { f.ownerBusy = false; }
   }
+  postBus.add((kind, x) => {
+    const p = x && find(x.id);
+    if (kind === 'liked' && p && !f.liking.has(x.id)) { p.liked = x.liked; p.like_count = x.like_count; patchLike(p); }
+    else if (kind === 'removed' && p) { f.posts = f.posts.filter(r => r.id !== x.id); cardOf(x.id)?.remove(); onRemoved?.(x.id); }
+    else if (kind === 'featured') {
+      if (p) { p.profile_featured_order = x.value; patchOwnership(p); }
+      onFeatured?.(x, p);
+    }
+  });
 
-  /* ---- Kategoriler + yayınlama ---- */
+  /* ---- Yorumlar ----
+     Akış sayfası başına tek önizleme sorgusu (+ yazarlar ve beğeniler için birer toplu sorgu).
+     Tam liste yalnızca kullanıcı açınca, sayfa sayfa yüklenir. */
+  const threads = (() => {
+    const map = new Map();             // postId -> { items, total, open, loading, full, editing }
+    const profiles = new Map();        // userId -> profil (tekrar sorgulanmaz)
+    const liking = new Set();
+    const C_SELECT = 'id,post_id,user_id,content,status,created_at,updated_at';
+    const PAGE = 10, PREVIEW = 2;
+    const get = id => { let t = map.get(id); if (!t) { t = { items: [], total: 0, open: false, loading: false, full: false, editing: null, draft: '' }; map.set(id, t); } return t; };
+    const slot = id => cardOf(id)?.querySelector('[data-thread]');
+    const post = id => find(id);
+
+    async function hydrate(rows) {
+      if (!rows.length) return rows;
+      const need = [...new Set(rows.map(r => r.user_id))].filter(id => !profiles.has(id));
+      const ids = rows.map(r => r.id);
+      const [pr, lk] = await Promise.all([
+        need.length ? db.from('profiles').select('id,full_name,avatar_url,profession,title').in('id', need) : Promise.resolve({ data: [] }),
+        db.from('professional_comment_likes').select('comment_id,user_id').in('comment_id', ids)
+      ]);
+      (pr.data || []).forEach(p => profiles.set(p.id, p));
+      const uid = session.user?.id, counts = new Map(), mine = new Set();
+      (lk.data || []).forEach(l => { counts.set(l.comment_id, (counts.get(l.comment_id) || 0) + 1); if (uid && l.user_id === uid) mine.add(l.comment_id); });
+      rows.forEach(r => { r.like_count = counts.get(r.id) || 0; r.liked = mine.has(r.id); });
+      return rows;
+    }
+    const author = c => profiles.get(c.user_id) || {};
+
+    function itemHTML(c, t) {
+      const a = author(c), own = !!session.user && c.user_id === session.user.id, role = identity.role(a);
+      const editing = t.editing === c.id;
+      const body = editing
+        ? `<form class="cm-edit" data-comment-edit="${esc(c.id)}"><textarea class="cm-input" maxlength="2000" rows="2" aria-label="Yorumu düzenle">${esc(c.content)}</textarea><div class="cm-edit-actions"><button type="button" class="cm-link" data-comment-cancel>Vazgeç</button><button type="submit" class="cm-save">Kaydet</button></div></form>`
+        : `<p class="cm-text">${esc(c.content)}</p>`;
+      const like = own
+        ? (c.like_count > 0 ? `<span class="cm-likes">${ICONS.heart}${c.like_count}</span>` : '')
+        : `<button type="button" class="cm-like${c.liked ? ' is-liked' : ''}" data-comment-like="${esc(c.id)}" aria-pressed="${c.liked}"${liking.has(c.id) ? ' disabled' : ''}>${ICONS.heart}<span>${c.like_count > 0 ? c.like_count : ''}</span><span class="k-sr">Yorumu beğen</span></button>`;
+      const menu = own && !editing ? `<div class="cm-more"><button type="button" class="cm-more-btn" data-popover-trigger aria-label="Yorum seçenekleri" aria-expanded="false">···</button><div class="k-popover cm-menu" hidden><button type="button" data-comment-act="edit" data-id="${esc(c.id)}">Düzenle</button><button type="button" class="is-danger" data-comment-act="delete" data-id="${esc(c.id)}">Sil</button></div></div>` : '';
+      return `<li class="cm-item" data-comment-id="${esc(c.id)}"><a class="cm-av" href="${esc(urls.profile(c.user_id))}" target="_top" aria-label="${esc(a.full_name || 'Kullanıcı')} profili">${avatar(a, 'sm')}</a>`
+        + `<div class="cm-bubble"><div class="cm-meta"><a class="cm-name" href="${esc(urls.profile(c.user_id))}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a>${role ? `<span class="cm-role">${esc(role)}</span>` : ''}</div>${body}</div>`
+        + `<div class="cm-foot"><time datetime="${esc(c.created_at)}">${esc(relativeTime(c.created_at))}${c.updated_at && c.updated_at !== c.created_at ? ' · düzenlendi' : ''}</time>${like}${menu}</div></li>`;
+    }
+    function render(id) {
+      const box = slot(id); if (!box) return;
+      const t = get(id), p = post(id);
+      const hasItems = t.items.length > 0;
+      if (!hasItems && !t.open) { box.hidden = true; box.innerHTML = ''; return; }
+      const total = Math.max(t.total, t.items.length);
+      const rest = total - t.items.length;
+      const moreBtn = !t.full && rest > 0
+        ? `<button type="button" class="cm-show" data-comment-more>${t.loading ? 'Yükleniyor…' : (t.items.length <= PREVIEW && !t.open ? `Tüm ${total} yorumu gör` : `Önceki ${rest} yorumu gör`)}</button>` : '';
+      const composerRow = t.open
+        ? (session.user
+          ? `<form class="cm-compose" data-comment-form><span class="cm-me">${avatar(session.me || {}, 'sm')}</span><textarea class="cm-input" maxlength="2000" rows="1" placeholder="Yorum yaz…" aria-label="Yorum yaz">${esc(t.draft)}</textarea><button type="submit" class="cm-send" aria-label="Yorumu gönder" disabled>${ICONS.send}</button></form>`
+          : `<button type="button" class="cm-login" data-comment-login>Yorum yazmak için giriş yap</button>`)
+        : '';
+      box.innerHTML = `${moreBtn}<ul class="cm-list">${t.items.map(c => itemHTML(c, t)).join('')}</ul>${composerRow}`;
+      box.hidden = false;
+      if (p) { const b = cardOf(id)?.querySelector('[data-post-action="comment"]'); b?.setAttribute('aria-expanded', String(t.open)); }
+      box.querySelectorAll('textarea.cm-input').forEach(autosize);
+      host.schedule();
+    }
+    function autosize(ta) { ta.style.height = 'auto'; ta.style.height = Math.min(160, ta.scrollHeight) + 'px'; }
+    function setCount(id, n) {
+      const p = post(id); if (!p) return;
+      p.comment_count = Math.max(0, n);
+      const c = cardOf(id)?.querySelector('[data-comment-count]'); if (c) c.textContent = p.comment_count > 0 ? String(p.comment_count) : '';
+    }
+
+    // Akış sayfası için önizleme: tek sorgu, gönderi başına en fazla PREVIEW yorum.
+    async function preview(posts) {
+      const ids = posts.filter(p => p.comment_count === null || p.comment_count > 0).map(p => p.id);
+      if (!ids.length) return;
+      try {
+        const { data, error } = await db.from('professional_post_comments').select(C_SELECT).in('post_id', ids).eq('status', 'active').order('created_at', { ascending: false }).limit(Math.min(120, ids.length * 6));
+        if (error) throw error;
+        const by = new Map();
+        (data || []).forEach(r => { const l = by.get(r.post_id) || []; if (l.length < PREVIEW) l.push(r); by.set(r.post_id, l); });
+        const rows = [...by.values()].flat();
+        await hydrate(rows);
+        by.forEach((list, pid) => {
+          const t = get(pid), p = post(pid);
+          if (t.items.length) return;                      // kullanıcı bu arada açtıysa dokunma
+          t.items = list.slice().reverse();
+          t.total = p?.comment_count ?? list.length + (list.length === PREVIEW ? 1 : 0);
+          render(pid);
+        });
+      } catch {}
+    }
+    async function loadMore(id) {
+      const t = get(id); if (t.loading || t.full) return;
+      t.loading = true; render(id);
+      try {
+        const oldest = t.items[0];
+        let q = db.from('professional_post_comments').select(C_SELECT).eq('post_id', id).eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(PAGE + 1);
+        if (oldest) q = q.or(`created_at.lt.${quote(oldest.created_at)},and(created_at.eq.${quote(oldest.created_at)},id.lt.${quote(oldest.id)})`);
+        const { data, error } = await q; if (error) throw error;
+        const rows = (data || []).slice(0, PAGE);
+        await hydrate(rows);
+        const known = new Set(t.items.map(c => c.id));
+        t.items = rows.filter(r => !known.has(r.id)).reverse().concat(t.items);
+        t.full = (data || []).length <= PAGE;
+        if (t.full) t.total = t.items.length;
+      } catch { toast('Yorumlar yüklenemedi. Tekrar dene.'); }
+      finally { t.loading = false; render(id); }
+    }
+    async function open(id) {
+      const t = get(id), p = post(id);
+      t.open = !t.open;
+      if (!t.items.length && p?.comment_count !== 0 && t.open) { render(id); await loadMore(id); }
+      else render(id);
+      if (t.open) setTimeout(() => slot(id)?.querySelector('textarea.cm-input')?.focus({ preventScroll: true }), 40);
+    }
+    async function submit(id, form) {
+      const t = get(id), ta = form.querySelector('textarea'), btn = form.querySelector('.cm-send');
+      const content = ta.value.trim(); if (!content) return;
+      const user = await requireUser(() => { t.open = true; render(id); }); if (!user) return;
+      ta.disabled = true; btn.disabled = true;
+      try {
+        const res = await db.from('professional_post_comments').insert({ post_id: id, user_id: user.id, content, status: 'active' }).select(C_SELECT).single();
+        if (res.error) throw res.error;
+        const now = new Date().toISOString();
+        const data = { post_id: id, user_id: user.id, content, status: 'active', created_at: now, updated_at: now, ...(res.data || {}) };
+        if (session.me) profiles.set(user.id, { id: user.id, full_name: session.me.full_name, avatar_url: session.me.avatar_url, profession: profiles.get(user.id)?.profession, title: profiles.get(user.id)?.title });
+        if (!profiles.get(user.id)?.profession && !profiles.get(user.id)?.title) { profiles.delete(user.id); await hydrate([data]); } else { data.like_count = 0; data.liked = false; }
+        t.items.push(data); t.total = Math.max(t.total, t.items.length - 1) + 1; t.draft = '';
+        setCount(id, (post(id)?.comment_count || 0) + 1);
+        render(id);
+      } catch (e) { toast(errorText(e, 'Yorum gönderilemedi. Tekrar dene.')); ta.disabled = false; btn.disabled = false; }
+    }
+    async function saveEdit(id, cid, form) {
+      const t = get(id), c = t.items.find(x => x.id === cid), content = form.querySelector('textarea').value.trim();
+      if (!c || !content || !session.user) return;
+      form.querySelectorAll('button,textarea').forEach(n => { n.disabled = true; });
+      try {
+        const { data, error } = await db.from('professional_post_comments').update({ content }).eq('id', cid).eq('user_id', session.user.id).eq('status', 'active').select(C_SELECT).single();
+        if (error) throw error;
+        Object.assign(c, { content: data?.content ?? content, updated_at: data?.updated_at ?? new Date().toISOString() });
+        t.editing = null; render(id);
+      } catch (e) { toast(errorText(e, 'Yorum güncellenemedi.')); render(id); }
+    }
+    async function remove(id, cid) {
+      const t = get(id);
+      if (!(await confirmBox({ title: 'Yorumu sil', text: 'Bu yorumu silmek istediğine emin misin?', confirm: 'Sil' }))) return;
+      try {
+        const { error } = await db.from('professional_post_comments').update({ status: 'deleted' }).eq('id', cid).eq('user_id', session.user?.id).select('id').single();
+        if (error) throw error;
+        t.items = t.items.filter(c => c.id !== cid); t.total = Math.max(0, t.total - 1);
+        setCount(id, (post(id)?.comment_count || 1) - 1);
+        render(id); toast('Yorum silindi.');
+      } catch (e) { toast(errorText(e, 'Yorum silinemedi.')); }
+    }
+    async function like(id, cid) {
+      const t = get(id), c = t.items.find(x => x.id === cid); if (!c) return;
+      const user = await requireUser(() => render(id)); if (!user || c.user_id === user.id || liking.has(cid)) return;
+      const was = c.liked; liking.add(cid); c.liked = !was; c.like_count = Math.max(0, c.like_count + (was ? -1 : 1)); render(id);
+      try {
+        const { error } = await (was ? db.from('professional_comment_likes').delete().eq('comment_id', cid).eq('user_id', user.id)
+          : db.from('professional_comment_likes').insert({ comment_id: cid, user_id: user.id }));
+        if (error) throw error;
+      } catch (e) { c.liked = was; c.like_count = Math.max(0, c.like_count + (was ? 1 : -1)); toast(errorText(e, 'Beğeni kaydedilemedi.')); }
+      finally { liking.delete(cid); render(id); }
+    }
+    async function onUser() {
+      const all = [...map.values()].flatMap(t => t.items);
+      all.forEach(c => { c.liked = false; });
+      if (session.user && all.length) { try { await hydrate(all); } catch {} }
+      map.forEach((_, id) => render(id));
+    }
+    // Yeniden çizim sonrası mevcut önizlemeleri yerine koy.
+    function rerenderAll() { map.forEach((_, id) => render(id)); }
+    function reset() { map.clear(); }
+    const avatarChanged = (uid, url) => { const p = profiles.get(uid); if (p) p.avatar_url = url; };
+    return { preview, open, loadMore, submit, saveEdit, remove, like, get, render, onUser, rerenderAll, reset, autosize, avatarChanged, isOpen: id => map.get(id)?.open };
+  })();
+
+  /* ---- Olaylar (kapsam: bu akışın kök elemanı) ---- */
+  scope.addEventListener('input', e => {
+    const ta = e.target; if (ta?.tagName !== 'TEXTAREA' || !ta.classList.contains('cm-input')) return;
+    threads.autosize(ta);
+    const form = ta.closest('[data-comment-form]');
+    if (form) { form.querySelector('.cm-send').disabled = !ta.value.trim(); const id = ta.closest('[data-post-id]')?.dataset.postId; if (id) threads.get(id).draft = ta.value; }
+  });
+  scope.addEventListener('keydown', e => {
+    const ta = e.target; if (ta?.tagName !== 'TEXTAREA' || !ta.classList.contains('cm-input')) return;
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ta.form?.requestSubmit(); }
+    if (e.key === 'Escape' && ta.closest('[data-comment-edit]')) { const id = ta.closest('[data-post-id]').dataset.postId; threads.get(id).editing = null; threads.render(id); }
+  });
+  scope.addEventListener('submit', e => {
+    const form = e.target, c = form.closest?.('[data-post-id]'); if (!c) return;
+    e.preventDefault();
+    const id = c.dataset.postId;
+    if (form.matches('[data-comment-form]')) threads.submit(id, form);
+    else if (form.matches('[data-comment-edit]')) threads.saveEdit(id, form.dataset.commentEdit, form);
+  });
+  scope.addEventListener('click', e => {
+    const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
+    const card0 = t.closest('[data-post-id]'), pid = card0?.dataset.postId;
+    if (pid && t.closest('[data-thread]')) {
+      if (t.closest('[data-popover-trigger]')) return;
+      const act = t.closest('[data-comment-act]');
+      if (act) { closePopovers(); if (act.dataset.commentAct === 'edit') { threads.get(pid).editing = act.dataset.id; threads.render(pid); setTimeout(() => card0.querySelector('[data-comment-edit] textarea')?.focus(), 30); } else threads.remove(pid, act.dataset.id); return; }
+      if (t.closest('[data-comment-cancel]')) { threads.get(pid).editing = null; threads.render(pid); return; }
+      const lk = t.closest('[data-comment-like]'); if (lk) { threads.like(pid, lk.dataset.commentLike); return; }
+      if (t.closest('[data-comment-more]')) { threads.get(pid).open = true; threads.loadMore(pid); return; }
+      if (t.closest('[data-comment-login]')) { requireUser(() => threads.render(pid)); return; }
+      return;
+    }
+    // Kartın boş alanına tıklama Çalışma Detay'a götürür (etkileşimli öğeler ve metin seçimi hariç).
+    if (card0 && !t.closest('a,button,input,textarea,select,label,form,.k-popover,[data-owner-slot]')) {
+      if (String(window.getSelection?.() || '').trim()) return;
+      shellHooks.leave();
+      navigateTop(urls.work(pid));
+      return;
+    }
+    const media = t.closest('[data-media]');
+    if (media) { mediaViewer.open(media.dataset.media, media.dataset.work, media.querySelector('img')?.alt || ''); return; }
+    const act = t.closest('[data-post-action]'); if (!act) return;
+    const c = act.closest('[data-post-id]'), p = c && find(c.dataset.postId); if (!p) return;
+    closePopovers();
+    switch (act.dataset.postAction) {
+      case 'like': toggleLike(p.id); break;
+      case 'comment': threads.open(p.id); break;
+      case 'share': shareLink({ url: urls.work(p.id), title: 'Kırmızı İSG Çalışma', text: (p.content || 'Kırmızı İSG’de bir Çalışma').slice(0, 160), copied: 'Çalışma bağlantısı kopyalandı.' }); break;
+      case 'edit': composer.open(p); break;
+      case 'feature': setFeatured(p); break;
+      case 'delete': deletePost(p); break;
+    }
+  });
+  // Görsel doğal oranında gösterilir; alan sınırına küçültülen uzun görsellerde "Tamamını gör" belirir.
+  scope.addEventListener('load', e => {
+    const img = e.target; if (img?.tagName !== 'IMG' || !img.classList.contains('kw-post-image')) return;
+    const box = img.closest('.kw-media'); if (!box) return;
+    const ratio = img.naturalHeight / Math.max(1, img.naturalWidth);
+    box.classList.toggle('is-tall', ratio > 1.3 && img.naturalHeight > img.clientHeight * 1.08);
+    box.style.setProperty('--ar', `${img.naturalWidth} / ${img.naturalHeight}`);
+  }, true);
+
+  function onSession(kind) {
+    if (kind !== 'user') return;
+    f.posts.forEach(p => { p.liked = false; patchOwnership(p); });
+    syncLikes(f.posts.map(p => p.id));
+    threads.onUser();
+  }
+  function avatarChanged(uid, url) {
+    f.posts.forEach(p => { if (p.author?.id === uid || p.user_id === uid) p.author = { ...(p.author || {}), id: uid, avatar_url: url }; });
+    threads.avatarChanged(uid, url);
+  }
+  return { f, find, cardOf, card, patchLike, patchOwnership, syncLikes, threads, onSession, avatarChanged };
+}
+
+/* =========================================================================
+   8b. Çalışma düzenleyici (yeni + düzenleme) — akış ve profil ortak kullanır.
+   Kayıt sonrası 'saved' olayı yayınlanır; her akış kendini yerinde günceller.
+   ========================================================================= */
+const composer = (() => {
+  const d = {
+    root: $('#kaPostDialog'), form: $('#kaPostForm'), title: $('#kaPostTitle'), content: $('#kaPostContent'), file: $('#kaPostImage'),
+    label: $('[data-photo-label]'), preview: $('#kaPostPreview'), category: $('#kaPostCategory'), error: $('#kaPostError'), submit: $('#kaPostSubmit')
+  };
+  const removeImageBtn = $('[data-remove-image]', d.preview);
+  const s = { categories: [], categoriesReady: false, categoriesPromise: null, edit: null, file: null, previewUrl: null, saving: false };
+
   function fillCategories(extra) {
     const selected = d.category.value;
     d.category.innerHTML = '<option value="">Kategori seçme</option>' + s.categories.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
@@ -1923,8 +2295,8 @@ function createWorksView() {
     d.label.textContent = 'Fotoğraf Ekle';
   }
   function formError(text) { d.error.textContent = text; d.error.hidden = !text; }
-  async function openComposer(post = null, intent = '') {
-    const user = await requireUser(() => openComposer(post, intent)); if (!user) return;
+  async function open(post = null, intent = '') {
+    const user = await requireUser(() => open(post, intent)); if (!user) return;
     if (s.saving || d.root.open || (post && post.user_id !== user.id)) return;
     s.edit = post; s.file = null; clearPreview();
     d.title.textContent = post ? 'Çalışmayı Düzenle' : 'Yeni Çalışma';
@@ -2027,32 +2399,6 @@ function createWorksView() {
     if (/payload too large|413|size/i.test(m)) return 'Görsel boyutu sınırı aşıyor. Daha küçük bir fotoğraf dene.';
     return '';
   }
-  async function fetchPost(id) {
-    const { data, error } = await runPostQuery(q => q.eq('id', id).eq('status', 'active').maybeSingle());
-    if (error) throw error;
-    return data ? normalize(data) : null;
-  }
-  // Kaydedilen Çalışma feed'e yerinde yansıtılır; tüm liste yeniden yüklenmez, scroll kaymaz.
-  async function reflectSaved(id, previous) {
-    try {
-      const fresh = await fetchPost(id);
-      if (previous) {
-        const old = find(id), c = cardOf(id);
-        if (!fresh) { s.posts = s.posts.filter(p => p.id !== id); c?.remove(); if (!s.posts.length) renderAll(); else placeRails(); return; }
-        fresh.liked = old?.liked || false;
-        s.posts = s.posts.map(p => (p.id === id ? fresh : p));
-        fresh.comment_count = fresh.comment_count ?? old?.comment_count ?? null;
-        if (c) { c.outerHTML = card(fresh); threads.render(id); }
-      } else if (fresh) {
-        s.posts.unshift(fresh);
-        $('.kw-empty-card', list)?.remove();
-        list.insertAdjacentHTML('afterbegin', card(fresh));
-        placeRails(); renderLive();
-        more.hidden = !s.hasMore;
-      }
-      host.schedule();
-    } catch { loadPosts({ reset: true }); }
-  }
   async function savePost(e) {
     e.preventDefault();
     if (s.saving) return;
@@ -2096,266 +2442,179 @@ function createWorksView() {
     if (!committed) return;
     dialogs.close(d.root);
     toast(current ? 'Çalışma güncellendi.' : 'Çalışma yayınlandı.');
-    await reflectSaved(savedId, current);
-    loadRails({ experts: true, services: false });
+    // Kaydedilen Çalışma açık akışlara yerinde yansıtılır; liste yeniden yüklenmez, scroll kaymaz.
+    let fresh = null, failed = false;
+    try { fresh = await postData.fetch(savedId); } catch { failed = true; }
+    emitPost('saved', { id: savedId, fresh, previous: current, failed });
   }
-
-  /* ---- Olaylar ---- */
-  /* ---- Yorumlar ----
-     Feed sayfası başına tek önizleme sorgusu (+ yazarlar ve beğeniler için birer toplu sorgu).
-     Tam liste yalnızca kullanıcı açınca, sayfa sayfa yüklenir. */
-  const threads = (() => {
-    const map = new Map();             // postId -> { items, total, open, loading, full, editing }
-    const profiles = new Map();        // userId -> profil (tekrar sorgulanmaz)
-    const liking = new Set();
-    const C_SELECT = 'id,post_id,user_id,content,status,created_at,updated_at';
-    const PAGE = 10, PREVIEW = 2;
-    const get = id => { let t = map.get(id); if (!t) { t = { items: [], total: 0, open: false, loading: false, full: false, editing: null, draft: '' }; map.set(id, t); } return t; };
-    const slot = id => cardOf(id)?.querySelector('[data-thread]');
-    const post = id => find(id);
-
-    async function hydrate(rows) {
-      if (!rows.length) return rows;
-      const need = [...new Set(rows.map(r => r.user_id))].filter(id => !profiles.has(id));
-      const ids = rows.map(r => r.id);
-      const [pr, lk] = await Promise.all([
-        need.length ? db.from('profiles').select('id,full_name,avatar_url,profession,title').in('id', need) : Promise.resolve({ data: [] }),
-        db.from('professional_comment_likes').select('comment_id,user_id').in('comment_id', ids)
-      ]);
-      (pr.data || []).forEach(p => profiles.set(p.id, p));
-      const uid = session.user?.id, counts = new Map(), mine = new Set();
-      (lk.data || []).forEach(l => { counts.set(l.comment_id, (counts.get(l.comment_id) || 0) + 1); if (uid && l.user_id === uid) mine.add(l.comment_id); });
-      rows.forEach(r => { r.like_count = counts.get(r.id) || 0; r.liked = mine.has(r.id); });
-      return rows;
-    }
-    const author = c => profiles.get(c.user_id) || {};
-
-    function itemHTML(c, t) {
-      const a = author(c), own = !!session.user && c.user_id === session.user.id, role = identity.role(a);
-      const editing = t.editing === c.id;
-      const body = editing
-        ? `<form class="cm-edit" data-comment-edit="${esc(c.id)}"><textarea class="cm-input" maxlength="2000" rows="2" aria-label="Yorumu düzenle">${esc(c.content)}</textarea><div class="cm-edit-actions"><button type="button" class="cm-link" data-comment-cancel>Vazgeç</button><button type="submit" class="cm-save">Kaydet</button></div></form>`
-        : `<p class="cm-text">${esc(c.content)}</p>`;
-      const like = own
-        ? (c.like_count > 0 ? `<span class="cm-likes">${ICONS.heart}${c.like_count}</span>` : '')
-        : `<button type="button" class="cm-like${c.liked ? ' is-liked' : ''}" data-comment-like="${esc(c.id)}" aria-pressed="${c.liked}"${liking.has(c.id) ? ' disabled' : ''}>${ICONS.heart}<span>${c.like_count > 0 ? c.like_count : ''}</span><span class="k-sr">Yorumu beğen</span></button>`;
-      const menu = own && !editing ? `<div class="cm-more"><button type="button" class="cm-more-btn" data-popover-trigger aria-label="Yorum seçenekleri" aria-expanded="false">···</button><div class="k-popover cm-menu" hidden><button type="button" data-comment-act="edit" data-id="${esc(c.id)}">Düzenle</button><button type="button" class="is-danger" data-comment-act="delete" data-id="${esc(c.id)}">Sil</button></div></div>` : '';
-      return `<li class="cm-item" data-comment-id="${esc(c.id)}"><a class="cm-av" href="${esc(urls.profile(c.user_id))}" target="_top" aria-label="${esc(a.full_name || 'Kullanıcı')} profili">${avatar(a, 'sm')}</a>`
-        + `<div class="cm-bubble"><div class="cm-meta"><a class="cm-name" href="${esc(urls.profile(c.user_id))}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a>${role ? `<span class="cm-role">${esc(role)}</span>` : ''}</div>${body}</div>`
-        + `<div class="cm-foot"><time datetime="${esc(c.created_at)}">${esc(relativeTime(c.created_at))}${c.updated_at && c.updated_at !== c.created_at ? ' · düzenlendi' : ''}</time>${like}${menu}</div></li>`;
-    }
-    function render(id) {
-      const box = slot(id); if (!box) return;
-      const t = get(id), p = post(id);
-      const hasItems = t.items.length > 0;
-      if (!hasItems && !t.open) { box.hidden = true; box.innerHTML = ''; return; }
-      const total = Math.max(t.total, t.items.length);
-      const rest = total - t.items.length;
-      const moreBtn = !t.full && rest > 0
-        ? `<button type="button" class="cm-show" data-comment-more>${t.loading ? 'Yükleniyor…' : (t.items.length <= PREVIEW && !t.open ? `Tüm ${total} yorumu gör` : `Önceki ${rest} yorumu gör`)}</button>` : '';
-      const composer = t.open
-        ? (session.user
-          ? `<form class="cm-compose" data-comment-form><span class="cm-me">${avatar(session.me || {}, 'sm')}</span><textarea class="cm-input" maxlength="2000" rows="1" placeholder="Yorum yaz…" aria-label="Yorum yaz">${esc(t.draft)}</textarea><button type="submit" class="cm-send" aria-label="Yorumu gönder" disabled>${ICONS.send}</button></form>`
-          : `<button type="button" class="cm-login" data-comment-login>Yorum yazmak için giriş yap</button>`)
-        : '';
-      box.innerHTML = `${moreBtn}<ul class="cm-list">${t.items.map(c => itemHTML(c, t)).join('')}</ul>${composer}`;
-      box.hidden = false;
-      if (p) { const b = cardOf(id)?.querySelector('[data-post-action="comment"]'); b?.setAttribute('aria-expanded', String(t.open)); }
-      box.querySelectorAll('textarea.cm-input').forEach(autosize);
-      host.schedule();
-    }
-    function autosize(ta) { ta.style.height = 'auto'; ta.style.height = Math.min(160, ta.scrollHeight) + 'px'; }
-    function setCount(id, n) {
-      const p = post(id); if (!p) return;
-      p.comment_count = Math.max(0, n);
-      const c = cardOf(id)?.querySelector('[data-comment-count]'); if (c) c.textContent = p.comment_count > 0 ? String(p.comment_count) : '';
-    }
-
-    // Feed sayfası için önizleme: tek sorgu, gönderi başına en fazla PREVIEW yorum.
-    async function preview(posts) {
-      const ids = posts.filter(p => p.comment_count === null || p.comment_count > 0).map(p => p.id);
-      if (!ids.length) return;
-      try {
-        const { data, error } = await db.from('professional_post_comments').select(C_SELECT).in('post_id', ids).eq('status', 'active').order('created_at', { ascending: false }).limit(Math.min(120, ids.length * 6));
-        if (error) throw error;
-        const by = new Map();
-        (data || []).forEach(r => { const l = by.get(r.post_id) || []; if (l.length < PREVIEW) l.push(r); by.set(r.post_id, l); });
-        const rows = [...by.values()].flat();
-        await hydrate(rows);
-        by.forEach((list, pid) => {
-          const t = get(pid), p = post(pid);
-          if (t.items.length) return;                      // kullanıcı bu arada açtıysa dokunma
-          t.items = list.slice().reverse();
-          t.total = p?.comment_count ?? list.length + (list.length === PREVIEW ? 1 : 0);
-          render(pid);
-        });
-      } catch {}
-    }
-    async function loadMore(id) {
-      const t = get(id); if (t.loading || t.full) return;
-      t.loading = true; render(id);
-      try {
-        const oldest = t.items[0];
-        let q = db.from('professional_post_comments').select(C_SELECT).eq('post_id', id).eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(PAGE + 1);
-        if (oldest) q = q.or(`created_at.lt.${quote(oldest.created_at)},and(created_at.eq.${quote(oldest.created_at)},id.lt.${quote(oldest.id)})`);
-        const { data, error } = await q; if (error) throw error;
-        const rows = (data || []).slice(0, PAGE);
-        await hydrate(rows);
-        const known = new Set(t.items.map(c => c.id));
-        t.items = rows.filter(r => !known.has(r.id)).reverse().concat(t.items);
-        t.full = (data || []).length <= PAGE;
-        if (t.full) t.total = t.items.length;
-      } catch { toast('Yorumlar yüklenemedi. Tekrar dene.'); }
-      finally { t.loading = false; render(id); }
-    }
-    async function open(id) {
-      const t = get(id), p = post(id);
-      t.open = !t.open;
-      if (!t.items.length && p?.comment_count !== 0 && t.open) { render(id); await loadMore(id); }
-      else render(id);
-      if (t.open) setTimeout(() => slot(id)?.querySelector('textarea.cm-input')?.focus({ preventScroll: true }), 40);
-    }
-    async function submit(id, form) {
-      const t = get(id), ta = form.querySelector('textarea'), btn = form.querySelector('.cm-send');
-      const content = ta.value.trim(); if (!content) return;
-      const user = await requireUser(() => { t.open = true; render(id); }); if (!user) return;
-      ta.disabled = true; btn.disabled = true;
-      try {
-        const res = await db.from('professional_post_comments').insert({ post_id: id, user_id: user.id, content, status: 'active' }).select(C_SELECT).single();
-        if (res.error) throw res.error;
-        const now = new Date().toISOString();
-        const data = { post_id: id, user_id: user.id, content, status: 'active', created_at: now, updated_at: now, ...(res.data || {}) };
-        if (session.me) profiles.set(user.id, { id: user.id, full_name: session.me.full_name, avatar_url: session.me.avatar_url, profession: profiles.get(user.id)?.profession, title: profiles.get(user.id)?.title });
-        if (!profiles.get(user.id)?.profession && !profiles.get(user.id)?.title) { profiles.delete(user.id); await hydrate([data]); } else { data.like_count = 0; data.liked = false; }
-        t.items.push(data); t.total = Math.max(t.total, t.items.length - 1) + 1; t.draft = '';
-        setCount(id, (post(id)?.comment_count || 0) + 1);
-        render(id);
-      } catch (e) { toast(errorText(e, 'Yorum gönderilemedi. Tekrar dene.')); ta.disabled = false; btn.disabled = false; }
-    }
-    async function saveEdit(id, cid, form) {
-      const t = get(id), c = t.items.find(x => x.id === cid), content = form.querySelector('textarea').value.trim();
-      if (!c || !content || !session.user) return;
-      form.querySelectorAll('button,textarea').forEach(n => { n.disabled = true; });
-      try {
-        const { data, error } = await db.from('professional_post_comments').update({ content }).eq('id', cid).eq('user_id', session.user.id).eq('status', 'active').select(C_SELECT).single();
-        if (error) throw error;
-        Object.assign(c, { content: data?.content ?? content, updated_at: data?.updated_at ?? new Date().toISOString() });
-        t.editing = null; render(id);
-      } catch (e) { toast(errorText(e, 'Yorum güncellenemedi.')); render(id); }
-    }
-    async function remove(id, cid) {
-      const t = get(id);
-      if (!(await confirmBox({ title: 'Yorumu sil', text: 'Bu yorumu silmek istediğine emin misin?', confirm: 'Sil' }))) return;
-      try {
-        const { error } = await db.from('professional_post_comments').update({ status: 'deleted' }).eq('id', cid).eq('user_id', session.user?.id).select('id').single();
-        if (error) throw error;
-        t.items = t.items.filter(c => c.id !== cid); t.total = Math.max(0, t.total - 1);
-        setCount(id, (post(id)?.comment_count || 1) - 1);
-        render(id); toast('Yorum silindi.');
-      } catch (e) { toast(errorText(e, 'Yorum silinemedi.')); }
-    }
-    async function like(id, cid) {
-      const t = get(id), c = t.items.find(x => x.id === cid); if (!c) return;
-      const user = await requireUser(() => render(id)); if (!user || c.user_id === user.id || liking.has(cid)) return;
-      const was = c.liked; liking.add(cid); c.liked = !was; c.like_count = Math.max(0, c.like_count + (was ? -1 : 1)); render(id);
-      try {
-        const { error } = await (was ? db.from('professional_comment_likes').delete().eq('comment_id', cid).eq('user_id', user.id)
-          : db.from('professional_comment_likes').insert({ comment_id: cid, user_id: user.id }));
-        if (error) throw error;
-      } catch (e) { c.liked = was; c.like_count = Math.max(0, c.like_count + (was ? 1 : -1)); toast(errorText(e, 'Beğeni kaydedilemedi.')); }
-      finally { liking.delete(cid); render(id); }
-    }
-    async function onUser() {
-      const all = [...map.values()].flatMap(t => t.items);
-      all.forEach(c => { c.liked = false; });
-      if (session.user && all.length) { try { await hydrate(all); } catch {} }
-      map.forEach((_, id) => render(id));
-    }
-    // Snapshot/yeniden çizim sonrası mevcut önizlemeleri yerine koy.
-    function rerenderAll() { map.forEach((_, id) => render(id)); }
-    const avatarChanged = (uid, url) => { const p = profiles.get(uid); if (p) p.avatar_url = url; };
-    return { preview, open, loadMore, submit, saveEdit, remove, like, get, render, onUser, rerenderAll, autosize, avatarChanged, isOpen: id => map.get(id)?.open };
-  })();
-
-  el.addEventListener('input', e => {
-    const ta = e.target; if (ta?.tagName !== 'TEXTAREA' || !ta.classList.contains('cm-input')) return;
-    threads.autosize(ta);
-    const form = ta.closest('[data-comment-form]');
-    if (form) { form.querySelector('.cm-send').disabled = !ta.value.trim(); const id = ta.closest('[data-post-id]')?.dataset.postId; if (id) threads.get(id).draft = ta.value; }
-  });
-  el.addEventListener('keydown', e => {
-    const ta = e.target; if (ta?.tagName !== 'TEXTAREA' || !ta.classList.contains('cm-input')) return;
-    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ta.form?.requestSubmit(); }
-    if (e.key === 'Escape' && ta.closest('[data-comment-edit]')) { const id = ta.closest('[data-post-id]').dataset.postId; threads.get(id).editing = null; threads.render(id); }
-  });
-  el.addEventListener('submit', e => {
-    const form = e.target, card = form.closest?.('[data-post-id]'); if (!card) return;
-    e.preventDefault();
-    const id = card.dataset.postId;
-    if (form.matches('[data-comment-form]')) threads.submit(id, form);
-    else if (form.matches('[data-comment-edit]')) threads.saveEdit(id, form.dataset.commentEdit, form);
-  });
-
-  el.addEventListener('click', e => {
-    const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
-    const card0 = t.closest('[data-post-id]'), pid = card0?.dataset.postId;
-    if (pid && t.closest('[data-thread]')) {
-      if (t.closest('[data-popover-trigger]')) return;
-      const act = t.closest('[data-comment-act]');
-      if (act) { closePopovers(); if (act.dataset.commentAct === 'edit') { threads.get(pid).editing = act.dataset.id; threads.render(pid); setTimeout(() => card0.querySelector('[data-comment-edit] textarea')?.focus(), 30); } else threads.remove(pid, act.dataset.id); return; }
-      if (t.closest('[data-comment-cancel]')) { threads.get(pid).editing = null; threads.render(pid); return; }
-      const lk = t.closest('[data-comment-like]'); if (lk) { threads.like(pid, lk.dataset.commentLike); return; }
-      if (t.closest('[data-comment-more]')) { threads.get(pid).open = true; threads.loadMore(pid); return; }
-      if (t.closest('[data-comment-login]')) { requireUser(() => threads.render(pid)); return; }
-      return;
-    }
-    // Kartın boş alanına tıklama Çalışma Detay'a götürür (etkileşimli öğeler ve metin seçimi hariç).
-    if (card0 && !t.closest('a,button,input,textarea,select,label,form,.k-popover,[data-owner-slot]')) {
-      if (String(window.getSelection?.() || '').trim()) return;
-      shellHooks.leave();
-      navigateTop(urls.work(pid));
-      return;
-    }
-    const composer = t.closest('[data-composer]'); if (composer) { openComposer(null, composer.dataset.composerIntent || ''); return; }
-    if (t.closest('[data-more]')) { loadPosts(); return; }
-    if (t.closest('[data-retry]')) { loadPosts({ reset: !s.posts.length }); return; }
-    const media = t.closest('[data-media]');
-    if (media) { openViewer(media.dataset.media, media.dataset.work, media.querySelector('img')?.alt || ''); return; }
-    const act = t.closest('[data-post-action]'); if (!act) return;
-    const c = act.closest('[data-post-id]'), p = c && find(c.dataset.postId); if (!p) return;
-    closePopovers();
-    switch (act.dataset.postAction) {
-      case 'like': toggleLike(p.id); break;
-      case 'comment': threads.open(p.id); break;
-      case 'share': shareLink({ url: urls.work(p.id), title: 'Kırmızı İSG Çalışma', text: (p.content || 'Kırmızı İSG’de bir Çalışma').slice(0, 160), copied: 'Çalışma bağlantısı kopyalandı.' }); break;
-      case 'edit': openComposer(p); break;
-      case 'feature': setFeatured(p); break;
-      case 'delete': deletePost(p); break;
-    }
-  });
-  const viewer = $('#kaMediaDialog'), viewerImg = $('[data-media-img]', viewer), viewerLink = $('[data-media-work]', viewer);
-  function openViewer(src, work, alt) {
-    viewerImg.src = src; viewerImg.alt = alt; viewerLink.href = work;
-    dialogs.open(viewer, 'center');
-    viewer.querySelector('.k-media-stage').scrollTop = 0;
-  }
-  viewer.addEventListener('close', () => { viewerImg.removeAttribute('src'); });
-  // Görsel doğal oranında gösterilir; alan sınırına küçültülen uzun görsellerde "Tamamını gör" belirir.
-  el.addEventListener('load', e => {
-    const img = e.target; if (img?.tagName !== 'IMG' || !img.classList.contains('kw-post-image')) return;
-    const box = img.closest('.kw-media'); if (!box) return;
-    const ratio = img.naturalHeight / Math.max(1, img.naturalWidth);
-    box.classList.toggle('is-tall', ratio > 1.3 && img.naturalHeight > img.clientHeight * 1.08);
-    box.style.setProperty('--ar', `${img.naturalWidth} / ${img.naturalHeight}`);
-  }, true);
   d.form.addEventListener('submit', savePost);
   d.root.addEventListener('close', () => { s.edit = null; s.file = null; clearPreview(); formError(''); d.category.disabled = false; });
   d.file.addEventListener('change', e => {
-    const f = e.target.files?.[0]; if (!f) return;
-    s.file = f; if (s.previewUrl) URL.revokeObjectURL(s.previewUrl);
-    s.previewUrl = URL.createObjectURL(f); showPreview(s.previewUrl);
+    const file = e.target.files?.[0]; if (!file) return;
+    s.file = file; if (s.previewUrl) URL.revokeObjectURL(s.previewUrl);
+    s.previewUrl = URL.createObjectURL(file); showPreview(s.previewUrl);
   });
   removeImageBtn.addEventListener('click', () => { s.file = null; clearPreview(); });
+  return { open, ensureCategories, onSession() { if (d.root.open && !s.saving) dialogs.close(d.root); } };
+})();
+
+/* =========================================================================
+   8c. Görünüm: Çalışmalar
+   ========================================================================= */
+function createWorksView() {
+  const el = $('[data-view="works"]');
+  const list = $('[data-list]', el), more = $('[data-more]', el), notice = $('[data-notice]', el);
+  const sideExperts = $('[data-side-experts]', el), sideServices = $('[data-side-services]', el);
+  const composerAvatar = $('[data-composer-avatar]', el);
+  const s = { mounted: false, cursor: null, hasMore: true, loading: false, queuedReset: false, experts: [], services: [], expertsFailed: false, servicesFailed: false };
+  const feed = createPostFeed({
+    scope: el,
+    onRemoved: () => { if (!feed.f.posts.length) renderAll(); else { placeRails(); renderLive(); } host.schedule(); }
+  });
+  const F = feed.f;
+  const emptyMarkup = '<div class="kw-post kw-empty-card"><div class="kw-empty"><img class="kw-empty-art" src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/erferf.png" alt="" aria-hidden="true"><strong>Henüz Çalışma yok</strong><p>Sahada yaptığın bir uygulamayı, gözlemini veya öğrendiğin bir şeyi paylaşarak ilk Çalışmayı sen başlat.</p><button type="button" class="k-btn k-btn-primary" data-composer>İlk Çalışmayı paylaş</button></div></div>';
+  function renderAll(eager = false) {
+    list.innerHTML = F.posts.length ? F.posts.map(p => feed.card(p, eager)).join('') : emptyMarkup;
+    placeRails(); renderLive();
+    feed.threads.rerenderAll();
+    more.hidden = !s.hasMore || !F.posts.length;
+  }
+  function showNotice(text) {
+    notice.innerHTML = `<span>${esc(text)}</span><button type="button" class="k-btn" data-retry>Yeniden dene</button>`;
+    notice.hidden = false;
+  }
+
+  /* ---- Keşif alanları (masaüstü kenar + mobil şerit) ---- */
+  function personRow(p) {
+    const role = identity.role(p) || identity.feedLine(p);
+    const cert = identity.certTag(p);
+    return `<a class="kw-person" href="${esc(urls.profile(p.id))}" target="_top">${avatar(p, 'lg')}<span class="kw-person-copy"><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>`
+      + (role || cert ? `<span class="kw-person-role">${esc(compact([role, cert]))}</span>` : '')
+      + (clean(p.city) ? `<span class="kw-person-meta">${placeMeta(p.city)}</span>` : '')
+      + `</span>${ICONS.chev}</a>`;
+  }
+  function offerRow(v) {
+    const p = v.provider;
+    return `<a class="kw-offer" href="${esc(urls.service(v.id))}" target="_top">${p ? avatar(p, 'lg') : '<span class="k-avatar k-avatar-lg" aria-hidden="true"></span>'}<span class="kw-offer-copy">`
+      + `<strong>${esc(v.title)}</strong>`
+      + (p?.full_name ? `<span class="kw-offer-by">${esc(p.full_name)}</span>` : '')
+      + (p && identity.role(p) ? `<span class="kw-offer-role">${esc(identity.role(p))}</span>` : '')
+      + `<span class="kw-offer-meta">${modeMeta(v.service_mode)}${placeMeta(v.service_region)}</span>`
+      + `</span>${ICONS.chev}</a>`;
+  }
+  function renderSide() {
+    sideExperts.innerHTML = s.experts.length ? s.experts.map(personRow).join('')
+      : `<div class="k-muted-note">${s.expertsFailed ? 'Uzmanlar şu anda görüntülenemiyor.' : 'Henüz görünür uzman yok.'}</div>`;
+    sideServices.innerHTML = s.services.length ? s.services.map(offerRow).join('')
+      : `<div class="k-muted-note">${s.servicesFailed ? 'Hizmetler şu anda görüntülenemiyor.' : 'Henüz yayınlanmış hizmet yok. İlk hizmeti sen yayınla.'}</div>`;
+  }
+  const railExperts = () => `<section class="kw-rail kw-rail-experts" aria-label="İSG profesyonellerini keşfet"><div class="kw-rail-head"><h2>İSG profesyonellerini keşfet</h2><a href="${esc(urls.view('experts'))}" target="_top" data-view-link="experts">Tümü →</a></div><div class="kw-rail-track">${s.experts.map(p => {
+    const role = identity.role(p) || identity.feedLine(p), meta = compact([identity.certTag(p), clean(p.city)]);
+    return `<a class="kw-rail-expert" href="${esc(urls.profile(p.id))}" target="_top">${avatar(p, 'xl')}<strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${role ? `<span>${esc(role)}</span>` : ''}${meta ? `<span>${esc(meta)}</span>` : ''}</a>`;
+  }).join('')}</div></section>`;
+  const railServices = () => `<section class="kw-rail kw-rail-services" aria-label="Sunulan hizmetler"><div class="kw-rail-head"><h2>Sunulan hizmetler</h2><a href="${esc(urls.view('services'))}" target="_top" data-view-link="services">Tümü →</a></div><div class="kw-rail-track">${s.services.map(v => `<a class="kw-rail-service" href="${esc(urls.service(v.id))}" target="_top"><span class="kw-rail-cat">${esc(v.category?.name || 'Hizmet')}</span><strong>${esc(v.title)}</strong>${v.provider ? `<span class="kw-rail-by">${avatar(v.provider, 'xs')}<span>${esc(v.provider.full_name || '')}</span></span>` : ''}<span class="kw-offer-meta">${modeMeta(v.service_mode)}${placeMeta(v.service_region)}</span></a>`).join('')}</div></section>`;
+  function renderLive() {
+    const live = $('[data-live]', el), first = F.posts[0];
+    if (!first) { live.hidden = true; return; }
+    $('[data-live-text]', live).textContent = `Son Çalışma · ${relativeTime(first.created_at)}`;
+    live.hidden = false;
+  }
+  function placeRails() {
+    $$('.kw-rail', list).forEach(n => n.remove());
+    const cards = $$('[data-post-id]', list); if (!cards.length) return;
+    const ei = Math.min(3, cards.length) - 1;
+    const si = Math.min(Math.max(ei + 3, 6), cards.length) - 1;
+    if (s.services.length) cards[si].insertAdjacentHTML('afterend', railServices());
+    if (s.experts.length) cards[ei].insertAdjacentHTML('afterend', railExperts());
+  }
+  async function loadRails({ experts = true, services = true } = {}) {
+    try { await dbReady; } catch { s.expertsFailed = s.servicesFailed = true; renderSide(); return; }
+    const jobs = [];
+    if (experts) jobs.push((async () => {
+      try {
+        const { data, error } = await db.from('profiles').select('id,full_name,avatar_url,profession,title,certificate_class,current_company,city').eq('is_discoverable', true).order('last_post_at', { ascending: false, nullsFirst: false }).limit(CONFIG.railExperts);
+        if (error) throw error; s.experts = data || []; s.expertsFailed = false;
+      } catch { s.experts = []; s.expertsFailed = true; }
+    })());
+    if (services) jobs.push((async () => {
+      try {
+        const { data, error } = await db.from('professional_services').select('id,title,service_region,service_mode,category:professional_service_categories(name),provider:profiles!professional_services_user_id_fkey(full_name,avatar_url,profession,title,certificate_class)').eq('status', 'active').order('created_at', { ascending: false }).limit(CONFIG.railServices);
+        if (error) throw error; s.services = data || []; s.servicesFailed = false;
+      } catch { s.services = []; s.servicesFailed = true; }
+    })());
+    await Promise.all(jobs);
+    renderSide(); placeRails(); host.schedule();
+  }
+
+  /* ---- Akış: public sorgu oturumu beklemeden başlar ---- */
+  async function loadPosts({ reset = false } = {}) {
+    if (s.loading) { if (reset) s.queuedReset = true; return; }
+    if (!reset && !s.hasMore) return;
+    s.loading = true; setBusy(more, true, 'Yükleniyor...');
+    if (reset) notice.hidden = true;
+    try {
+      await dbReady;
+      const cursor = reset ? null : s.cursor;
+      const { data, error } = await postData.run(q => {
+        q = q.eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(CONFIG.postsPageSize);
+        return cursor ? q.or(`created_at.lt.${quote(cursor.created_at)},and(created_at.eq.${quote(cursor.created_at)},id.lt.${quote(cursor.id)})`) : q;
+      });
+      if (error) throw error;
+      await session.ready; // sahiplik doğru çizilsin; sorgu zaten paralel çalıştı
+      const page = (data || []).map(postData.normalize);
+      if (reset) { F.posts = []; list.innerHTML = ''; }
+      const known = new Set(F.posts.map(p => p.id));
+      const fresh = page.filter(p => !known.has(p.id));
+      F.posts.push(...fresh);
+      s.hasMore = page.length === CONFIG.postsPageSize;
+      const last = page[page.length - 1];
+      if (last) s.cursor = { created_at: last.created_at, id: last.id }; else if (reset) s.cursor = null;
+      $('.kw-empty-card', list)?.remove();
+      $$('.kw-sk', list).forEach(n => n.remove());
+      if (F.posts.length) list.insertAdjacentHTML('beforeend', fresh.map(p => feed.card(p)).join('')); else list.innerHTML = emptyMarkup;
+      placeRails(); renderLive();
+      more.hidden = !s.hasMore || !F.posts.length;
+      notice.hidden = true;
+      feed.syncLikes(fresh.map(p => p.id));
+      feed.threads.preview(fresh);
+    } catch {
+      $$('.kw-sk', list).forEach(n => n.remove());
+      showNotice('Çalışmalar şu anda yüklenemedi.');
+    } finally {
+      s.loading = false; setBusy(more, false); host.schedule();
+      if (s.queuedReset) { s.queuedReset = false; loadPosts({ reset: true }); }
+    }
+  }
+  // Düzenleyiciden gelen kayıt: yeni Çalışma başa eklenir, düzenlenen yerinde güncellenir.
+  postBus.add((kind, x) => {
+    if (kind !== 'saved' || !s.mounted) return;
+    if (x.failed) { loadPosts({ reset: true }); return; }
+    const { id, fresh, previous } = x;
+    if (previous) {
+      const old = feed.find(id), c = feed.cardOf(id);
+      if (!old) return;
+      if (!fresh) { F.posts = F.posts.filter(p => p.id !== id); c?.remove(); if (!F.posts.length) renderAll(); else placeRails(); return; }
+      const next = { ...fresh, liked: old.liked || false, comment_count: fresh.comment_count ?? old.comment_count ?? null };
+      F.posts = F.posts.map(p => (p.id === id ? next : p));
+      if (c) { c.outerHTML = feed.card(next); feed.threads.render(id); }
+    } else if (fresh && !feed.find(id)) {
+      F.posts.unshift({ ...fresh });
+      $('.kw-empty-card', list)?.remove();
+      list.insertAdjacentHTML('afterbegin', feed.card(F.posts[0]));
+      placeRails(); renderLive();
+      more.hidden = !s.hasMore;
+      loadRails({ experts: true, services: false });
+    }
+    host.schedule();
+  });
+
+  /* ---- Olaylar ---- */
+  el.addEventListener('click', e => {
+    const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
+    const trigger = t.closest('[data-composer]'); if (trigger) { composer.open(null, trigger.dataset.composerIntent || ''); return; }
+    if (t.closest('[data-more]')) { loadPosts(); return; }
+    if (t.closest('[data-retry]')) loadPosts({ reset: !F.posts.length });
+  });
 
   // Composer daveti: İSG sahasına özgü sorular, sakin geçişle döner (reduced-motion'da sabit).
   const PROMPTS = ['Sahada ne yaptın? Bir Çalışma paylaş…', 'Bugün hangi riski azalttın?', 'Son denetiminde ne dikkatini çekti?', 'Verdiğin eğitimden bir kare paylaş…', 'Hangi iyi uygulamayı hayata geçirdin?', 'Bir ramak kaladan ne öğrendin?'];
@@ -2383,39 +2642,35 @@ function createWorksView() {
     if (snap && Array.isArray(snap.posts)) {
       try { await dbReady; } catch { showNotice('Bağlantı kurulamadı.'); return; }
       await session.ready;
-      s.posts = snap.posts; s.cursor = snap.cursor || null; s.hasMore = !!snap.hasMore;
+      F.posts = snap.posts; s.cursor = snap.cursor || null; s.hasMore = !!snap.hasMore;
       s.experts = snap.experts || []; s.services = snap.services || [];
       renderSide(); renderAll(true);
-      syncLikes(s.posts.map(p => p.id));
-      threads.preview(s.posts);
-      idle(() => ensureCategories().catch(() => {}));
+      feed.syncLikes(F.posts.map(p => p.id));
+      feed.threads.preview(F.posts);
+      idle(() => composer.ensureCategories().catch(() => {}));
       await settleImages(1500);
       return;
     }
     loadRails();
-    idle(() => ensureCategories().catch(() => {}));
+    idle(() => composer.ensureCategories().catch(() => {}));
     await loadPosts({ reset: true });
   }
   function onSession(kind) {
     renderComposerAvatar();
     if (kind !== 'user' || !s.mounted) return;
-    if (d.root.open && !s.saving) dialogs.close(d.root);
-    s.posts.forEach(p => { p.liked = false; patchOwnership(p); });
-    syncLikes(s.posts.map(p => p.id));
-    threads.onUser();
+    feed.onSession(kind);
   }
   function snapshot() {
-    if (!s.mounted || !s.posts.length) return null;
-    const posts = s.posts.slice(0, 60).map(({ liked, _likeStamp, ...rest }) => ({ ...rest, liked: false }));
-    const truncated = posts.length < s.posts.length, last = posts[posts.length - 1];
+    if (!s.mounted || !F.posts.length) return null;
+    const posts = F.posts.slice(0, 60).map(({ liked, _likeStamp, ...rest }) => ({ ...rest, liked: false }));
+    const truncated = posts.length < F.posts.length, last = posts[posts.length - 1];
     return { posts, cursor: truncated ? { created_at: last.created_at, id: last.id } : s.cursor, hasMore: truncated || s.hasMore, experts: s.experts, services: s.services };
   }
   shellHooks.avatarChanged = ((prev) => (uid, url) => {
     prev(uid, url);
-    s.posts.forEach(p => { if (p.author?.id === uid || p.user_id === uid) p.author = { ...(p.author || {}), id: uid, avatar_url: url }; });
+    feed.avatarChanged(uid, url);
     s.experts.forEach(p => { if (p.id === uid) p.avatar_url = url; });
     s.services.forEach(v => { if (v.user_id === uid && v.provider) v.provider.avatar_url = url; });
-    threads.avatarChanged?.(uid, url);
   })(shellHooks.avatarChanged);
   return { name: 'works', el, mount, onSession, snapshot, isMounted: () => s.mounted };
 }
@@ -2670,6 +2925,16 @@ function createExpertsView() {
 /* =========================================================================
    11. Görünüm: Hizmetler (mevcut /hizmetler V1 davranışı korunur)
    ========================================================================= */
+// Hizmet kartı: Hizmetler kataloğu ve Profil > Verdiği Hizmetler aynı tasarımı kullanır.
+function serviceCard(v, { provider = true } = {}) {
+  const p = provider ? v.provider : null, role = p ? identity.role(p) : '';
+  const meta = modeMeta(v.service_mode) + placeMeta(v.service_region);
+  return `<a class="kc-card ks-card" href="${esc(urls.service(v.id))}" target="_top">`
+    + (p ? `<div class="ks-by">${avatar(p, 'md')}<div><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${role ? `<p>${esc(role)}</p>` : ''}</div></div>` : '')
+    + `<h2>${esc(v.title)}</h2>`
+    + (v.description ? `<p class="ks-description">${esc(v.description)}</p>` : '')
+    + `<div class="ks-foot">${v.category?.name ? `<span class="k-tag">${esc(v.category.name)}</span>` : ''}${meta ? `<span class="ks-meta">${meta}</span>` : ''}<span class="ks-cta">Hizmeti Gör <span aria-hidden="true">→</span></span></div></a>`;
+}
 function createServicesView() {
   const el = $('[data-view="services"]');
   const SELECT = 'id,user_id,title,category_id,description,service_region,service_mode,status,created_at,updated_at,category:professional_service_categories(id,name,slug),provider:profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company)';
@@ -2680,15 +2945,7 @@ function createServicesView() {
   const filterMarkup = prefix => `<label class="kc-field" for="${prefix}-category"><span class="kc-flabel">Kategori</span><select id="${prefix}-category" data-filter="category"><option value="">Tüm kategoriler</option>${options()}</select></label>`
     + `<label class="kc-field" for="${prefix}-mode"><span class="kc-flabel">Hizmet Şekli</span><select id="${prefix}-mode" data-filter="mode"><option value="">Tüm hizmet şekilleri</option>${Object.entries(SERVICE_MODES).map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>`
     + `<label class="kc-field" for="${prefix}-region"><span class="kc-flabel">Bölge</span><input id="${prefix}-region" data-filter="region" maxlength="120" placeholder="Bölge" autocomplete="off"></label>`;
-  function card(v) {
-    const p = v.provider, role = p ? identity.role(p) : '';
-    const meta = modeMeta(v.service_mode) + placeMeta(v.service_region);
-    return `<a class="kc-card ks-card" href="${esc(urls.service(v.id))}" target="_top">`
-      + (p ? `<div class="ks-by">${avatar(p, 'md')}<div><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${role ? `<p>${esc(role)}</p>` : ''}</div></div>` : '')
-      + `<h2>${esc(v.title)}</h2>`
-      + (v.description ? `<p class="ks-description">${esc(v.description)}</p>` : '')
-      + `<div class="ks-foot">${v.category?.name ? `<span class="k-tag">${esc(v.category.name)}</span>` : ''}${meta ? `<span class="ks-meta">${meta}</span>` : ''}<span class="ks-cta">Hizmeti Gör <span aria-hidden="true">→</span></span></div></a>`;
-  }
+  const card = v => serviceCard(v);
 
   const catalog = createCatalog({
     name: 'services', el, sheetTitle: 'Hizmetleri Filtrele', filterMarkup,
@@ -2804,11 +3061,738 @@ function createServicesView() {
 }
 
 /* =========================================================================
+   11b. Görünüm: Profil — Kırmızı İSG Kişi Kartı (/profil?id={user_id})
+   Profil V1'in veri/gizlilik kuralları birebir korunur:
+   - Telefon herkese açık okumada yalnızca show_phone_publicly=true ise ayrıca sorgulanır.
+   - Sahibin gizli telefonu yalnızca "Profili Düzenle" açılırken, doğrulanmış oturumla okunur.
+   - title, specialties ve job_role hiçbir zaman yazılmaz; yalnız değişen alanlar gönderilir.
+   ========================================================================= */
+const PROFILE_BASE = 'id,full_name,avatar_url,profession,title,certificate_class,city,current_company,about,social_links,linkedin_url,instagram_url,website_url,is_discoverable,show_phone_publicly';
+const CITIES = ['Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Amasya', 'Ankara', 'Antalya', 'Ardahan', 'Artvin', 'Aydın', 'Balıkesir', 'Bartın', 'Batman', 'Bayburt', 'Bilecik', 'Bingöl', 'Bitlis', 'Bolu', 'Burdur', 'Bursa', 'Çanakkale', 'Çankırı', 'Çorum', 'Denizli', 'Diyarbakır', 'Düzce', 'Edirne', 'Elazığ', 'Erzincan', 'Erzurum', 'Eskişehir', 'Gaziantep', 'Giresun', 'Gümüşhane', 'Hakkari', 'Hatay', 'Iğdır', 'Isparta', 'İstanbul', 'İzmir', 'Kahramanmaraş', 'Karabük', 'Karaman', 'Kars', 'Kastamonu', 'Kayseri', 'Kilis', 'Kırıkkale', 'Kırklareli', 'Kırşehir', 'Kocaeli', 'Konya', 'Kütahya', 'Malatya', 'Manisa', 'Mardin', 'Mersin', 'Muğla', 'Muş', 'Nevşehir', 'Niğde', 'Ordu', 'Osmaniye', 'Rize', 'Sakarya', 'Samsun', 'Şanlıurfa', 'Siirt', 'Sinop', 'Şırnak', 'Sivas', 'Tekirdağ', 'Tokat', 'Trabzon', 'Tunceli', 'Uşak', 'Van', 'Yalova', 'Yozgat', 'Zonguldak'];
+const EXPERIENCE_OPTIONS = ['0-1 yıl', '1-3 yıl', '3-5 yıl', '5-10 yıl', '10-15 yıl', '15+ yıl'];
+const SOCIAL_PLATFORMS = { linkedin: 'LinkedIn', instagram: 'Instagram', facebook: 'Facebook', youtube: 'YouTube', tiktok: 'TikTok', x: 'X', website: 'Web Sitesi' };
+const SOCIAL_ICONS = {
+  linkedin: '<path d="M20.5 2h-17A1.5 1.5 0 0 0 2 3.5v17A1.5 1.5 0 0 0 3.5 22h17a1.5 1.5 0 0 0 1.5-1.5v-17A1.5 1.5 0 0 0 20.5 2ZM8 19H5V9h3ZM6.5 7.7a1.75 1.75 0 1 1 0-3.5 1.75 1.75 0 0 1 0 3.5ZM19 19h-3v-5.2c0-1.3-.3-2.2-1.5-2.2S13 12.5 13 13.8V19h-3V9h2.9v1.4c.4-.8 1.4-1.7 3-1.7 2.4 0 3.1 1.5 3.1 4Z"/>',
+  instagram: '<g fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/></g><circle cx="17.5" cy="6.5" r="1.1"/>',
+  facebook: '<path d="M14 22v-9h3l.5-3.5H14V7.3c0-1 .3-1.7 1.8-1.7h1.9V2.5c-.3 0-1.5-.2-2.8-.2-2.8 0-4.7 1.7-4.7 4.8v2.4H7V13h3.2v9Z"/>',
+  youtube: '<path d="M21.5 6.4a2.8 2.8 0 0 0-2-2C17.8 4 12 4 12 4s-5.8 0-7.5.4a2.8 2.8 0 0 0-2 2C2 8.1 2 12 2 12s0 3.9.5 5.6a2.8 2.8 0 0 0 2 2C6.2 20 12 20 12 20s5.8 0 7.5-.4a2.8 2.8 0 0 0 2-2c.5-1.7.5-5.6.5-5.6s0-3.9-.5-5.6ZM10 16V8l6 4Z"/>',
+  tiktok: '<path d="M15 2h-3v13.7a2.8 2.8 0 1 1-2.4-2.8V9.8a5.8 5.8 0 1 0 5.4 5.9V8.5a8 8 0 0 0 5 1.7V7a5 5 0 0 1-5-5Z"/>',
+  x: '<path d="M18.8 2H22l-7 8 8 12h-6.3l-5-7.6L5 22H2l8.3-9.7L2 2h6.4l4.7 7.1L18.8 2ZM17.9 20h1.7L7.4 4H5.5Z"/>',
+  website: '<g fill="none" stroke="currentColor" stroke-width="1.65"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M4.5 7.5h15M4.5 16.5h15"/></g>',
+  whatsapp: '<path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" d="M20.8 11.5a8.8 8.8 0 0 1-13.1 7.7L3 20.5l1.3-4.6a8.8 8.8 0 1 1 16.5-4.4Z"/><path d="M8.1 6.7c-.4 0-1.4.7-1.4 2 0 2.4 3.5 6.5 6.9 7.2 1.4.3 2.6-.7 2.8-1.6.1-.4 0-.6-.3-.8l-1.8-.9c-.3-.1-.5 0-.7.3l-.6.8c-.2.2-.4.2-.7.1-1.3-.5-2.4-1.5-3.1-2.7-.2-.3-.1-.5.1-.7l.5-.7c.2-.2.2-.4.1-.7L9 7c-.1-.3-.4-.3-.9-.3Z"/>'
+};
+const PICONS = {
+  camera: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.5-2h6l1.5 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5Z"/><circle cx="12" cy="12.5" r="3.3"/></svg>',
+  clock: '<svg class="k-ico" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
+  building: '<svg class="k-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20V5.5A1.5 1.5 0 0 1 5.5 4h7A1.5 1.5 0 0 1 14 5.5V20M14 10h4.5a1.5 1.5 0 0 1 1.5 1.5V20M3 20h18M7.5 8h3M7.5 11.5h3M7.5 15h3"/></svg>',
+  phone: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5.5 3.5h3l1.5 4-2 1.3a11 11 0 0 0 5.2 5.2l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3.5 5.7a2 2 0 0 1 2-2.2Z"/></svg>',
+  download: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>',
+  edit: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16Z"/><path d="m13.5 6.5 4 4"/></svg>',
+  plus: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
+};
+// Sosyal bağlantı normalizasyonu: Profil V1 ile aynı kural (şemasız adres https ile tamamlanır).
+function linkUrl(v) {
+  try {
+    const s = clean(v); if (!s) return '';
+    if (/^[a-z][a-z0-9+.-]*:/i.test(s) && !/^https?:\/\//i.test(s)) return '';
+    const u = new URL(/^https?:\/\//i.test(s) ? s : 'https://' + s);
+    return ['https:', 'http:'].includes(u.protocol) && !u.username && !u.password ? u.href : '';
+  } catch { return ''; }
+}
+function socialLinks(p) {
+  const result = [], seen = new Set();
+  const add = (platform, value, original = null) => {
+    const href = linkUrl(value); if (!href) return;
+    let key = clean(platform).toLowerCase();
+    if (key === 'twitter') key = 'x';
+    if (key === 'whatsapp') return;
+    if (!SOCIAL_PLATFORMS[key]) key = 'website';
+    const n = new URL(href);
+    const fp = n.hostname.toLowerCase().replace(/^www\./, '') + n.pathname.replace(/\/+$/, '') + n.search + n.hash;
+    if (seen.has(fp)) return; seen.add(fp);
+    result.push({ platform: key, url: href, original });
+  };
+  (Array.isArray(p?.social_links) ? p.social_links : []).forEach(s => { if (s && typeof s === 'object') add(s.platform || s.type || s.name, s.url || s.href, s); });
+  [['linkedin', 'linkedin_url'], ['instagram', 'instagram_url'], ['website', 'website_url']].forEach(([a, b]) => add(a, p?.[b]));
+  return result;
+}
+function phoneDigits(value) {
+  const text = clean(value);
+  if (!text || !/^\+?[\d\s().-]+$/.test(text)) return '';
+  let n = text.replace(/\D/g, '');
+  if (n.startsWith('00')) n = n.slice(2);
+  else if (!text.startsWith('+')) { if (/^0[2-5]\d{9}$/.test(n)) n = '9' + n; else if (/^[2-5]\d{9}$/.test(n)) n = '90' + n; }
+  return /^[1-9]\d{9,14}$/.test(n) ? n : '';
+}
+function phoneDisplay(value) {
+  const d = phoneDigits(value); if (!d) return clean(value);
+  const m = d.match(/^90(\d{3})(\d{3})(\d{2})(\d{2})$/);
+  return m ? `+90 ${m[1]} ${m[2]} ${m[3]} ${m[4]}` : '+' + d;
+}
+const experienceText = v => { const t = clean(v); return /^\d[\d\s+\-–]*$/.test(t) ? `${t} yıl` : t; };
+const socialAnchor = (platform, href) => {
+  const label = platform === 'whatsapp' ? 'WhatsApp' : SOCIAL_PLATFORMS[platform];
+  return `<a class="kp-social" href="${esc(href)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(label)}" title="${esc(label)}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${SOCIAL_ICONS[platform]}</svg></a>`;
+};
+
+/* Kişi Kartı PDF'i: ekran görüntüsü değil, jsPDF ile ayrıca tasarlanmış tek sayfa A4.
+   Kütüphaneler ve Türkçe karakterli yazı tipi yalnızca "PDF Olarak İndir" basıldığında yüklenir. */
+const profilePdf = (() => {
+  const LIBS = {
+    jspdf: 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
+    qr: 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js',
+    regular: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/inter@0.2.3/Inter_400Regular.ttf',
+    bold: 'https://cdn.jsdelivr.net/npm/@expo-google-fonts/inter@0.2.3/Inter_700Bold.ttf'
+  };
+  const LOGO = 'https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/logo.jpg';
+  const scripts = {};
+  function script(src, ready) {
+    if (ready()) return Promise.resolve();
+    scripts[src] ||= new Promise((resolve, reject) => {
+      const s = document.createElement('script'); s.src = src; s.async = true;
+      s.onload = () => (ready() ? resolve() : reject(new Error('lib')));
+      s.onerror = () => { delete scripts[src]; reject(new Error('lib')); };
+      document.head.append(s);
+    });
+    return scripts[src];
+  }
+  let fonts = null;
+  async function fontData() {
+    fonts ||= Promise.all([LIBS.regular, LIBS.bold].map(async u => {
+      const r = await fetch(u, { mode: 'cors' }); if (!r.ok) throw new Error('font');
+      const bytes = new Uint8Array(await r.arrayBuffer());
+      let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      return btoa(bin);
+    })).catch(e => { fonts = null; throw e; });
+    return fonts;
+  }
+  // Görseli (avatar/logo) CORS ile alır, kare kırpar; circle=true ise dairesel PNG üretir.
+  async function imageData(src, size, circle) {
+    if (!src) return null;
+    try {
+      const r = await fetch(src, { mode: 'cors', cache: 'force-cache' }); if (!r.ok) return null;
+      const bmp = await createImageBitmap(await r.blob());
+      const c = document.createElement('canvas'); c.width = c.height = size;
+      const x = c.getContext('2d');
+      if (circle) { x.beginPath(); x.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2); x.clip(); }
+      else { x.fillStyle = '#fff'; x.fillRect(0, 0, size, size); }
+      const k = Math.min(bmp.width, bmp.height);
+      x.drawImage(bmp, (bmp.width - k) / 2, (bmp.height - k) / 2, k, k, 0, 0, size, size);
+      bmp.close?.();
+      return c.toDataURL(circle ? 'image/png' : 'image/jpeg', 0.9);
+    } catch { return null; }
+  }
+  const ASCII = { ç: 'c', Ç: 'C', ğ: 'g', Ğ: 'G', ı: 'i', İ: 'I', ö: 'o', Ö: 'O', ş: 's', Ş: 'S', ü: 'u', Ü: 'U', '’': "'", '·': '-', '…': '...', '–': '-', '→': '>' };
+  const slug = v => clean(v).toLocaleLowerCase('tr-TR').replace(/[çğıöşü]/g, c => ASCII[c]).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'profil';
+
+  async function create(data) {
+    await Promise.all([
+      script(LIBS.jspdf, () => !!window.jspdf?.jsPDF),
+      script(LIBS.qr, () => typeof window.qrcode === 'function')
+    ]);
+    const [fontsB64, avatarImg, logoImg] = await Promise.all([
+      fontData().catch(() => null),
+      imageData(httpUrl(data.profile.avatar_url), 480, true),
+      imageData(LOGO, 160, false)
+    ]);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+    let F = 'helvetica';
+    if (fontsB64) {
+      doc.addFileToVFS('Inter-Regular.ttf', fontsB64[0]); doc.addFont('Inter-Regular.ttf', 'Inter', 'normal');
+      doc.addFileToVFS('Inter-Bold.ttf', fontsB64[1]); doc.addFont('Inter-Bold.ttf', 'Inter', 'bold');
+      F = 'Inter';
+    }
+    // Yazı tipi yüklenemezse PDF yine üretilir; Türkçe karakterler Latin karşılıklarına indirgenir.
+    const T = v => (fontsB64 ? String(v ?? '') : String(v ?? '').replace(/[çÇğĞıİöÖşŞüÜ’·…–→]/g, c => ASCII[c]));
+    const RED = [227, 10, 23], INK = [20, 26, 36], TEXT = [38, 45, 56], MUTED = [93, 104, 120], FAINT = [135, 145, 160], LINE = [226, 229, 234], SOFT = [246, 247, 249];
+    const W = 210, H = 297, M = 16, CW = W - M * 2;
+    const font = (style, size, color = INK) => { doc.setFont(F, style); doc.setFontSize(size); doc.setTextColor(...color); };
+    const wrap = (text, width, maxLines) => {
+      let lines = doc.splitTextToSize(T(text).replace(/\s*\n+\s*/g, '\n'), width);
+      if (maxLines && lines.length > maxLines) { lines = lines.slice(0, maxLines); lines[maxLines - 1] = lines[maxLines - 1].replace(/\s*\S*$/, '') + ' …'; }
+      return lines;
+    };
+    const lh = size => size * 0.3528 * 1.42;
+    const p = data.profile, url = data.url;
+
+    // Üst şerit: marka + belge türü
+    doc.setFillColor(...RED); doc.rect(0, 0, W, 2.2, 'F');
+    if (logoImg) doc.addImage(logoImg, 'JPEG', M, 10, 10, 10, undefined, 'FAST');
+    else { doc.setFillColor(...RED); doc.roundedRect(M, 10, 10, 10, 2, 2, 'F'); }
+    font('bold', 11.5); doc.text(T('Kırmızı İSG'), M + 13, 14.4);
+    font('bold', 8.5, RED); doc.text('Professional', M + 13, 18.6);
+    font('bold', 7.5, FAINT); doc.text(T('KİŞİ KARTI'), W - M, 14.4, { align: 'right', charSpace: 0.6 });
+    font('normal', 7.5, FAINT); doc.text(T(new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())), W - M, 18.6, { align: 'right' });
+
+    // Kimlik
+    let y = 32;
+    const AV = 34;
+    doc.setFillColor(...SOFT); doc.circle(M + AV / 2, y + AV / 2, AV / 2, 'F');
+    if (avatarImg) doc.addImage(avatarImg, 'PNG', M, y, AV, AV, undefined, 'FAST');
+    else { font('bold', 24, [59, 68, 83]); doc.text(T(initials(p.full_name) || '•'), M + AV / 2, y + AV / 2 + 3, { align: 'center' }); }
+    doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.circle(M + AV / 2, y + AV / 2, AV / 2, 'S');
+    const X = M + AV + 9, IW = W - M - X;
+    let iy = y + 7;
+    font('bold', 21); const nameLines = wrap(p.full_name || 'Kırmızı İSG üyesi', IW, 2); doc.text(nameLines, X, iy); iy += (nameLines.length - 1) * lh(21) + 7;
+    if (data.role) { font('normal', 11.5, TEXT); const rl = wrap(data.role, IW, 2); doc.text(rl, X, iy); iy += rl.length * lh(11.5) + 1.5; }
+    if (data.status) {
+      font('bold', 8.5, INK);
+      const label = T(data.status), tw = doc.getTextWidth(label) + 10;
+      doc.setDrawColor(...LINE); doc.setFillColor(255, 255, 255); doc.roundedRect(X, iy - 1, tw, 7, 3.5, 3.5, 'FD');
+      doc.setFillColor(...RED); doc.circle(X + 3.6, iy + 2.5, 0.9, 'F');
+      doc.text(label, X + 6, iy + 3.6);
+      iy += 9;
+    }
+    y = Math.max(y + AV, iy) + 7;
+
+    // Bilgi kutuları
+    const facts = [['Şehir', p.city], ['Mesleki Deneyim', experienceText(p.experience_range)], ['Çalıştığı Firma', p.current_company]].filter(f => clean(f[1]));
+    if (facts.length) {
+      const gap = 4, bw = (CW - gap * (facts.length - 1)) / facts.length;
+      const rows = facts.map(([, v]) => { font('bold', 10.5); return wrap(v, bw - 10, 2); });
+      const bh = 12 + Math.max(...rows.map(r => r.length)) * lh(10.5);
+      facts.forEach(([k], i) => {
+        const bx = M + i * (bw + gap);
+        doc.setFillColor(...SOFT); doc.roundedRect(bx, y, bw, bh, 2.5, 2.5, 'F');
+        font('normal', 7.5, MUTED); doc.text(T(k.toLocaleUpperCase('tr-TR')), bx + 5, y + 6.2, { charSpace: 0.3 });
+        font('bold', 10.5); doc.text(rows[i], bx + 5, y + 11.8);
+      });
+      y += bh + 7;
+    }
+
+    // İletişim ve bağlantılar
+    const contacts = [];
+    if (data.phone) contacts.push(['Telefon', phoneDisplay(data.phone), 'tel:+' + phoneDigits(data.phone)]);
+    data.socials.forEach(s => contacts.push([SOCIAL_PLATFORMS[s.platform] || 'Bağlantı', s.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''), s.url]));
+    if (contacts.length) {
+      font('bold', 8, RED); doc.text(T('İLETİŞİM'), M, y, { charSpace: 0.5 }); y += 5;
+      const colW = CW / 2;
+      contacts.slice(0, 6).forEach((c, i) => {
+        const cx = M + (i % 2) * colW, cy = y + Math.floor(i / 2) * 6.2;
+        font('normal', 8.5, MUTED); doc.text(T(c[0]), cx, cy);
+        font('normal', 9, INK); const v = wrap(c[1], colW - 26, 1)[0];
+        doc.textWithLink(v, cx + 22, cy, { url: c[2] });
+      });
+      y += Math.ceil(Math.min(contacts.length, 6) / 2) * 6.2 + 4;
+    }
+
+    // Alt blok (QR) sabit yer kaplar; içerik ona kadar akar.
+    const FOOT = H - 16 - 36;
+    const section = (title, count) => {
+      doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, y, W - M, y); y += 7;
+      font('bold', 8, RED); doc.text(T(title.toLocaleUpperCase('tr-TR')), M, y, { charSpace: 0.5 });
+      if (count != null) { font('normal', 8, FAINT); doc.text(T(`${count} toplam`), W - M, y, { align: 'right' }); }
+      y += 5.5;
+    };
+    const fits = h => y + h <= FOOT - 4;
+
+    if (clean(p.about) && fits(20)) {
+      section('Hakkında');
+      font('normal', 9.5, TEXT);
+      // Hakkında, altındaki Çalışma/Hizmet özetlerine yer bırakacak kadar satır alır.
+      const reserve = (data.posts.length ? 34 : 0) + (data.services.length ? 30 : 0);
+      const room = Math.max(2, Math.min(7, Math.floor((FOOT - 16 - reserve - y) / lh(9.5))));
+      const lines = wrap(p.about, CW, room); doc.text(lines, M, y + 1); y += lines.length * lh(9.5) + 5;
+    }
+    if (data.posts.length && fits(26)) {
+      section('Çalışmalar', data.postCount);
+      for (const w of data.posts.slice(0, 3)) {
+        font('normal', 9.5, TEXT); const lines = wrap(w.content || 'Görselli Çalışma', CW - 6, 2);
+        const h = 5 + lines.length * lh(9.5) + 3.5;
+        if (!fits(h + (data.services.length ? 28 : 0))) break;   // hizmet özetine yer kalsın
+        doc.setFillColor(...RED); doc.rect(M, y - 2.6, 0.7, h - 2.5, 'F');
+        font('bold', 7.5, MUTED);
+        const meta = compact([new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(w.created_at)), w.category?.name, w.profile_featured_order ? 'Öne çıkan' : '']);
+        doc.textWithLink(T(meta), M + 4, y, { url: urls.work(w.id) });
+        font('normal', 9.5, TEXT); doc.text(lines, M + 4, y + 4.6);
+        y += h;
+      }
+      y += 2;
+    }
+    if (data.services.length && fits(26)) {
+      section('Verdiği Hizmetler', data.services.length);
+      for (const v of data.services.slice(0, 5)) {
+        font('normal', 8.5, MUTED); const desc = v.description ? wrap(v.description, CW - 6, 1) : [];
+        const h = 5 + (desc.length ? lh(8.5) + 1 : 0) + 4.5;
+        if (!fits(h)) break;
+        font('bold', 10); doc.textWithLink(wrap(v.title, CW - 60, 1)[0], M, y, { url: urls.service(v.id) });
+        font('normal', 8, MUTED); doc.text(T(compact([v.category?.name, SERVICE_MODES[v.service_mode], clean(v.service_region)])), W - M, y, { align: 'right' });
+        if (desc.length) { font('normal', 8.5, MUTED); doc.text(desc, M, y + 4.6); }
+        y += h;
+      }
+    }
+
+    // QR + canlı profil
+    const fy = H - 16 - 32;
+    doc.setFillColor(...SOFT); doc.roundedRect(M, fy, CW, 32, 3, 3, 'F');
+    const qr = window.qrcode(0, 'M'); qr.addData(url); qr.make();
+    const n = qr.getModuleCount(), QS = 24, cell = QS / n, qx = W - M - 4 - QS, qy = fy + 4;
+    doc.setFillColor(255, 255, 255); doc.rect(qx - 1.5, qy - 1.5, QS + 3, QS + 3, 'F');
+    doc.setFillColor(...INK);
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) doc.rect(qx + c * cell, qy + r * cell, cell + 0.01, cell + 0.01, 'F');
+    doc.link(qx, qy, QS, QS, { url });
+    font('bold', 11); doc.text(T('Güncel profili görüntüle'), M + 6, fy + 10);
+    font('normal', 8.5, MUTED); doc.text(wrap('Karekodu okut veya bağlantıyı aç: Çalışmalar, hizmetler ve iletişim bilgileri Kırmızı İSG Professional’da her zaman güncel.', CW - QS - 22, 2), M + 6, fy + 15.5);
+    font('bold', 8.5, RED); doc.textWithLink(T(url.replace(/^https?:\/\//, '')), M + 6, fy + 26, { url });
+    font('normal', 7, FAINT); doc.text(T('Kırmızı İSG Professional · isgcalisanplatformu.com'), M, H - 9);
+    doc.text(T('Bu belge profil sahibinin paylaştığı bilgilerden otomatik oluşturulmuştur.'), W - M, H - 9, { align: 'right' });
+
+    doc.setProperties({ title: T(`${p.full_name || 'Profil'} — Kırmızı İSG Kişi Kartı`), subject: 'Kırmızı İSG Kişi Kartı', creator: 'Kırmızı İSG Professional' });
+    doc.save(`kirmizi-isg-${slug(p.full_name)}.pdf`);
+  }
+  return { create };
+})();
+
+function createProfileView() {
+  const el = $('[data-view="profile"]');
+  const cardSlot = $('[data-profile-card]', el), statusBox = $('[data-profile-status]', el), main = $('[data-profile-main]', el);
+  const postsBox = $('[data-profile-posts]', el), postsMore = $('[data-profile-posts-more]', el), servicesBox = $('[data-profile-services]', el);
+  const composeRow = $('[data-profile-compose]', el), composeAvatar = $('[data-profile-compose-avatar]', el);
+  const tabs = $$('[data-profile-tab]', el);
+  const s = {
+    mounted: false, id: '', rev: 0, profile: null, phone: null, tab: 'calismalar',
+    cursor: null, hasMore: false, loadingPosts: false, postsFailed: false,
+    services: [], servicesState: 'idle', counts: { posts: null, services: null }, withExperience: true, pdfBusy: false
+  };
+  const feed = createPostFeed({
+    scope: $('[data-profile-panel="calismalar"]', el),
+    onRemoved: () => { if (s.counts.posts) s.counts.posts--; renderTabs(); renderPosts(); },
+    onFeatured: (x, p) => {
+      if (!p && x.post?.user_id === s.id && s.profile) feed.f.posts.push({ ...x.post, profile_featured_order: x.value });
+      if (s.profile) renderPosts();
+    }
+  });
+  const F = feed.f;
+  const own = () => !!(session.user && s.profile && session.user.id === s.profile.id);
+
+  /* ---- Kişi Kartı ---- */
+  const fact = (icon, label, value) => (clean(value) ? `<li class="kp-fact">${icon}<span><small>${label}</small><b>${esc(value)}</b></span></li>` : '');
+  function cardHTML(p) {
+    const role = identity.role(p), status = identity.statusLong(p);
+    const showStatus = status && role.toLocaleLowerCase('tr-TR') !== status.toLocaleLowerCase('tr-TR');
+    const links = socialLinks(p);
+    const phone = p.show_phone_publicly ? s.phone : '';
+    const wa = phone && phoneDigits(phone) ? 'https://wa.me/' + phoneDigits(phone) : '';
+    const facts = fact(ICONS.pin, 'Şehir', p.city) + fact(PICONS.clock, 'Mesleki deneyim', experienceText(p.experience_range)) + fact(PICONS.building, 'Çalıştığı firma', p.current_company);
+    const missing = own() ? [['city', 'şehir'], ['experience_range', 'deneyim'], ['current_company', 'firma'], ['about', 'hakkında']].filter(([k]) => (k !== 'experience_range' || s.withExperience) && !clean(p[k])).map(([, l]) => l) : [];
+    return `<article class="kp-card" aria-labelledby="kpName">`
+      + `<p class="kp-kicker"><span class="k-badge">KIRMIZI İSG KİŞİ KARTI</span></p>`
+      + `<div class="kp-head"><div class="kp-av">${avatar(p, 'profile')}${own() ? `<button type="button" class="kp-av-edit" data-profile-action="avatar" aria-label="Profil fotoğrafını değiştir">${PICONS.camera}</button>` : ''}</div>`
+      + `<div class="kp-idn"><h1 id="kpName">${esc(p.full_name || 'Kırmızı İSG üyesi')}</h1>${role ? `<p class="kp-role">${esc(role)}</p>` : ''}`
+      + (showStatus ? `<p class="kp-cert"><span class="k-tag k-tag-cert"><i aria-hidden="true"></i>${esc(status)}</span></p>` : '') + `</div></div>`
+      + (facts ? `<ul class="kp-facts">${facts}</ul>` : '')
+      + (phone || links.length ? `<div class="kp-contact">${phone ? `<a class="kp-phone" href="tel:+${esc(phoneDigits(phone))}">${PICONS.phone}<span>${esc(phoneDisplay(phone))}</span></a>` : ''}<div class="kp-socials">${wa ? socialAnchor('whatsapp', wa) : ''}${links.map(l => socialAnchor(l.platform, l.url)).join('')}</div></div>` : '')
+      + (clean(p.about) ? `<section class="kp-about" aria-labelledby="kpAboutTitle"><h2 id="kpAboutTitle">Hakkında</h2><p class="kp-about-text is-clamped" data-about>${esc(p.about)}</p><button type="button" class="k-text-button kp-about-more" data-profile-action="about" hidden>Devamını gör</button></section>` : '')
+      + `<div class="kp-actions">`
+      + (own() ? `<button type="button" class="k-btn k-btn-primary kp-act-main kp-act-keep" data-profile-action="edit">${PICONS.edit}<span>Profili Düzenle</span></button>` : '')
+      + `<button type="button" class="k-btn${own() ? '' : ' k-btn-primary kp-act-keep'}" data-profile-action="share">${ICONS.share}<span>Profili Paylaş</span></button>`
+      + `<button type="button" class="k-btn" data-profile-action="pdf">${PICONS.download}<span data-pdf-label>PDF Olarak İndir</span></button></div>`
+      + (missing.length ? `<p class="kp-hint">Kişi kartını tamamla: ${esc(missing.join(', '))} ekle. <button type="button" class="k-text-button" data-profile-action="edit">Şimdi ekle</button></p>` : '')
+      + `</article>`;
+  }
+  function renderCard() {
+    if (!s.profile) return;
+    cardSlot.innerHTML = cardHTML(s.profile);
+    const about = $('[data-about]', cardSlot);
+    if (about) requestAnimationFrame(() => { const more = $('[data-profile-action="about"]', cardSlot); if (more) more.hidden = about.scrollHeight <= about.clientHeight + 2; });
+    renderCompose();
+    host.schedule();
+  }
+  function renderSkeleton() {
+    cardSlot.innerHTML = '<div class="kp-card kp-card-sk" aria-hidden="true"><div class="kp-head"><i class="k-sk kp-sk-av"></i><span class="kp-sk-lines"><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk k-sk-short"></i><i class="k-sk"></i></div>';
+    postsBox.innerHTML = '<div class="kw-post kw-sk" aria-hidden="true"><div class="kw-sk-head"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>';
+    servicesBox.innerHTML = '';
+  }
+  function showStatus(title, text = '', retry = false) {
+    statusBox.innerHTML = title ? `<strong>${esc(title)}</strong>${text ? `<p>${esc(text)}</p>` : ''}${retry ? '<button type="button" class="k-btn" data-profile-action="retry">Yeniden dene</button>' : ''}` : '';
+    statusBox.hidden = !title; main.hidden = !!title;
+    host.schedule();
+  }
+  function renderCompose() {
+    composeRow.hidden = !own();
+    composeAvatar.dataset.initials = initials(session.me?.full_name);
+    composeAvatar.innerHTML = meAvatarMarkup();
+  }
+
+  /* ---- Sekmeler ---- */
+  function renderTabs() {
+    const n = { calismalar: s.counts.posts, hizmetler: s.counts.services };
+    tabs.forEach(t => {
+      const on = t.dataset.profileTab === s.tab;
+      t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1;
+      const c = $('[data-count]', t), v = n[t.dataset.profileTab];
+      c.textContent = Number.isInteger(v) && v > 0 ? String(v) : '';
+    });
+    $$('[data-profile-panel]', el).forEach(p => { p.hidden = p.dataset.profilePanel !== s.tab; });
+  }
+  function setTab(tab, write = false) {
+    s.tab = tab === 'hizmetler' ? 'hizmetler' : 'calismalar';
+    renderTabs();
+    if (s.tab === 'hizmetler' && s.profile && s.servicesState === 'idle') loadServices();
+    if (write) router.replaceHash(s.tab);
+    host.schedule();
+  }
+  tabs.forEach(t => {
+    t.addEventListener('click', () => setTab(t.dataset.profileTab, true));
+    t.addEventListener('keydown', e => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+      e.preventDefault();
+      const next = e.key === 'Home' ? 'calismalar' : e.key === 'End' ? 'hizmetler' : (t.dataset.profileTab === 'calismalar' ? 'hizmetler' : 'calismalar');
+      setTab(next, true); $(`[data-profile-tab="${next}"]`, el).focus();
+    });
+  });
+
+  /* ---- Çalışmalar (ortak kart sistemi) ---- */
+  const byDate = (a, b) => String(b.created_at).localeCompare(String(a.created_at)) || String(b.id).localeCompare(String(a.id));
+  const featuredPosts = () => F.posts.filter(p => p.profile_featured_order).sort((a, b) => a.profile_featured_order - b.profile_featured_order);
+  const chronoPosts = () => F.posts.filter(p => !p.profile_featured_order).sort(byDate);
+  function renderPosts() {
+    const featured = featuredPosts(), chrono = chronoPosts();
+    let html = '';
+    if (featured.length) html += `<h2 class="kp-sec">Öne çıkan Çalışmalar</h2>${featured.map(p => feed.card(p)).join('')}`;
+    if (featured.length && (chrono.length || s.hasMore)) html += '<h2 class="kp-sec">Tüm Çalışmalar</h2>';
+    html += chrono.map(p => feed.card(p)).join('');
+    if (!F.posts.length && !s.postsFailed) {
+      html = `<div class="kw-empty"><strong>${own() ? 'İlk Çalışmanı paylaş' : 'Henüz Çalışma yok'}</strong><p>${own() ? 'Sahada yaptıkların kişi kartında görünür; meslektaşların seni işinle tanır.' : 'Paylaşılan mesleki çalışmalar burada görünecek.'}</p></div>`;
+    }
+    if (s.postsFailed) html += '<div class="kw-empty"><strong>Çalışmalar yüklenemedi.</strong><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" class="k-btn" data-profile-action="retry-posts">Yeniden dene</button></div>';
+    postsBox.innerHTML = html;
+    feed.threads.rerenderAll();
+    postsMore.hidden = !s.hasMore || s.postsFailed;
+    host.schedule();
+  }
+  async function loadPosts(reset = false) {
+    if (s.loadingPosts || !s.id) return;
+    const rev = s.rev, id = s.id;
+    s.loadingPosts = true; s.postsFailed = false; setBusy(postsMore, true, 'Yükleniyor...');
+    try {
+      const cursor = reset ? null : s.cursor;
+      const pageQ = postData.run(q => {
+        q = q.eq('user_id', id).eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(CONFIG.postsPageSize + 1);
+        return cursor ? q.or(`created_at.lt.${quote(cursor.created_at)},and(created_at.eq.${quote(cursor.created_at)},id.lt.${quote(cursor.id)})`) : q;
+      });
+      const featQ = reset ? postData.run(q => q.eq('user_id', id).eq('status', 'active').in('profile_featured_order', [1, 2, 3]).order('profile_featured_order').limit(3)) : null;
+      const [page, feat] = await Promise.all([pageQ, featQ]);
+      if (rev !== s.rev) return;
+      if (page.error) throw page.error;
+      if (feat?.error) throw feat.error;
+      await session.ready;
+      const rows = (page.data || []).slice(0, CONFIG.postsPageSize).map(postData.normalize);
+      const extra = (feat?.data || []).map(postData.normalize);
+      if (reset) F.posts = [];
+      const known = new Set(F.posts.map(p => p.id));
+      const fresh = [...extra, ...rows].filter(p => (known.has(p.id) ? false : (known.add(p.id), true)));
+      F.posts.push(...fresh);
+      s.hasMore = (page.data || []).length > CONFIG.postsPageSize;
+      const last = rows[rows.length - 1]; if (last) s.cursor = { created_at: last.created_at, id: last.id };
+      renderPosts();
+      feed.syncLikes(fresh.map(p => p.id));
+      feed.threads.preview(fresh);
+    } catch {
+      if (rev !== s.rev) return;
+      s.postsFailed = true; renderPosts();
+    } finally {
+      if (rev === s.rev) { s.loadingPosts = false; setBusy(postsMore, false); host.schedule(); }
+    }
+  }
+  postBus.add((kind, x) => {
+    if (kind !== 'saved' || !s.profile) return;
+    if (x.failed) { if (own()) loadPosts(true); return; }
+    const { id, fresh, previous } = x, old = feed.find(id);
+    if (previous && old) {
+      if (!fresh) { F.posts = F.posts.filter(p => p.id !== id); renderPosts(); return; }
+      F.posts = F.posts.map(p => (p.id === id ? { ...fresh, liked: old.liked, comment_count: fresh.comment_count ?? old.comment_count ?? null } : p));
+      renderPosts();
+    } else if (!previous && fresh && fresh.user_id === s.id && !old) {
+      F.posts.push({ ...fresh });
+      if (Number.isInteger(s.counts.posts)) s.counts.posts++;
+      renderTabs(); renderPosts();
+    }
+  });
+
+  /* ---- Verdiği Hizmetler ---- */
+  function renderServices() {
+    const publish = own() && s.services.length < CONFIG.maxActiveServices
+      ? `<button type="button" class="kc-publish kp-publish" data-profile-action="publish">${PICONS.plus}<span>Hizmetini Yayınla</span></button>` : '';
+    if (s.servicesState === 'loading' && !s.services.length) servicesBox.innerHTML = '<div class="kc-sk" aria-hidden="true"><i class="k-sk k-sk-short"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>';
+    else if (s.servicesState === 'failed') servicesBox.innerHTML = '<div class="k-empty"><strong>Hizmetler yüklenemedi.</strong><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" class="k-btn" data-profile-action="retry-services">Yeniden dene</button></div>';
+    else if (!s.services.length) servicesBox.innerHTML = `<div class="k-empty"><strong>${own() ? 'Henüz hizmet yayınlamadın' : 'Henüz aktif hizmet yok'}</strong><p>${own() ? 'Sunduğun İSG hizmetlerini yayınla; kişi kartında ve Hizmetler kataloğunda görünsün.' : 'Yayınlanan hizmetler burada görünecek.'}</p>${publish ? `<div class="k-empty-actions">${publish}</div>` : ''}</div>`;
+    else servicesBox.innerHTML = `${publish ? `<div class="kp-services-head">${publish}</div>` : ''}<div class="kc-results ks-grid kp-services">${s.services.map(v => serviceCard(v, { provider: false })).join('')}</div>`;
+    host.schedule();
+  }
+  async function loadServices() {
+    if (s.servicesState === 'loading' || !s.id) return;
+    const rev = s.rev;
+    s.servicesState = 'loading'; renderServices();
+    try {
+      const { data, error } = await db.from('professional_services').select('id,user_id,title,category_id,description,service_region,service_mode,status,created_at,category:professional_service_categories(id,name)').eq('user_id', s.id).eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(20);
+      if (rev !== s.rev) return;
+      if (error) throw error;
+      s.services = data || []; s.servicesState = 'ready';
+      s.counts.services = s.services.length; renderTabs();
+    } catch { if (rev === s.rev) s.servicesState = 'failed'; }
+    if (rev === s.rev) renderServices();
+  }
+  async function loadCounts(rev) {
+    const head = t => db.from(t).select('id', { count: 'exact', head: true }).eq('user_id', s.id).eq('status', 'active');
+    try {
+      const [a, b] = await Promise.all([head('professional_posts'), head('professional_services')]);
+      if (rev !== s.rev) return;
+      if (!a.error && Number.isInteger(a.count)) s.counts.posts = a.count;
+      if (!b.error && Number.isInteger(b.count) && s.servicesState !== 'ready') s.counts.services = b.count;
+      renderTabs();
+    } catch {}
+  }
+
+  /* ---- Yükleme ---- */
+  async function fetchProfile(id) {
+    const run = () => db.from('profiles').select(PROFILE_BASE + (s.withExperience ? ',experience_range' : '')).eq('id', id).maybeSingle();
+    let res = await run();
+    // experience_range kolonu yoksa profil yine açılır (alan gizlenir); başka bir sorgu kesintiye uğramaz.
+    if (res.error && s.withExperience && /42703|PGRST204|experience_range/i.test(`${res.error.code} ${res.error.message}`)) { s.withExperience = false; res = await run(); }
+    if (res.error) throw res.error;
+    return res.data;
+  }
+  async function publicPhone(p) {
+    if (!p?.show_phone_publicly) return null;
+    const r = await db.from('profiles').select('phone').eq('id', p.id).eq('show_phone_publicly', true).maybeSingle();
+    return r.error ? null : (r.data?.phone || null);
+  }
+  function setDocTitle() {
+    if (!router.enabled || router.current !== 'profile' || !s.profile) return;
+    try { host.doc.title = `${s.profile.full_name || 'Profil'} | Kırmızı İSG`; } catch {}
+  }
+  async function load(id, tab) {
+    const rev = ++s.rev;
+    Object.assign(s, { id, profile: null, phone: null, cursor: null, hasMore: false, loadingPosts: false, postsFailed: false, services: [], servicesState: 'idle', counts: { posts: null, services: null } });
+    F.posts = []; feed.threads.reset();
+    s.tab = tab === 'hizmetler' ? 'hizmetler' : 'calismalar';
+    showStatus(''); renderSkeleton(); renderTabs(); composeRow.hidden = true; postsMore.hidden = true;
+    if (!UUID_RE.test(id)) { showStatus('Profil bulunamadı', 'Geçerli bir profil bağlantısı bulunamadı.'); return; }
+    try {
+      await dbReady;
+      const data = await fetchProfile(id);
+      if (rev !== s.rev) return;
+      if (!data) { showStatus('Profil bulunamadı', 'Bu profil kaldırılmış veya görüntülenemiyor olabilir.'); return; }
+      const phone = await publicPhone(data);
+      if (rev !== s.rev) return;
+      s.profile = data; s.phone = phone;
+      await session.ready;
+      if (rev !== s.rev) return;
+      renderCard(); renderTabs(); setDocTitle();
+      loadCounts(rev);
+      if (s.tab === 'hizmetler') loadServices();
+      await loadPosts(true);
+    } catch {
+      if (rev === s.rev) showStatus('Profil şu anda yüklenemedi', 'Bağlantını kontrol edip yeniden dene.', true);
+    }
+  }
+  async function route(params = {}) {
+    let id = clean(params.id);
+    const tab = params.tab === 'hizmetler' ? 'hizmetler' : 'calismalar';
+    if (!id) { await session.ready; id = session.user?.id || ''; }
+    if (id && id === s.id && (s.profile || s.rev)) { setTab(tab); setDocTitle(); return; }
+    await load(id, tab);
+  }
+
+  /* ---- Profili Düzenle (Profil V1 kayıt kuralları) ---- */
+  const ed = {
+    root: $('#kaProfileDialog'), form: $('#kaProfileForm'), error: $('#kaPeError'), save: $('#kaPeSave'),
+    socials: $('[data-pe-socials]'), expWrap: $('[data-pe-exp]'), discoverable: $('#kaPeDiscoverable'), phonePublic: $('#kaPePhonePublic')
+  };
+  const field = k => $('#kaPe_' + k);
+  const TEXT_FIELDS = ['full_name', 'profession', 'current_company', 'about', 'phone'];
+  let edit = null, saving = false;
+  function selectOptions(select, options, value, blankLabel) {
+    const v = clean(value);
+    const list = options.map(o => (Array.isArray(o) ? o : [o, o]));
+    const hit = list.find(([k]) => k.toLocaleLowerCase('tr-TR') === v.toLocaleLowerCase('tr-TR'));
+    select.innerHTML = `<option value="">${esc(blankLabel)}</option>` + list.map(([k, l]) => `<option value="${esc(k)}">${esc(l)}</option>`).join('')
+      + (v && !hit ? `<option value="${esc(v)}">${esc(v)} (mevcut)</option>` : '');
+    select.value = hit ? hit[0] : v;
+    return select.value;
+  }
+  function socialRow(link = { platform: 'linkedin', url: '' }) {
+    const row = document.createElement('div');
+    row.className = 'kpe-social'; row._original = link.original || null;
+    row.innerHTML = `<select class="k-input" aria-label="Platform">${Object.entries(SOCIAL_PLATFORMS).map(([k, l]) => `<option value="${k}"${k === link.platform ? ' selected' : ''}>${l}</option>`).join('')}</select>`
+      + `<input class="k-input" type="url" inputmode="url" placeholder="https://" maxlength="2000" aria-label="Bağlantı adresi" value="${esc(link.url)}">`
+      + `<button type="button" class="k-icon-btn" data-pe-remove aria-label="Bağlantıyı kaldır">×</button>`;
+    ed.socials.append(row);
+    return row;
+  }
+  function formError(text) { ed.error.textContent = text; ed.error.hidden = !text; host.schedule(); }
+  function readForm() {
+    const v = Object.fromEntries(TEXT_FIELDS.map(k => [k, clean(field(k).value)]));
+    v.certificate_class = field('certificate_class').value;
+    v.city = field('city').value;
+    v.experience_range = s.withExperience ? field('experience_range').value : undefined;
+    v.is_discoverable = ed.discoverable.checked;
+    v.show_phone_publicly = ed.phonePublic.checked;
+    v.socials = [...ed.socials.children].map(row => ({ platform: row.querySelector('select').value, raw: clean(row.querySelector('input').value), original: row._original }));
+    return v;
+  }
+  const socialKey = list => JSON.stringify(list.map(l => [l.platform, l.url]));
+  async function openEditor() {
+    if (!own() || saving || ed.root.open) return;
+    const ownerId = s.profile.id, rev = s.rev;
+    const btns = $$('[data-profile-action="edit"]', cardSlot); btns.forEach(b => { b.disabled = true; });
+    try {
+      const user = await session.verified();
+      if (!user || user.id !== ownerId) throw new Error('Profilini düzenlemek için tekrar giriş yap.');
+      // Gizli telefon yalnız sahibin düzenleme eylemiyle okunur (Profil V1 kuralı).
+      const { data, error } = await db.from('profiles').select('phone').eq('id', ownerId).single();
+      if (error || !data) throw new Error('Telefon bilgisi alınamadı. Lütfen tekrar dene.');
+      if (!own() || rev !== s.rev) return;
+      const p = s.profile;
+      field('full_name').value = p.full_name || '';
+      field('profession').value = p.profession || '';
+      field('current_company').value = p.current_company || '';
+      field('about').value = p.about || '';
+      field('phone').value = data.phone || '';
+      const cert = selectOptions(field('certificate_class'), STATUS_OPTIONS, identity.statusKey(p), 'Belge / statü yok');
+      const city = selectOptions(field('city'), CITIES, p.city, 'Şehir seçin');
+      ed.expWrap.hidden = !s.withExperience;
+      const exp = s.withExperience ? selectOptions(field('experience_range'), EXPERIENCE_OPTIONS, p.experience_range, 'Belirtme') : undefined;
+      ed.discoverable.checked = !!p.is_discoverable;
+      ed.phonePublic.checked = !!p.show_phone_publicly;
+      ed.socials.replaceChildren();
+      const links = socialLinks(p); links.forEach(socialRow);
+      edit = {
+        ownerId, phone: data.phone ?? null, cert, city, exp,
+        text: Object.fromEntries(TEXT_FIELDS.filter(k => k !== 'phone').map(k => [k, clean(p[k])])),
+        is_discoverable: !!p.is_discoverable, show_phone_publicly: !!p.show_phone_publicly, socialKey: socialKey(links)
+      };
+      formError('');
+      dialogs.open(ed.root, 'sheet');
+      setTimeout(() => field('full_name').focus({ preventScroll: true }), 30);
+    } catch (e) { toast(e?.message || 'Profil bilgileri alınamadı.'); }
+    finally { btns.forEach(b => { b.disabled = false; }); }
+  }
+  async function saveProfile(e) {
+    e.preventDefault();
+    if (saving || !edit || !own()) return;
+    const v = readForm(), payload = {};
+    if (!v.full_name) { formError('Ad Soyad boş bırakılamaz.'); return; }
+    ['full_name', 'profession', 'current_company', 'about'].forEach(k => { if (v[k] !== edit.text[k]) payload[k] = v[k] || null; });
+    if (v.certificate_class !== edit.cert) payload.certificate_class = v.certificate_class || null;
+    if (v.city !== edit.city) payload.city = v.city || null;
+    if (s.withExperience && v.experience_range !== edit.exp) payload.experience_range = v.experience_range || null;
+    if (v.phone !== clean(edit.phone)) {
+      if (!v.phone) payload.phone = null;
+      else { const d = phoneDigits(v.phone); if (!d) { formError('Telefon numarasını ülke koduyla birlikte geçerli biçimde gir. Örnek: +90 5xx xxx xx xx'); return; } payload.phone = '+' + d; }
+    }
+    if (v.is_discoverable !== edit.is_discoverable) payload.is_discoverable = v.is_discoverable;
+    if (v.show_phone_publicly !== edit.show_phone_publicly) payload.show_phone_publicly = v.show_phone_publicly;
+    const entries = v.socials.filter(x => x.raw).map(x => ({ platform: x.platform, url: linkUrl(x.raw), original: x.original }));
+    if (entries.some(x => !x.url)) { formError('Sosyal bağlantıları https:// ile başlayan geçerli adresler olarak gir.'); return; }
+    const normalized = socialLinks({ social_links: entries });
+    if (socialKey(normalized) !== edit.socialKey) {
+      payload.social_links = normalized.map(x => ({ ...(x.original?.original || {}), platform: x.platform, url: x.url }));
+      for (const [platform, key] of [['linkedin', 'linkedin_url'], ['instagram', 'instagram_url'], ['website', 'website_url']]) payload[key] = payload.social_links.find(x => x.platform === platform)?.url || null;
+    }
+    if (!Object.keys(payload).length) { dialogs.close(ed.root); return; }
+    // title, specialties ve job_role bilinçli olarak gönderilmez; mevcut değerleri korunur.
+    saving = true; session.writes++; dialogs.lock(ed.root, true); setBusy(ed.save, true, 'Kaydediliyor...'); formError('');
+    let saved = null;
+    try {
+      const user = await session.verified();
+      if (!user || user.id !== edit.ownerId || user.id !== s.id) throw Object.assign(new Error('identity'), { userMessage: 'Oturumunu doğrulayıp tekrar giriş yap.' });
+      const { data, error } = await db.from('profiles').update(payload).eq('id', user.id).select(PROFILE_BASE + (s.withExperience ? ',experience_range' : '')).single();
+      if (error) throw error;
+      saved = data;
+    } catch (err) {
+      const code = String(err?.code || '');
+      formError(err?.userMessage
+        || (code === '23514' ? 'Seçilen Mesleki Belge / Statü veya deneyim değeri veritabanında henüz tanımlı değil. Diğer bilgilerini değiştirmeden tekrar deneyebilirsin.'
+          : code === '42703' || code === 'PGRST204' ? 'Profil alanlarından biri veritabanında bulunamadı. Lütfen yöneticiye bildir.'
+            : 'Profil kaydedilemedi. Lütfen tekrar dene.'));
+    } finally { saving = false; session.writes--; dialogs.lock(ed.root, false); setBusy(ed.save, false); }
+    if (!saved) return;
+    s.profile = { ...s.profile, ...saved };
+    s.phone = await publicPhone(s.profile);
+    dialogs.close(ed.root);
+    renderCard(); setDocTitle();
+    // Ad/unvan değiştiyse profildeki Çalışma kartları da güncel kimlikle çizilir.
+    F.posts.forEach(p => { if (p.user_id === s.id) p.author = { ...(p.author || {}), id: s.id, full_name: saved.full_name, profession: saved.profession, title: saved.title, certificate_class: saved.certificate_class, current_company: saved.current_company }; });
+    renderPosts();
+    if ('full_name' in payload || 'is_discoverable' in payload) session.refreshMe();
+    toast('Profilin güncellendi.');
+  }
+  ed.form.addEventListener('submit', saveProfile);
+  ed.root.addEventListener('close', () => { edit = null; field('phone').value = ''; });
+  ed.root.addEventListener('click', e => {
+    const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
+    if (t.closest('[data-pe-add-social]')) { const row = socialRow(); row.querySelector('input').focus(); host.place(ed.root); return; }
+    const rm = t.closest('[data-pe-remove]'); if (rm) { rm.closest('.kpe-social')?.remove(); host.place(ed.root); }
+  });
+
+  /* ---- Paylaş / PDF ---- */
+  async function downloadPdf(btn) {
+    if (s.pdfBusy || !s.profile) return;
+    s.pdfBusy = true;
+    const label = $('[data-pdf-label]', btn), prev = label?.textContent;
+    btn.disabled = true; if (label) label.textContent = 'PDF hazırlanıyor…';
+    try {
+      if (s.servicesState !== 'ready') await loadServices();
+      const p = s.profile;
+      await profilePdf.create({
+        profile: p, url: urls.profile(p.id), role: identity.role(p), status: identity.statusLong(p),
+        phone: p.show_phone_publicly ? s.phone : null, socials: socialLinks(p),
+        posts: [...featuredPosts(), ...chronoPosts()], postCount: s.counts.posts, services: s.services
+      });
+    } catch (e) { console.warn('PDF oluşturulamadı:', e?.message || e); toast('PDF oluşturulamadı. Bağlantını kontrol edip tekrar dene.'); }
+    finally { s.pdfBusy = false; btn.disabled = false; if (label) label.textContent = prev; }
+  }
+
+  el.addEventListener('click', e => {
+    const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
+    const a = t.closest('[data-profile-action]'); if (!a) return;
+    switch (a.dataset.profileAction) {
+      case 'edit': openEditor(); break;
+      case 'avatar': avatarManager.open(); break;
+      case 'share': if (s.profile) shareLink({ url: urls.profile(s.profile.id), title: `${s.profile.full_name || 'Profil'} | Kırmızı İSG`, text: compact([s.profile.full_name, identity.role(s.profile)], ' — '), copied: 'Profil bağlantısı kopyalandı.' }); break;
+      case 'pdf': downloadPdf(a); break;
+      case 'about': { const p = $('[data-about]', cardSlot); const open = p.classList.toggle('is-clamped'); a.textContent = open ? 'Devamını gör' : 'Daha az göster'; host.schedule(); break; }
+      case 'compose': composer.open(null, a.dataset.intent || ''); break;
+      case 'publish': VIEWS.services.publish(); break;
+      case 'retry': load(s.id, s.tab); break;
+      case 'retry-posts': loadPosts(!F.posts.length); break;
+      case 'retry-services': s.servicesState = 'idle'; loadServices(); break;
+    }
+  });
+  postsMore.addEventListener('click', () => loadPosts());
+
+  function onSession(kind) {
+    renderCompose();
+    if (kind !== 'user' || !s.profile) return;
+    if (ed.root.open && !saving) dialogs.close(ed.root);
+    renderCard();
+    feed.onSession(kind);
+    if (s.servicesState === 'ready' || s.servicesState === 'failed') renderServices();
+  }
+  shellHooks.avatarChanged = ((prev) => (uid, url) => {
+    prev(uid, url);
+    feed.avatarChanged(uid, url);
+    if (s.profile?.id === uid) s.profile.avatar_url = url;
+  })(shellHooks.avatarChanged);
+
+  return {
+    name: 'profile', el, route,
+    mount() { s.mounted = true; return Promise.resolve(); },
+    onSession, snapshot: () => null, isMounted: () => s.mounted,
+    get id() { return s.id; }, get tab() { return s.tab; }
+  };
+}
+
+/* =========================================================================
    12. Görünümler + oturum aboneliği
    ========================================================================= */
-const VIEWS = { works: createWorksView(), experts: createExpertsView(), services: createServicesView() };
+const VIEWS = { works: createWorksView(), experts: createExpertsView(), services: createServicesView(), profile: createProfileView() };
 session.on(kind => {
   authUI.render(kind);
+  if (kind === 'user') composer.onSession();
   Object.values(VIEWS).forEach(v => { try { v.onSession?.(kind); } catch (e) { console.error(e); } });
   host.schedule();
 });
@@ -2822,12 +3806,18 @@ const router = (() => {
   const TITLES_KEY = 'kisg:titles:v1';
   const scroll = {};
   const mounts = {};
-  let current = null, enabled = false, pending = {};
+  let current = null, params = {}, enabled = false, pending = {};
 
   const viewFromPath = pathname => {
     const p = String(pathname || '/').replace(/\/+$/, '').toLowerCase() || '/';
     return Object.keys(CONFIG.routes).find(k => CONFIG.routes[k] === p) || null;
   };
+  // Profil: /profil?id={user_id}#calismalar|#hizmetler. Scroll konumu profil kimliği başına tutulur.
+  const tabOf = hash => (/^#?hizmetler$/i.test(hash || '') ? 'hizmetler' : /^#?calismalar$/i.test(hash || '') ? 'calismalar' : '');
+  const paramsOf = url => ({ id: url.searchParams.get('id') || '', tab: tabOf(url.hash) });
+  const keyOf = (name, p = {}) => (name === 'profile' ? `profile:${p.id || ''}` : name);
+  const pathOf = (name, p = {}) => (name === 'profile' ? `${CONFIG.routes.profile}${p.id ? `?id=${encodeURIComponent(p.id)}` : ''}${p.tab ? '#' + p.tab : ''}` : CONFIG.routes[name]);
+  const stateOf = () => ({ kisgShell: { view: current, doc: bootId, params: { ...params } } });
   function setTabs(name) {
     navEl.querySelectorAll('.ka-tab').forEach(a => {
       const on = a.dataset.viewLink === name;
@@ -2837,6 +3827,7 @@ const router = (() => {
     shellHooks.viewChanged(name);
   }
   function titleFor(name) {
+    if (name === 'profile') return `${LABELS.profile} | Kırmızı İSG`;
     const known = readJSON(local, TITLES_KEY) || {};
     if (known[name]) return known[name];
     const base = host.doc?.title || '';
@@ -2857,29 +3848,40 @@ const router = (() => {
     const el = VIEWS[name].el;
     el.classList.remove('is-entering'); void el.offsetWidth; el.classList.add('is-entering');
     ensureMounted(name);
+    if (name === 'profile') VIEWS.profile.route({ ...params });
   }
-  function activate(name, { mode = 'push' } = {}) {
+  function activate(name, { mode = 'push', params: next = {} } = {}) {
     if (!VIEWS[name]) return;
-    if (name === current) {
-      if (mode === 'push') { const top = host.shellTop(); if (host.scrollY() > top + 4) host.scrollTo(top, true); }
+    const nextParams = name === 'profile' ? { id: clean(next.id), tab: tabOf(next.tab) } : {};
+    if (name === current && keyOf(name, nextParams) === keyOf(current, params)) {
+      if (name === 'profile' && nextParams.tab) { replaceHash(nextParams.tab); VIEWS.profile.route({ ...params }); }
+      else if (mode === 'push') { const top = host.shellTop(); if (host.scrollY() > top + 4) host.scrollTo(top, true); }
       return;
     }
-    const prev = current;
-    if (prev) scroll[prev] = host.scrollY();
+    const prevKey = current ? keyOf(current, params) : null;
+    if (prevKey) scroll[prevKey] = host.scrollY();
     closePopovers();
     $$('dialog[open]').forEach(d => dialogs.close(d));
+    current = name; params = nextParams;
     show(name);
-    current = name;
     if (mode === 'push' && enabled) {
-      try { host.win.history.pushState({ kisgShell: { view: name, doc: bootId } }, '', CONFIG.routes[name]); }
-      catch { navigateTop(urls.view(name)); return; }
+      try { host.win.history.pushState(stateOf(), '', pathOf(name, params)); }
+      catch { navigateTop(CONFIG.siteUrl + pathOf(name, params)); return; }
     }
     if (enabled) { try { host.doc.title = titleFor(name); } catch {} }
     host.sync();
     // Daha önce ziyaret edildiyse kaldığı yer; değilse sekme çubuğu görünür kalacak şekilde.
-    const from = prev && scroll[prev] != null ? scroll[prev] : host.scrollY();
-    const target = scroll[name] != null ? scroll[name] : Math.min(from, host.shellTop());
+    const key = keyOf(name, params);
+    const from = prevKey && scroll[prevKey] != null ? scroll[prevKey] : host.scrollY();
+    const target = scroll[key] != null ? scroll[key] : Math.min(from, host.shellTop());
     host.scrollTo(target);
+  }
+  // Profil sekmesi değişimi yeni geçmiş kaydı açmaz; mevcut kaydın hash'i ve durumu güncellenir.
+  function replaceHash(tab) {
+    if (current !== 'profile') return;
+    params = { ...params, tab: tabOf(tab) };
+    if (!enabled) return;
+    try { const w = host.win, u = new URL(w.location.href); u.hash = params.tab; w.history.replaceState({ ...(w.history.state || {}), ...stateOf() }, '', u.href); } catch {}
   }
   // Capture fazında: yalnızca bu dokümana ait shell kayıtlarını işler, diğer dinleyicilere sızdırmaz
   // (Hostinger'ın kendi router'ı varsa aynı sayfa içindeki sekme geçişine karışmasın).
@@ -2887,23 +3889,24 @@ const router = (() => {
     const st = e.state && e.state.kisgShell;
     if (!st || st.doc !== bootId || !VIEWS[st.view]) return;
     e.stopImmediatePropagation();
-    activate(st.view, { mode: 'pop' });
+    activate(st.view, { mode: 'pop', params: st.params || {} });
   }
   function init() {
     const url = host.url();
     const fromPath = viewFromPath(url.pathname);
     const initial = fromPath || (VIEWS[root.dataset.initialView] ? root.dataset.initialView : CONFIG.defaultView);
+    if (initial === 'profile') params = paramsOf(url);
     enabled = Boolean(CONFIG.historyRouting && host.canRoute && fromPath && CONFIG.siteOrigins.includes(url.origin));
     if (enabled) {
       try {
         const w = host.win;
         const state = w.history.state && typeof w.history.state === 'object' ? w.history.state : {};
-        w.history.replaceState({ ...state, kisgShell: { view: initial, doc: bootId } }, '');
+        w.history.replaceState({ ...state, kisgShell: { view: initial, doc: bootId, params: { ...params } } }, '');
         if ('scrollRestoration' in w.history) w.history.scrollRestoration = 'manual';
         w.addEventListener('popstate', onPop, true);
         window.addEventListener('pagehide', e => { if (!e.persisted) { try { w.removeEventListener('popstate', onPop, true); } catch {} } });
         const titles = readJSON(local, TITLES_KEY) || {};
-        if (w.document.title) { titles[initial] = w.document.title; writeJSON(local, TITLES_KEY, titles); }
+        if (w.document.title && initial !== 'profile') { titles[initial] = w.document.title; writeJSON(local, TITLES_KEY, titles); }
       } catch { enabled = false; }
     }
     root.dataset.routing = enabled ? 'shell' : 'document';
@@ -2913,19 +3916,30 @@ const router = (() => {
     if (snap) { pending = { ...(snap.views || {}) }; Object.assign(scroll, snap.scroll || {}); }
     current = initial;
     show(initial);
-    const target = snap?.scroll?.[initial];
-    delete scroll[initial];
-    if (target != null) {
+    const key = keyOf(initial, params);
+    const target = snap?.scroll?.[key];
+    delete scroll[key];
+    if (target != null && initial !== 'profile') {
       await ensureMounted(initial);
       host.sync();
       host.scrollTo(target);
     }
   }
+  // Uygulama içi profil bağlantısı: /profil?id=… (aynı origin, geçerli kimlik) → {id, tab}
+  function profileTarget(href) {
+    try {
+      const u = new URL(href, CONFIG.siteUrl);
+      if (!CONFIG.siteOrigins.includes(u.origin) || viewFromPath(u.pathname) !== 'profile') return null;
+      const p = paramsOf(u);
+      return UUID_RE.test(p.id) ? p : null;
+    } catch { return null; }
+  }
   return {
-    init, start, activate,
+    init, start, activate, replaceHash, profileTarget,
     get enabled() { return enabled; },
     get current() { return current; },
-    scrollMap: () => ({ ...scroll, ...(current ? { [current]: host.scrollY() } : {}) })
+    pendingSnapshot: name => pending[name] || null,
+    scrollMap: () => ({ ...scroll, ...(current ? { [keyOf(current, params)]: host.scrollY() } : {}) })
   };
 })();
 
@@ -2938,7 +3952,8 @@ const snapshots = {
   save() {
     if (!router.current) return;
     const data = { v: 2, t: Date.now(), scroll: router.scrollMap(), views: {} };
-    Object.entries(VIEWS).forEach(([k, v]) => { if (v.isMounted()) { const s = v.snapshot(); if (s) data.views[k] = s; } });
+    // Henüz açılmamış (bekleyen) görünüm durumları da taşınır: /calisma → profil → detay → geri → geri zincirinde feed kaybolmaz.
+    Object.entries(VIEWS).forEach(([k, v]) => { const s = v.isMounted() ? v.snapshot() : router.pendingSnapshot(k); if (s) data.views[k] = s; });
     writeJSON(sessionStore, this.KEY, data);
   },
   take() {
@@ -2973,6 +3988,15 @@ onShellClick(e => {
     e.preventDefault();
     router.activate(link.dataset.viewLink, { mode: 'push' });
     if (link.dataset.then === 'publish' && link.dataset.viewLink === 'services') VIEWS.services.publish();
+    return;
+  }
+  // Çalışma/Uzman/Hizmet/yorum/hesap menüsündeki profil bağlantıları shell içinde açılır (reload yok).
+  const anchor = t.closest('a[href]');
+  const target = anchor && router.enabled && !e.defaultPrevented && e.button === 0 && !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) ? router.profileTarget(anchor.href) : null;
+  if (target) {
+    e.preventDefault();
+    closePopovers();
+    router.activate('profile', { mode: 'push', params: target });
     return;
   }
   // Uygulamadan çıkan linkler (detay, profil, ekosistem): dönüşte liste ve konum geri gelsin.
@@ -3016,7 +4040,8 @@ const appChrome = (() => {
 
   function indicator() {
     const a = navEl.querySelector('.ka-tab.is-active');
-    if (!a || !a.offsetWidth) return;
+    if (!a) { tabsBox.style.setProperty('--ind-w', '0px'); return; }   // Profil: sekme vurgusu yok
+    if (!a.offsetWidth) return;
     tabsBox.style.setProperty('--ind-x', a.offsetLeft + 'px');
     tabsBox.style.setProperty('--ind-w', a.offsetWidth + 'px');
     tabsBox.classList.add('is-measured');
