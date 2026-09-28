@@ -2826,9 +2826,9 @@ function createExpertsView() {
   const BASE = 'id,full_name,profession,title,avatar_url,city,certificate_class,current_company,specialties,last_post_at';
   const COUNTS = ',posts:professional_posts!professional_posts_user_id_fkey(count),services:professional_services!professional_services_user_id_fkey(count)';
   let withCounts = true;
-  const fields = [['title', 'Meslek', 'keListTitles', 'Meslek'], ['certificate_class', 'Belge Sınıfı'], ['city', 'Şehir', 'keListCities', 'Şehir'], ['specialties', 'Uzmanlık', 'keListSpecialties', 'Uzmanlık']];
+  const fields = [['title', 'Meslek', 'keListTitles', 'Meslek'], ['certificate_class', 'Mesleki Belge / Statü'], ['city', 'Şehir', 'keListCities', 'Şehir'], ['specialties', 'Uzmanlık', 'keListSpecialties', 'Uzmanlık']];
   const filterMarkup = prefix => fields.map(([key, label, listId, placeholder]) => `<label class="kc-field" for="${prefix}-${key}"><span class="kc-flabel">${label}</span>${key === 'certificate_class'
-    ? `<select id="${prefix}-${key}" data-filter="${key}"><option value="">Tüm belge sınıfları</option><option value="A">A Sınıfı</option><option value="B">B Sınıfı</option><option value="C">C Sınıfı</option></select>`
+    ? `<select id="${prefix}-${key}" data-filter="${key}"><option value="">Tüm belgeler / statüler</option>${STATUS_OPTIONS.map(([v]) => `<option value="${esc(v)}">${esc(/^[ABC]$/.test(v) ? v + ' Sınıfı' : v)}</option>`).join('')}</select>`
     : `<input id="${prefix}-${key}" data-filter="${key}" type="text" maxlength="120" list="${listId}" autocomplete="off" placeholder="${placeholder}">`}</label>`).join('');
   // specialties text[]: tam dizi öğesi eşleşmesi (cs), büyük/küçük harf varyantlarıyla.
   const variants = v => [...new Set([v, v.toLocaleLowerCase('tr-TR'), v.toLocaleUpperCase('tr-TR'), v.toLocaleLowerCase('tr-TR').replace(/(^|\s)\S/g, x => x.toLocaleUpperCase('tr-TR'))])];
@@ -2840,9 +2840,13 @@ function createExpertsView() {
     if (f.city) c.push('city.ilike.' + quote(likePattern(f.city)));
     if (f.certificate_class) {
       const k = f.certificate_class;
-      // Dolu certificate_class belirleyicidir; null/boşsa title'a bakılır (mobil profiller).
-      const match = field => [field + '.ilike.' + quote(k), field + '.ilike.' + quote(k + ' Sınıfı'), field + '.ilike.' + quote(k + ' Sınıfı %')].join(',');
-      c.push('or(' + match('certificate_class') + ',and(or(certificate_class.is.null,certificate_class.eq.""),or(' + match('title') + ')))');
+      // İşyeri Hekimi / DSP: yalnız certificate_class değeriyle eşleşir.
+      if (!/^[ABC]$/.test(k)) c.push('certificate_class.ilike.' + quote(k));
+      else {
+        // Dolu certificate_class belirleyicidir; null/boşsa title'a bakılır (mobil profiller).
+        const match = field => [field + '.ilike.' + quote(k), field + '.ilike.' + quote(k + ' Sınıfı'), field + '.ilike.' + quote(k + ' Sınıfı %')].join(',');
+        c.push('or(' + match('certificate_class') + ',and(or(certificate_class.is.null,certificate_class.eq.""),or(' + match('title') + ')))');
+      }
     }
     if (f.specialties) c.push('or(' + specialty(f.specialties).join(',') + ')');
     if (cursor) {
@@ -3069,7 +3073,8 @@ function createServicesView() {
    ========================================================================= */
 const PROFILE_BASE = 'id,full_name,avatar_url,profession,title,certificate_class,city,current_company,about,social_links,linkedin_url,instagram_url,website_url,is_discoverable,show_phone_publicly';
 const CITIES = ['Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Amasya', 'Ankara', 'Antalya', 'Ardahan', 'Artvin', 'Aydın', 'Balıkesir', 'Bartın', 'Batman', 'Bayburt', 'Bilecik', 'Bingöl', 'Bitlis', 'Bolu', 'Burdur', 'Bursa', 'Çanakkale', 'Çankırı', 'Çorum', 'Denizli', 'Diyarbakır', 'Düzce', 'Edirne', 'Elazığ', 'Erzincan', 'Erzurum', 'Eskişehir', 'Gaziantep', 'Giresun', 'Gümüşhane', 'Hakkari', 'Hatay', 'Iğdır', 'Isparta', 'İstanbul', 'İzmir', 'Kahramanmaraş', 'Karabük', 'Karaman', 'Kars', 'Kastamonu', 'Kayseri', 'Kilis', 'Kırıkkale', 'Kırklareli', 'Kırşehir', 'Kocaeli', 'Konya', 'Kütahya', 'Malatya', 'Manisa', 'Mardin', 'Mersin', 'Muğla', 'Muş', 'Nevşehir', 'Niğde', 'Ordu', 'Osmaniye', 'Rize', 'Sakarya', 'Samsun', 'Şanlıurfa', 'Siirt', 'Sinop', 'Şırnak', 'Sivas', 'Tekirdağ', 'Tokat', 'Trabzon', 'Tunceli', 'Uşak', 'Van', 'Yalova', 'Yozgat', 'Zonguldak'];
-const EXPERIENCE_OPTIONS = ['0-1 yıl', '1-3 yıl', '3-5 yıl', '5-10 yıl', '10-15 yıl', '15+ yıl'];
+// Supabase'de izin verilen değerlerle birebir aynı (kayıt değeri = etiket).
+const EXPERIENCE_OPTIONS = ['1 yıldan az', '1-3 yıl', '3-5 yıl', '5-10 yıl', '10-15 yıl', '15+ yıl'];
 const SOCIAL_PLATFORMS = { linkedin: 'LinkedIn', instagram: 'Instagram', facebook: 'Facebook', youtube: 'YouTube', tiktok: 'TikTok', x: 'X', website: 'Web Sitesi' };
 const SOCIAL_ICONS = {
   linkedin: '<path d="M20.5 2h-17A1.5 1.5 0 0 0 2 3.5v17A1.5 1.5 0 0 0 3.5 22h17a1.5 1.5 0 0 0 1.5-1.5v-17A1.5 1.5 0 0 0 20.5 2ZM8 19H5V9h3ZM6.5 7.7a1.75 1.75 0 1 1 0-3.5 1.75 1.75 0 0 1 0 3.5ZM19 19h-3v-5.2c0-1.3-.3-2.2-1.5-2.2S13 12.5 13 13.8V19h-3V9h2.9v1.4c.4-.8 1.4-1.7 3-1.7 2.4 0 3.1 1.5 3.1 4Z"/>',
