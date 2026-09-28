@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.4.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.4.1
 Çalışmalar | Uzmanlar | Hizmetler | Profil (Kişi Kartı) tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki DÖRT Hostinger sayfasındaki Custom HTML/Embed
@@ -8,6 +8,9 @@ içeriğinin yerine BİREBİR AYNI şekilde yapıştırılır:
 (/profil'deki eski "PROFİL V1" embed'inin yerine bu dosya gelir.)
 /calisma-detay ve /hizmet-detay embed'lerine DOKUNULMAZ.
 
+v4.4.1: Mobil görsel görüntüleyici (X / dışarı dokunma / geri tuşu / nav altında tam ekran),
+ modal açıkken arka plan scroll kilidi, mobilde PDF teslimi (paylaş / üst dokümandan indirme),
+ Çalışma görsellerine uzun süreli cache, silinen Çalışmanın görseli Storage'dan temizlenir.
 v4.4: Profil Detay V2 — /profil?id={user_id} App Shell route'u olarak çalışır.
  - Uygulama içinden profile geçiş pushState ile olur (iframe/shell yeniden yüklenmez);
    geri tuşunda önceki görünümün feed/filtre/arama durumu ve scroll konumu korunur.
@@ -323,7 +326,7 @@ Acil kapatma: CONFIG.historyRouting=false.
   </form>
 </dialog>
 
-<dialog id="kaMediaDialog" class="k-dialog k-media-dialog" aria-label="Çalışma görseli">
+<dialog id="kaMediaDialog" class="k-dialog k-media-dialog" aria-label="Çalışma görseli" tabindex="-1" autofocus>
   <header class="k-dialog-head"><a class="k-media-open" data-media-work target="_top">Çalışmayı Gör <span aria-hidden="true">→</span></a><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
   <div class="k-media-stage"><img alt="" data-media-img></div>
 </dialog>
@@ -685,8 +688,11 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .k-media-dialog{width:min(1040px,calc(100% - 24px));background:#fff}
 #kisgApp .k-media-dialog .k-dialog-head{padding:10px 10px 10px 20px}
 #kisgApp .k-media-open{color:var(--ink);font-size:14px;font-weight:700}
-#kisgApp .k-media-stage{max-height:calc(100dvh - 110px);overflow:auto;overscroll-behavior:contain;background:var(--surface-2)}
-#kisgApp .k-media-stage img{display:block;max-width:100%;height:auto;margin:0 auto}
+#kisgApp .k-media-dialog[open]{display:flex;flex-direction:column}
+#kisgApp .k-media-dialog .k-dialog-head{flex:none}
+#kisgApp .k-media-dialog:focus{outline:none}
+#kisgApp .k-media-stage{display:flex;flex:1 1 auto;min-height:0;max-height:calc(100dvh - 110px);overflow:auto;overscroll-behavior:contain;background:var(--surface-2);cursor:zoom-out}
+#kisgApp .k-media-stage img{display:block;max-width:100%;height:auto;margin:auto;cursor:default}
 /* Profil fotoğrafı düzenleyici */
 #kisgApp .av-stage{position:relative;display:grid;place-items:center;width:min(280px,100%);aspect-ratio:1;margin:4px auto 0;overflow:hidden;border-radius:18px}
 #kisgApp .av-current .av-big{width:180px;height:180px;font-size:52px}
@@ -903,7 +909,7 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .k-login-top{padding-left:16px}
   #kisgApp .k-two{grid-template-columns:1fr}
   #kisgApp .k-media-dialog{width:100%;max-width:none;height:100dvh;max-height:none;margin:0;border-radius:0}
-  #kisgApp .k-media-stage{max-height:calc(100dvh - 58px)}
+  #kisgApp .k-media-stage{max-height:none}
   #kisgApp .k-toast{inset:auto 12px 12px 12px;max-width:none}
   /* Profil (telefon): kart kenardan kenara, kimlik yatay, bilgiler kompakt, eylemler tek satır */
   #kisgApp .kp-page{width:100%;padding:0 0 40px}
@@ -1002,7 +1008,7 @@ const navEl = root.querySelector('.kpn');
 const $n = sel => navEl.querySelector(sel);
 const shellClickHandlers = [];
 const onShellClick = fn => { shellClickHandlers.push(fn); root.addEventListener('click', fn); };
-const shellHooks = { modal() {}, viewChanged() {}, layout() {}, leave() {}, avatarChanged() {} };
+const shellHooks = { modal() {}, viewChanged() {}, leave() {}, avatarChanged() {} };
 const avatarScopes = new Set([root, navEl]);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const clean = v => (typeof v === 'string' ? v.trim() : '');
@@ -1065,7 +1071,6 @@ const ICONS = {
   share: '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/></svg>',
   pin: '<svg class="k-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/></svg>',
   chev: '<svg class="k-chev" aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>',
-  eye: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
   remote: '<svg class="k-ico" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8 20h8M12 16.5V20"/></svg>',
   onsite: '<svg class="k-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-6h6v6"/></svg>'
 };
@@ -1327,8 +1332,28 @@ const host = (() => {
     try { if (/^https?:/.test(location.href)) return new URL(location.href); } catch {}
     return new URL(CONFIG.siteUrl);
   }
-  const scrollY = () => (win || window).scrollY;
+  // Modal açıkken sayfa kaydırması kilitlenir (mobilde arka plan kaymaz, dialog yerinden oynamaz).
+  // iOS Safari'de yalnız overflow:hidden yetmediği için body sabitlenir; kapanınca konum aynen geri gelir.
+  let locked = null;
+  function lock(on) {
+    const w = win || window;
+    try {
+      const d = w.document, b = d.body;
+      if (on && !locked) {
+        locked = { y: w.scrollY, html: d.documentElement.getAttribute('style'), body: b.getAttribute('style') };
+        d.documentElement.style.setProperty('overflow', 'hidden');
+        Object.assign(b.style, { position: 'fixed', top: -locked.y + 'px', left: '0', right: '0', width: '100%', overflow: 'hidden' });
+      } else if (!on && locked) {
+        const l = locked; locked = null;
+        const restore = (n, v) => (v == null ? n.removeAttribute('style') : n.setAttribute('style', v));
+        restore(d.documentElement, l.html); restore(b, l.body);
+        scrollTo(l.y);
+      }
+    } catch { locked = null; }
+  }
+  const scrollY = () => (locked ? locked.y : (win || window).scrollY);
   function scrollTo(y, smooth = false) {
+    if (locked) { locked.y = Math.max(0, Math.round(y)); return; }
     const w = win || window, top = Math.max(0, Math.round(y));
     try { w.scrollTo({ top, left: w.scrollX, behavior: smooth ? 'smooth' : 'instant' }); } catch { w.scrollTo(w.scrollX, top); }
   }
@@ -1339,20 +1364,25 @@ const host = (() => {
     const r = frameRect();
     return r && win ? r.top + win.scrollY + inner : inner;
   }
+  // Üst dokümanda iframe'in üstünü örten sabit alan (Professional nav) — dialoglar bunun altına yerleşir.
+  let cover = () => 0;
   // İframe dokümanı koordinatlarında görünen alan. Çerçevesiz kullanımda null (CSS yeterli).
   function visible() {
     if (!framed || !win) return null;
     const r = frameRect(); if (!r) return null;
     const vh = win.visualViewport?.height || win.innerHeight;
-    const top = Math.max(0, -r.top);
-    return { top, height: Math.max(240, Math.min(window.innerHeight - top, vh - Math.max(0, r.top))) };
+    const edge = Math.max(0, r.top, cover());
+    const top = Math.max(0, edge - r.top);
+    return { top, height: Math.max(240, Math.min(window.innerHeight - top, vh - edge)) };
   }
   function place(el) {
     if (!el.isConnected || (el.tagName === 'DIALOG' && !el.open)) return;
     const box = visible();
-    if (!box) { ['top', 'bottom', 'maxHeight', 'marginTop'].forEach(k => { el.style[k] = ''; }); return; }
+    if (!box) { ['top', 'bottom', 'maxHeight', 'marginTop', 'height'].forEach(k => { el.style[k] = ''; }); return; }
     if (el.dataset.place === 'toast') { el.style.bottom = 'auto'; el.style.top = (box.top + box.height - el.offsetHeight - 16) + 'px'; return; }
     el.style.bottom = 'auto'; el.style.marginTop = '0';
+    // Tam ekran görüntüleyici (mobil) görünen alanın tamamını kaplar.
+    if (el.dataset.place === 'full' && window.matchMedia('(max-width:640px)').matches) { el.style.maxHeight = el.style.height = box.height + 'px'; el.style.top = box.top + 'px'; return; }
     el.style.maxHeight = Math.max(220, box.height - 24) + 'px';
     const h = el.getBoundingClientRect().height;
     const sheet = el.dataset.place === 'sheet' && window.matchMedia('(max-width:640px)').matches;
@@ -1385,7 +1415,7 @@ const host = (() => {
   }
   function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; sync(); }); }
   function float(el, on) { if (on) { floating.add(el); place(el); } else floating.delete(el); }
-  return { framed, win, frame, installHostWidth, doc: win ? win.document : null, canRoute: !!win && typeof win.history?.pushState === 'function', url, scrollY, scrollTo, shellTop, sync, schedule, float, place, repositionFloating: () => floating.forEach(place) };
+  return { framed, win, frame, installHostWidth, doc: win ? win.document : null, canRoute: !!win && typeof win.history?.pushState === 'function', url, scrollY, scrollTo, shellTop, sync, schedule, float, place, lock, setCover: fn => { cover = fn; }, repositionFloating: () => floating.forEach(place) };
 })();
 
 /* =========================================================================
@@ -1498,6 +1528,7 @@ const dialogs = {
     $$('dialog[open]').forEach(x => { if (x !== d) this.close(x); });
     this.triggers.set(d, document.activeElement);
     d.dataset.place = place;
+    host.lock(true);
     d.showModal();
     host.float(d, true);
     shellHooks.modal(true);
@@ -1510,7 +1541,8 @@ $$('dialog').forEach(d => {
   d.addEventListener('close', () => {
     host.float(d, false);
     shellHooks.modal(Boolean(root.querySelector('dialog[open]')));
-    ['top', 'bottom', 'maxHeight', 'marginTop'].forEach(k => { d.style[k] = ''; });
+    ['top', 'bottom', 'maxHeight', 'marginTop', 'height'].forEach(k => { d.style[k] = ''; });
+    if (!root.querySelector('dialog[open]')) host.lock(false);
     const t = dialogs.triggers.get(d); if (t?.isConnected) t.focus({ preventScroll: true });
   });
   d.addEventListener('click', e => {
@@ -1852,14 +1884,19 @@ const postData = (() => {
 const postBus = new Set();
 const emitPost = (kind, payload) => postBus.forEach(fn => { try { fn(kind, payload); } catch (e) { console.error(e); } });
 
+/* Görsel görüntüleyici: mobilde görünen alanı tam kaplar (nav'ın altında), X / görsel dışına dokunma /
+   Esc / cihazın geri tuşu ile kapanır; geri tuşu sayfadan çıkmaz, yalnız görüntüleyiciyi kapatır. */
 const mediaViewer = (() => {
-  const d = $('#kaMediaDialog'), img = $('[data-media-img]', d), link = $('[data-media-work]', d);
-  d.addEventListener('close', () => { img.removeAttribute('src'); });
+  const d = $('#kaMediaDialog'), img = $('[data-media-img]', d), link = $('[data-media-work]', d), stage = $('.k-media-stage', d);
+  d.addEventListener('close', () => { img.removeAttribute('src'); router.popModal(); });
+  stage.addEventListener('click', e => { if (e.target !== img) dialogs.close(d); });
   return {
     open(src, work, alt) {
       img.src = src; img.alt = alt; link.href = work;
-      dialogs.open(d, 'center');
-      d.querySelector('.k-media-stage').scrollTop = 0;
+      dialogs.open(d, 'full');
+      d.focus({ preventScroll: true });   // ilk bağlantıda odak halkası çıkmasın; Esc/Tab erişilebilirliği korunur
+      stage.scrollTop = 0;
+      router.pushModal(() => dialogs.close(d));
     }
   };
 })();
@@ -1994,6 +2031,8 @@ function createPostFeed({ scope, onRemoved, onFeatured }) {
     try {
       const { error } = await db.from('professional_posts').update({ status: 'deleted', profile_featured_order: null }).eq('id', p.id).eq('user_id', session.user.id).select('id').single();
       if (error) throw error;
+      // Silinen Çalışmanın görseli Storage'da sahipsiz kalmasın (düzenlemedeki görsel değişimiyle aynı kural).
+      if (p.image_path) db.storage.from(CONFIG.imageBucket).remove([p.image_path]).catch(() => {});
       emitPost('removed', { id: p.id });
       toast('Çalışma silindi.'); host.schedule();
     } catch (e) { toast(errorText(e, 'Çalışma silinemedi.')); } finally { f.ownerBusy = false; }
@@ -2419,7 +2458,8 @@ const composer = (() => {
         const img = await compressImage(file);
         newPath = `${userId}/${postId}-${newId()}.${img.ext}`;
         if (session.user?.id !== userId) throw new Error('Oturum değişti.');
-        const { error } = await db.storage.from(CONFIG.imageBucket).upload(newPath, img.blob, { contentType: img.type, upsert: false });
+        // Yol her yüklemede benzersiz: uzun tarayıcı/CDN önbelleği güvenli, tekrar indirme olmaz.
+        const { error } = await db.storage.from(CONFIG.imageBucket).upload(newPath, img.blob, { contentType: img.type, upsert: false, cacheControl: '31536000' });
         if (error) throw error;
         uploaded = true;
       } else if (removingExisting) newPath = null;
@@ -3344,9 +3384,29 @@ const profilePdf = (() => {
     doc.text(T('Bu belge profil sahibinin paylaştığı bilgilerden otomatik oluşturulmuştur.'), W - M, H - 9, { align: 'right' });
 
     doc.setProperties({ title: T(`${p.full_name || 'Profil'} — Kırmızı İSG Kişi Kartı`), subject: 'Kırmızı İSG Kişi Kartı', creator: 'Kırmızı İSG Professional' });
-    doc.save(`kirmizi-isg-${slug(p.full_name)}.pdf`);
+    return { blob: doc.output('blob'), name: `kirmizi-isg-${slug(p.full_name)}.pdf`, title: T(`${p.full_name || 'Profil'} — Kırmızı İSG Kişi Kartı`) };
   }
-  return { create };
+  /* Teslim: jsPDF.save() mobilde (iframe içi indirme, iOS'ta data: URL'e yönlenme) boş sayfa açabiliyor.
+     Dosya Blob olarak üretilir; mobilde kullanıcı etkileşimi hâlâ geçerliyse sistem paylaşım sayfası
+     (Dosyalara kaydet / WhatsApp vb.), değilse üst dokümandan gerçek dosya indirmesi yapılır. */
+  async function deliver({ blob, name, title }) {
+    const file = typeof File === 'function' ? new File([blob], name, { type: 'application/pdf' }) : null;
+    const touch = window.matchMedia('(pointer: coarse)').matches;
+    if (touch && file && navigator.canShare?.({ files: [file] }) && navigator.userActivation?.isActive !== false) {
+      try { await navigator.share({ files: [file], title }); return; }
+      catch (e) { if (e?.name === 'AbortError') return; }
+    }
+    const w = host.win || window, d = w.document;
+    const url = w.URL.createObjectURL(blob);
+    const a = d.createElement('a');
+    a.href = url; a.download = name; a.rel = 'noopener'; a.style.display = 'none';
+    d.body.append(a); a.click(); a.remove();
+    setTimeout(() => { try { w.URL.revokeObjectURL(url); } catch {} }, 60000);
+  }
+  // Mobilde kütüphane/yazı tipi yüklemesi sürerken dokunma etkileşimi zaman aşımına uğrayabilir;
+  // bu durumda indirme/paylaşım tarayıcıca engellenir → PDF hazır tutulur, ikinci dokunuşta teslim edilir.
+  const needsTap = () => window.matchMedia('(pointer: coarse)').matches && navigator.userActivation && !navigator.userActivation.isActive;
+  return { create, deliver, needsTap };
 })();
 
 function createProfileView() {
@@ -3392,7 +3452,7 @@ function createProfileView() {
       + `<div class="kp-actions">`
       + (own() ? `<button type="button" class="k-btn k-btn-primary kp-act-main kp-act-keep" data-profile-action="edit">${PICONS.edit}<span>Profili Düzenle</span></button>` : '')
       + `<button type="button" class="k-btn${own() ? '' : ' k-btn-primary kp-act-keep'}" data-profile-action="share">${ICONS.share}<span>Profili Paylaş</span></button>`
-      + `<button type="button" class="k-btn" data-profile-action="pdf">${PICONS.download}<span data-pdf-label>PDF Olarak İndir</span></button></div>`
+      + `<button type="button" class="k-btn" data-profile-action="pdf">${PICONS.download}<span data-pdf-label>${s.pdfReady?.id === p.id ? 'PDF hazır · Kaydet' : 'PDF Olarak İndir'}</span></button></div>`
       + (missing.length ? `<p class="kp-hint">Kişi kartını tamamla: ${esc(missing.join(', '))} ekle. <button type="button" class="k-text-button" data-profile-action="edit">Şimdi ekle</button></p>` : '')
       + `</article>`;
   }
@@ -3570,7 +3630,7 @@ function createProfileView() {
   }
   async function load(id, tab) {
     const rev = ++s.rev;
-    Object.assign(s, { id, profile: null, phone: null, cursor: null, hasMore: false, loadingPosts: false, postsFailed: false, services: [], servicesState: 'idle', counts: { posts: null, services: null } });
+    Object.assign(s, { pdfReady: null, id, profile: null, phone: null, cursor: null, hasMore: false, loadingPosts: false, postsFailed: false, services: [], servicesState: 'idle', counts: { posts: null, services: null } });
     F.posts = []; feed.threads.reset();
     s.tab = tab === 'hizmetler' ? 'hizmetler' : 'calismalar';
     showStatus(''); renderSkeleton(); renderTabs(); composeRow.hidden = true; postsMore.hidden = true;
@@ -3736,19 +3796,27 @@ function createProfileView() {
   /* ---- Paylaş / PDF ---- */
   async function downloadPdf(btn) {
     if (s.pdfBusy || !s.profile) return;
+    const label = $('[data-pdf-label]', btn), idle = 'PDF Olarak İndir';
+    if (s.pdfReady?.id === s.profile.id) {
+      const ready = s.pdfReady; s.pdfReady = null; if (label) label.textContent = idle;
+      try { await profilePdf.deliver(ready.file); } catch { toast('PDF kaydedilemedi. Tekrar dene.'); }
+      return;
+    }
     s.pdfBusy = true;
-    const label = $('[data-pdf-label]', btn), prev = label?.textContent;
     btn.disabled = true; if (label) label.textContent = 'PDF hazırlanıyor…';
+    let text = idle;
     try {
       if (s.servicesState !== 'ready') await loadServices();
       const p = s.profile;
-      await profilePdf.create({
+      const file = await profilePdf.create({
         profile: p, url: urls.profile(p.id), role: identity.role(p), status: identity.statusLong(p),
         phone: p.show_phone_publicly ? s.phone : null, socials: socialLinks(p),
         posts: [...featuredPosts(), ...chronoPosts()], postCount: s.counts.posts, services: s.services
       });
+      if (profilePdf.needsTap()) { s.pdfReady = { id: p.id, file }; text = 'PDF hazır · Kaydet'; toast('PDF hazır. Kaydetmek için tekrar dokun.'); }
+      else await profilePdf.deliver(file);
     } catch (e) { console.warn('PDF oluşturulamadı:', e?.message || e); toast('PDF oluşturulamadı. Bağlantını kontrol edip tekrar dene.'); }
-    finally { s.pdfBusy = false; btn.disabled = false; if (label) label.textContent = prev; }
+    finally { s.pdfBusy = false; btn.disabled = false; if (label) label.textContent = text; }
   }
 
   el.addEventListener('click', e => {
@@ -3890,7 +3958,19 @@ const router = (() => {
   }
   // Capture fazında: yalnızca bu dokümana ait shell kayıtlarını işler, diğer dinleyicilere sızdırmaz
   // (Hostinger'ın kendi router'ı varsa aynı sayfa içindeki sekme geçişine karışmasın).
+  // Tam ekran görüntüleyici için geçmiş kaydı: cihazın geri tuşu sayfadan çıkmak yerine görüntüleyiciyi kapatır.
+  let modalBack = null;
+  function pushModal(close) {
+    if (!enabled || modalBack) return;
+    try { host.win.history.pushState({ ...stateOf(), kisgModal: true }, '', host.win.location.href); modalBack = close; } catch {}
+  }
+  function popModal() {
+    if (!modalBack) return;
+    modalBack = null;
+    try { if (host.win.history.state?.kisgModal) host.win.history.back(); } catch {}
+  }
   function onPop(e) {
+    if (modalBack) { const close = modalBack; modalBack = null; e.stopImmediatePropagation(); close(); return; }
     const st = e.state && e.state.kisgShell;
     if (!st || st.doc !== bootId || !VIEWS[st.view]) return;
     e.stopImmediatePropagation();
@@ -3940,7 +4020,7 @@ const router = (() => {
     } catch { return null; }
   }
   return {
-    init, start, activate, replaceHash, profileTarget,
+    init, start, activate, replaceHash, profileTarget, pushModal, popModal,
     get enabled() { return enabled; },
     get current() { return current; },
     pendingSnapshot: name => pending[name] || null,
@@ -4148,6 +4228,7 @@ const appChrome = (() => {
       pd.getElementById('kisg-pro-nav')?.remove();
       hostEl = pd.createElement('div');
       hostEl.id = 'kisg-pro-nav';
+      host.setCover(() => { try { return hostEl.getBoundingClientRect().bottom; } catch { return 0; } });
       hostEl.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147480000;will-change:transform;transform:translate3d(0,0,0)';
       const shadow = hostEl.attachShadow({ mode: 'open' });
       const st = pd.createElement('style'); st.textContent = NAV_CSS;
@@ -4208,7 +4289,6 @@ const appChrome = (() => {
     if (on) setCompact(false);
   };
   shellHooks.viewChanged = () => { setCompact(false); requestAnimationFrame(() => { indicator(); layoutSides(); schedule(); }); };
-  shellHooks.layout = schedule;
   return { init, schedule, measure, layoutSides };
 })();
 root.addEventListener('load', () => host.schedule(), true);
