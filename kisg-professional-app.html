@@ -10,7 +10,7 @@ içeriğinin yerine BİREBİR AYNI şekilde yapıştırılır:
 
 v4.4.1: Mobil görsel görüntüleyici (X / dışarı dokunma / geri tuşu / nav altında tam ekran),
  modal açıkken arka plan scroll kilidi, mobilde PDF teslimi (paylaş / üst dokümandan indirme),
- Çalışma görsellerine uzun süreli cache, silinen Çalışmanın görseli Storage'dan temizlenir.
+ Çalışma görsellerine uzun süreli cache. (Soft-delete edilen Çalışmanın görseli Storage'da korunur.)
 v4.4: Profil Detay V2 — /profil?id={user_id} App Shell route'u olarak çalışır.
  - Uygulama içinden profile geçiş pushState ile olur (iframe/shell yeniden yüklenmez);
    geri tuşunda önceki görünümün feed/filtre/arama durumu ve scroll konumu korunur.
@@ -2031,8 +2031,6 @@ function createPostFeed({ scope, onRemoved, onFeatured }) {
     try {
       const { error } = await db.from('professional_posts').update({ status: 'deleted', profile_featured_order: null }).eq('id', p.id).eq('user_id', session.user.id).select('id').single();
       if (error) throw error;
-      // Silinen Çalışmanın görseli Storage'da sahipsiz kalmasın (düzenlemedeki görsel değişimiyle aynı kural).
-      if (p.image_path) db.storage.from(CONFIG.imageBucket).remove([p.image_path]).catch(() => {});
       emitPost('removed', { id: p.id });
       toast('Çalışma silindi.'); host.schedule();
     } catch (e) { toast(errorText(e, 'Çalışma silinemedi.')); } finally { f.ownerBusy = false; }
