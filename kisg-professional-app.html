@@ -1,12 +1,17 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.5.0
-Çalışmalar | Uzmanlar | Hizmetler | Profil (Kişi Kartı) | Çalışma Detay tek uygulama.
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.6.0
+Çalışmalar | Uzmanlar | Hizmetler | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
-KURULUM: Bu dosyanın TAMAMI, aşağıdaki BEŞ Hostinger sayfasındaki Custom HTML/Embed
+KURULUM: Bu dosyanın TAMAMI, aşağıdaki ALTI Hostinger sayfasındaki Custom HTML/Embed
 içeriğinin yerine BİREBİR AYNI şekilde yapıştırılır:
-  /calisma   /uzmanlar   /hizmetler   /profil   /calisma-detay
-(/profil'deki "PROFİL V1" ve /calisma-detay'daki "ÇALIŞMA DETAY V1" embed'lerinin yerine bu dosya gelir.)
-/hizmet-detay embed'ine DOKUNULMAZ.
+  /calisma   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
+(/profil, /calisma-detay ve /hizmet-detay'daki eski V1 embed'lerinin yerine bu dosya gelir.)
+
+v4.6: Hizmetler profesyonel hizmet vitrini olarak yeniden tasarlandı (vitrin başlığı, kategori şeridi,
+ sağlayıcıyı öne çıkaran hizmet kartı, yayınlama bandı). Hizmet Detay /hizmet-detay?id= App Shell
+ route'u: reload yok, geri tuşunda Hizmetler filtre/arama/scroll korunur, doğrudan URL çalışır.
+ Detay: sağlayıcı kartı (izinli telefon/WhatsApp — Profil ile aynı gizlilik kuralı), paylaşım,
+ sahibi için Düzenle / Kaldır (status=archived), aynı profesyonelin diğer hizmetleri.
 
 v4.5: Çalışma Detay — /calisma-detay?id={post_id} App Shell route'u. Akıştan geçiş pushState ile
  (reload yok), geri tuşunda akışın durumu ve scroll konumu korunur; doğrudan URL ile de açılır.
@@ -154,23 +159,59 @@ Acil kapatma: CONFIG.historyRouting=false.
   </div>
 </section>
 
-<!-- HİZMETLER -->
-<section class="ka-view kc" data-view="services" hidden aria-labelledby="ksTitle">
-  <div class="k-page kc-page">
+<!-- HİZMETLER — profesyonel hizmet vitrini -->
+<section class="ka-view kc ks" data-view="services" hidden aria-labelledby="ksTitle">
+  <div class="k-page kc-page ks-page">
+    <header class="ks-hero">
+      <div class="ks-hero-copy">
+        <p class="ks-kicker">Kırmızı İSG Professional · Hizmetler</p>
+        <h1 id="ksTitle">İSG hizmetleri, işin uzmanından<span class="ks-dot">.</span></h1>
+        <p class="ks-lead">Danışmanlık, eğitim, ölçüm ve saha hizmetlerini keşfet; hizmeti sunan profesyoneli meslek ve belgesiyle birlikte tanı.</p>
+        <div class="ks-hero-actions">
+          <button type="button" class="k-btn k-btn-primary ks-hero-cta" data-publish><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Hizmetini Yayınla</span></button>
+          <span class="ks-hero-count" data-hero-count></span>
+        </div>
+      </div>
+      <div class="ks-hero-art" aria-hidden="true"><img src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/erferf.png" alt="" decoding="async" fetchpriority="low"></div>
+    </header>
     <p class="kc-message" data-notice role="status" hidden></p>
-    <h1 id="ksTitle" class="k-sr">Hizmetler</h1>
-    <div class="kc-controls" role="search">
+    <div class="kc-controls ks-controls" role="search">
       <label class="k-sr" for="ksSearch">Hizmet, açıklama, bölge veya sağlayıcı ara</label>
-      <div class="kc-search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="ksSearch" data-search type="search" maxlength="120" placeholder="Hizmet, bölge veya uzman ara" data-short-placeholder="Hizmet veya bölge" autocomplete="off"><button type="button" data-clear-search aria-label="Aramayı temizle" hidden>×</button></div>
+      <div class="kc-search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="ksSearch" data-search type="search" maxlength="120" placeholder="Hizmet, bölge veya uzman ara" data-short-placeholder="Hizmet, bölge, uzman" autocomplete="off"><button type="button" data-clear-search aria-label="Aramayı temizle" hidden>×</button></div>
       <button type="button" class="kc-filter-btn" data-open-filters aria-haspopup="dialog"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/></svg><span data-filter-label>Filtrele</span></button>
-      <button class="kc-publish" type="button" data-publish><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Hizmetini Yayınla</span></button>
       <div class="kc-filters kc-filters-inline" data-desktop-filters></div>
     </div>
+    <div class="ks-chips" data-chips role="group" aria-label="Kategoriler" hidden></div>
     <div class="kc-results-head"><p data-status role="status" aria-live="polite">Hizmetler yükleniyor…</p><button type="button" class="k-text-button" data-reset hidden>Filtreleri temizle</button></div>
     <div class="kc-results ks-grid" data-results aria-busy="true"></div>
-    <div class="k-empty" data-empty hidden><strong data-empty-text></strong><p>İlk hizmeti sen yayınlayabilir ya da filtreleri değiştirebilirsin.</p><div class="k-empty-actions"><button type="button" class="k-btn" data-empty-reset>Filtreleri temizle</button><button type="button" class="k-btn k-btn-primary" data-empty-publish data-publish>Hizmetini Yayınla</button></div></div>
+    <div class="k-empty" data-empty hidden><img class="kw-empty-art" src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/erferf.png" alt="" aria-hidden="true" loading="lazy"><strong data-empty-text></strong><p>İlk hizmeti sen yayınlayabilir ya da filtreleri değiştirebilirsin.</p><div class="k-empty-actions"><button type="button" class="k-btn" data-empty-reset>Filtreleri temizle</button><button type="button" class="k-btn k-btn-primary" data-empty-publish data-publish>Hizmetini Yayınla</button></div></div>
     <div class="k-empty" data-error role="alert" hidden><strong>Hizmetler şu anda yüklenemedi.</strong><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" class="k-btn" data-retry>Yeniden dene</button></div>
     <button type="button" class="k-btn kc-more" data-more hidden>Daha fazla hizmet göster</button>
+    <aside class="ks-band" data-band hidden aria-labelledby="ksBandTitle">
+      <img class="ks-band-logo" src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/logo.jpg" alt="" width="44" height="44" loading="lazy" decoding="async">
+      <div class="ks-band-copy"><strong id="ksBandTitle">Uzmanlığını Kırmızı İSG'de sun.</strong><p>Hizmetini yayınla; işverenler ve meslektaşların seni profilin ve çalışmalarınla birlikte bulsun.</p></div>
+      <button type="button" class="k-btn k-btn-primary" data-publish>Hizmetini Yayınla</button>
+    </aside>
+  </div>
+</section>
+
+<!-- HİZMET DETAY (/hizmet-detay?id=) -->
+<section class="ka-view kh" data-view="service" hidden aria-labelledby="khTitle">
+  <div class="k-page kh-page">
+    <div class="kh-top">
+      <a class="kd-back" href="https://isgcalisanplatformu.com/hizmetler" target="_top" data-view-link="services"><span aria-hidden="true">←</span> Hizmetlere Dön</a>
+      <div class="kh-owner" data-service-owner hidden>
+        <button type="button" class="kw-more-btn" data-popover-trigger aria-label="Hizmeti yönet" aria-expanded="false">···</button>
+        <div class="k-popover kw-menu" hidden><button type="button" data-service-action="edit">Düzenle</button><button type="button" class="is-danger" data-service-action="remove">Kaldır</button></div>
+      </div>
+    </div>
+    <div class="k-empty kd-state" data-service-status role="status" hidden></div>
+    <div class="kh-layout" data-service-main hidden>
+      <header class="kh-head" data-service-head></header>
+      <aside class="kh-side" data-service-side aria-label="Hizmeti sunan profesyonel"></aside>
+      <article class="kh-body" data-service-body></article>
+    </div>
+    <section class="kh-more" data-service-more hidden></section>
   </div>
 </section>
 
@@ -643,20 +684,82 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .ke-cta{margin-left:auto;color:var(--ink);font-size:13px;font-weight:750}
 #kisgApp .ke-discovery{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 16px;margin-top:16px;padding:12px 16px;border:1px dashed var(--line-strong);border-radius:12px;color:var(--muted);font-size:13.5px}
 #kisgApp .ke-discovery strong{color:var(--ink);font-weight:650}
-/* Hizmetler: hizmeti sunan profesyonel önde */
-#kisgApp .ks-grid{grid-template-columns:repeat(auto-fill,minmax(380px,1fr))}
-#kisgApp .ks-card{gap:0;padding:18px 20px 0}
-#kisgApp .ks-by{display:flex;align-items:center;gap:10px;min-width:0}
-#kisgApp .ks-by>div{min-width:0}
-#kisgApp .ks-by strong{display:block;overflow:hidden;color:var(--ink);font-size:14px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
-#kisgApp .ks-by p{overflow:hidden;color:var(--muted);font-size:12.5px;text-overflow:ellipsis;white-space:nowrap}
-#kisgApp .ks-card h2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:14px;color:var(--ink);font-size:18.5px;font-weight:750;line-height:1.3;letter-spacing:-.015em}
-#kisgApp .ks-card>h2:first-child{margin-top:0}
-#kisgApp .ks-description{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:6px;color:var(--text);font-size:14px;line-height:1.55}
-#kisgApp .ks-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:auto -20px 0;padding:12px 20px;border-top:1px solid var(--line-soft)}
-#kisgApp .ks-card>.ks-foot{margin-top:16px}
-#kisgApp .ks-meta{display:flex;flex-wrap:wrap;gap:2px 12px;color:var(--muted);font-size:12.5px}
-#kisgApp .ks-cta{margin-left:auto;color:var(--ink);font-size:13px;font-weight:750;white-space:nowrap}
+/* Hizmetler: profesyonel hizmet vitrini — premium his renkten değil ölçü, tipografi ve boşluktan */
+#kisgApp .ks-page{padding-top:28px}
+#kisgApp .ks-hero{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 260px;align-items:center;gap:32px;margin-bottom:28px;padding:40px 44px;border-radius:24px;background:#f4f5f7;overflow:hidden}
+#kisgApp .ks-kicker{color:var(--red-text);font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+#kisgApp .ks-hero h1{max-width:620px;margin-top:12px;color:var(--ink);font-size:44px;font-weight:800;line-height:1.08;letter-spacing:-.035em}
+#kisgApp .ks-dot{color:var(--red)}
+#kisgApp .ks-lead{max-width:560px;margin-top:14px;color:var(--muted);font-size:16.5px;line-height:1.6}
+#kisgApp .ks-hero-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;margin-top:24px}
+#kisgApp .ks-hero-cta{min-height:48px;padding:0 22px;font-size:15px}
+#kisgApp .ks-hero-count{color:var(--muted);font-size:14px;font-weight:650}
+#kisgApp .ks-hero-count:not(:empty)::before{content:"";display:inline-block;width:6px;height:6px;margin:0 8px 2px 0;border-radius:50%;background:var(--red)}
+#kisgApp .ks-hero-art{justify-self:end;width:230px}
+#kisgApp .ks-hero-art img{display:block;width:100%;height:auto;mix-blend-mode:multiply;transform:rotate(-7deg)}
+#kisgApp .ks .kc-filters-inline .kc-field-cat{display:none}
+#kisgApp .ks .kc-filters-inline{flex:0 0 auto;flex-wrap:nowrap}
+#kisgApp .ks .kc-filters-inline :is(input,select){height:52px;padding-inline:18px}
+#kisgApp .ks .kc-filters-inline select{padding-right:38px}
+#kisgApp .ks-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+#kisgApp .ks-chip{min-height:38px;padding:0 16px;border:0;border-radius:var(--r-pill);background:#fff;box-shadow:inset 0 0 0 1px var(--line);color:var(--text);font-size:13.5px;font-weight:650;white-space:nowrap;transition:background var(--t-fast),color var(--t-fast),box-shadow var(--t-fast)}
+#kisgApp .ks-chip[aria-pressed="true"]{background:var(--ink);box-shadow:none;color:#fff}
+#kisgApp .ks-grid{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+#kisgApp .ks-card{gap:0;padding:24px 24px 0;border-radius:20px}
+#kisgApp .ks-card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;color:var(--muted);font-size:12.5px;font-weight:600}
+#kisgApp .ks-cat{display:inline-flex;align-items:center;gap:8px;min-width:0;overflow:hidden;color:var(--ink);font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .ks-cat::before{content:"";flex:none;width:14px;height:2px;border-radius:2px;background:var(--red)}
+#kisgApp .ks-card h2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:16px;color:var(--ink);font-size:20.5px;font-weight:780;line-height:1.26;letter-spacing:-.022em}
+#kisgApp .ks-description{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-top:10px;color:var(--muted);font-size:14.5px;line-height:1.6}
+#kisgApp .ks-card>:is(h2,.ks-description):has(+.ks-pro){margin-bottom:22px}
+#kisgApp .ks-pro{display:flex;align-items:center;gap:12px;min-width:0;margin-top:auto;padding-top:18px;border-top:1px solid var(--line-soft)}
+#kisgApp .ks-pro-copy{display:grid;min-width:0}
+#kisgApp .ks-pro-copy strong{overflow:hidden;color:var(--ink);font-size:14.5px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .ks-pro-copy span{overflow:hidden;color:var(--muted);font-size:13px;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .ks-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:20px -24px 0;padding:14px 24px;border-top:1px solid var(--line-soft);color:var(--muted);font-size:13px}
+#kisgApp .ks-card:not(:has(.ks-pro)) .ks-foot{margin-top:auto}
+#kisgApp .ks-card:not(:has(.ks-pro)) .ks-description{margin-bottom:20px}
+#kisgApp .ks-cta{display:inline-flex;align-items:center;gap:6px;margin-left:auto;color:var(--ink);font-size:13.5px;font-weight:750;white-space:nowrap}
+#kisgApp .ks-cta span{transition:transform var(--t) var(--ease)}
+#kisgApp .ks-sk{padding:24px}
+#kisgApp .ks-band{display:flex;align-items:center;gap:18px;margin-top:40px;padding:22px 24px;border-radius:20px;background:var(--ink);color:#fff}
+#kisgApp .ks-band-logo{flex:none;width:44px;height:44px;border-radius:12px;object-fit:cover}
+#kisgApp .ks-band-copy{flex:1;min-width:0}
+#kisgApp .ks-band-copy strong{font-size:17px;font-weight:750;letter-spacing:-.01em}
+#kisgApp .ks-band-copy p{margin-top:3px;color:rgba(255,255,255,.72);font-size:14px}
+#kisgApp .ks-band .k-btn{flex:none}
+/* Hizmet Detay */
+#kisgApp .kh-page{max-width:1120px;padding:18px 0 72px}
+#kisgApp .kh-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#kisgApp .kh-owner{position:relative}
+#kisgApp .kh-layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;grid-template-areas:"head side" "body side";grid-template-rows:auto 1fr;column-gap:56px;align-items:start;margin-top:14px}
+#kisgApp .kh-head{grid-area:head;display:grid;gap:0}
+#kisgApp .kh-head h1{margin-top:14px;color:var(--ink);font-size:42px;font-weight:800;line-height:1.1;letter-spacing:-.035em;overflow-wrap:anywhere}
+#kisgApp .kh-sk-title{height:34px;margin:14px 0}
+#kisgApp .kh-meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;color:var(--muted);font-size:14.5px}
+#kisgApp .kh-meta .k-ico{width:16px;height:16px}
+#kisgApp .kh-body{grid-area:body;display:grid;gap:10px;margin-top:32px;padding-top:32px;border-top:1px solid var(--line)}
+#kisgApp .kh-label{color:var(--faint);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+#kisgApp .kh-desc{color:var(--text);font-size:17px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}
+#kisgApp .kh-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;margin:24px 0 0;border-radius:16px;background:var(--line);box-shadow:0 0 0 1px var(--line);overflow:hidden}
+#kisgApp .kh-facts div{padding:16px 18px;background:#fff}
+#kisgApp .kh-facts div:last-child:nth-child(odd){grid-column:1/-1}
+#kisgApp .kh-facts dt{color:var(--faint);font-size:12px;font-weight:700}
+#kisgApp .kh-facts dd{margin:3px 0 0;color:var(--ink);font-size:15px;font-weight:650;overflow-wrap:anywhere}
+#kisgApp .kh-side{grid-area:side}
+#kisgApp .kh-card{position:relative;padding:24px;border-radius:20px;background:#fff;box-shadow:inset 0 0 0 1px var(--line),0 1px 2px rgba(20,26,36,.03)}
+#kisgApp .kh-card::before{content:"";position:absolute;left:24px;top:0;width:44px;height:3px;border-radius:0 0 3px 3px;background:var(--red)}
+#kisgApp .kh-pro{display:flex;align-items:center;gap:16px;min-width:0;margin-top:16px}
+#kisgApp .kh-pro-copy{display:grid;gap:2px;min-width:0}
+#kisgApp .kh-pro-copy strong{color:var(--ink);font-size:18px;font-weight:780;line-height:1.25;letter-spacing:-.015em}
+#kisgApp .kh-pro-copy span{color:var(--text);font-size:14px}
+#kisgApp .kh-pro-copy small{color:var(--muted);font-size:13px}
+#kisgApp .kh-actions{display:grid;gap:8px;margin-top:22px}
+#kisgApp .kh-actions .k-btn{min-height:46px}
+#kisgApp .kh-actions svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .kh-note{margin-top:14px;color:var(--muted);font-size:12.5px;line-height:1.5}
+#kisgApp .kh-more{margin-top:64px;padding-top:32px;border-top:1px solid var(--line)}
+#kisgApp .kh-more-title{margin-bottom:18px;color:var(--ink);font-size:20px;font-weight:780;letter-spacing:-.02em}
 
 /* =====================================================================
    DİALOG / FORM / GÖRSEL GÖRÜNTÜLEYİCİ / TOAST
@@ -819,6 +922,11 @@ Acil kapatma: CONFIG.historyRouting=false.
 @media(hover:hover) and (pointer:fine){
   #kisgApp .kp-social:hover{background:var(--surface-2);color:var(--ink)}
   #kisgApp .kd-back:hover{color:var(--ink)}
+  #kisgApp .ks-chip:hover:not([aria-pressed="true"]){box-shadow:inset 0 0 0 1px var(--ink);color:var(--ink)}
+  #kisgApp .ks-card:hover{transform:translateY(-3px);box-shadow:inset 0 0 0 1px var(--line-strong),0 14px 34px -18px rgba(20,26,36,.28)}
+  #kisgApp .ks-card:hover .ks-cta span{transform:translateX(3px)}
+  #kisgApp .ks-card:hover h2{color:#000}
+  #kisgApp .kh-pro:hover strong{color:var(--red-text)}
   #kisgApp .kd-profile:hover{background:var(--surface-2)}
   #kisgApp .kp-av-edit:hover{background:#000}
   #kisgApp .kp-tabs [role="tab"]:hover{color:var(--ink)}
@@ -877,7 +985,12 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .kw-rail-services{display:block}
   #kisgApp .kc-filters-inline{display:none}
   #kisgApp .kc-filter-btn{display:inline-flex}
-  #kisgApp .ks-grid{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+  #kisgApp .ks-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+  #kisgApp .ks-hero{grid-template-columns:minmax(0,1fr) 180px;padding:32px}
+  #kisgApp .ks-hero h1{font-size:36px}
+  #kisgApp .ks-hero-art{width:170px}
+  #kisgApp .kh-layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "side" "body";grid-template-rows:none;max-width:720px}
+  #kisgApp .kh-side{margin-top:24px}
 }
 /* Telefon: kenardan kenara feed, içerik önce */
 @media(max-width:640px){
@@ -927,9 +1040,40 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .ke-activity{display:none}
   #kisgApp .ke-cta{margin:0 auto}
   #kisgApp .ks-grid{grid-template-columns:minmax(0,1fr)}
-  #kisgApp .ks-card{padding:16px 16px 0}
-  #kisgApp .ks-card h2{font-size:17px}
-  #kisgApp .ks-foot{margin-inline:-16px;padding:12px 16px}
+  #kisgApp .ks-page{padding-top:0}
+  #kisgApp .ks-hero{display:block;margin:0 0 14px;padding:26px var(--pad) 24px;border-radius:0;background:#f4f5f7}
+  #kisgApp .ks-hero-art{position:absolute;right:-18px;top:14px;width:96px;opacity:.9}
+  #kisgApp .ks-kicker{font-size:11px;padding-right:72px}
+  #kisgApp .ks-hero h1{margin-top:10px;padding-right:48px;font-size:28px;line-height:1.12}
+  #kisgApp .ks-lead{margin-top:10px;font-size:15px}
+  #kisgApp .ks-hero-actions{margin-top:18px}
+  #kisgApp .ks-hero-cta{flex:1 1 auto;min-height:46px}
+  #kisgApp .ks-hero-count{flex:1 1 100%;text-align:center;font-size:13px}
+  #kisgApp .ks-chips{flex-wrap:nowrap;overflow-x:auto;margin:12px 0 0;padding:2px var(--gutter) 4px;scrollbar-width:none;overscroll-behavior-x:contain}
+  #kisgApp .ks-chips::-webkit-scrollbar{display:none}
+  #kisgApp .ks-chip{flex:none;min-height:40px}
+  #kisgApp .ks-card{padding:20px 18px 0;border-radius:18px}
+  #kisgApp .ks-card h2{margin-top:12px;font-size:18.5px}
+  #kisgApp .ks-description{font-size:14px;-webkit-line-clamp:2}
+  #kisgApp .ks-foot{margin-inline:-18px;padding:13px 18px}
+  #kisgApp .ks-band{flex-wrap:wrap;margin:28px var(--gutter) 0;padding:20px 18px}
+  #kisgApp .ks-band .k-btn{flex:1 1 100%}
+  #kisgApp .kh-page{width:100%;padding:0 0 40px}
+  #kisgApp .kh-top{padding:4px var(--gutter) 0}
+  #kisgApp .kh-layout{margin-top:6px}
+  #kisgApp .kh-head{padding:0 var(--pad)}
+  #kisgApp .kh-head h1{margin-top:10px;font-size:29px;line-height:1.14}
+  #kisgApp .kh-meta{gap:6px 14px;margin-top:12px;font-size:13.5px}
+  #kisgApp .kh-side{margin-top:20px;padding:0 var(--gutter)}
+  #kisgApp .kh-card{padding:20px 18px}
+  #kisgApp .kh-card::before{left:18px}
+  #kisgApp .kh-pro-copy strong{font-size:17px}
+  #kisgApp .kh-body{margin-top:24px;padding:24px var(--pad) 0}
+  #kisgApp .kh-desc{font-size:16px;line-height:1.75}
+  #kisgApp .kh-facts{grid-template-columns:minmax(0,1fr)}
+  #kisgApp .kh-more{margin-top:40px;padding:28px var(--gutter) 0}
+  #kisgApp .kh-more-title{font-size:18px}
+  #kisgApp .kh-more .kc-results{margin-inline:0}
   #kisgApp .kc-more{width:calc(100% - var(--gutter) * 2)}
   #kisgApp .k-dialog[data-place="sheet"]{inset:auto 0 0;width:100%;max-width:none;max-height:92dvh;margin:0;border-radius:20px 20px 0 0}
   #kisgApp .k-dialog[data-place="sheet"][open]{animation:k-sheet .26s var(--ease)}
@@ -1007,7 +1151,7 @@ const CONFIG = Object.freeze({
   historyRouting: true,
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
-  routes: { works: '/calisma', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay' },
+  routes: { works: '/calisma', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
   defaultView: 'works',
   returnPaths: ['/calisma-detay', '/hizmet-detay', '/profil'],
   snapshotMaxAgeMs: 15 * 60 * 1000,
@@ -1027,7 +1171,7 @@ const CONFIG = Object.freeze({
   // WebKit (iPhone/Safari) canvas'tan WebP üretemez; bu cihazlarda aynı yola JPEG yüklenir.
   allowJpegFallback: true
 });
-const LABELS = { works: 'Çalışmalar', experts: 'Uzmanlar', services: 'Hizmetler', profile: 'Profil', work: 'Çalışma' };
+const LABELS = { works: 'Çalışmalar', experts: 'Uzmanlar', services: 'Hizmetler', profile: 'Profil', work: 'Çalışma', service: 'Hizmet' };
 // Mesleki Belge / Statü: [certificate_class değeri, etiket]. A/B/C mevcut veriyle aynı (tek harf) yazılır.
 const STATUS_OPTIONS = [['A', 'A Sınıfı'], ['B', 'B Sınıfı'], ['C', 'C Sınıfı'], ['İşyeri Hekimi', 'İşyeri Hekimi'], ['DSP', 'DSP (Diğer Sağlık Personeli)']];
 const SERVICE_MODES = { onsite: 'Yerinde', remote: 'Uzaktan', both: 'Yerinde + Uzaktan' };
@@ -3011,24 +3155,32 @@ function createExpertsView() {
 /* =========================================================================
    11. Görünüm: Hizmetler (mevcut /hizmetler V1 davranışı korunur)
    ========================================================================= */
-// Hizmet kartı: Hizmetler kataloğu ve Profil > Verdiği Hizmetler aynı tasarımı kullanır.
+// Hizmet kartı: Hizmetler vitrini ve Profil > Verdiği Hizmetler aynı tasarımı kullanır.
+// Hiyerarşi: kategori → hizmet → kısa açıklama → hizmeti sunan profesyonel → bölge / incele.
 function serviceCard(v, { provider = true } = {}) {
-  const p = provider ? v.provider : null, role = p ? identity.role(p) : '';
-  const meta = modeMeta(v.service_mode) + placeMeta(v.service_region);
-  return `<a class="kc-card ks-card" href="${esc(urls.service(v.id))}" target="_top">`
-    + (p ? `<div class="ks-by">${avatar(p, 'md')}<div><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${role ? `<p>${esc(role)}</p>` : ''}</div></div>` : '')
+  const p = provider ? v.provider : null;
+  const line = p ? compact([identity.role(p), identity.certTag(p)]) : '';
+  return `<a class="kc-card ks-card" data-service-id="${esc(v.id)}" href="${esc(urls.service(v.id))}" target="_top">`
+    + `<div class="ks-card-top">${v.category?.name ? `<span class="ks-cat">${esc(v.category.name)}</span>` : '<span class="ks-cat">Hizmet</span>'}${modeMeta(v.service_mode)}</div>`
     + `<h2>${esc(v.title)}</h2>`
     + (v.description ? `<p class="ks-description">${esc(v.description)}</p>` : '')
-    + `<div class="ks-foot">${v.category?.name ? `<span class="k-tag">${esc(v.category.name)}</span>` : ''}${meta ? `<span class="ks-meta">${meta}</span>` : ''}<span class="ks-cta">Hizmeti Gör <span aria-hidden="true">→</span></span></div></a>`;
+    + (p ? `<div class="ks-pro">${avatar(p, 'lg')}<span class="ks-pro-copy"><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${line ? `<span>${esc(line)}</span>` : ''}</span></div>` : '')
+    + `<div class="ks-foot">${clean(v.service_region) ? placeMeta(v.service_region) : '<span></span>'}<span class="ks-cta">İncele <span aria-hidden="true">→</span></span></div></a>`;
 }
+// Hizmet kayıt olayları: katalog, profil ve detay aynı hizmeti anında günceller.
+const serviceBus = new Set();
+const emitService = (kind, payload) => serviceBus.forEach(fn => { try { fn(kind, payload); } catch (e) { console.error(e); } });
+const SERVICE_SELECT = 'id,user_id,title,category_id,description,service_region,service_mode,status,created_at,updated_at,category:professional_service_categories(id,name,slug),provider:profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company)';
+
 function createServicesView() {
   const el = $('[data-view="services"]');
-  const SELECT = 'id,user_id,title,category_id,description,service_region,service_mode,status,created_at,updated_at,category:professional_service_categories(id,name,slug),provider:profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company)';
-  const ed = { root: $('#kaServiceDialog'), form: $('#kaServiceForm'), title: $('#kaServiceTitle'), category: $('#kaServiceCategory'), description: $('#kaServiceDescription'), region: $('#kaServiceRegion'), mode: $('#kaServiceMode'), error: $('#kaServiceError'), save: $('#kaServiceSave') };
+  const SELECT = SERVICE_SELECT;
+  const chips = $('[data-chips]', el), heroCount = $('[data-hero-count]', el), band = $('[data-band]', el);
+  const ed = { root: $('#kaServiceDialog'), form: $('#kaServiceForm'), heading: $('#kaServiceDialogTitle'), title: $('#kaServiceTitle'), category: $('#kaServiceCategory'), description: $('#kaServiceDescription'), region: $('#kaServiceRegion'), mode: $('#kaServiceMode'), error: $('#kaServiceError'), save: $('#kaServiceSave'), hint: $('#kaServiceDialog .k-hint') };
   const limit = { root: $('#kaLimitDialog'), manage: $('#kaLimitManage') };
-  const st = { categories: [], categoriesReady: false, categoriesPromise: null, publishing: false, writing: false, editingUser: null, invalidated: false };
+  const st = { categories: [], categoriesReady: false, categoriesPromise: null, publishing: false, writing: false, editingUser: null, edit: null, invalidated: false };
   const options = () => st.categories.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
-  const filterMarkup = prefix => `<label class="kc-field" for="${prefix}-category"><span class="kc-flabel">Kategori</span><select id="${prefix}-category" data-filter="category"><option value="">Tüm kategoriler</option>${options()}</select></label>`
+  const filterMarkup = prefix => `<label class="kc-field kc-field-cat" for="${prefix}-category"><span class="kc-flabel">Kategori</span><select id="${prefix}-category" data-filter="category"><option value="">Tüm kategoriler</option>${options()}</select></label>`
     + `<label class="kc-field" for="${prefix}-mode"><span class="kc-flabel">Hizmet Şekli</span><select id="${prefix}-mode" data-filter="mode"><option value="">Tüm hizmet şekilleri</option>${Object.entries(SERVICE_MODES).map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>`
     + `<label class="kc-field" for="${prefix}-region"><span class="kc-flabel">Bölge</span><input id="${prefix}-region" data-filter="region" maxlength="120" placeholder="Bölge" autocomplete="off"></label>`;
   const card = v => serviceCard(v);
@@ -3036,10 +3188,11 @@ function createServicesView() {
   const catalog = createCatalog({
     name: 'services', el, sheetTitle: 'Hizmetleri Filtrele', filterMarkup,
     blank: () => ({ category: '', mode: '', region: '' }),
-    text: { loading: 'Hizmetler yükleniyor…', loadingMore: 'Diğer hizmetler yükleniyor…', count: n => `${n} hizmet`, empty: 'Henüz yayınlanmış hizmet yok.', emptyFiltered: 'Bu filtrelere uygun hizmet bulunamadı.' },
+    text: { loading: 'Hizmetler yükleniyor…', loadingMore: 'Diğer hizmetler yükleniyor…', count: n => `${n} hizmet listeleniyor`, empty: 'Henüz yayınlanmış hizmet yok.', emptyFiltered: 'Bu filtrelere uygun hizmet bulunamadı.' },
     card, skeletonCount: 6,
-    skeleton: () => '<div class="kc-sk" aria-hidden="true"><div class="kc-sk-top"><i class="k-sk k-sk-circle"></i><span><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>',
+    skeleton: () => '<div class="kc-sk ks-sk" aria-hidden="true"><i class="k-sk k-sk-short"></i><i class="k-sk"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i><div class="kc-sk-top"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div></div>',
     onEmptyState: filtered => { $('[data-empty-publish]', el).hidden = filtered; },
+    afterRender: rows => { renderChips(); band.hidden = !rows.length; },
     pageOf: r => ({ created_at: r.created_at, id: r.id }),
     async fetchPage({ search, filters, page, signal }) {
       let qy = db.from('professional_services').select(SELECT + (search ? ',search_provider:profiles!professional_services_user_id_fkey()' : '')).eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(CONFIG.catalogPageSize + 1);
@@ -3057,6 +3210,30 @@ function createServicesView() {
     }
   });
 
+  /* ---- Kategori şeridi: masaüstü kategori seçicisinin yerine; seçim aynı filtre alanına yazılır ---- */
+  const currentCategory = () => $('[data-desktop-filters] [data-filter="category"]', el)?.value || catalog.state.filters.category || '';
+  function renderChips() {
+    if (!st.categories.length) { chips.hidden = true; return; }
+    const cur = String(currentCategory());
+    chips.innerHTML = [['', 'Tümü'], ...st.categories.map(c => [String(c.id), c.name])]
+      .map(([id, name]) => `<button type="button" class="ks-chip" data-chip="${esc(id)}" aria-pressed="${id === cur}">${esc(name)}</button>`).join('');
+    chips.hidden = false;
+  }
+  chips.addEventListener('click', e => {
+    const b = e.target?.closest?.('[data-chip]'); if (!b) return;
+    const sel = $('[data-desktop-filters] [data-filter="category"]', el); if (!sel) return;
+    sel.value = b.dataset.chip;
+    $$('[data-chip]', chips).forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    sel.closest('[data-desktop-filters]').dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  async function loadHeroCount() {
+    try {
+      await dbReady;
+      const { count, error } = await db.from('professional_services').select('id', { count: 'exact', head: true }).eq('status', 'active');
+      if (!error && Number.isInteger(count) && count > 0) heroCount.textContent = `${new Intl.NumberFormat('tr-TR').format(count)} aktif hizmet`;
+    } catch {}
+  }
+
   // Kategoriler sonuç sorgusunu bloklamaz; hazır olunca filtre seçenekleri doldurulur.
   function loadCategories() {
     if (st.categoriesReady) return Promise.resolve();
@@ -3067,6 +3244,7 @@ function createServicesView() {
       st.categories = data || []; st.categoriesReady = true;
       catalog.renderFilters();
       ed.category.innerHTML = '<option value="">Seçin</option>' + options();
+      renderChips();
     })().finally(() => { st.categoriesPromise = null; });
     return st.categoriesPromise;
   }
@@ -3077,10 +3255,19 @@ function createServicesView() {
   }
   const formError = text => { ed.error.textContent = text; ed.error.hidden = !text; host.schedule(); };
   const setPublishDisabled = on => $$('[data-publish]', el).forEach(b => { b.disabled = on; });
-  function openEditor(user) {
-    st.editingUser = user.id;
+  // Yeni hizmet veya (sahibi için) mevcut hizmeti düzenleme — Hizmet Detay V1 kuralları.
+  function openEditor(user, service = null) {
+    st.editingUser = user.id; st.edit = service;
     ed.form.reset();
     ed.category.innerHTML = '<option value="">Seçin</option>' + options();
+    if (service?.category_id && !st.categories.some(c => c.id === service.category_id)) ed.category.add(new Option(service.category?.name || 'Mevcut kategori', service.category_id));
+    ed.heading.textContent = service ? 'Hizmeti Düzenle' : 'Yeni Hizmet';
+    ed.save.textContent = service ? 'Değişiklikleri Kaydet' : 'Hizmeti Yayınla';
+    ed.hint.hidden = !!service;
+    if (service) {
+      ed.title.value = service.title || ''; ed.category.value = service.category_id || ''; ed.description.value = service.description || '';
+      ed.region.value = service.service_region || ''; ed.mode.value = service.service_mode || '';
+    }
     formError('');
     dialogs.open(ed.root, 'sheet');
     setTimeout(() => ed.title.focus({ preventScroll: true }), 30);
@@ -3099,6 +3286,34 @@ function createServicesView() {
     } catch { catalog.notice('Hizmet formu şu anda açılamadı. Lütfen yeniden deneyin.'); }
     finally { st.publishing = false; setPublishDisabled(false); }
   }
+  const owns = v => !!v && v.status === 'active' && v.user_id === session.user?.id;
+  async function edit(service) {
+    if (!owns(service) || st.writing || st.publishing) return;
+    st.publishing = true;
+    try {
+      const user = await session.verified();
+      if (!user || user.id !== service.user_id) throw new Error('identity');
+      await loadCategories();
+      if (owns(service) && session.user?.id === user.id) openEditor(user, service);
+    } catch { toast('Hizmet formu açılamadı. Oturumunuzu ve bağlantınızı kontrol edip yeniden deneyin.'); }
+    finally { st.publishing = false; }
+  }
+  // Kaldırma: kullanıcı yalnız 'archived' yazar (hidden moderasyona ayrılmış) — Hizmet Detay V1 kuralı.
+  async function remove(service) {
+    if (!owns(service) || st.writing) return;
+    if (!(await confirmBox({ title: 'Hizmeti kaldır', text: 'Bu hizmet aktif katalogdan kaldırılacak.', confirm: 'Kaldır' }))) return;
+    if (!owns(service)) return;
+    st.writing = true; session.writes++;
+    try {
+      const user = await session.verified();
+      if (!user || user.id !== service.user_id) throw new Error('identity');
+      const { data, error } = await db.from('professional_services').update({ status: 'archived' }).eq('id', service.id).eq('user_id', user.id).eq('status', 'active').select('id').single();
+      if (error || !data) throw error || new Error('unchanged');
+      emitService('removed', { id: service.id });
+      toast('Hizmet katalogdan kaldırıldı.');
+    } catch (e) { toast(e?.code === 'PGRST116' ? 'Hizmet artık aktif olmayabilir.' : 'Hizmet kaldırılamadı. Oturumunuzu ve hizmetin hâlâ aktif olduğunu kontrol edip tekrar deneyin.'); }
+    finally { st.writing = false; session.writes--; }
+  }
   function writeBusy(on) {
     st.writing = on; session.writes += on ? 1 : -1; dialogs.lock(ed.root, on);
     $$('input,select,textarea,button', ed.form).forEach(n => { n.disabled = on; });
@@ -3106,43 +3321,184 @@ function createServicesView() {
   async function save(e) {
     e.preventDefault();
     if (st.writing || !ed.form.reportValidity()) return;
-    const expected = st.editingUser;
+    const expected = st.editingUser, current = st.edit;
     const payload = { title: ed.title.value.trim(), category_id: ed.category.value, description: ed.description.value.trim(), service_region: ed.region.value.trim() || null, service_mode: ed.mode.value };
     if (!payload.title || !payload.description || !payload.category_id || !SERVICE_MODES[payload.service_mode]) { formError('Başlık, kategori, açıklama ve hizmet şeklini doldurun.'); return; }
     writeBusy(true); formError('');
-    let saved = null;
+    let saved = null, stale = false;
     try {
       const user = await session.verified();
       if (!user || user.id !== expected) throw new Error('identity');
-      if (await activeCount(user.id) >= CONFIG.maxActiveServices) { formError('En fazla 5 aktif hizmet yayınlayabilirsiniz. Hizmetlerim bölümünden bir hizmeti kaldırabilirsiniz.'); return; }
-      const result = await db.from('professional_services').insert({ ...payload, user_id: user.id, status: 'active' }).select('id').single();
-      if (result.error || !result.data) throw result.error || new Error('unchanged');
-      saved = result.data.id;
+      if (current) {
+        if (!owns(current) || user.id !== current.user_id) throw new Error('identity');
+        const { data, error } = await db.from('professional_services').update(payload).eq('id', current.id).eq('user_id', user.id).eq('status', 'active').select('id').single();
+        if (error || !data) throw error || new Error('unchanged');
+        saved = data.id;
+      } else {
+        if (await activeCount(user.id) >= CONFIG.maxActiveServices) { formError('En fazla 5 aktif hizmet yayınlayabilirsiniz. Hizmetlerim bölümünden bir hizmeti kaldırabilirsiniz.'); return; }
+        const result = await db.from('professional_services').insert({ ...payload, user_id: user.id, status: 'active' }).select('id').single();
+        if (result.error || !result.data) throw result.error || new Error('unchanged');
+        saved = result.data.id;
+      }
     } catch (error) {
+      stale = !!current && error?.code === 'PGRST116';
       let text = 'Hizmet kaydedilemedi. Lütfen yeniden deneyin.';
       if (error?.message === 'identity' || error?.code === '42501') text = 'Oturumunuz veya işlem yetkiniz değişti. Tekrar giriş yapıp deneyin.';
+      else if (stale) text = 'Hizmet artık aktif olmayabilir.';
       else if (/(?:5|max|limit).*(?:active|aktif|service|hizmet)|(?:active|aktif|service|hizmet).*(?:5|max|limit)/i.test(error?.message || '')) text = 'En fazla 5 aktif hizmet yayınlayabilirsiniz.';
       formError(text);
     } finally { writeBusy(false); }
+    if (stale) { dialogs.close(ed.root); emitService('removed', { id: current.id }); return; }
     if (!saved) return;
     dialogs.close(ed.root);
-    catalog.notice('Hizmet yayınlandı.');
-    st.invalidated = true; // geri dönüldüğünde katalog tazeden yüklenir
-    navigateTop(urls.service(saved));
+    emitService('saved', { id: saved, created: !current });
+    if (current) { toast('Hizmet güncellendi.'); return; }
+    toast('Hizmet yayınlandı.');
+    if (router.enabled) router.activate('service', { mode: 'push', params: { id: saved } });
+    else { st.invalidated = true; navigateTop(urls.service(saved)); }
   }
   ed.form.addEventListener('submit', save);
-  ed.root.addEventListener('close', () => { st.editingUser = null; });
+  ed.root.addEventListener('close', () => { st.editingUser = null; st.edit = null; });
   el.addEventListener('click', e => { if (e.target?.nodeType === 1 && e.target.closest('[data-publish]')) publish(); });
 
+  // Katalogdaki kart yerinde güncellenir / kaldırılır; liste yeniden yüklenmez, scroll kaymaz.
+  serviceBus.add(async (kind, x) => {
+    if (!catalog.isMounted()) return;
+    const rows = catalog.state.rows, i = rows.findIndex(r => r.id === x.id);
+    const node = catalog.ui.results.querySelector(`[data-service-id="${CSS.escape(x.id)}"]`);
+    if (kind === 'removed') { if (i >= 0) rows.splice(i, 1); node?.remove(); catalog.renderMeta(); loadHeroCount(); host.schedule(); return; }
+    if (kind !== 'saved') return;
+    if (x.created) { loadHeroCount(); catalog.load(); return; }
+    if (i < 0) return;
+    try {
+      const { data } = await db.from('professional_services').select(SELECT).eq('id', x.id).eq('status', 'active').maybeSingle();
+      if (!data) { rows.splice(i, 1); node?.remove(); catalog.renderMeta(); return; }
+      rows[i] = data; if (node) node.outerHTML = serviceCard(data);
+      host.schedule();
+    } catch {}
+  });
+
   return {
-    name: 'services', el, publish,
-    mount(snap) { loadCategories().catch(() => {}); return catalog.mount(st.invalidated ? null : snap); },
+    name: 'services', el, publish, edit, remove,
+    mount(snap) { loadCategories().catch(() => {}); loadHeroCount(); return catalog.mount(st.invalidated ? null : snap); },
     onSession(kind) {
       if (kind !== 'user') return;
       if (!st.writing) { if (ed.root.open) dialogs.close(ed.root); if (limit.root.open) dialogs.close(limit.root); }
     },
     snapshot: () => (st.invalidated ? null : catalog.snapshot()),
     isMounted: catalog.isMounted
+  };
+}
+
+/* =========================================================================
+   11a. Görünüm: Hizmet Detay (/hizmet-detay?id={service_id})
+   Hizmet Detay V1 verisi ve kuralları: yalnız status=active hizmet okunur; sahibi Düzenle / Kaldır
+   (archived) yapar; sağlayıcı telefonu yalnız profilde herkese açık seçildiyse (show_phone_publicly)
+   Profil ile aynı sorguyla okunur.
+   ========================================================================= */
+function createServiceView() {
+  const el = $('[data-view="service"]');
+  const statusBox = $('[data-service-status]', el), main = $('[data-service-main]', el);
+  const headBox = $('[data-service-head]', el), side = $('[data-service-side]', el), body = $('[data-service-body]', el), more = $('[data-service-more]', el);
+  const owner = $('[data-service-owner]', el);
+  const SELECT = 'id,user_id,title,category_id,description,service_region,service_mode,status,created_at,updated_at,category:professional_service_categories(id,name,slug),provider:profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company,city,show_phone_publicly)';
+  const s = { id: '', rev: 0, service: null, phone: null, mounted: false };
+  const owns = v => !!v && v.status === 'active' && v.user_id === session.user?.id;
+  const date = v => { try { return new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(v)); } catch { return ''; } };
+
+  function showStatus(title, text = '', retry = false) {
+    statusBox.innerHTML = title ? `<strong>${esc(title)}</strong>${text ? `<p>${esc(text)}</p>` : ''}<div class="k-empty-actions">${retry ? '<button type="button" class="k-btn" data-service-action="retry">Yeniden dene</button>' : ''}<a class="k-btn" href="${esc(urls.view('services'))}" target="_top" data-view-link="services">Hizmetlere Dön</a></div>` : '';
+    statusBox.hidden = !title; main.hidden = !!title; more.hidden = true; owner.hidden = true;
+    host.schedule();
+  }
+  function renderOwner() { owner.hidden = !owns(s.service); }
+  function render() {
+    const v = s.service, p = v.provider || null;
+    const phone = p?.show_phone_publicly ? s.phone : null, digits = phone ? phoneDigits(phone) : '';
+    headBox.innerHTML = `<p class="ks-cat">${esc(v.category?.name || 'Hizmet')}</p><h1 id="khTitle">${esc(v.title)}</h1>`
+      + `<div class="kh-meta">${modeMeta(v.service_mode)}${placeMeta(v.service_region)}${v.created_at ? `<span class="k-meta-item">Yayın: ${esc(date(v.created_at))}</span>` : ''}</div>`;
+    body.innerHTML = `<h2 class="kh-label">Hizmet hakkında</h2><div class="kh-desc">${esc(v.description)}</div>`
+      + `<dl class="kh-facts">${[['Kategori', v.category?.name], ['Hizmet şekli', SERVICE_MODES[v.service_mode]], ['Hizmet bölgesi', v.service_region], ['Yayın tarihi', v.created_at ? date(v.created_at) : '']].filter(([, x]) => clean(x)).map(([k, x]) => `<div><dt>${k}</dt><dd>${esc(x)}</dd></div>`).join('')}</dl>`;
+    const line = p ? compact([identity.role(p), identity.statusShort(p)]) : '';
+    side.innerHTML = `<div class="kh-card">`
+      + `<p class="kh-label">Hizmeti sunan profesyonel</p>`
+      + (p ? `<a class="kh-pro" href="${esc(urls.profile(v.user_id))}" target="_top">${avatar(p, 'xl')}<span class="kh-pro-copy"><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${line ? `<span>${esc(line)}</span>` : ''}${compact([p.current_company, p.city]) ? `<small>${esc(compact([p.current_company, p.city]))}</small>` : ''}</span></a>`
+        : '<p class="k-hint">Profesyonel bilgileri şu anda görüntülenemiyor.</p>')
+      + `<div class="kh-actions">`
+      + (digits ? `<a class="k-btn k-btn-primary k-btn-block" href="https://wa.me/${esc(digits)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:currentColor;stroke:none">${SOCIAL_ICONS.whatsapp}</svg>WhatsApp ile yaz</a><a class="k-btn k-btn-block" href="tel:+${esc(digits)}">${PICONS.phone}${esc(phoneDisplay(phone))}</a>` : '')
+      + `<a class="k-btn ${digits ? '' : 'k-btn-primary '}k-btn-block" href="${esc(urls.profile(v.user_id))}" target="_top">Profili Gör</a>`
+      + `<button type="button" class="k-btn k-btn-block" data-service-action="share">${ICONS.share}Hizmeti Paylaş</button></div>`
+      + (digits ? '' : '<p class="kh-note">İletişim bilgileri profesyonelin izin verdiği ölçüde gösterilir; profilinden ulaşabilirsin.</p>')
+      + `</div>`;
+    renderOwner();
+    statusBox.hidden = true; main.hidden = false;
+    host.schedule();
+  }
+  async function loadMore(v, rev) {
+    try {
+      const { data, error } = await db.from('professional_services').select('id,user_id,title,description,service_region,service_mode,status,created_at,category:professional_service_categories(id,name)').eq('user_id', v.user_id).eq('status', 'active').neq('id', v.id).order('created_at', { ascending: false }).limit(3);
+      if (rev !== s.rev || error || !data?.length) { if (rev === s.rev) more.hidden = true; return; }
+      const first = clean(v.provider?.full_name).split(/\s+/)[0];
+      more.innerHTML = `<h2 class="kh-more-title">${esc(first ? `${first} tarafından sunulan diğer hizmetler` : 'Aynı profesyonelin diğer hizmetleri')}</h2><div class="kc-results ks-grid">${data.map(x => serviceCard(x, { provider: false })).join('')}</div>`;
+      more.hidden = false; host.schedule();
+    } catch { if (rev === s.rev) more.hidden = true; }
+  }
+  function setDocTitle() {
+    if (!router.enabled || router.current !== 'service' || !s.service) return;
+    try { host.doc.title = `${s.service.title} | Kırmızı İSG`; } catch {}
+  }
+  async function load(id) {
+    const rev = ++s.rev;
+    s.id = id; s.service = null; s.phone = null; owner.hidden = true; more.hidden = true;
+    if (!UUID_RE.test(id)) { showStatus('Hizmet bulunamadı'); return; }
+    statusBox.hidden = true; main.hidden = false;
+    headBox.innerHTML = '<i class="k-sk k-sk-short"></i><i class="k-sk kh-sk-title"></i><i class="k-sk k-sk-short"></i>';
+    body.innerHTML = '<i class="k-sk"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i>'; side.innerHTML = '<div class="kh-card"><div class="kc-sk-top"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div></div>';
+    host.schedule();
+    try {
+      await dbReady;
+      const { data, error } = await db.from('professional_services').select(SELECT).eq('id', id).eq('status', 'active').maybeSingle();
+      if (rev !== s.rev) return;
+      if (error) throw error;
+      if (!data || data.status !== 'active') { showStatus('Hizmet bulunamadı', 'Bu hizmet kaldırılmış veya artık yayında olmayabilir.'); return; }
+      let phone = null;
+      if (data.provider?.show_phone_publicly) {
+        const r = await db.from('profiles').select('phone').eq('id', data.user_id).eq('show_phone_publicly', true).maybeSingle();
+        if (!r.error) phone = r.data?.phone || null;
+      }
+      await session.ready;
+      if (rev !== s.rev) return;
+      s.service = data; s.phone = phone;
+      render(); setDocTitle(); loadMore(data, rev);
+    } catch { if (rev === s.rev) showStatus('Hizmet şu anda yüklenemedi', 'Bağlantınızı kontrol edip yeniden deneyin.', true); }
+  }
+  async function route(params = {}) {
+    const id = clean(params.id);
+    if (id && id === s.id && (s.service || s.rev)) { setDocTitle(); return; }
+    await load(id);
+  }
+  el.addEventListener('click', e => {
+    const a = e.target?.nodeType === 1 ? e.target.closest('[data-service-action]') : null; if (!a) return;
+    closePopovers();
+    const v = s.service;
+    switch (a.dataset.serviceAction) {
+      case 'share': if (v) shareLink({ url: urls.service(v.id), title: v.title, text: compact([v.title, v.provider?.full_name], ' — '), copied: 'Hizmet bağlantısı kopyalandı.' }); break;
+      case 'edit': VIEWS.services.edit(v); break;
+      case 'remove': VIEWS.services.remove(v); break;
+      case 'retry': load(s.id); break;
+    }
+  });
+  serviceBus.add((kind, x) => {
+    if (x.id !== s.id || !s.service) return;
+    if (kind === 'removed') { s.service = null; showStatus('Hizmet yayından kaldırıldı', 'Bu hizmet artık katalogda görünmüyor.'); }
+    else if (kind === 'saved') { s.rev++; const id = s.id; s.id = ''; load(id); }
+  });
+  shellHooks.avatarChanged = ((prev) => (uid, url) => { prev(uid, url); if (s.service?.provider && s.service.user_id === uid) s.service.provider.avatar_url = url; })(shellHooks.avatarChanged);
+  return {
+    name: 'service', el, route,
+    mount() { s.mounted = true; return Promise.resolve(); },
+    onSession() { if (s.service) render(); },
+    snapshot: () => null, isMounted: () => s.mounted
   };
 }
 
@@ -3652,6 +4008,13 @@ function createProfileView() {
     } catch {}
   }
 
+  // Hizmet düzenlendi/kaldırıldı/yayınlandı: açık profildeki "Verdiği Hizmetler" tazelenir.
+  serviceBus.add(() => {
+    if (!s.profile || s.servicesState === 'idle') return;
+    s.servicesState = 'idle';
+    if (s.tab === 'hizmetler') loadServices(); else loadCounts(s.rev);
+  });
+
   /* ---- Yükleme ---- */
   async function fetchProfile(id) {
     const run = () => db.from('profiles').select(PROFILE_BASE + (s.withExperience ? ',experience_range' : '')).eq('id', id).maybeSingle();
@@ -3982,7 +4345,7 @@ function createWorkView() {
 /* =========================================================================
    12. Görünümler + oturum aboneliği
    ========================================================================= */
-const VIEWS = { works: createWorksView(), experts: createExpertsView(), services: createServicesView(), profile: createProfileView(), work: createWorkView() };
+const VIEWS = { works: createWorksView(), experts: createExpertsView(), services: createServicesView(), profile: createProfileView(), work: createWorkView(), service: createServiceView() };
 session.on(kind => {
   authUI.render(kind);
   if (kind === 'user') composer.onSession();
@@ -4009,13 +4372,14 @@ const router = (() => {
   const tabOf = hash => (/^#?hizmetler$/i.test(hash || '') ? 'hizmetler' : /^#?calismalar$/i.test(hash || '') ? 'calismalar' : '');
   const paramsOf = url => ({ id: url.searchParams.get('id') || '', tab: tabOf(url.hash) });
   // Kimlik parametreli görünümler: Profil (/profil?id=) ve Çalışma Detay (/calisma-detay?id=).
-  const PARAM_VIEWS = ['profile', 'work'];
+  const PARAM_VIEWS = ['profile', 'work', 'service'];
   const keyOf = (name, p = {}) => (PARAM_VIEWS.includes(name) ? `${name}:${p.id || ''}` : name);
   const pathOf = (name, p = {}) => (PARAM_VIEWS.includes(name) ? `${CONFIG.routes[name]}${p.id ? `?id=${encodeURIComponent(p.id)}` : ''}${name === 'profile' && p.tab ? '#' + p.tab : ''}` : CONFIG.routes[name]);
-  const paramsFor = (name, p = {}) => (name === 'profile' ? { id: clean(p.id), tab: tabOf(p.tab) } : name === 'work' ? { id: clean(p.id) } : {});
+  const paramsFor = (name, p = {}) => (name === 'profile' ? { id: clean(p.id), tab: tabOf(p.tab) } : name === 'work' || name === 'service' ? { id: clean(p.id) } : {});
   const stateOf = () => ({ kisgShell: { view: current, doc: bootId, params: { ...params } } });
   function setTabs(name) {
-    if (name === 'work') name = 'works';   // detay, Çalışmalar sekmesinin parçası
+    if (name === 'work') name = 'works';   // detaylar, kendi sekmesinin parçası
+    if (name === 'service') name = 'services';
     navEl.querySelectorAll('.ka-tab').forEach(a => {
       const on = a.dataset.viewLink === name;
       a.classList.toggle('is-active', on);
@@ -4047,6 +4411,7 @@ const router = (() => {
     ensureMounted(name);
     if (name === 'profile') VIEWS.profile.route({ ...params });
     if (name === 'work') VIEWS.work.route({ ...params });
+    if (name === 'service') VIEWS.service.route({ ...params });
   }
   function activate(name, { mode = 'push', params: next = {} } = {}) {
     if (!VIEWS[name]) return;
