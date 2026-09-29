@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.9.4
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.10.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,9 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.10.0: Kullanıcıya görünen terminoloji "Çalışma" → "Post" (teknik adlar, tablolar ve /calisma-detay route'u aynı).
+ Uzmanlar ve Hizmet Bul'da serbest metin şehir/bölge alanı yerine 81 il + "Tüm Şehirler" aramalı seçici;
+ Uzmanlar profiles.city, Hizmet Bul service_region üzerinde Türkçe yazım varyantlarıyla (İstanbul/istanbul/Istanbul) eşleşir.
 v4.9.4: Dialog/overlay düzeltmesi. Scroll kilidi Hostinger'ın html,body{height:100%} kuralında body'yi görünen alan
  kadar kırpıyordu (dialog açıkken ekranın altı beyaz). Görüntüleyici başka bir dialog için kapanınca geçmiş
  kaydını geri alırken oluşan popstate yeni açılan giriş penceresini kapatıyordu. Yan paneller dialog açıkken gizlenir.
@@ -110,7 +113,7 @@ Acil kapatma: CONFIG.historyRouting=false.
         <button class="ka-account-toggle" type="button" data-popover-trigger aria-label="Hesabım" aria-expanded="false" aria-controls="kaAccountMenu"><span class="k-avatar k-avatar-sm" data-me-avatar></span><span class="ka-me-name" data-me-name></span><svg class="ka-chevron" aria-hidden="true" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg></button>
         <div id="kaAccountMenu" class="k-popover ka-account-menu" hidden>
           <a data-me-link="profile" target="_top">Profilim</a>
-          <a data-me-link="works" target="_top">Çalışmalarım</a>
+          <a data-me-link="works" target="_top">Postlarım</a>
           <a data-me-link="services" target="_top">Hizmetlerim</a>
           <button type="button" data-action="avatar">Profil fotoğrafı</button>
           <button type="button" data-action="signout">Çıkış</button>
@@ -143,21 +146,21 @@ Acil kapatma: CONFIG.historyRouting=false.
     <div class="kw-feed">
       <div class="kw-sheet">
         <div class="kw-composer">
-          <button class="kw-composer-main" type="button" data-composer aria-label="Yeni Çalışma paylaş">
+          <button class="kw-composer-main" type="button" data-composer aria-label="Yeni Post paylaş">
             <span class="k-avatar k-avatar-md" data-composer-avatar aria-hidden="true"></span>
-            <span class="kw-composer-field"><span class="kw-composer-desktop">Sahada ne yaptın? Bir Çalışma paylaş…</span><span class="kw-composer-mobile">Çalışma paylaş…</span></span>
+            <span class="kw-composer-field"><span class="kw-composer-desktop">Sahada ne yaptın? Bir Post paylaş…</span><span class="kw-composer-mobile">Post paylaş…</span></span>
           </button>
-          <button type="button" class="kw-tool" data-composer data-composer-intent="photo" aria-label="Fotoğraflı Çalışma paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span>Fotoğraf</span></button>
-          <button type="button" class="k-btn k-btn-primary kw-composer-cta" data-composer aria-label="Yeni Çalışma"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Paylaş</span></button>
+          <button type="button" class="kw-tool" data-composer data-composer-intent="photo" aria-label="Fotoğraflı Post paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span>Fotoğraf</span></button>
+          <button type="button" class="k-btn k-btn-primary kw-composer-cta" data-composer aria-label="Yeni Post"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Paylaş</span></button>
         </div>
-        <button type="button" class="kw-newposts" data-new-posts data-place="pill" hidden aria-live="polite"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 19V5m0 0-6 6m6-6 6 6"/></svg><span data-new-posts-label>Yeni Çalışma</span></button>
+        <button type="button" class="kw-newposts" data-new-posts data-place="pill" hidden aria-live="polite"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 19V5m0 0-6 6m6-6 6 6"/></svg><span data-new-posts-label>Yeni Post</span></button>
         <p class="kw-live" data-live hidden><span class="kw-live-dot" aria-hidden="true"></span><span data-live-text></span></p>
         <div class="kw-notice" data-notice role="alert" hidden></div>
         <div class="kw-list" data-list aria-live="polite">
           <div class="kw-post kw-sk" aria-hidden="true"><div class="kw-sk-head"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i><i class="k-sk k-sk-media"></i></div>
           <div class="kw-post kw-sk" aria-hidden="true"><div class="kw-sk-head"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>
         </div>
-        <button class="kw-load-more" type="button" data-more hidden>Daha fazla Çalışma göster</button>
+        <button class="kw-load-more" type="button" data-more hidden>Daha fazla Post göster</button>
       </div>
     </div>
 
@@ -250,7 +253,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 </section>
 
 <!-- ÇALIŞMA DETAY (/calisma-detay?id=) -->
-<section class="ka-view kd" data-view="work" hidden aria-label="Çalışma Detay">
+<section class="ka-view kd" data-view="work" hidden aria-label="Post Detay">
   <div class="k-page kd-page">
     <a class="kd-back" href="https://isgcalisanplatformu.com/" target="_top" data-view-link="works"><span aria-hidden="true">←</span> Akışa Dön</a>
     <div class="k-empty kd-state" data-work-status role="status" hidden></div>
@@ -266,20 +269,20 @@ Acil kapatma: CONFIG.historyRouting=false.
       <aside class="kp-side" data-profile-card aria-label="Kişi kartı"></aside>
       <div class="kp-main">
         <div class="kp-tabs" role="tablist" aria-label="Profil içerikleri">
-          <button type="button" role="tab" id="kpTabWorks" aria-controls="kpPanelWorks" aria-selected="true" data-profile-tab="calismalar">Çalışmalar<span class="kp-count" data-count></span></button>
+          <button type="button" role="tab" id="kpTabWorks" aria-controls="kpPanelWorks" aria-selected="true" data-profile-tab="calismalar">Postlar<span class="kp-count" data-count></span></button>
           <button type="button" role="tab" id="kpTabServices" aria-controls="kpPanelServices" aria-selected="false" tabindex="-1" data-profile-tab="hizmetler">Verdiği Hizmetler<span class="kp-count" data-count></span></button>
         </div>
         <div class="kp-panel" id="kpPanelWorks" role="tabpanel" aria-labelledby="kpTabWorks" data-profile-panel="calismalar">
           <div class="kw-sheet kp-sheet">
             <div class="kw-composer kp-compose" data-profile-compose hidden>
-              <button class="kw-composer-main" type="button" data-profile-action="compose" aria-label="Yeni Çalışma paylaş">
+              <button class="kw-composer-main" type="button" data-profile-action="compose" aria-label="Yeni Post paylaş">
                 <span class="k-avatar k-avatar-md" data-profile-compose-avatar aria-hidden="true"></span>
-                <span class="kw-composer-field"><span>Sahada ne yaptın? Bir Çalışma paylaş…</span></span>
+                <span class="kw-composer-field"><span>Sahada ne yaptın? Bir Post paylaş…</span></span>
               </button>
-              <button type="button" class="kw-tool" data-profile-action="compose" data-intent="photo" aria-label="Fotoğraflı Çalışma paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span>Fotoğraf</span></button>
+              <button type="button" class="kw-tool" data-profile-action="compose" data-intent="photo" aria-label="Fotoğraflı Post paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span>Fotoğraf</span></button>
             </div>
             <div class="kw-list" data-profile-posts aria-live="polite"></div>
-            <button class="kw-load-more" type="button" data-profile-posts-more hidden>Daha fazla Çalışma göster</button>
+            <button class="kw-load-more" type="button" data-profile-posts-more hidden>Daha fazla Post göster</button>
           </div>
         </div>
         <div class="kp-panel" id="kpPanelServices" role="tabpanel" aria-labelledby="kpTabServices" data-profile-panel="hizmetler" hidden>
@@ -301,7 +304,7 @@ Acil kapatma: CONFIG.historyRouting=false.
   <div class="k-dialog-body">
     <div class="ku-steps" data-auth-steps hidden aria-hidden="true"><span></span><span></span></div>
     <h2 id="kaLoginTitle">Kırmızı İSG'ye giriş yap</h2>
-    <p class="k-login-lead" data-auth-lead>Çalışmalarını paylaş, meslektaşlarını keşfet, hizmetlerini yayınla.</p>
+    <p class="k-login-lead" data-auth-lead>Postlarını paylaş, meslektaşlarını keşfet, hizmetlerini yayınla.</p>
     <div class="ku-tabs" role="tablist" aria-label="Hesap" data-auth-tabs>
       <button type="button" role="tab" data-auth-go="login" aria-selected="true">Giriş Yap</button>
       <button type="button" role="tab" data-auth-go="signup" aria-selected="false">Kayıt Ol</button>
@@ -403,20 +406,20 @@ Acil kapatma: CONFIG.historyRouting=false.
 
 <dialog id="kaPostDialog" class="k-dialog k-dialog-lg" aria-labelledby="kaPostTitle">
   <form id="kaPostForm">
-    <header class="k-dialog-head"><h2 id="kaPostTitle">Yeni Çalışma</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
+    <header class="k-dialog-head"><h2 id="kaPostTitle">Yeni Post</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
     <div class="k-dialog-body">
-      <label class="k-sr" for="kaPostContent">Çalışma metni</label>
+      <label class="k-sr" for="kaPostContent">Post metni</label>
       <textarea id="kaPostContent" class="k-input k-textarea k-composer-text" maxlength="5000" placeholder="Bugün sahada ne yaptın, ne gördün, ne öğrendin?"></textarea>
       <div id="kaPostPreview" class="k-image-preview" hidden><img alt="Seçilen görsel önizlemesi"><button type="button" data-remove-image>Fotoğrafı Kaldır</button></div>
       <div class="k-composer-row">
         <label class="k-file-button"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span data-photo-label>Fotoğraf Ekle</span><input id="kaPostImage" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"></label>
-        <label class="k-sr" for="kaPostCategory">Çalışma Alanı</label>
+        <label class="k-sr" for="kaPostCategory">Post Kategorisi</label>
         <select id="kaPostCategory" class="k-input k-select-inline"><option value="">Kategori seçme</option></select>
       </div>
       <p class="k-hint">Metin veya tek bir görsel yeterli. Kategori isteğe bağlı.</p>
       <div id="kaPostError" class="k-form-error" role="alert" hidden></div>
     </div>
-    <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button id="kaPostSubmit" type="submit" class="k-btn k-btn-primary">Çalışmayı Yayınla</button></footer>
+    <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button id="kaPostSubmit" type="submit" class="k-btn k-btn-primary">Post Yayınla</button></footer>
   </form>
 </dialog>
 
@@ -502,8 +505,8 @@ Acil kapatma: CONFIG.historyRouting=false.
   </form>
 </dialog>
 
-<dialog id="kaMediaDialog" class="k-dialog k-media-dialog" aria-label="Çalışma görseli" tabindex="-1" autofocus>
-  <header class="k-dialog-head"><a class="k-media-open" data-media-work target="_top">Çalışmayı Gör <span aria-hidden="true">→</span></a><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
+<dialog id="kaMediaDialog" class="k-dialog k-media-dialog" aria-label="Post görseli" tabindex="-1" autofocus>
+  <header class="k-dialog-head"><a class="k-media-open" data-media-work target="_top">Postu Gör <span aria-hidden="true">→</span></a><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
   <div class="k-media-stage"><img alt="" data-media-img></div>
 </dialog>
 
@@ -806,6 +809,27 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kc-filters-inline input::placeholder{color:var(--muted)}
 #kisgApp .kc-filters-inline select{padding-right:34px;-webkit-appearance:none;appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d6878' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 12px center/16px}
 #kisgApp .kc-filters-inline .is-set :is(input,select){box-shadow:inset 0 0 0 1.5px var(--ink)}
+#kisgApp .kc-field-city{position:relative}
+#kisgApp .kc-city-native{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;border:0!important;opacity:0;pointer-events:none;clip:rect(0,0,0,0)}
+#kisgApp .kc-city-btn{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;width:100%;color:var(--ink);font-weight:650;text-align:left;white-space:nowrap;cursor:pointer}
+#kisgApp .kc-city-btn span{overflow:hidden;text-overflow:ellipsis}
+#kisgApp .kc-city-btn svg{flex:none;width:16px;height:16px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;transition:transform var(--t-fast)}
+#kisgApp .kc-city-btn[aria-expanded="true"] svg{transform:rotate(180deg)}
+#kisgApp .kc-filters-inline .kc-city-btn{width:170px;height:38px;padding:0 12px 0 14px;border:0;border-radius:var(--r-pill);background:#fff;box-shadow:inset 0 0 0 1px var(--line);font-size:13.5px}
+#kisgApp .kc-filters-inline .kc-field-city.is-set .kc-city-btn{box-shadow:inset 0 0 0 1.5px var(--ink)}
+#kisgApp .kc-filters-inline .kc-city-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;width:260px;padding:8px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:var(--shadow-pop)}
+#kisgApp .kc-field-city .kc-city-q,#kisgApp :is(.kc-filters-inline,.kc-filters-stack) .kc-field-city .kc-city-q{display:block;width:100%;height:40px;min-height:0;padding:0 12px;border:1px solid var(--line-strong);border-radius:10px;background:#fff;box-shadow:none;color:var(--ink);font-size:14px;font-weight:500;outline:none}
+#kisgApp .kc-field-city .kc-city-q:focus,#kisgApp :is(.kc-filters-inline,.kc-filters-stack) .kc-field-city .kc-city-q:focus{border-color:var(--ink);box-shadow:0 0 0 3px rgba(20,26,36,.08);outline:none}
+#kisgApp .kc-city-list{max-height:264px;margin:6px 0 0;padding:0;overflow:auto;list-style:none;overscroll-behavior:contain}
+#kisgApp .kc-city-list li{padding:9px 10px;border-radius:8px;color:var(--text);font-size:14px;cursor:pointer}
+#kisgApp .kc-city-list li.is-active{background:var(--surface-2)}
+#kisgApp .kc-city-list li[aria-selected="true"]{color:var(--red-text);font-weight:700}
+#kisgApp .kc-city-list .kc-city-none{color:var(--muted);cursor:default}
+#kisgApp .kc-filters-stack .kc-city-btn{min-height:48px;padding:0 14px;border:1px solid var(--line-strong);border-radius:12px;background:#fff;font-size:16px;font-weight:400}
+#kisgApp .kc-filters-stack .kc-city-pop{margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+#kisgApp .kc-filters-stack .kc-field-city .kc-city-q{height:46px;font-size:16px}
+#kisgApp .kc-filters-stack .kc-city-list{max-height:min(300px,42dvh)}
+#kisgApp .kc-filters-stack .kc-city-list li{padding:12px 10px;font-size:15.5px}
 #kisgApp .kc-filters-stack{display:grid;gap:16px}
 #kisgApp .kc-filters-stack .kc-field{display:grid;gap:6px}
 #kisgApp .kc-filters-stack .kc-flabel{color:var(--text);font-size:13px;font-weight:650}
@@ -1142,6 +1166,7 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp :is(.cp-name,.cp-text):hover{color:var(--ink)}
   #kisgApp .cp-name:hover{text-decoration:underline;text-underline-offset:2px}
   #kisgApp .cp-all:hover{color:var(--ink)}
+  #kisgApp .kc-city-list li:hover{background:var(--surface-2)}
   #kisgApp .cp-all:hover span{transform:translateX(3px)}
   #kisgApp .kc-card:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px var(--line-strong),var(--shadow-hover)}
   #kisgApp .ke-card:hover .k-avatar{box-shadow:0 0 0 3px #fff,0 0 0 5px var(--ink)}
@@ -1344,7 +1369,7 @@ const CONFIG = Object.freeze({
   legal: { terms: '', privacy: '' },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.9.4',
+  version: '4.10.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -1369,7 +1394,7 @@ const CONFIG = Object.freeze({
   // WebKit (iPhone/Safari) canvas'tan WebP üretemez; bu cihazlarda aynı yola JPEG yüklenir.
   allowJpegFallback: true
 });
-const LABELS = { works: 'Akış', experts: 'Uzmanlar', services: 'Hizmet Bul', profile: 'Profil', work: 'Çalışma', service: 'Hizmet' };
+const LABELS = { works: 'Akış', experts: 'Uzmanlar', services: 'Hizmet Bul', profile: 'Profil', work: 'Post', service: 'Hizmet' };
 // Mesleki Belge / Statü: [certificate_class değeri, etiket]. A/B/C mevcut veriyle aynı (tek harf) yazılır.
 const STATUS_OPTIONS = [['A', 'A Sınıfı'], ['B', 'B Sınıfı'], ['C', 'C Sınıfı'], ['İşyeri Hekimi', 'İşyeri Hekimi'], ['DSP', 'DSP (Diğer Sağlık Personeli)']];
 const SERVICE_MODES = { onsite: 'Yerinde', remote: 'Uzaktan', both: 'Yerinde + Uzaktan' };
@@ -1445,11 +1470,75 @@ function errorText(error, fallback) {
   const m = String(error?.message || '');
   if (/row-level security|JWT|not authenticated/i.test(m)) return 'Bu işlem için giriş yapmalısınız.';
   if (/duplicate key/i.test(m)) return 'Bu işlem zaten yapılmış.';
-  if (/maximum|en fazla|profile_featured_order/i.test(m)) return 'En fazla 3 Çalışmayı öne çıkarabilirsiniz.';
+  if (/maximum|en fazla|profile_featured_order/i.test(m)) return 'En fazla 3 Postu öne çıkarabilirsiniz.';
   return fallback || 'İşlem tamamlanamadı. Lütfen tekrar deneyin.';
 }
 const readValues = box => Object.fromEntries($$('[data-filter]', box).map(i => [i.dataset.filter, i.value.trim()]));
-const writeValues = (box, values) => $$('[data-filter]', box).forEach(i => { i.value = values?.[i.dataset.filter] || ''; });
+const writeValues = (box, values) => $$('[data-filter]', box).forEach(i => { i.value = values?.[i.dataset.filter] || ''; if (i.matches('.kc-city-native')) cityPicker.sync(i); });
+
+/* Şehir seçici (Uzmanlar + Hizmet Bul filtreleri): 81 il, "Tüm Şehirler", arama kutulu açılır liste.
+   Değerin kaynağı gizli native <select data-filter> — mevcut readValues/writeValues ve mobil filtre penceresi aynen çalışır.
+   Arama Türkçe karakterden bağımsızdır (istanbul / İstanbul / Istanbul). */
+const trFold = v => String(v || '').toLocaleLowerCase('tr-TR').replace(/[çğıöşüâîû]/g, c => ({ ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', â: 'a', î: 'i', û: 'u' })[c]).replace(/\u0307/g, '');
+// Veritabanında aynı il farklı yazılmış olabilir (İstanbul / istanbul / İSTANBUL / Istanbul); ILIKE Türkçe İ/ı'yı
+// tek başına eşlemez — bu yüzden tüm yazımlar tek bir or(...) koşulunda aranır.
+const cityVariants = v => [...new Set([v, v.toLocaleLowerCase('tr-TR'), v.toLocaleUpperCase('tr-TR'), v.replace(/[ÇĞİÖŞÜçğıöşü]/g, c => ({ Ç: 'C', Ğ: 'G', İ: 'I', Ö: 'O', Ş: 'S', Ü: 'U', ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u' })[c])])];
+const cityClause = (column, city) => 'or(' + cityVariants(city).map(v => column + '.ilike.' + quote(likePattern(v))).join(',') + ')';
+const cityPicker = (() => {
+  const chevron = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg>';
+  function markup(id, key) {
+    return `<div class="kc-field kc-field-city" data-city-picker><span class="kc-flabel" id="${id}-label">Şehir</span>`
+      + `<select id="${id}" data-filter="${key}" class="kc-city-native" tabindex="-1" aria-hidden="true"><option value="">Tüm Şehirler</option>${CITIES.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}</select>`
+      + `<button type="button" class="kc-city-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="${id}-label ${id}-value"><span id="${id}-value" data-city-value>Tüm Şehirler</span>${chevron}</button>`
+      + `<div class="kc-city-pop" hidden><input type="search" class="kc-city-q" placeholder="Şehir ara…" aria-label="Şehir ara" autocomplete="off" enterkeyhint="search" data-city-q><ul class="kc-city-list" role="listbox" aria-label="Şehirler" data-city-list></ul></div></div>`;
+  }
+  const parts = sel => { const w = sel.closest('[data-city-picker]'); return w && { w, sel, btn: $('.kc-city-btn', w), pop: $('.kc-city-pop', w), q: $('[data-city-q]', w), list: $('[data-city-list]', w) }; };
+  function sync(sel) { const x = parts(sel); if (!x) return; $('[data-city-value]', x.w).textContent = sel.value || 'Tüm Şehirler'; x.w.classList.toggle('is-set', !!sel.value); }
+  function renderList(x) {
+    const q = trFold(x.q.value.trim()), cur = x.sel.value;
+    const items = [['', 'Tüm Şehirler'], ...CITIES.map(c => [c, c])].filter(([v, l]) => !q || (v && trFold(l).includes(q)));
+    x.list.innerHTML = items.length
+      ? items.map(([v, l], i) => `<li role="option" data-city="${esc(v)}" aria-selected="${v === cur}" class="${i === 0 ? 'is-active' : ''}">${esc(l)}</li>`).join('')
+      : '<li class="kc-city-none" aria-disabled="true">Şehir bulunamadı</li>';
+  }
+  function close(x, focus) { if (!x || x.pop.hidden) return; x.pop.hidden = true; x.btn.setAttribute('aria-expanded', 'false'); if (focus) x.btn.focus({ preventScroll: true }); host.schedule(); }
+  function closeAll(except) { $$('[data-city-picker] .kc-city-pop:not([hidden])').forEach(p => { const x = parts($('.kc-city-native', p.closest('[data-city-picker]'))); if (x && x.w !== except) close(x); }); }
+  function open(x) {
+    closeAll(x.w); x.q.value = ''; renderList(x);
+    x.pop.hidden = false; x.btn.setAttribute('aria-expanded', 'true');
+    $('[aria-selected="true"]', x.list)?.scrollIntoView({ block: 'nearest' });
+    if (window.matchMedia('(hover:hover) and (pointer:fine)').matches) x.q.focus({ preventScroll: true });
+    host.schedule();
+  }
+  function choose(x, value) {
+    x.sel.value = value; sync(x.sel); close(x, true);
+    x.sel.dispatchEvent(new Event('input', { bubbles: true }));
+    x.sel.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  root.addEventListener('click', e => {
+    const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
+    const w = t.closest('[data-city-picker]');
+    if (!w) { closeAll(); return; }
+    const x = parts($('.kc-city-native', w));
+    if (t.closest('.kc-city-btn')) { x.pop.hidden ? open(x) : close(x); return; }
+    const li = t.closest('[data-city]'); if (li) choose(x, li.dataset.city);
+  });
+  root.addEventListener('input', e => { if (e.target?.matches?.('[data-city-q]')) { e.stopPropagation(); renderList(parts($('.kc-city-native', e.target.closest('[data-city-picker]')))); } }, true);
+  root.addEventListener('keydown', e => {
+    const w = e.target?.closest?.('[data-city-picker]'); if (!w) return;
+    const x = parts($('.kc-city-native', w));
+    if (e.key === 'Escape' && !x.pop.hidden) { e.preventDefault(); e.stopPropagation(); close(x, true); return; }
+    if (x.pop.hidden) { if ((e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') && e.target === x.btn) { e.preventDefault(); open(x); } return; }
+    const opts = $$('[data-city]', x.list), i = opts.findIndex(o => o.classList.contains('is-active'));
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault(); if (!opts.length) return;
+      const n = e.key === 'ArrowDown' ? Math.min(opts.length - 1, i + 1) : Math.max(0, i - 1);
+      opts.forEach((o, k) => o.classList.toggle('is-active', k === n)); opts[n].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') { e.preventDefault(); const o = opts[Math.max(0, i)]; if (o) choose(x, o.dataset.city); }
+    else if (e.key === 'Tab') close(x);
+  }, true);
+  return { markup, sync };
+})();
 
 const ICONS = {
   user: '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg>',
@@ -2059,8 +2148,8 @@ const authUI = (() => {
   const ONBOARD_KEY = 'kisg:onboarding:v1', ONBOARD_TTL = 14 * 864e5, MIN_PASSWORD = 8, RESEND_SECONDS = 60;
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const TEXT = {
-    login: ["Kırmızı İSG'ye giriş yap", 'Çalışmalarını paylaş, meslektaşlarını keşfet, hizmetlerini yayınla.'],
-    signup: ['Ücretsiz hesap oluştur', 'İSG profesyonelleriyle tanış, Çalışmalarını paylaş, hizmetlerini yayınla.'],
+    login: ["Kırmızı İSG'ye giriş yap", 'Postlarını paylaş, meslektaşlarını keşfet, hizmetlerini yayınla.'],
+    signup: ['Ücretsiz hesap oluştur', 'İSG profesyonelleriyle tanış, Postlarını paylaş, hizmetlerini yayınla.'],
     verify: ['E-postanı doğrula', m => `${m} adresine bir doğrulama e-postası gönderdik. E-postadaki kodu gir.`],
     forgot: ['Şifreni sıfırla', 'Hesabına kayıtlı e-posta adresini yaz; sana 8 haneli bir kod gönderelim.'],
     code: ['Kodu gir', m => `${m} adresi kayıtlıysa 8 haneli bir kod gönderdik. Gelen kutunu ve istenmeyen klasörünü kontrol et.`],
@@ -2668,7 +2757,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
   /* ---- Render ---- */
   function ownerMenu(p) {
     if (!isOwn(p)) return '';
-    return `<button type="button" class="kw-more-btn" data-popover-trigger aria-label="Çalışma seçenekleri" aria-expanded="false">···</button><div class="k-popover kw-menu" hidden>`
+    return `<button type="button" class="kw-more-btn" data-popover-trigger aria-label="Post seçenekleri" aria-expanded="false">···</button><div class="k-popover kw-menu" hidden>`
       + `<button type="button" data-post-action="edit">Düzenle</button>`
       + `<button type="button" data-post-action="feature">${p.profile_featured_order ? 'Öne çıkandan kaldır' : 'Profilde öne çıkar'}</button>`
       + `<button type="button" class="is-danger" data-post-action="delete">Sil</button></div>`;
@@ -2700,7 +2789,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       + `<div class="kw-post-body">`
       + (p.content ? (detail ? `<div class="kw-post-text"><p class="kw-post-content">${esc(p.content)}</p></div>` : `<a class="kw-post-detail kw-post-text" href="${esc(work)}" target="_top"><p class="kw-post-content${long ? ' is-clamped' : ''}">${esc(p.content)}</p></a>`) : '')
       + (long ? `<a class="kw-more-link" href="${esc(work)}" target="_top">Devamını oku</a>` : '')
-      + (image ? `<button type="button" class="kw-media" data-media="${esc(image)}" data-work="${esc(work)}" aria-label="Görseli tam boyut aç"><img class="kw-post-image" src="${esc(image)}" alt="${esc((p.content || 'Çalışma görseli').slice(0, 120))}" loading="${eager ? 'eager' : 'lazy'}" decoding="async"><span class="kw-media-more" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4h5v5M9 20H4v-5M20 4l-6 6M4 20l6-6"/></svg>Tamamını gör</span></button>` : '')
+      + (image ? `<button type="button" class="kw-media" data-media="${esc(image)}" data-work="${esc(work)}" aria-label="Görseli tam boyut aç"><img class="kw-post-image" src="${esc(image)}" alt="${esc((p.content || 'Post görseli').slice(0, 120))}" loading="${eager ? 'eager' : 'lazy'}" decoding="async"><span class="kw-media-more" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4h5v5M9 20H4v-5M20 4l-6 6M4 20l6-6"/></svg>Tamamını gör</span></button>` : '')
       + (p.category?.name ? `<div class="kw-post-tags"><span class="k-tag">${esc(p.category.name)}</span></div>` : '')
       + `<div class="kw-post-actions" data-actions>${actions(p)}</div><div class="kw-thread" data-thread hidden></div></div></article>`;
   }
@@ -2778,25 +2867,25 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
         if (error) throw error;
         const used = new Set((data || []).map(r => r.profile_featured_order));
         value = [1, 2, 3].find(o => !used.has(o));
-        if (!value) { toast('En fazla 3 Çalışmayı öne çıkarabilirsiniz.'); return; }
+        if (!value) { toast('En fazla 3 Postu öne çıkarabilirsiniz.'); return; }
       }
       const { error } = await db.from('professional_posts').update({ profile_featured_order: value }).eq('id', p.id).eq('user_id', uid).eq('status', 'active').select('id').single();
       if (error) throw error;
       emitPost('featured', { id: p.id, value, post: p });
-      toast(value ? 'Çalışma profilinizde öne çıkarıldı.' : 'Çalışma öne çıkandan kaldırıldı.');
+      toast(value ? 'Post profilinizde öne çıkarıldı.' : 'Post öne çıkandan kaldırıldı.');
     } catch (e) { toast(errorText(e)); } finally { f.ownerBusy = false; }
   }
   async function deletePost(p) {
     if (!isOwn(p) || f.ownerBusy) return;
-    if (!(await confirmBox({ title: 'Çalışmayı sil', text: 'Bu Çalışmayı silmek istediğinize emin misiniz?', confirm: 'Sil' }))) return;
+    if (!(await confirmBox({ title: 'Postu sil', text: 'Bu Postu silmek istediğinize emin misiniz?', confirm: 'Sil' }))) return;
     if (!isOwn(p)) return;
     f.ownerBusy = true;
     try {
       const { error } = await db.from('professional_posts').update({ status: 'deleted', profile_featured_order: null }).eq('id', p.id).eq('user_id', session.user.id).select('id').single();
       if (error) throw error;
       emitPost('removed', { id: p.id });
-      toast('Çalışma silindi.'); host.schedule();
-    } catch (e) { toast(errorText(e, 'Çalışma silinemedi.')); } finally { f.ownerBusy = false; }
+      toast('Post silindi.'); host.schedule();
+    } catch (e) { toast(errorText(e, 'Post silinemedi.')); } finally { f.ownerBusy = false; }
   }
   postBus.add((kind, x) => {
     const p = x && find(x.id);
@@ -3109,7 +3198,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
     switch (act.dataset.postAction) {
       case 'like': toggleLike(p.id); break;
       case 'comment': threads.open(p.id); break;
-      case 'share': shareLink({ url: urls.work(p.id), title: 'Kırmızı İSG Çalışma', text: (p.content || 'Kırmızı İSG’de bir Çalışma').slice(0, 160), copied: 'Çalışma bağlantısı kopyalandı.' }); break;
+      case 'share': shareLink({ url: urls.work(p.id), title: 'Kırmızı İSG Postu', text: (p.content || 'Kırmızı İSG’de bir Post').slice(0, 160), copied: 'Post bağlantısı kopyalandı.' }); break;
       case 'edit': composer.open(p); break;
       case 'feature': setFeatured(p); break;
       case 'delete': deletePost(p); break;
@@ -3176,8 +3265,8 @@ const composer = (() => {
     const user = await requireUser(() => open(post, intent)); if (!user) return;
     if (s.saving || d.root.open || (post && post.user_id !== user.id)) return;
     s.edit = post; s.file = null; clearPreview();
-    d.title.textContent = post ? 'Çalışmayı Düzenle' : 'Yeni Çalışma';
-    d.submit.textContent = post ? 'Değişiklikleri Kaydet' : 'Çalışmayı Yayınla';
+    d.title.textContent = post ? 'Postu Düzenle' : 'Yeni Post';
+    d.submit.textContent = post ? 'Değişiklikleri Kaydet' : 'Post Yayınla';
     d.content.value = post?.content || '';
     fillCategories(post?.category);
     d.category.value = post?.category?.id || '';
@@ -3190,7 +3279,7 @@ const composer = (() => {
     if (!s.categoriesReady) {
       d.category.disabled = true;
       ensureCategories().then(() => { fillCategories(s.edit?.category); if (s.edit?.category?.id && !d.category.value) d.category.value = s.edit.category.id; d.category.disabled = false; })
-        .catch(() => toast('Çalışma alanları yüklenemedi; mevcut kategori korunacak.'));
+        .catch(() => toast('Post kategorileri yüklenemedi; mevcut kategori korunacak.'));
     }
   }
   /* Görsel hattı: seçim → tür tespiti → decode (EXIF yönüyle) → boyutlandırma → canvas →
@@ -3350,7 +3439,7 @@ const composer = (() => {
     const content = d.content.value.trim();
     const categoryId = s.categoriesReady ? (d.category.value || null) : (current?.category?.id || null);
     const removingExisting = !!current?.image_path && d.preview.hidden && !s.file;
-    if (!content && !s.file && (!current?.image_path || removingExisting)) { formError('Çalışma için metin veya görsel ekleyin.'); return; }
+    if (!content && !s.file && (!current?.image_path || removingExisting)) { formError('Post için metin veya görsel ekleyin.'); return; }
     const userId = session.user.id, file = s.file;
     s.saving = true; session.writes++; dialogs.lock(d.root, true);
     d.file.disabled = true; removeImageBtn.disabled = true; formError('');
@@ -3376,16 +3465,16 @@ const composer = (() => {
       committed = true; savedId = result.data.id;
       if (current?.image_path && current.image_path !== newPath) { try { await db.storage.from(CONFIG.imageBucket).remove([current.image_path]); } catch {} }
     } catch (err) {
-      console.warn('Çalışma kaydedilemedi:', err?.code || err?.message || err);
+      console.warn('Post kaydedilemedi:', err?.code || err?.message || err);
       if (uploaded && !committed && newPath) { try { await db.storage.from(CONFIG.imageBucket).remove([newPath]); } catch {} }
-      formError(err?.userMessage || storageErrorText(err) || errorText(err, 'Çalışma kaydedilemedi.'));
+      formError(err?.userMessage || storageErrorText(err) || errorText(err, 'Post kaydedilemedi.'));
     } finally {
       s.saving = false; session.writes--; dialogs.lock(d.root, false);
       d.file.disabled = false; removeImageBtn.disabled = false; setBusy(d.submit, false);
     }
     if (!committed) return;
     dialogs.close(d.root);
-    toast(current ? 'Çalışma güncellendi.' : 'Çalışma yayınlandı.');
+    toast(current ? 'Post güncellendi.' : 'Post yayınlandı.');
     // Kaydedilen Çalışma açık akışlara yerinde yansıtılır; liste yeniden yüklenmez, scroll kaymaz.
     let fresh = null, failed = false;
     try { fresh = await postData.fetch(savedId); } catch { failed = true; }
@@ -3432,7 +3521,7 @@ function createWorksView() {
     onRemoved: () => { if (!feed.f.posts.length) renderAll(); else { placeRails(); renderLive(); } host.schedule(); }
   });
   const F = feed.f;
-  const emptyMarkup = '<div class="kw-post kw-empty-card"><div class="kw-empty"><img class="kw-empty-art" src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/erferf.png" alt="" aria-hidden="true"><strong>Henüz Çalışma yok</strong><p>Sahada yaptığın bir uygulamayı, gözlemini veya öğrendiğin bir şeyi paylaşarak ilk Çalışmayı sen başlat.</p><button type="button" class="k-btn k-btn-primary" data-composer>İlk Çalışmayı paylaş</button></div></div>';
+  const emptyMarkup = '<div class="kw-post kw-empty-card"><div class="kw-empty"><img class="kw-empty-art" src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/erferf.png" alt="" aria-hidden="true"><strong>Henüz Post yok</strong><p>Sahada yaptığın bir uygulamayı, gözlemini veya öğrendiğin bir şeyi paylaşarak ilk Postu sen başlat.</p><button type="button" class="k-btn k-btn-primary" data-composer>İlk Postu paylaş</button></div></div>';
   function renderAll(eager = false) {
     list.innerHTML = F.posts.length ? F.posts.map(p => feed.card(p, eager)).join('') : emptyMarkup;
     placeRails(); renderLive();
@@ -3477,7 +3566,7 @@ function createWorksView() {
   function renderLive() {
     const live = $('[data-live]', el), first = F.posts[0];
     if (!first) { live.hidden = true; return; }
-    $('[data-live-text]', live).textContent = `Son Çalışma · ${relativeTime(first.created_at)}`;
+    $('[data-live-text]', live).textContent = `Son Post · ${relativeTime(first.created_at)}`;
     live.hidden = false;
   }
   function placeRails() {
@@ -3541,7 +3630,7 @@ function createWorksView() {
       if (reset) newPosts.afterLoad();
     } catch {
       $$('.kw-sk', list).forEach(n => n.remove());
-      showNotice('Çalışmalar şu anda yüklenemedi.');
+      showNotice('Postlar şu anda yüklenemedi.');
     } finally {
       s.loading = false; setBusy(more, false); host.schedule();
       if (s.queuedReset) { s.queuedReset = false; loadPosts({ reset: true }); }
@@ -3585,7 +3674,7 @@ function createWorksView() {
      Akış kendiliğinden değişmez, scroll oynamaz. Realtime yoksa akış aynen çalışır, kullanıcı hata görmez. */
   const newPosts = (() => {
     const pill = $('[data-new-posts]', el), label = $('[data-new-posts-label]', pill);
-    const pending = new Map();        // id → user_id (kendi Çalışmaları sayılmaz)
+    const pending = new Map();        // id → user_id (kendi Postları sayılmaz)
     let channel = null, joined = false, lost = false, catching = false, merging = false, poll = 0;
     const known = id => F.posts.some(p => String(p.id) === String(id));
     const time = v => { const t = Date.parse(v); return Number.isFinite(t) ? t : 0; };
@@ -3597,7 +3686,7 @@ function createWorksView() {
     function render() {
       prune();
       const n = pending.size, show = n > 0 && active() && !merging;
-      if (show) label.textContent = n === 1 ? 'Yeni Çalışma' : `${n} yeni Çalışma`;
+      if (show) label.textContent = n === 1 ? 'Yeni Post' : `${n} yeni Post`;
       if (show === !pill.hidden) { if (show) host.place(pill); return; }
       pill.hidden = !show;
       host.float(pill, show);
@@ -3675,7 +3764,7 @@ function createWorksView() {
           feed.threads.preview(rows);
         }
         pending.clear();
-      } catch { toast('Yeni Çalışmalar şu anda yüklenemedi.'); }
+      } catch { toast('Yeni Postlar şu anda yüklenemedi.'); }
       finally {
         merging = false; render(); host.schedule();
         host.scrollTo(host.shellTop(), true);
@@ -3697,7 +3786,7 @@ function createWorksView() {
   postBus.add(kind => { if (kind === 'saved' || kind === 'removed') newPosts.render(); });
 
   // Composer daveti: İSG sahasına özgü sorular, sakin geçişle döner (reduced-motion'da sabit).
-  const PROMPTS = ['Sahada ne yaptın? Bir Çalışma paylaş…', 'Bugün hangi riski azalttın?', 'Son denetiminde ne dikkatini çekti?', 'Verdiğin eğitimden bir kare paylaş…', 'Hangi iyi uygulamayı hayata geçirdin?', 'Bir ramak kaladan ne öğrendin?'];
+  const PROMPTS = ['Sahada ne yaptın? Bir Post paylaş…', 'Bugün hangi riski azalttın?', 'Son denetiminde ne dikkatini çekti?', 'Verdiğin eğitimden bir kare paylaş…', 'Hangi iyi uygulamayı hayata geçirdin?', 'Bir ramak kaladan ne öğrendin?'];
   const promptEl = $('.kw-composer-desktop', el);
   let promptIdx = Math.floor(Math.random() * PROMPTS.length);
   promptEl.textContent = PROMPTS[promptIdx];
@@ -3728,7 +3817,7 @@ function createWorksView() {
       feed.syncLikes(F.posts.map(p => p.id));
       feed.threads.preview(F.posts);
       idle(() => composer.ensureCategories().catch(() => {}));
-      newPosts.afterLoad();   // geri dönüş kaydından açıldı: aradaki yeni Çalışmalar doğrulanır
+      newPosts.afterLoad();   // geri dönüş kaydından açıldı: aradaki yeni Postlar doğrulanır
       await settleImages(1500);
       return;
     }
@@ -3909,7 +3998,7 @@ function createExpertsView() {
   const COUNTS = ',posts:professional_posts!professional_posts_user_id_fkey(count),services:professional_services!professional_services_user_id_fkey(count)';
   let withCounts = true;
   const fields = [['title', 'Meslek', 'keListTitles', 'Meslek'], ['certificate_class', 'Mesleki Belge / Statü'], ['city', 'Şehir', 'keListCities', 'Şehir'], ['specialties', 'Uzmanlık', 'keListSpecialties', 'Uzmanlık']];
-  const filterMarkup = prefix => fields.map(([key, label, listId, placeholder]) => `<label class="kc-field" for="${prefix}-${key}"><span class="kc-flabel">${label}</span>${key === 'certificate_class'
+  const filterMarkup = prefix => fields.map(([key, label, listId, placeholder]) => key === 'city' ? cityPicker.markup(`${prefix}-${key}`, key) : `<label class="kc-field" for="${prefix}-${key}"><span class="kc-flabel">${label}</span>${key === 'certificate_class'
     ? `<select id="${prefix}-${key}" data-filter="${key}"><option value="">Tüm belgeler / statüler</option>${STATUS_OPTIONS.map(([v]) => `<option value="${esc(v)}">${esc(/^[ABC]$/.test(v) ? v + ' Sınıfı' : v)}</option>`).join('')}</select>`
     : `<input id="${prefix}-${key}" data-filter="${key}" type="text" maxlength="120" list="${listId}" autocomplete="off" placeholder="${placeholder}">`}</label>`).join('');
   // specialties text[]: tam dizi öğesi eşleşmesi (cs), büyük/küçük harf varyantlarıyla.
@@ -3919,7 +4008,7 @@ function createExpertsView() {
     const c = [];
     if (search) { const p = quote(likePattern(search)); c.push('or(' + ['full_name.ilike.' + p, 'profession.ilike.' + p, 'title.ilike.' + p, 'city.ilike.' + p, ...specialty(search)].join(',') + ')'); }
     if (f.title) { const p = quote(likePattern(f.title)); c.push('or(profession.ilike.' + p + ',and(or(profession.is.null,profession.eq.""),title.ilike.' + p + '))'); }
-    if (f.city) c.push('city.ilike.' + quote(likePattern(f.city)));
+    if (f.city) c.push(cityClause('city', f.city));
     if (f.certificate_class) {
       const k = f.certificate_class;
       // İşyeri Hekimi / DSP: yalnız certificate_class değeriyle eşleşir.
@@ -3947,7 +4036,7 @@ function createExpertsView() {
   const countLabel = (v, label) => { const n = Array.isArray(v) ? v[0]?.count : undefined; return Number.isInteger(n) && n >= 0 ? new Intl.NumberFormat('tr-TR').format(n) + ' ' + label : ''; };
   function card(p) {
     const sp = Array.isArray(p.specialties) ? p.specialties.filter(x => typeof x === 'string' && x.trim()) : [];
-    const counts = [countLabel(p.posts, 'Çalışma'), countLabel(p.services, 'Hizmet')].filter(Boolean).join(' · ');
+    const counts = [countLabel(p.posts, 'Post'), countLabel(p.services, 'Hizmet')].filter(Boolean).join(' · ');
     const role = p.profession || p.title, cert = identity.certTag(p);
     return `<a class="kc-card ke-card" href="${esc(urls.profile(p.id))}" target="_top">`
       + `<span class="ke-av">${avatar(p, 'xl')}</span>`
@@ -3959,7 +4048,7 @@ function createExpertsView() {
       + `<span class="ke-bottom">${counts ? `<span class="ke-activity">${esc(counts)}</span>` : ''}<span class="ke-cta">Profili Gör<span class="k-sr"> ${esc(p.full_name || '')}</span></span></span></a>`;
   }
   function suggestions(rows) {
-    for (const [key, id] of [['title', 'keListTitles'], ['city', 'keListCities'], ['specialties', 'keListSpecialties']]) {
+    for (const [key, id] of [['title', 'keListTitles'], ['specialties', 'keListSpecialties']]) {
       const values = [...new Set(rows.flatMap(p => key === 'title' ? [p.profession || p.title] : Array.isArray(p[key]) ? p[key] : [p[key]]).filter(v => typeof v === 'string' && v.trim()))].sort((a, b) => a.localeCompare(b, 'tr')).slice(0, 150);
       $('#' + id).innerHTML = values.map(v => `<option value="${esc(v)}"></option>`).join('');
     }
@@ -4047,7 +4136,7 @@ function createServicesView() {
   const options = () => st.categories.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
   const filterMarkup = prefix => `<label class="kc-field kc-field-cat" for="${prefix}-category"><span class="kc-flabel">Kategori</span><select id="${prefix}-category" data-filter="category"><option value="">Tüm kategoriler</option>${options()}</select></label>`
     + `<label class="kc-field" for="${prefix}-mode"><span class="kc-flabel">Hizmet Şekli</span><select id="${prefix}-mode" data-filter="mode"><option value="">Tüm hizmet şekilleri</option>${Object.entries(SERVICE_MODES).map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>`
-    + `<label class="kc-field" for="${prefix}-region"><span class="kc-flabel">Bölge</span><input id="${prefix}-region" data-filter="region" maxlength="120" placeholder="Bölge" autocomplete="off"></label>`;
+    + cityPicker.markup(`${prefix}-region`, 'region');
   const card = v => serviceCard(v);
 
   const catalog = createCatalog({
@@ -4065,7 +4154,8 @@ function createServicesView() {
       if (search) { const p = quote(likePattern(search)); qy = qy.ilike('search_provider.full_name', likePattern(search)); clauses.push('or(title.ilike.' + p + ',description.ilike.' + p + ',service_region.ilike.' + p + ',search_provider.not.is.null)'); }
       if (filters.category) qy = qy.eq('category_id', filters.category);
       if (filters.mode) qy = qy.eq('service_mode', filters.mode);
-      if (filters.region) qy = qy.ilike('service_region', likePattern(filters.region));
+      // service_region serbest metindir ("Kocaeli, Sakarya" gibi birden çok il içerebilir): seçilen il metinde aranır.
+      if (filters.region) clauses.push(cityClause('service_region', filters.region));
       if (page) clauses.push(`or(created_at.lt.${quote(page.created_at)},and(created_at.eq.${quote(page.created_at)},id.lt.${quote(page.id)}))`);
       if (clauses.length) qy = qy.or('and(' + clauses.join(',') + ')');
       const { data, error } = await qy.abortSignal(signal);
@@ -4603,9 +4693,9 @@ const profilePdf = (() => {
       const lines = wrap(p.about, CW, room); doc.text(lines, M, y + 1); y += lines.length * lh(9.5) + 5;
     }
     if (data.posts.length && fits(26)) {
-      section('Çalışmalar', data.postCount);
+      section('Postlar', data.postCount);
       for (const w of data.posts.slice(0, 3)) {
-        font('normal', 9.5, TEXT); const lines = wrap(w.content || 'Görselli Çalışma', CW - 6, 2);
+        font('normal', 9.5, TEXT); const lines = wrap(w.content || 'Görselli Post', CW - 6, 2);
         const h = 5 + lines.length * lh(9.5) + 3.5;
         if (!fits(h + (data.services.length ? 28 : 0))) break;   // hizmet özetine yer kalsın
         doc.setFillColor(...RED); doc.rect(M, y - 2.6, 0.7, h - 2.5, 'F');
@@ -4640,7 +4730,7 @@ const profilePdf = (() => {
     for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) doc.rect(qx + c * cell, qy + r * cell, cell + 0.01, cell + 0.01, 'F');
     doc.link(qx, qy, QS, QS, { url });
     font('bold', 11); doc.text(T('Güncel profili görüntüle'), M + 6, fy + 10);
-    font('normal', 8.5, MUTED); doc.text(wrap('Karekodu okut veya bağlantıyı aç: Çalışmalar, hizmetler ve iletişim bilgileri Kırmızı İSG Professional’da her zaman güncel.', CW - QS - 22, 2), M + 6, fy + 15.5);
+    font('normal', 8.5, MUTED); doc.text(wrap('Karekodu okut veya bağlantıyı aç: Postlar, hizmetler ve iletişim bilgileri Kırmızı İSG Professional’da her zaman güncel.', CW - QS - 22, 2), M + 6, fy + 15.5);
     font('bold', 8.5, RED); doc.textWithLink(T(url.replace(/^https?:\/\//, '')), M + 6, fy + 26, { url });
     font('normal', 7, FAINT); doc.text(T('Kırmızı İSG Professional · isgcalisanplatformu.com'), M, H - 9);
     doc.text(T('Bu belge profil sahibinin paylaştığı bilgilerden otomatik oluşturulmuştur.'), W - M, H - 9, { align: 'right' });
@@ -4777,13 +4867,13 @@ function createProfileView() {
   function renderPosts() {
     const featured = featuredPosts(), chrono = chronoPosts();
     let html = '';
-    if (featured.length) html += `<h2 class="kp-sec">Öne çıkan Çalışmalar</h2>${featured.map(p => feed.card(p)).join('')}`;
-    if (featured.length && (chrono.length || s.hasMore)) html += '<h2 class="kp-sec">Tüm Çalışmalar</h2>';
+    if (featured.length) html += `<h2 class="kp-sec">Öne çıkan Postlar</h2>${featured.map(p => feed.card(p)).join('')}`;
+    if (featured.length && (chrono.length || s.hasMore)) html += '<h2 class="kp-sec">Tüm Postlar</h2>';
     html += chrono.map(p => feed.card(p)).join('');
     if (!F.posts.length && !s.postsFailed) {
-      html = `<div class="kw-empty"><strong>${own() ? 'İlk Çalışmanı paylaş' : 'Henüz Çalışma yok'}</strong><p>${own() ? 'Sahada yaptıkların kişi kartında görünür; meslektaşların seni işinle tanır.' : 'Paylaşılan mesleki çalışmalar burada görünecek.'}</p></div>`;
+      html = `<div class="kw-empty"><strong>${own() ? 'İlk Postunu paylaş' : 'Henüz Post yok'}</strong><p>${own() ? 'Sahada yaptıkların kişi kartında görünür; meslektaşların seni işinle tanır.' : 'Paylaşılan postlar burada görünecek.'}</p></div>`;
     }
-    if (s.postsFailed) html += '<div class="kw-empty"><strong>Çalışmalar yüklenemedi.</strong><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" class="k-btn" data-profile-action="retry-posts">Yeniden dene</button></div>';
+    if (s.postsFailed) html += '<div class="kw-empty"><strong>Postlar yüklenemedi.</strong><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" class="k-btn" data-profile-action="retry-posts">Yeniden dene</button></div>';
     postsBox.innerHTML = html;
     feed.threads.rerenderAll();
     postsMore.hidden = !s.hasMore || s.postsFailed;
@@ -5140,7 +5230,7 @@ function createWorkView() {
   const s = { id: '', rev: 0, mounted: false };
   const feed = createPostFeed({
     scope: el, detail: true,
-    onRemoved: id => { if (id === s.id) showStatus('Bu Çalışma silindi', 'Çalışma yayından kaldırıldı.', false, true); }
+    onRemoved: id => { if (id === s.id) showStatus('Bu Post silindi', 'Post yayından kaldırıldı.', false, true); }
   });
   const F = feed.f;
   function showStatus(title, text = '', retry = false, back = false) {
@@ -5158,12 +5248,12 @@ function createWorkView() {
   function setDocTitle() {
     const p = F.posts[0];
     if (!router.enabled || router.current !== 'work' || !p) return;
-    try { host.doc.title = `${p.author?.full_name ? p.author.full_name + ' — ' : ''}Çalışma | Kırmızı İSG`; } catch {}
+    try { host.doc.title = `${p.author?.full_name ? p.author.full_name + ' — ' : ''}Post | Kırmızı İSG`; } catch {}
   }
   async function load(id) {
     const rev = ++s.rev;
     s.id = id; F.posts = []; feed.threads.reset(); box.innerHTML = '';
-    if (!UUID_RE.test(id)) { showStatus('Çalışma bulunamadı', '', false, true); return; }
+    if (!UUID_RE.test(id)) { showStatus('Post bulunamadı', '', false, true); return; }
     statusBox.hidden = true; sheet.hidden = false;
     box.innerHTML = '<div class="kw-post kw-sk" aria-hidden="true"><div class="kw-sk-head"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>';
     host.schedule();
@@ -5171,7 +5261,7 @@ function createWorkView() {
       await dbReady;
       const p = await postData.fetch(id);
       if (rev !== s.rev) return;
-      if (!p) { showStatus('Çalışma bulunamadı', 'Bu Çalışma kaldırılmış veya artık yayında olmayabilir.', false, true); return; }
+      if (!p) { showStatus('Post bulunamadı', 'Bu Post kaldırılmış veya artık yayında olmayabilir.', false, true); return; }
       await session.ready;
       if (rev !== s.rev) return;
       F.posts = [p];
@@ -5179,7 +5269,7 @@ function createWorkView() {
       feed.syncLikes([p.id]);
       feed.threads.expand(p.id);
     } catch {
-      if (rev === s.rev) showStatus('Çalışma şu anda yüklenemedi', 'Bağlantını kontrol edip yeniden dene.', true);
+      if (rev === s.rev) showStatus('Post şu anda yüklenemedi', 'Bağlantını kontrol edip yeniden dene.', true);
     }
   }
   async function route(params = {}) {
@@ -5192,7 +5282,7 @@ function createWorkView() {
   postBus.add((kind, x) => {
     if (kind !== 'saved' || !x.previous || x.id !== s.id || !F.posts.length) return;
     if (x.failed) { load(s.id); return; }
-    if (!x.fresh) { F.posts = []; showStatus('Çalışma bulunamadı', 'Bu Çalışma kaldırılmış veya artık yayında olmayabilir.', false, true); return; }
+    if (!x.fresh) { F.posts = []; showStatus('Post bulunamadı', 'Bu Post kaldırılmış veya artık yayında olmayabilir.', false, true); return; }
     const old = F.posts[0];
     F.posts = [{ ...x.fresh, liked: old.liked, comment_count: x.fresh.comment_count ?? old.comment_count ?? null }];
     render();
@@ -5238,7 +5328,7 @@ root.dataset.version = CONFIG.version;
    ========================================================================= */
 const router = (() => {
   const bootId = newId();
-  const TITLES_KEY = 'kisg:titles:v2';   // v2: Akış = '/' (eski 'Çalışmalar' başlıkları kullanılmaz)
+  const TITLES_KEY = 'kisg:titles:v2';   // v2: Akış = '/' (eski 'Postlar' başlıkları kullanılmaz)
   const scroll = {};
   const mounts = {};
   let current = null, params = {}, enabled = false, pending = {};
