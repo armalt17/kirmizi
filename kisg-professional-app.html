@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.9.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.9.1
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,9 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.9.1: Kayıt formunda "Uzmanlarda Görün" (varsayılan açık). Tercih onboarding'de mevcut profile UPDATE ile
+ profiles.is_discoverable'a yazılır (onboarding atlanırsa da yalnız bu alan); insert/upsert yok. Profil
+ düzenleyicideki anahtar aynı alanı kullanır; kendi görünürlüğü değişince açık Uzmanlar listesi tazelenir.
 v4.9.0: Web Auth V1 — tek pencerede Giriş Yap / Kayıt Ol / Şifremi Unuttum (masaüstü modal, mobil alt sayfa).
  Mobil ile aynı Supabase Auth kullanıcıları. Profil satırını mevcut on_auth_user_created → handle_new_user()
  trigger'ı oluşturur; web profiles'a insert/upsert yapmaz. Şifre sıfırlama mobil ile aynı OTP akışı
@@ -314,6 +317,10 @@ Acil kapatma: CONFIG.historyRouting=false.
       <p class="ku-hint" id="kaSignupPwHint">En az 8 karakter.</p>
       <label class="k-label" for="kaSignupPassword2">Şifre Tekrar</label>
       <input class="k-input" id="kaSignupPassword2" type="password" autocomplete="new-password" required>
+      <label class="ku-switch" for="kaSignupDiscoverable">
+        <span class="ku-switch-text"><strong>Uzmanlarda Görün</strong><small id="kaSignupDiscoverableHint">Profiliniz Kırmızı İSG Uzmanlar bölümünde görüntülenir. Görünmek istemiyorsanız kapatabilirsiniz. Bu ayarı daha sonra profilinizden değiştirebilirsiniz.</small></span>
+        <input type="checkbox" role="switch" id="kaSignupDiscoverable" checked aria-describedby="kaSignupDiscoverableHint"><span class="ku-switch-ui" aria-hidden="true"></span>
+      </label>
       <label class="kpe-check ku-terms"><input type="checkbox" id="kaSignupTerms"><span data-auth-terms></span></label>
       <p class="k-form-error" role="alert" hidden></p>
       <p class="ku-inline" data-auth-exists hidden><button type="button" class="ku-link" data-auth-go="login">Giriş yap</button> · <button type="button" class="ku-link" data-auth-go="forgot">Şifremi unuttum</button></p>
@@ -921,6 +928,16 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .ku-terms{align-items:flex-start;margin-top:16px;font-size:13.5px;line-height:1.5;color:var(--text)}
 #kisgApp .ku-terms input{flex:none;width:18px;height:18px;margin-top:1px;accent-color:var(--red)}
 #kisgApp .ku-terms a{color:var(--ink);font-weight:650;text-underline-offset:2px}
+#kisgApp .ku-switch{position:relative;display:flex;align-items:flex-start;gap:14px;margin-top:18px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);cursor:pointer}
+#kisgApp .ku-switch-text{flex:1;min-width:0}
+#kisgApp .ku-switch-text strong{display:block;color:var(--ink);font-size:14.5px;font-weight:700}
+#kisgApp .ku-switch-text small{display:block;margin-top:4px;color:var(--muted);font-size:12.5px;line-height:1.5}
+#kisgApp .ku-switch input{position:absolute;opacity:0;width:1px;height:1px}
+#kisgApp .ku-switch-ui{position:relative;flex:none;width:44px;height:26px;margin-top:1px;border-radius:999px;background:var(--line-strong);transition:background var(--t-fast)}
+#kisgApp .ku-switch-ui::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(20,26,36,.25);transition:transform var(--t-fast)}
+#kisgApp .ku-switch input:checked + .ku-switch-ui{background:var(--red)}
+#kisgApp .ku-switch input:checked + .ku-switch-ui::after{transform:translateX(18px)}
+#kisgApp .ku-switch input:focus-visible + .ku-switch-ui{outline:2px solid var(--ink);outline-offset:2px}
 #kisgApp .ku-code{font-size:22px;font-weight:750;letter-spacing:.28em;text-align:center;font-variant-numeric:tabular-nums}
 #kisgApp .ku-submit{margin-top:20px}
 #kisgApp .ku-actions{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 16px;margin-top:16px}
@@ -1283,7 +1300,7 @@ const CONFIG = Object.freeze({
   legal: { terms: '', privacy: '' },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.9.0',
+  version: '4.9.1',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -2118,7 +2135,7 @@ const authUI = (() => {
   });
 
   /* ---- Kayıt ---- */
-  const su = { name: $('#kaSignupName'), email: $('#kaSignupEmail'), pw: $('#kaSignupPassword'), pw2: $('#kaSignupPassword2'), terms: $('#kaSignupTerms') };
+  const su = { name: $('#kaSignupName'), email: $('#kaSignupEmail'), pw: $('#kaSignupPassword'), pw2: $('#kaSignupPassword2'), terms: $('#kaSignupTerms'), discoverable: $('#kaSignupDiscoverable') };
   (() => {
     const link = (url, text) => (httpUrl(url) ? `<a href="${esc(httpUrl(url))}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text));
     $('[data-auth-terms]', dlg).innerHTML = `${link(CONFIG.legal?.terms, 'Kullanım Koşulları')}'nı ve ${link(CONFIG.legal?.privacy, 'KVKK Aydınlatma Metni')}'ni okudum, kabul ediyorum.`;
@@ -2144,7 +2161,8 @@ const authUI = (() => {
     }, { user_already_exists: () => { exists.hidden = false; return 'Bu e-posta ile zaten bir hesap var. Giriş yapabilir veya şifreni sıfırlayabilirsin.'; }, email_exists: () => { exists.hidden = false; return 'Bu e-posta ile zaten bir hesap var. Giriş yapabilir veya şifreni sıfırlayabilirsin.'; } });
     if (!data) return;
     flowEmail = mail;
-    writeJSON(local, ONBOARD_KEY, { uid: data.user?.id || null, email: mail, name, t: Date.now() });
+    // "Uzmanlarda Görün" tercihi onboarding sırasında mevcut profile UPDATE ile yazılır (signUp'a eklenmez).
+    writeJSON(local, ONBOARD_KEY, { uid: data.user?.id || null, email: mail, name, discoverable: su.discoverable.checked, t: Date.now() });
     su.pw.value = su.pw2.value = '';
     pending = null;
     if (data.session?.user) { session.adopt(data.session.user); startOnboarding(); return; }
@@ -2250,8 +2268,8 @@ const authUI = (() => {
   async function startOnboarding() {
     const u = session.user; if (!u || onboarding) return;
     const f = onboardingFlag() || {};
-    onboarding = { uid: u.id, name: clean(f.name), orig: {}, withExp: true };
-    const cols = 'full_name,profession,title,certificate_class,city';
+    onboarding = { uid: u.id, name: clean(f.name), orig: {}, withExp: true, discoverable: typeof f.discoverable === 'boolean' ? f.discoverable : null, discSaved: false };
+    const cols = 'full_name,profession,title,certificate_class,city,is_discoverable';
     try {
       let r = await db.from('profiles').select(cols + ',experience_range').eq('id', u.id).maybeSingle();
       if (r.error && /42703|PGRST204|experience_range/i.test(`${r.error.code} ${r.error.message}`)) { onboarding.withExp = false; r = await db.from('profiles').select(cols).eq('id', u.id).maybeSingle(); }
@@ -2281,6 +2299,7 @@ const authUI = (() => {
     if (v.city !== o.city) payload.city = v.city;
     if (o.withExp && v.experience_range && v.experience_range !== o.exp) payload.experience_range = v.experience_range;
     if (!clean(o.orig.full_name) && o.name) payload.full_name = o.name;
+    if (o.discoverable !== null && o.orig.is_discoverable !== o.discoverable) payload.is_discoverable = o.discoverable;
     if (Object.keys(payload).length) {
       session.writes++;
       const saved = await run('onboard', 'Kaydediliyor...', async () => {
@@ -2301,8 +2320,24 @@ const authUI = (() => {
       o.orig = { ...o.orig, ...payload }; o.cert = v.certificate_class || o.cert; o.city = v.city; o.exp = payload.experience_range || o.exp;
       session.refreshMe();
     }
+    o.discSaved = true;
     renderPhoto(); show('photo');
   });
+  // Onboarding 1. adım kaydedilmeden kapatılırsa bile kayıt formundaki "Uzmanlarda Görün" tercihi uygulanır
+  // (yalnız is_discoverable, yalnız mevcut profile UPDATE; değer zaten aynıysa istek yok).
+  async function applyDiscoverability(o) {
+    if (!o || o.discSaved || o.discoverable === null || o.orig.is_discoverable === o.discoverable) return;
+    o.discSaved = true;
+    session.writes++;
+    try {
+      const user = await session.verified();
+      if (!user || user.id !== o.uid) throw new Error('identity');
+      const { data, error } = await db.from('profiles').update({ is_discoverable: o.discoverable }).eq('id', user.id).select('id').maybeSingle();
+      if (error || !data) throw error || new Error('no_row');
+      session.refreshMe();
+    } catch { toast('Uzmanlarda görünme tercihin kaydedilemedi. Profilinden değiştirebilirsin.'); }
+    finally { session.writes--; }
+  }
   function renderPhoto() {
     const me = session.me || {}, url = httpUrl(me.avatar_url), text = initials(me.full_name || onboarding?.name);
     ob.avatar.innerHTML = `${text ? esc(text) : ICONS.user}${url ? `<img src="${esc(url)}" alt="" decoding="async">` : ''}`;
@@ -2329,7 +2364,7 @@ const authUI = (() => {
     if (!busy) pending = null;
     clearTimeout(resendTimer);
     // Onboarding penceresi kapatıldıysa (fotoğraf adımına geçiş hariç) tekrar zorlanmaz.
-    if (onboarding && !handoff && ONBOARD_PANES.includes(pane)) endOnboarding();
+    if (onboarding && !handoff && ONBOARD_PANES.includes(pane)) { const o = onboarding; endOnboarding(); applyDiscoverability(o); }
   });
 
   dlg.addEventListener('click', e => {
@@ -3750,6 +3785,7 @@ function createExpertsView() {
       const { data, error } = await db.from('profiles').update({ is_discoverable: true }).eq('id', user.id).select('id,is_discoverable').single();
       if (error || !data?.is_discoverable) throw error || new Error('not_updated');
       if (session.me) session.me.is_discoverable = true;
+      lastDisc = true;
       session.refreshMe();
       renderDiscovery();
       catalog.notice("Profilin artık Uzmanlar'da görünür.", true);
@@ -3758,11 +3794,19 @@ function createExpertsView() {
     finally { setBusy(discoverBtn, false); }
   }
   discoverBtn.addEventListener('click', becomeVisible);
+  let lastDisc;
 
   return {
     name: 'experts', el,
     mount: snap => { renderDiscovery(); return catalog.mount(snap); },
-    onSession(kind) { if (kind === 'user') catalog.notice(''); renderDiscovery(); },
+    onSession(kind) {
+      if (kind === 'user') catalog.notice('');
+      // Kendi görünürlüğü değiştiyse (onboarding / Profili Düzenle) açık liste tazelenir.
+      const d = session.user && session.me?.id === session.user.id ? session.me.is_discoverable : undefined;
+      if (kind === 'me' && lastDisc !== undefined && d !== undefined && d !== null && d !== lastDisc && catalog.isMounted()) catalog.load();
+      lastDisc = d;
+      renderDiscovery();
+    },
     snapshot: catalog.snapshot, isMounted: catalog.isMounted
   };
 }
