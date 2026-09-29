@@ -16,10 +16,13 @@ Bu klasördeki SQL dosyaları **otomatik uygulanmaz**. Production'a uygulamadan 
 | `migrations/20261002_admin_v1_a.sql` | Production'a uygulandı, verify 28/28 `ok` (Admin V1 / Migration A: kisg_is_admin, audit log, yaptırımlar, şikâyet çözüm alanları, yaptırım kontrolü) |
 | `migrations/20261002_admin_v1_a.rollback.sql` | Geri alma (audit log, yaptırımlar ve şikâyet çözüm alanlarındaki veriler silinir) |
 | `migrations/20261002_admin_v1_a.verify.sql` | Uygulama sonrası salt okunur doğrulama (her satır `ok = true`) |
+| `migrations/20261003_admin_v1_b.sql` | Production'a uygulandı, verify 35/35 `ok` (Admin V1 / Migration B: admin RPC fonksiyonları + get_my_sanctions) |
+| `migrations/20261003_admin_v1_b.rollback.sql` | Geri alma (yalnız fonksiyonlar kaldırılır, veri değişmez) |
+| `migrations/20261003_admin_v1_b.verify.sql` | Uygulama sonrası salt okunur doğrulama (her satır `ok = true`) |
 
 Uygulama: Supabase SQL Editor'de dosyanın tamamı tek seferde çalıştırılır (kendi `begin/commit`'i var, tekrar çalıştırılabilir).
 
-Doğrulama: `npm test -- --only reports-db` / `npm test -- --only security-fix-pack1` / `npm test -- --only security-fix-pack2` / `npm test -- --only admin-v1-a` migration'ı yerel geçici bir PostgreSQL kümesinde
+Doğrulama: `npm test -- --only reports-db` / `npm test -- --only security-fix-pack1` / `npm test -- --only security-fix-pack2` / `npm test -- --only admin-v1` migration'ı yerel geçici bir PostgreSQL kümesinde
 `tests/helpers/supabase-stub.sql` üzerine uygular ve anon / authenticated / service_role davranışını sınar.
 Bu, gerçek Supabase şemasının birebir kopyası değildir; staging'de ayrıca kontrol edilmelidir:
 
