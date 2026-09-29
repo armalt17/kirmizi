@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.10.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.10.1
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,8 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.10.1: Akış sol panel uzmanları: profiles.last_post_at yerine kullanıcıların AKTİF Postlarındaki en yeni tarihe göre
+ (kullanıcı başına bir kez, yalnız is_discoverable, en güncel 3). Silinen Post sayılmaz; aktif Postu kalmayan çıkar.
 v4.10.0: Kullanıcıya görünen terminoloji "Çalışma" → "Post" (teknik adlar, tablolar ve /calisma-detay route'u aynı).
  Uzmanlar ve Hizmet Bul'da serbest metin şehir/bölge alanı yerine 81 il + "Tüm Şehirler" aramalı seçici;
  Uzmanlar profiles.city, Hizmet Bul service_region üzerinde Türkçe yazım varyantlarıyla (İstanbul/istanbul/Istanbul) eşleşir.
@@ -1369,7 +1371,7 @@ const CONFIG = Object.freeze({
   legal: { terms: '', privacy: '' },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.10.0',
+  version: '4.10.1',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -1380,7 +1382,7 @@ const CONFIG = Object.freeze({
   snapshotMaxAgeMs: 15 * 60 * 1000,
   postsPageSize: 10,
   catalogPageSize: 18,
-  railExperts: 6,
+  railExperts: 3,
   railServices: 3,
   maxActiveServices: 5,
   debounceMs: 350,
@@ -3577,13 +3579,36 @@ function createWorksView() {
     if (s.services.length) cards[si].insertAdjacentHTML('afterend', railServices());
     if (s.experts.length) cards[ei].insertAdjacentHTML('afterend', railExperts());
   }
+  /* "Son Post paylaşan uzmanlar": sıralama profiles.last_post_at'e değil, kullanıcının AKTİF Postlarına dayanır.
+     Aktif Postlar en yeniden taranır; her kullanıcı ilk (en yeni aktif) Postuyla bir kez alınır. Silinen/gizlenen
+     Postlar sayılmaz (bir önceki aktif Post esas olur); aktif Postu kalmayan listeden çıkar. Yalnız is_discoverable. */
+  async function recentExperts() {
+    const out = [], seen = new Set(), PAGE = 60;
+    let cursor = null;
+    for (let round = 0; round < 5 && out.length < CONFIG.railExperts; round++) {
+      let q = db.from('professional_posts').select('id,user_id,created_at,author:profiles!professional_posts_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company,city,is_discoverable)')
+        .eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(PAGE);
+      if (cursor) q = q.or(`created_at.lt.${quote(cursor.created_at)},and(created_at.eq.${quote(cursor.created_at)},id.lt.${quote(cursor.id)})`);
+      const { data, error } = await q;
+      if (error) throw error;
+      for (const r of data || []) {
+        const a = r.author;
+        if (!a || a.is_discoverable !== true || seen.has(r.user_id)) continue;
+        seen.add(r.user_id);
+        out.push({ ...a, id: a.id || r.user_id, last_active_post_at: r.created_at });
+        if (out.length >= CONFIG.railExperts) break;
+      }
+      if (!data || data.length < PAGE) break;
+      cursor = data[data.length - 1];
+    }
+    return out;
+  }
   async function loadRails({ experts = true, services = true } = {}) {
     try { await dbReady; } catch { s.expertsFailed = s.servicesFailed = true; renderSide(); return; }
     const jobs = [];
     if (experts) jobs.push((async () => {
       try {
-        const { data, error } = await db.from('profiles').select('id,full_name,avatar_url,profession,title,certificate_class,current_company,city').eq('is_discoverable', true).order('last_post_at', { ascending: false, nullsFirst: false }).limit(CONFIG.railExperts);
-        if (error) throw error; s.experts = data || []; s.expertsFailed = false;
+        s.experts = await recentExperts(); s.expertsFailed = false;
       } catch { s.experts = []; s.expertsFailed = true; }
     })());
     if (services) jobs.push((async () => {
@@ -3638,6 +3663,8 @@ function createWorksView() {
   }
   // Düzenleyiciden gelen kayıt: yeni Çalışma başa eklenir, düzenlenen yerinde güncellenir.
   postBus.add((kind, x) => {
+    // Post silinince "son Post paylaşan uzmanlar" yeniden hesaplanır (önceki aktif Post esas alınır).
+    if (kind === 'removed' && s.mounted) { loadRails({ experts: true, services: false }); return; }
     if (kind !== 'saved' || !s.mounted) return;
     if (x.failed) { loadPosts({ reset: true }); return; }
     const { id, fresh, previous } = x;
