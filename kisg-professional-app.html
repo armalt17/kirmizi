@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.12.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.12.1
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,8 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.12.1: Bildirim Realtime kanalı kullanıcı JWT'si Realtime'a aktarılmadan katılıyordu (anon rolü) → production'da
+ "invalid column for filter recipient_id". Kanal artık setAuth() tamamlandıktan sonra açılır.
 v4.12.0: Yorum Beğenisi V1: Akış önizlemesi ve Post Detay'da "zaman · Beğen/Beğenildi · N beğeni"; kendi yorumunda aksiyon yok.
  Misafir → giriş → bekleyen beğeni (sunucu kontrolüyle); Akış ↔ Post Detay senkron; bildirimi DB tetikleyicisi üretir.
 v4.11.0: Web Notification Center V1 (professional_notifications). Giriş yapmış kullanıcıda zil + okunmamış sayısı (1–9, 9+);
@@ -1403,7 +1405,7 @@ const CONFIG = Object.freeze({
   legal: { terms: '', privacy: '' },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.12.0',
+  version: '4.12.1',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -2683,6 +2685,13 @@ const notifications = (() => {
     if (!db?.channel || st.channel) return;
     try { if (st.removing) await st.removing; await settle(); } catch {}
     if (st.uid !== uid || st.channel) return;
+    // Katılma (phx_join) kullanıcı JWT'siyle gitmeli: Realtime filtreyi katılan rolün kolon yetkisiyle doğrular.
+    // Token henüz Realtime'a aktarılmadan katılınca istek anon rolüyle gidiyor ve sunucu
+    // "invalid column for filter recipient_id" ile reddediyordu (kanal ancak yeniden denemede açılıyordu).
+    try { await db.realtime?.setAuth?.(); } catch {}
+    const token = db.realtime?.accessTokenValue;
+    if (st.uid !== uid || st.channel) return;
+    if (!token || token === CONFIG.supabaseKey) { startPoll(); return; }   // kullanıcı token'ı yoksa yalnız yoklama
     try {
       st.channel = db.channel(`kisg-pro-notif-${newId()}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: TABLE, filter: `recipient_id=eq.${uid}` }, payload => {

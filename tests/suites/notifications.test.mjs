@@ -1,5 +1,5 @@
 // Kaynak: geçici /tmp/claude-0/pkg/notif.mjs — v4.12.0 güvenlik ağı olarak kalıcılaştırıldı.
-import { chromium, fs, ROOT, APP, NM, OUT, U1, U2, now, iso, db, writes, uploads, IMG, DB0, resetDb, cursorOr, filterRows, seq, orderRows, withEmbeds, handleRest, libs, HOSTINGER_BASE_CSS, hostPage, errors, realtimeMock, postSeq, makePost, setup, frameOf, check, DEFAULT_CHROMIUM, LAUNCH } from '../helpers/harness.mjs';
+import { chromium, fs, ROOT, ANON_DENIED_TABLES, APP, NM, OUT, U1, U2, now, iso, db, writes, uploads, IMG, DB0, resetDb, cursorOr, filterRows, seq, orderRows, withEmbeds, handleRest, libs, HOSTINGER_BASE_CSS, hostPage, errors, realtimeMock, postSeq, makePost, setup, frameOf, check, DEFAULT_CHROMIUM, LAUNCH } from '../helpers/harness.mjs';
 import { b64, tokenFor, uidOf, uidSeq, authMock, boot, acct, paneOf, errOf, navLogin, go, submitPane, fillSignup, visibleView, navClick, settle, flag, noProfileInsert } from '../helpers/auth.mjs';
 
 // ===== Web Notification Center V1 =====
@@ -90,6 +90,17 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   check(notifChannels(rt) === 1, `${N} Realtime: tek bildirim kanalı (${notifChannels(rt)})`);
   const joinFilter = [...rt.conns].flatMap(c => [...c.topics.values()]).flatMap(t => t.bindings).find(x => x.table === NT);
   check(joinFilter?.filter === `recipient_id=eq.${U1}` && joinFilter?.schema === 'public', `${N} Realtime filtresi recipient_id=eq.{uid} (${joinFilter?.filter})`);
+  // v4.12.1 regresyonu: bildirim kanalı kullanıcı JWT'siyle katılmalı (anon → "invalid column for filter recipient_id")
+  const notifJoins = () => rt.joinLog.filter(j => j.bindings.some(b => b.table === NT));
+  const sessToken = await page.evaluate(() => JSON.parse(localStorage.getItem('sb-twaptpofhbnnfciowoig-auth-token') || '{}').access_token);
+  const nj = notifJoins();
+  check(nj.length >= 1 && nj.every(j => !j.anon && j.token === sessToken) && nj[0].bindings.length === 1 && nj[0].bindings[0].schema === 'public' && nj[0].bindings[0].table === NT && nj[0].bindings[0].event === '*' && nj[0].bindings[0].filter === `recipient_id=eq.${U1}`, `${N} Realtime join: kullanıcı JWT'si + public.${NT} + recipient_id=eq.{uid} (${nj.map(j => j.anon ? 'anon' : 'jwt').join(',')})`);
+  check(rt.rejects.length === 0, `${N} Realtime: "invalid column for filter" reddi yok (${JSON.stringify(rt.rejects)})`);
+  // reconnect: yeniden katılma da JWT ile ve reddedilmeden
+  const joinsBefore = notifJoins().length;
+  rt.dropAll(); await settle(page, 3500);
+  const rj = notifJoins().slice(joinsBefore);
+  check(rj.length >= 1 && rj.every(j => !j.anon) && rt.rejects.length === 0 && notifChannels(rt) === 1, `${N} Realtime reconnect: yeniden katılma JWT ile, red yok, tek kanal (${rj.length} join)`);
   // panel
   await clickBell(page); await settle(page, 900);
   let items = await panelItems(page, mobile, f);
@@ -173,6 +184,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await navLogin(page); await settle(page, 400); await g2.fill('#kaLoginEmail', 'a@b.c'); await g2.fill('#kaLoginPassword', 'dogru-sifre'); await submitPane(g2, 'login'); await settle(page, 1500);
   b = await bellState(page);
   check(b.visible && b.badge === '1' && notifChannels(rt) === 1, `${N} yeniden giriş: tek kanal, badge "1" (${b.badge}, ${notifChannels(rt)})`);
+  check(rt.rejects.length === 0 && rt.joinLog.filter(j => j.bindings.some(x => x.table === NT)).every(j => !j.anon), `${N} çıkış/giriş sonrası da tüm bildirim join'leri JWT ile, red yok`);
   await ctx.close();
 }
 await browser.close();

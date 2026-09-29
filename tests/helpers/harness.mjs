@@ -142,8 +142,10 @@ const hostPage = path => `<!doctype html><html><head><meta charset="utf-8"><titl
 
 const errors = [];
 // Supabase Realtime sahte sunucusu (Phoenix vsn 1.0.0 JSON protokolü: phx_join/phx_reply/heartbeat/postgres_changes/phx_leave)
+// anon rolünün Realtime filtresi kuramadığı tablolar (gerçek RLS/kolon yetkisi: yalnız authenticated).
+const ANON_DENIED_TABLES = ['professional_notifications'];
 function realtimeMock(ctx) {
-  const rt = { conns: new Set(), joins: 0, leaves: 0, down: false, bindId: 0 };
+  const rt = { conns: new Set(), joins: 0, leaves: 0, down: false, bindId: 0, joinLog: [], rejects: [] };
   rt.ready = ctx.routeWebSocket(/\/realtime\/v1\/websocket/, ws => {
     if (rt.down) { ws.close({ code: 1011, reason: 'down' }); return; }
     const conn = { ws, topics: new Map() };
@@ -153,7 +155,18 @@ function realtimeMock(ctx) {
       const reply = (payload = {}) => ws.send(JSON.stringify({ topic: m.topic, event: 'phx_reply', payload: { status: 'ok', response: payload }, ref: m.ref, join_ref: m.join_ref }));
       if (m.topic === 'phoenix' && m.event === 'heartbeat') return reply();
       if (m.event === 'phx_join') {
-        const pcs = (m.payload?.config?.postgres_changes || []).map(b => ({ ...b, id: ++rt.bindId }));
+        const raw = m.payload?.config?.postgres_changes || [];
+        const token = m.payload?.access_token || null, anon = !token || String(token).startsWith('sb_publishable');
+        rt.joinLog.push({ topic: m.topic, token, anon, bindings: raw.map(b => ({ ...b })) });
+        // Üretimdeki realtime.subscription_check_filters gibi: filtre kolonu katılan rolün SELECT yetkisiyle doğrulanır.
+        // anon rolünün professional_notifications üzerinde yetkisi yok → sunucu join'i reddeder.
+        const denied = anon && raw.find(b => ANON_DENIED_TABLES.includes(b.table) && b.filter);
+        if (denied) {
+          const reason = `invalid column for filter ${String(denied.filter).split('=')[0]}`;
+          rt.rejects.push({ topic: m.topic, reason });
+          return ws.send(JSON.stringify({ topic: m.topic, event: 'phx_reply', payload: { status: 'error', response: { reason } }, ref: m.ref, join_ref: m.join_ref }));
+        }
+        const pcs = raw.map(b => ({ ...b, id: ++rt.bindId }));
         conn.topics.set(m.topic, { join_ref: m.join_ref, bindings: pcs });
         rt.joins++;
         return reply({ postgres_changes: pcs });
@@ -219,4 +232,4 @@ const check = (ok, msg) => { console.log((ok ? 'PASS ' : 'FAIL ') + msg); if (!o
 const DEFAULT_CHROMIUM = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const LAUNCH = fs.existsSync(process.env.CHROMIUM_PATH || DEFAULT_CHROMIUM) ? { executablePath: process.env.CHROMIUM_PATH || DEFAULT_CHROMIUM } : {};
 
-export { chromium, fs, ROOT, APP, NM, OUT, U1, U2, now, iso, db, writes, uploads, IMG, DB0, resetDb, cursorOr, filterRows, seq, orderRows, withEmbeds, handleRest, libs, HOSTINGER_BASE_CSS, hostPage, errors, realtimeMock, postSeq, makePost, setup, frameOf, check, DEFAULT_CHROMIUM, LAUNCH };
+export { chromium, fs, ROOT, ANON_DENIED_TABLES, APP, NM, OUT, U1, U2, now, iso, db, writes, uploads, IMG, DB0, resetDb, cursorOr, filterRows, seq, orderRows, withEmbeds, handleRest, libs, HOSTINGER_BASE_CSS, hostPage, errors, realtimeMock, postSeq, makePost, setup, frameOf, check, DEFAULT_CHROMIUM, LAUNCH };
