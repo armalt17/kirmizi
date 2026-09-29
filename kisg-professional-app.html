@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.9.3
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.9.4
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,9 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.9.4: Dialog/overlay düzeltmesi. Scroll kilidi Hostinger'ın html,body{height:100%} kuralında body'yi görünen alan
+ kadar kırpıyordu (dialog açıkken ekranın altı beyaz). Görüntüleyici başka bir dialog için kapanınca geçmiş
+ kaydını geri alırken oluşan popstate yeni açılan giriş penceresini kapatıyordu. Yan paneller dialog açıkken gizlenir.
 v4.9.3: Mobil fotoğraf yükleme düzeltmesi (Çalışma oluştur/düzenle). Seçilen fotoğrafın baytları seçim anında
  belleğe alınır (Android galeri dosyaları sonradan okunamaz olabiliyordu → önizleme açılıp yayınlarken
  "Bu görsel açılamadı"). Biçim MIME/uzantıdan değil dosya içeriğinden (imza) belirlenir; boyut ve EXIF yönü
@@ -1341,7 +1344,7 @@ const CONFIG = Object.freeze({
   legal: { terms: '', privacy: '' },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.9.3',
+  version: '4.9.4',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -1734,7 +1737,9 @@ const host = (() => {
       if (on && !locked) {
         locked = { y: w.scrollY, html: d.documentElement.getAttribute('style'), body: b.getAttribute('style') };
         d.documentElement.style.setProperty('overflow', 'hidden');
-        Object.assign(b.style, { position: 'fixed', top: -locked.y + 'px', left: '0', right: '0', width: '100%', overflow: 'hidden' });
+        // height:auto — Hostinger html,body{height:100%} kullanır; sabitlenen body görünen alan yüksekliğinde kalıp
+        // top:-scrollY kadar yukarı kaydığı için altı kırpılıyor, dialog açıkken ekranın altı beyaz görünüyordu.
+        Object.assign(b.style, { position: 'fixed', top: -locked.y + 'px', left: '0', right: '0', width: '100%', height: 'auto', minHeight: '100%', maxHeight: 'none', overflow: 'hidden' });
       } else if (!on && locked) {
         const l = locked; locked = null;
         const restore = (n, v) => (v == null ? n.removeAttribute('style') : n.setAttribute('style', v));
@@ -5334,12 +5339,16 @@ const router = (() => {
     if (!enabled || modalBack) return;
     try { host.win.history.pushState({ ...stateOf(), kisgModal: true }, '', host.win.location.href); modalBack = close; } catch {}
   }
+  // Görüntüleyici başka bir dialog (ör. giriş) açıldığı için kapanırsa, kendi geçmiş kaydını geri alırken
+  // oluşan popstate yalnızca yutulur; aksi halde router aynı görünümü "yeniden etkinleştirip" yeni dialogu kapatıyordu.
+  let selfPop = false;
   function popModal() {
     if (!modalBack) return;
     modalBack = null;
-    try { if (host.win.history.state?.kisgModal) host.win.history.back(); } catch {}
+    try { if (host.win.history.state?.kisgModal) { selfPop = true; host.win.history.back(); } } catch { selfPop = false; }
   }
   function onPop(e) {
+    if (selfPop) { selfPop = false; e.stopImmediatePropagation(); return; }
     if (modalBack) { const close = modalBack; modalBack = null; e.stopImmediatePropagation(); close(); return; }
     const st = e.state && e.state.kisgShell;
     if (!st || st.doc !== bootId || !VIEWS[st.view]) return;
@@ -5542,7 +5551,7 @@ const appChrome = (() => {
     const st = pd.createElement('style');
     st.textContent = SIDE_CSS + `.kps{position:absolute;inset:0}.kps-col{position:absolute;top:0;bottom:0}
 .kps-col>.kw-side{position:sticky;top:var(--kps-top,84px);pointer-events:auto;transition:filter .2s}
-.kps.is-modal .kw-side{filter:brightness(.54);pointer-events:none}`;
+.kps.is-modal .kw-side{visibility:hidden;pointer-events:none}`;
     sidesWrap = pd.createElement('div'); sidesWrap.className = 'kps';
     ['left', 'right'].forEach(k => { const c = pd.createElement('div'); c.className = 'kps-col'; c.append(panels[k]); cols[k] = c; sidesWrap.append(c); });
     shadow.append(st, sidesWrap);
