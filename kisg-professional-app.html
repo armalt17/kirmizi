@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.11.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.12.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,8 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.12.0: Yorum Beğenisi V1: Akış önizlemesi ve Post Detay'da "zaman · Beğen/Beğenildi · N beğeni"; kendi yorumunda aksiyon yok.
+ Misafir → giriş → bekleyen beğeni (sunucu kontrolüyle); Akış ↔ Post Detay senkron; bildirimi DB tetikleyicisi üretir.
 v4.11.0: Web Notification Center V1 (professional_notifications). Giriş yapmış kullanıcıda zil + okunmamış sayısı (1–9, 9+);
  masaüstü nav paneli, mobil alt sayfa; son 20 bildirim; tıklayınca yalnız o kaydın read_at'i + Post Detay (yorumsa vurgu);
  "Tümünü okundu işaretle". Realtime: filter recipient_id=eq.{uid}, oturum değişiminde kanal kapanır. İstemci INSERT yapmaz.
@@ -726,6 +728,8 @@ Acil kapatma: CONFIG.historyRouting=false.
 @container (max-width:250px){#kisgApp .cp-role,#kisgApp .cp-edited{display:none}#kisgApp .cp-name{max-width:75%}}
 #kisgApp .cp-text{display:-webkit-box;margin-top:1px;overflow:hidden;color:var(--text);font-size:14px;line-height:1.45;white-space:pre-line;overflow-wrap:anywhere;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 #kisgApp .cp-side{display:flex;align-items:center;margin:-7px -8px 0 0}
+#kisgApp .cp-acts{display:flex;align-items:center;margin:1px 0 0 -6px;color:var(--faint);font-size:12px}
+#kisgApp .cp-acts .cm-like{min-height:24px}
 #kisgApp .cp-side :is(.cm-like,.cm-likes){min-height:32px;padding:0 8px;color:var(--faint)}
 #kisgApp .cp-side .cm-like.is-liked{color:var(--red-text)}
 #kisgApp .cp-side :is(.cm-like,.cm-likes) svg{width:14px;height:14px}
@@ -749,9 +753,15 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .cm-role{min-width:0;overflow:hidden;color:var(--muted);font-size:12px;text-overflow:ellipsis;white-space:nowrap}
 #kisgApp .cm-text{margin-top:2px;color:var(--text);font-size:14.5px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
 #kisgApp .cm-foot{grid-column:2;display:flex;align-items:center;gap:2px;min-height:34px;padding-left:10px;color:var(--faint);font-size:12px}
-#kisgApp .cm-foot time{margin-right:6px}
+#kisgApp .cm-foot time{margin-right:0}
+#kisgApp .cm-sep{padding:0 1px;color:var(--faint)}
+#kisgApp .cm-lcount{padding:0 4px;color:var(--faint);font-size:12px;white-space:nowrap}
+#kisgApp .cm-foot .cm-more{margin-left:auto}
 #kisgApp :is(.cm-like,.cm-likes){display:inline-flex;align-items:center;gap:4px;min-height:34px;padding:0 10px;border:0;border-radius:var(--r-pill);background:none;color:var(--muted);font-size:12px;font-weight:750}
 #kisgApp :is(.cm-like,.cm-likes) svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}
+#kisgApp .cm-like{padding:0 6px;border-radius:6px;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:color var(--t-fast)}
+#kisgApp .cm-like.is-liked{color:var(--red-text)}
+#kisgApp .cm-like:disabled{cursor:default}
 #kisgApp .cm-likes svg,#kisgApp .cm-like.is-liked svg{fill:var(--red);stroke:var(--red)}
 #kisgApp .cm-like.is-liked{color:var(--red-text)}
 #kisgApp .cm-more{position:relative;margin-left:auto}
@@ -1257,6 +1267,7 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .kw-media{border-radius:12px}
   #kisgApp :is(.cm-like,.cm-likes,.cm-more-btn){min-height:40px;min-width:40px}
   #kisgApp .cp-side :is(.cm-like,.cm-likes,.cm-more-btn){min-height:40px;min-width:36px}
+  #kisgApp .cp-acts .cm-like{min-height:30px;min-width:0}
   #kisgApp .cp-side{margin-top:-10px}
   #kisgApp .cp-all{min-height:36px}
   #kisgApp .cm-input{font-size:16px}
@@ -1392,7 +1403,7 @@ const CONFIG = Object.freeze({
   legal: { terms: '', privacy: '' },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.11.0',
+  version: '4.12.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -3133,6 +3144,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
   }
   postBus.add((kind, x) => {
     const p = x && find(x.id);
+    if (kind === 'commentLiked') { threads.syncCommentLike(x); return; }
     if (kind === 'liked' && p && !f.liking.has(x.id)) { p.liked = x.liked; p.like_count = x.like_count; patchLike(p); }
     else if (kind === 'removed' && p) { f.posts = f.posts.filter(r => r.id !== x.id); cardOf(x.id)?.remove(); onRemoved?.(x.id); }
     else if (kind === 'featured') {
@@ -3172,15 +3184,20 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
     }
     const author = c => profiles.get(c.user_id) || {};
 
+    // Yorum beğenisi: "Beğen / Beğenildi · N beğeni". Kendi yorumunda aksiyon yok, yalnız sayı (varsa).
+    function likeActions(c, own) {
+      const n = c.like_count > 0 ? `<span class="cm-lcount">${c.like_count} beğeni</span>` : '';
+      if (own) return n ? `<span class="cm-sep" aria-hidden="true">·</span>${n}` : '';
+      return `<span class="cm-sep" aria-hidden="true">·</span><button type="button" class="cm-like${c.liked ? ' is-liked' : ''}" data-comment-like="${esc(c.id)}" aria-pressed="${!!c.liked}"${liking.has(String(c.id)) ? ' disabled' : ''}>${c.liked ? 'Beğenildi' : 'Beğen'}</button>`
+        + (n ? `<span class="cm-sep" aria-hidden="true">·</span>${n}` : '');
+    }
     function itemHTML(c, t) {
       const a = author(c), own = !!session.user && c.user_id === session.user.id, role = identity.role(a);
       const editing = t.editing != null && String(t.editing) === String(c.id);
       const body = editing
         ? `<form class="cm-edit" data-comment-edit="${esc(c.id)}"><textarea class="cm-input" maxlength="2000" rows="2" aria-label="Yorumu düzenle">${esc(c.content)}</textarea><div class="cm-edit-actions"><button type="button" class="cm-link" data-comment-cancel>Vazgeç</button><button type="submit" class="cm-save">Kaydet</button></div></form>`
         : `<p class="cm-text">${esc(c.content)}</p>`;
-      const like = own
-        ? (c.like_count > 0 ? `<span class="cm-likes">${ICONS.heart}${c.like_count}</span>` : '')
-        : `<button type="button" class="cm-like${c.liked ? ' is-liked' : ''}" data-comment-like="${esc(c.id)}" aria-pressed="${c.liked}"${liking.has(String(c.id)) ? ' disabled' : ''}>${ICONS.heart}<span>${c.like_count > 0 ? c.like_count : ''}</span><span class="k-sr">Yorumu beğen</span></button>`;
+      const like = likeActions(c, own);
       const menu = own && !editing ? `<div class="cm-more"><button type="button" class="cm-more-btn" data-popover-trigger aria-label="Yorum seçenekleri" aria-expanded="false">···</button><div class="k-popover cm-menu" hidden><button type="button" data-comment-act="edit" data-id="${esc(c.id)}">Düzenle</button><button type="button" class="is-danger" data-comment-act="delete" data-id="${esc(c.id)}">Sil</button></div></div>` : '';
       return `<li class="cm-item" data-comment-id="${esc(c.id)}"><a class="cm-av" href="${esc(urls.profile(c.user_id))}" target="_top" aria-label="${esc(a.full_name || 'Kullanıcı')} profili">${avatar(a, 'sm')}</a>`
         + `<div class="cm-bubble"><div class="cm-meta"><a class="cm-name" href="${esc(urls.profile(c.user_id))}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a>${role ? `<span class="cm-role">${esc(role)}</span>` : ''}</div>${body}</div>`
@@ -3193,14 +3210,13 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       const body = editing
         ? `<form class="cm-edit" data-comment-edit="${esc(c.id)}"><textarea class="cm-input" maxlength="2000" rows="2" aria-label="Yorumu düzenle">${esc(c.content)}</textarea><div class="cm-edit-actions"><button type="button" class="cm-link" data-comment-cancel>Vazgeç</button><button type="submit" class="cm-save">Kaydet</button></div></form>`
         : `<a class="cp-text" href="${esc(urls.work(c.post_id))}" target="_top">${esc(c.content)}</a>`;
-      const like = own
-        ? (c.like_count > 0 ? `<span class="cm-likes">${ICONS.heart}${c.like_count}</span>` : '')
-        : `<button type="button" class="cm-like${c.liked ? ' is-liked' : ''}" data-comment-like="${esc(c.id)}" aria-pressed="${c.liked}"${liking.has(String(c.id)) ? ' disabled' : ''}>${ICONS.heart}<span>${c.like_count > 0 ? c.like_count : ''}</span><span class="k-sr">Yorumu beğen</span></button>`;
+      const like = likeActions(c, own);
       const menu = own && !editing ? `<div class="cm-more"><button type="button" class="cm-more-btn" data-popover-trigger aria-label="Yorum seçenekleri" aria-expanded="false">···</button><div class="k-popover cm-menu" hidden><button type="button" data-comment-act="edit" data-id="${esc(c.id)}">Düzenle</button><button type="button" class="is-danger" data-comment-act="delete" data-id="${esc(c.id)}">Sil</button></div></div>` : '';
       const edited = c.updated_at && c.updated_at !== c.created_at ? ' · düzenlendi' : '';
       return `<div class="cp" data-comment-id="${esc(c.id)}"><a class="cp-av" href="${esc(prof)}" target="_top" aria-label="${esc(a.full_name || 'Kullanıcı')} profili">${avatar(a, 'sm')}</a>`
-        + `<div class="cp-main"><div class="cp-meta"><a class="cp-name" href="${esc(prof)}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a>${role ? `<span class="cp-role">${esc(role)}</span>` : ''}<span class="cp-time"><span aria-hidden="true">· </span><time datetime="${esc(c.created_at)}" title="${esc(relativeTime(c.created_at) + edited)}">${esc(shortTime(c.created_at))}</time>${edited ? '<span class="cp-edited"> · düzenlendi</span>' : ''}</span></div>${body}</div>`
-        + `<div class="cp-side">${editing ? '' : like}${menu}</div></div>`;
+        + `<div class="cp-main"><div class="cp-meta"><a class="cp-name" href="${esc(prof)}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a>${role ? `<span class="cp-role">${esc(role)}</span>` : ''}<span class="cp-time"><span aria-hidden="true">· </span><time datetime="${esc(c.created_at)}" title="${esc(relativeTime(c.created_at) + edited)}">${esc(shortTime(c.created_at))}</time>${edited ? '<span class="cp-edited"> · düzenlendi</span>' : ''}</span></div>${body}`
+        + (!editing && like ? `<div class="cp-acts">${like.replace(/^<span class="cm-sep" aria-hidden="true">·<\/span>/, '')}</div>` : '') + `</div>`
+        + `<div class="cp-side">${menu}</div></div>`;
     }
     function renderCompact(id, box, t) {
       const c = t.items[t.items.length - 1], p = post(id);
@@ -3370,15 +3386,35 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
     }
     async function like(id, cid) {
       const t = get(id), c = t.items.find(x => String(x.id) === String(cid)); if (!c) return;
-      const user = await requireUser(() => render(id)); if (!user || c.user_id === user.id || liking.has(String(cid))) return;
+      const user = await requireUser(() => likeAfterLogin(id, cid)); if (!user || c.user_id === user.id || liking.has(String(cid))) return;
       const was = c.liked; liking.add(String(cid)); c.liked = !was; c.like_count = Math.max(0, c.like_count + (was ? -1 : 1)); render(id);
+      let ok = false;
       try {
-        // Satırın kendi kimliği gönderilir (DOM'daki dataset daima metindir).
+        // Satırın kendi kimliği gönderilir (DOM'daki dataset daima metindir). Bildirimi DB tetikleyicisi üretir/kaldırır.
         const { error } = await (was ? db.from('professional_comment_likes').delete().eq('comment_id', c.id).eq('user_id', user.id)
           : db.from('professional_comment_likes').insert({ comment_id: c.id, user_id: user.id }));
-        if (error) throw error;
+        if (error && !was && String(error.code) === '23505') { await hydrate([c]); ok = true; }   // zaten beğenilmiş (başka sekme): sunucu durumu esas
+        else if (error) throw error;
+        else ok = true;
       } catch (e) { c.liked = was; c.like_count = Math.max(0, c.like_count + (was ? 1 : -1)); toast(errorText(e, 'Beğeni kaydedilemedi.')); }
       finally { liking.delete(String(cid)); render(id); }
+      if (ok) emitPost('commentLiked', { cid: String(c.id), liked: c.liked, like_count: c.like_count, source: threadsId });
+    }
+    // Girişten sonra: sunucuda zaten beğenilmişse geri almaz; yalnız beğenilmemişse beğenir.
+    async function likeAfterLogin(id, cid) {
+      const t = get(id), c = t.items.find(x => String(x.id) === String(cid)), uid = session.user?.id;
+      if (!c || !uid || c.user_id === uid) { render(id); return; }
+      const { data, error } = await db.from('professional_comment_likes').select('comment_id').eq('comment_id', c.id).eq('user_id', uid).maybeSingle();
+      if (error) { toast('Beğeni durumu alınamadı. Lütfen tekrar deneyin.'); return; }
+      if (session.user?.id !== uid) return;
+      if (data) { if (!c.liked) { c.liked = true; } render(id); return; }
+      c.liked = false; await like(id, cid);
+    }
+    // Aynı yorum başka bir akışta (Akış ↔ Post Detay) beğenilince burada da güncellenir.
+    const threadsId = newId();
+    function syncCommentLike(x) {
+      if (!x || x.source === threadsId || liking.has(x.cid)) return;
+      map.forEach((t, pid) => { const c = t.items.find(i => String(i.id) === x.cid); if (c) { c.liked = x.liked; c.like_count = x.like_count; render(pid); } });
     }
     async function onUser() {
       const all = [...map.values()].flatMap(t => t.items);
@@ -3390,7 +3426,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
     function rerenderAll() { map.forEach((_, id) => render(id)); }
     function reset() { map.clear(); }
     const avatarChanged = (uid, url) => { const p = profiles.get(uid); if (p) p.avatar_url = url; };
-    return { preview, open, expand, loadMore, submit, saveEdit, remove, like, get, render, onUser, rerenderAll, reset, autosize, avatarChanged, isOpen: id => map.get(id)?.open };
+    return { preview, open, expand, loadMore, submit, saveEdit, remove, like, get, render, onUser, rerenderAll, reset, autosize, avatarChanged, syncCommentLike, isOpen: id => map.get(id)?.open };
   })();
 
   /* ---- Olaylar (kapsam: bu akışın kök elemanı) ---- */
