@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.9.1
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.9.2
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,10 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.9.2: Akış yorum önizlemesi yenilendi: yalnız en güncel 1 yorum (kutu/balon/gri alan yok; küçük avatar,
+ isim · meslek · kısa zaman, en fazla 2 satır). 2+ yorumda "X yorumun tümünü gör →"; bu satır ve kartın yorum
+ sayısı Çalışma Detay'ı açar. Akışta liste yüklenmez; "Yorum Yap" hızlı yanıt alanını açar. Çalışma Detay'da
+ 10'dan fazla yorumda "Önceki yorumları gör" butonunun görünmemesi düzeltildi.
 v4.9.1: Kayıt formunda "Uzmanlarda Görün" (varsayılan açık). Tercih onboarding'de mevcut profile UPDATE ile
  profiles.is_discoverable'a yazılır (onboarding atlanırsa da yalnız bu alan); insert/upsert yok. Profil
  düzenleyicideki anahtar aynı alanı kullanır; kendi görünürlüğü değişince açık Uzmanlar listesi tazelenir.
@@ -681,6 +685,31 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kw-post .kw-thread,#kisgApp .kw-post .kw-post-head .kw-owner{cursor:auto}
 /* Yorumlar */
 #kisgApp .kw-thread{margin:2px 0 8px;padding-top:12px;border-top:1px solid var(--line-soft);cursor:auto}
+/* Akış yorum önizlemesi (en güncel 1 yorum): kutu/balon/gri alan yok; kartın ritmine hafifçe eklenir. */
+#kisgApp .kw-thread.is-preview{margin:0 0 6px;padding-top:2px;border-top:0}
+#kisgApp .cp{display:grid;grid-template-columns:28px minmax(0,1fr) auto;column-gap:10px;align-items:start;padding:4px 0 0;animation:ka-enter .2s var(--ease)}
+#kisgApp .cp-av{display:block;margin-top:1px;border-radius:50%}
+#kisgApp .cp-av .k-avatar{width:28px;height:28px;font-size:10.5px}
+#kisgApp .cp-main{min-width:0;container-type:inline-size}
+#kisgApp .cp-meta{display:flex;align-items:baseline;gap:6px;min-width:0;line-height:1.35;white-space:nowrap}
+#kisgApp .cp-name{flex:none;max-width:52%;overflow:hidden;color:var(--ink);font-size:13.5px;font-weight:700;text-overflow:ellipsis}
+#kisgApp .cp-role{min-width:0;overflow:hidden;color:var(--muted);font-size:12.5px;text-overflow:ellipsis}
+#kisgApp .cp-time{flex:none;color:var(--faint);font-size:12.5px}
+@container (max-width:250px){#kisgApp .cp-role,#kisgApp .cp-edited{display:none}#kisgApp .cp-name{max-width:75%}}
+#kisgApp .cp-text{display:-webkit-box;margin-top:1px;overflow:hidden;color:var(--text);font-size:14px;line-height:1.45;white-space:pre-line;overflow-wrap:anywhere;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+#kisgApp .cp-side{display:flex;align-items:center;margin:-7px -8px 0 0}
+#kisgApp .cp-side :is(.cm-like,.cm-likes){min-height:32px;padding:0 8px;color:var(--faint)}
+#kisgApp .cp-side .cm-like.is-liked{color:var(--red-text)}
+#kisgApp .cp-side :is(.cm-like,.cm-likes) svg{width:14px;height:14px}
+#kisgApp .cp-side .cm-more-btn{width:32px;height:32px;color:var(--faint)}
+#kisgApp .cp .cm-edit{margin-top:4px}
+#kisgApp .cp-all{display:inline-flex;align-items:center;gap:5px;min-height:30px;margin:2px 0 0 38px;color:var(--muted);font-size:13px;font-weight:650;transition:color var(--t-fast)}
+#kisgApp .cp-all span{transition:transform var(--t-fast)}
+#kisgApp .kw-thread.is-preview .cm-compose{margin-top:8px}
+#kisgApp .kw-thread.is-preview .cm-login{margin-top:6px}
+#kisgApp .kw-act-pair{display:inline-flex;align-items:center}
+#kisgApp .kw-act-pair .kw-act-count{padding-right:2px}
+#kisgApp .kw-act-pair .kw-act-comment{padding-left:6px}
 #kisgApp .cm-show{display:block;margin:0 0 10px;padding:4px 0;border:0;background:none;color:var(--muted);font-size:13px;font-weight:750}
 #kisgApp .cm-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}
 #kisgApp .cm-list:empty{display:none}
@@ -1102,6 +1131,10 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp :is(.cm-like,.cm-more-btn,.cm-link,.cm-show):hover{background:var(--surface-2);color:var(--ink)}
   #kisgApp .cm-show:hover{background:none;text-decoration:underline}
   #kisgApp .cm-like:hover{color:var(--red-text)}
+  #kisgApp :is(.cp-name,.cp-text):hover{color:var(--ink)}
+  #kisgApp .cp-name:hover{text-decoration:underline;text-underline-offset:2px}
+  #kisgApp .cp-all:hover{color:var(--ink)}
+  #kisgApp .cp-all:hover span{transform:translateX(3px)}
   #kisgApp .kc-card:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px var(--line-strong),var(--shadow-hover)}
   #kisgApp .ke-card:hover .k-avatar{box-shadow:0 0 0 3px #fff,0 0 0 5px var(--ink)}
   #kisgApp .kc-filters-inline :is(input,select):hover,#kisgApp .kc-filter-btn:hover{box-shadow:inset 0 0 0 1px var(--ink)}
@@ -1167,6 +1200,9 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .kw-post-content{font-size:15px;line-height:1.58}
   #kisgApp .kw-media{border-radius:12px}
   #kisgApp :is(.cm-like,.cm-likes,.cm-more-btn){min-height:40px;min-width:40px}
+  #kisgApp .cp-side :is(.cm-like,.cm-likes,.cm-more-btn){min-height:40px;min-width:36px}
+  #kisgApp .cp-side{margin-top:-10px}
+  #kisgApp .cp-all{min-height:36px}
   #kisgApp .cm-input{font-size:16px}
   #kisgApp .kw-post-actions{margin:6px -8px 0 -10px}
   #kisgApp :is(.kw-act,.kw-likes-static){min-height:44px;padding:6px 12px 6px 10px}
@@ -1300,7 +1336,7 @@ const CONFIG = Object.freeze({
   legal: { terms: '', privacy: '' },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.9.1',
+  version: '4.9.2',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -1373,6 +1409,17 @@ function relativeTime(value) {
   if (abs < 864e5) return rtf.format(Math.round(delta / 36e5), 'hour');
   if (abs < 6048e5) return rtf.format(Math.round(delta / 864e5), 'day');
   return new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value));
+}
+// Kısa zaman (akış yorum önizlemesi): "şimdi", "5 dk", "3 sa", "2 g", sonra "12 Mar" / "12 Mar 2024".
+function shortTime(value) {
+  const d = new Date(value), abs = Date.now() - d.getTime();
+  if (!Number.isFinite(abs)) return '';
+  if (abs < 60e3) return 'şimdi';
+  if (abs < 36e5) return `${Math.round(abs / 60e3)} dk`;
+  if (abs < 864e5) return `${Math.round(abs / 36e5)} sa`;
+  if (abs < 6048e5) return `${Math.round(abs / 864e5)} g`;
+  const same = d.getFullYear() === new Date().getFullYear();
+  return new Intl.DateTimeFormat('tr-TR', same ? { day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
 }
 function idle(fn) { (window.requestIdleCallback || (cb => setTimeout(cb, 500)))(() => { try { fn(); } catch (e) { console.error(e); } }); }
 function webStorage(kind) { try { const s = window[kind]; s.setItem('__kisg', '1'); s.removeItem('__kisg'); return s; } catch { return null; } }
@@ -2622,7 +2669,11 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       ? `<span class="kw-likes-static" data-like-static${p.like_count > 0 ? '' : ' hidden'}>${ICONS.heart}<span data-like-count>${likeNum(p)}</span><span class="k-sr"> beğeni</span></span>`
       : `<button type="button" class="kw-act kw-act-like${p.liked ? ' is-liked' : ''}" data-post-action="like" aria-pressed="${p.liked}"${f.liking.has(p.id) ? ' disabled' : ''}><span class="kw-act-ico">${ICONS.heart}</span><span class="kw-like-num" data-like-count>${likeNum(p)}</span><span class="kw-act-label">Beğen</span></button>`;
     const cc = p.comment_count > 0 ? String(p.comment_count) : '';
-    return `${like}<button type="button" class="kw-act kw-act-comment" data-post-action="comment" aria-expanded="${!!threads.isOpen(p.id)}"><span class="kw-act-ico">${ICONS.comment}</span><span class="kw-like-num" data-comment-count>${cc}</span><span class="kw-act-label">Yorum Yap</span></button><button type="button" class="kw-act kw-act-share" data-post-action="share"><span class="kw-act-ico">${ICONS.send}</span><span class="kw-act-label">Paylaş</span></button>`;
+    // Akış kartında yorum sayısı Çalışma Detay'a götürür (tüm yorumlar orada); "Yorum Yap" hızlı yanıt alanını açar.
+    const comment = !detail && cc
+      ? `<span class="kw-act-pair"><a class="kw-act kw-act-count" href="${esc(urls.work(p.id))}" target="_top" data-comment-count-link aria-label="${cc} yorumun tümünü gör"><span class="kw-act-ico">${ICONS.comment}</span><span class="kw-like-num" data-comment-count>${cc}</span></a><button type="button" class="kw-act kw-act-comment" data-post-action="comment" aria-expanded="${!!threads.isOpen(p.id)}"><span class="kw-act-label">Yorum Yap</span></button></span>`
+      : `<button type="button" class="kw-act kw-act-comment" data-post-action="comment" aria-expanded="${!!threads.isOpen(p.id)}"><span class="kw-act-ico">${ICONS.comment}</span><span class="kw-like-num" data-comment-count>${cc}</span><span class="kw-act-label">Yorum Yap</span></button>`;
+    return `${like}${comment}<button type="button" class="kw-act kw-act-share" data-post-action="share"><span class="kw-act-ico">${ICONS.send}</span><span class="kw-act-label">Paylaş</span></button>`;
   }
   // Uzun Çalışma kartta kırpılır; tamamı Çalışma Detay'da okunur.
   const isLong = text => text.length > 520 || (text.match(/\n/g) || []).length > 9;
@@ -2748,14 +2799,15 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
   });
 
   /* ---- Yorumlar ----
-     Akış sayfası başına tek önizleme sorgusu (+ yazarlar ve beğeniler için birer toplu sorgu).
-     Tam liste yalnızca kullanıcı açınca, sayfa sayfa yüklenir. */
+     Akış kartı (detail=false): yalnız en güncel 1 yorum, 2+ yorumda "X yorumun tümünü gör →" (Çalışma Detay).
+     Akış içinde yorum listesi yüklenmez; "Yorum Yap" yalnız hızlı yanıt alanını açar.
+     Çalışma Detay (detail=true): tam liste, sayfa sayfa (değişmedi). */
   const threads = (() => {
     const map = new Map();             // postId -> { items, total, open, loading, full, editing }
     const profiles = new Map();        // userId -> profil (tekrar sorgulanmaz)
     const liking = new Set();
     const C_SELECT = 'id,post_id,user_id,content,status,created_at,updated_at';
-    const PAGE = 10, PREVIEW = 2;
+    const PAGE = 10, compact = !detail;
     const get = id => { let t = map.get(id); if (!t) { t = { items: [], total: 0, open: false, loading: false, full: false, editing: null, draft: '' }; map.set(id, t); } return t; };
     const slot = id => cardOf(id)?.querySelector('[data-thread]');
     const post = id => find(id);
@@ -2791,15 +2843,52 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
         + `<div class="cm-bubble"><div class="cm-meta"><a class="cm-name" href="${esc(urls.profile(c.user_id))}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a>${role ? `<span class="cm-role">${esc(role)}</span>` : ''}</div>${body}</div>`
         + `<div class="cm-foot"><time datetime="${esc(c.created_at)}">${esc(relativeTime(c.created_at))}${c.updated_at && c.updated_at !== c.created_at ? ' · düzenlendi' : ''}</time>${like}${menu}</div></li>`;
     }
+    // Akış önizlemesi: kutu/balon yok; küçük avatar, tek satır kimlik + zaman, en fazla 2 satır metin.
+    function previewHTML(c, t) {
+      const a = author(c), own = !!session.user && c.user_id === session.user.id, role = identity.role(a), prof = urls.profile(c.user_id);
+      const editing = t.editing != null && String(t.editing) === String(c.id);
+      const body = editing
+        ? `<form class="cm-edit" data-comment-edit="${esc(c.id)}"><textarea class="cm-input" maxlength="2000" rows="2" aria-label="Yorumu düzenle">${esc(c.content)}</textarea><div class="cm-edit-actions"><button type="button" class="cm-link" data-comment-cancel>Vazgeç</button><button type="submit" class="cm-save">Kaydet</button></div></form>`
+        : `<a class="cp-text" href="${esc(urls.work(c.post_id))}" target="_top">${esc(c.content)}</a>`;
+      const like = own
+        ? (c.like_count > 0 ? `<span class="cm-likes">${ICONS.heart}${c.like_count}</span>` : '')
+        : `<button type="button" class="cm-like${c.liked ? ' is-liked' : ''}" data-comment-like="${esc(c.id)}" aria-pressed="${c.liked}"${liking.has(String(c.id)) ? ' disabled' : ''}>${ICONS.heart}<span>${c.like_count > 0 ? c.like_count : ''}</span><span class="k-sr">Yorumu beğen</span></button>`;
+      const menu = own && !editing ? `<div class="cm-more"><button type="button" class="cm-more-btn" data-popover-trigger aria-label="Yorum seçenekleri" aria-expanded="false">···</button><div class="k-popover cm-menu" hidden><button type="button" data-comment-act="edit" data-id="${esc(c.id)}">Düzenle</button><button type="button" class="is-danger" data-comment-act="delete" data-id="${esc(c.id)}">Sil</button></div></div>` : '';
+      const edited = c.updated_at && c.updated_at !== c.created_at ? ' · düzenlendi' : '';
+      return `<div class="cp" data-comment-id="${esc(c.id)}"><a class="cp-av" href="${esc(prof)}" target="_top" aria-label="${esc(a.full_name || 'Kullanıcı')} profili">${avatar(a, 'sm')}</a>`
+        + `<div class="cp-main"><div class="cp-meta"><a class="cp-name" href="${esc(prof)}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a>${role ? `<span class="cp-role">${esc(role)}</span>` : ''}<span class="cp-time"><span aria-hidden="true">· </span><time datetime="${esc(c.created_at)}" title="${esc(relativeTime(c.created_at) + edited)}">${esc(shortTime(c.created_at))}</time>${edited ? '<span class="cp-edited"> · düzenlendi</span>' : ''}</span></div>${body}</div>`
+        + `<div class="cp-side">${editing ? '' : like}${menu}</div></div>`;
+    }
+    function renderCompact(id, box, t) {
+      const c = t.items[t.items.length - 1], p = post(id);
+      const total = Math.max(t.total, t.items.length, p?.comment_count || 0);
+      if (!c && !t.open) { box.hidden = true; box.innerHTML = ''; return; }
+      const all = c && total >= 2 ? `<a class="cp-all" href="${esc(urls.work(id))}" target="_top" data-comment-all>${total} yorumun tümünü gör <span aria-hidden="true">→</span></a>` : '';
+      const composerRow = t.open
+        ? (session.user
+          ? `<form class="cm-compose" data-comment-form><span class="cm-me">${avatar(session.me || {}, 'sm')}</span><textarea class="cm-input" maxlength="2000" rows="1" placeholder="Yorum yaz…" aria-label="Yorum yaz">${esc(t.draft)}</textarea><button type="submit" class="cm-send" aria-label="Yorumu gönder" disabled>${ICONS.send}</button></form>`
+          : `<button type="button" class="cm-login" data-comment-login>Yorum yazmak için giriş yap</button>`)
+        : '';
+      box.classList.add('is-preview');
+      box.innerHTML = `${c ? previewHTML(c, t) : ''}${all}${composerRow}`;
+      box.hidden = false;
+      cardOf(id)?.querySelector('[data-post-action="comment"]')?.setAttribute('aria-expanded', String(t.open));
+      box.querySelectorAll('textarea.cm-input').forEach(autosize);
+      host.schedule();
+    }
     function render(id) {
       const box = slot(id); if (!box) return;
       const t = get(id), p = post(id);
+      if (compact) { renderCompact(id, box, t); return; }
+      const PREVIEW = 2;
       const hasItems = t.items.length > 0;
       if (!hasItems && !t.open) { box.hidden = true; box.innerHTML = ''; return; }
-      const total = Math.max(t.total, t.items.length);
+      // Toplam, gönderinin yorum sayısından da okunur; liste tamamlanmadıysa (sunucuda daha eski yorum var)
+      // buton sayı bilinmese de gösterilir — detaya her girişte liste tazelendiği için t.total sıfırdan başlar.
+      const total = Math.max(t.total, t.items.length, p?.comment_count || 0);
       const rest = total - t.items.length;
-      const moreBtn = !t.full && rest > 0
-        ? `<button type="button" class="cm-show" data-comment-more>${t.loading ? 'Yükleniyor…' : (t.items.length <= PREVIEW && !t.open ? `Tüm ${total} yorumu gör` : `Önceki ${rest} yorumu gör`)}</button>` : '';
+      const moreBtn = !t.full && (rest > 0 || t.items.length > 0)
+        ? `<button type="button" class="cm-show" data-comment-more>${t.loading ? 'Yükleniyor…' : (t.items.length <= PREVIEW && !t.open ? `Tüm ${total} yorumu gör` : rest > 0 ? `Önceki ${rest} yorumu gör` : 'Önceki yorumları gör')}</button>` : '';
       const composerRow = t.open
         ? (session.user
           ? `<form class="cm-compose" data-comment-form><span class="cm-me">${avatar(session.me || {}, 'sm')}</span><textarea class="cm-input" maxlength="2000" rows="1" placeholder="Yorum yaz…" aria-label="Yorum yaz">${esc(t.draft)}</textarea><button type="submit" class="cm-send" aria-label="Yorumu gönder" disabled>${ICONS.send}</button></form>`
@@ -2816,25 +2905,44 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
     function setCount(id, n) {
       const p = post(id); if (!p) return;
       p.comment_count = Math.max(0, n);
-      const c = cardOf(id)?.querySelector('[data-comment-count]'); if (c) c.textContent = p.comment_count > 0 ? String(p.comment_count) : '';
+      const bar = cardOf(id)?.querySelector('[data-actions]');
+      if (bar) { bar.innerHTML = actions(p); patchLike(p); }
+    }
+    const newestFirst = q => q.eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false });
+    // Akış kartı için en güncel yorum (silme sonrası sıradaki yorum da buradan gelir).
+    async function latest(id) {
+      try {
+        const { data, error } = await newestFirst(db.from('professional_post_comments').select(C_SELECT).eq('post_id', id)).limit(1);
+        if (error) throw error;
+        await hydrate(data || []);
+        get(id).items = data || [];
+      } catch {}
+      render(id);
     }
 
-    // Akış sayfası için önizleme: tek sorgu, gönderi başına en fazla PREVIEW yorum.
+    // Akış önizlemesi: sayfa başına tek toplu sorgu, gönderi başına yalnız en güncel yorum.
+    // Toplu sorgu limitine takılan gönderiler tek tek tamamlanır; gömülü sayı boşsa sayı ayrıca okunur.
     async function preview(posts) {
-      const ids = posts.filter(p => p.comment_count === null || p.comment_count > 0).map(p => p.id);
-      if (!ids.length) return;
+      const list = posts.filter(p => p.comment_count === null || p.comment_count > 0);
+      if (!list.length) return;
       try {
-        const { data, error } = await db.from('professional_post_comments').select(C_SELECT).in('post_id', ids).eq('status', 'active').order('created_at', { ascending: false }).limit(Math.min(120, ids.length * 6));
+        const ids = list.map(p => p.id), LIMIT = Math.min(200, ids.length * 4);
+        const { data, error } = await newestFirst(db.from('professional_post_comments').select(C_SELECT).in('post_id', ids)).limit(LIMIT);
         if (error) throw error;
         const by = new Map();
-        (data || []).forEach(r => { const l = by.get(r.post_id) || []; if (l.length < PREVIEW) l.push(r); by.set(r.post_id, l); });
-        const rows = [...by.values()].flat();
-        await hydrate(rows);
-        by.forEach((list, pid) => {
+        (data || []).forEach(r => { if (!by.has(r.post_id)) by.set(r.post_id, r); });
+        const missing = (data || []).length >= LIMIT ? list.filter(p => !by.has(p.id)) : [];
+        const unknown = list.filter(p => p.comment_count === null);
+        await Promise.all([
+          ...missing.map(async p => { const r = await newestFirst(db.from('professional_post_comments').select(C_SELECT).eq('post_id', p.id)).limit(1); if (!r.error && r.data?.[0]) by.set(p.id, r.data[0]); }),
+          ...unknown.map(async p => { const r = await db.from('professional_post_comments').select('id', { count: 'exact', head: true }).eq('post_id', p.id).eq('status', 'active'); if (!r.error && typeof r.count === 'number') setCount(p.id, r.count); })
+        ]);
+        await hydrate([...by.values()]);
+        by.forEach((row, pid) => {
           const t = get(pid), p = post(pid);
-          if (t.items.length) return;                      // kullanıcı bu arada açtıysa dokunma
-          t.items = list.slice().reverse();
-          t.total = p?.comment_count ?? list.length + (list.length === PREVIEW ? 1 : 0);
+          if (t.items.length) return;                      // kullanıcı bu arada yorum yazdıysa dokunma
+          t.items = [row];
+          t.total = p?.comment_count || 1;
           render(pid);
         });
       } catch {}
@@ -2867,6 +2975,11 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
     }
     async function open(id) {
       const t = get(id), p = post(id);
+      if (compact) {
+        t.open = !t.open; render(id);
+        if (t.open) setTimeout(() => slot(id)?.querySelector('textarea.cm-input')?.focus({ preventScroll: true }), 40);
+        return;
+      }
       t.open = !t.open;
       if (!t.items.length && p?.comment_count !== 0 && t.open) { render(id); await loadMore(id); }
       else render(id);
@@ -2908,7 +3021,8 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
         if (error) throw error;
         t.items = t.items.filter(c => String(c.id) !== String(cid)); t.total = Math.max(0, t.total - 1);
         setCount(id, (post(id)?.comment_count || 1) - 1);
-        render(id); toast('Yorum silindi.');
+        if (compact && !t.items.length && (post(id)?.comment_count || 0) > 0) latest(id); else render(id);
+        toast('Yorum silindi.');
       } catch (e) { toast(errorText(e, 'Yorum silinemedi.')); }
     }
     async function like(id, cid) {
