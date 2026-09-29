@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.10.1
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.11.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,9 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.11.0: Web Notification Center V1 (professional_notifications). Giriş yapmış kullanıcıda zil + okunmamış sayısı (1–9, 9+);
+ masaüstü nav paneli, mobil alt sayfa; son 20 bildirim; tıklayınca yalnız o kaydın read_at'i + Post Detay (yorumsa vurgu);
+ "Tümünü okundu işaretle". Realtime: filter recipient_id=eq.{uid}, oturum değişiminde kanal kapanır. İstemci INSERT yapmaz.
 v4.10.1: Akış sol panel uzmanları: profiles.last_post_at yerine kullanıcıların AKTİF Postlarındaki en yeni tarihe göre
  (kullanıcı başına bir kez, yalnız is_discoverable, en güncel 3). Silinen Post sayılmaz; aktif Postu kalmayan çıkar.
 v4.10.0: Kullanıcıya görünen terminoloji "Çalışma" → "Post" (teknik adlar, tablolar ve /calisma-detay route'u aynı).
@@ -107,6 +110,13 @@ Acil kapatma: CONFIG.historyRouting=false.
           <p class="kpn-apps-title">Kırmızı İSG ekosistemi</p>
           <a class="kpn-app" href="https://isgcalisanplatformu.com/isg-is-ilanlari" target="_top"><span class="kpn-app-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 12.5h18"/></svg></span><span><b>İş İlanları</b><small>Güncel İSG iş ilanları</small></span></a>
           <a class="kpn-app" href="https://isgcalisanplatformu.com/isg-dokumanlari" target="_top"><span class="kpn-app-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg></span><span><b>Dokümanlar</b><small>İSG doküman arşivi</small></span></a>
+        </div>
+      </div>
+      <div class="ka-notif" data-notif hidden>
+        <button class="ka-bell" type="button" data-notif-toggle data-popover-trigger aria-haspopup="true" aria-expanded="false" aria-label="Bildirimler"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg><span class="ka-badge" data-notif-badge hidden></span></button>
+        <div class="k-popover kn-panel" data-notif-panel role="dialog" aria-label="Bildirimler" hidden>
+          <div class="kn-head"><strong>Bildirimler</strong><button type="button" class="kn-all" data-notif-all hidden>Tümünü okundu işaretle</button></div>
+          <div class="kn-list" data-notif-list></div>
         </div>
       </div>
       <div class="ka-account" data-state="loading">
@@ -507,6 +517,11 @@ Acil kapatma: CONFIG.historyRouting=false.
   </form>
 </dialog>
 
+<dialog id="kaNotifDialog" class="k-dialog k-dialog-sm kn-sheet" aria-labelledby="kaNotifTitle" tabindex="-1">
+  <header class="k-dialog-head"><h2 id="kaNotifTitle">Bildirimler</h2><div class="kn-head-actions"><button type="button" class="kn-all" data-notif-all hidden>Tümünü okundu işaretle</button><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></div></header>
+  <div class="kn-list" data-notif-list></div>
+</dialog>
+
 <dialog id="kaMediaDialog" class="k-dialog k-media-dialog" aria-label="Post görseli" tabindex="-1" autofocus>
   <header class="k-dialog-head"><a class="k-media-open" data-media-work target="_top">Postu Gör <span aria-hidden="true">→</span></a><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
   <div class="k-media-stage"><img alt="" data-media-img></div>
@@ -811,6 +826,12 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kc-filters-inline input::placeholder{color:var(--muted)}
 #kisgApp .kc-filters-inline select{padding-right:34px;-webkit-appearance:none;appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d6878' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 12px center/16px}
 #kisgApp .kc-filters-inline .is-set :is(input,select){box-shadow:inset 0 0 0 1.5px var(--ink)}
+#kisgApp .kn-sheet:focus{outline:none}
+#kisgApp .kn-sheet .k-dialog-head h2{font-size:17px}
+#kisgApp [data-comment-id].is-flash{border-radius:14px;animation:kn-flash 2.2s var(--ease)}
+@keyframes kn-flash{0%,35%{background:rgba(227,10,23,.07);box-shadow:0 0 0 6px rgba(227,10,23,.07)}100%{background:transparent;box-shadow:0 0 0 6px transparent}}
+#kisgApp .kn-head-actions{display:flex;align-items:center;gap:6px}
+#kisgApp .kn-sheet .kn-list{padding:6px 8px max(12px,env(safe-area-inset-bottom,0px))}
 #kisgApp .kc-field-city{position:relative}
 #kisgApp .kc-city-native{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;border:0!important;opacity:0;pointer-events:none;clip:rect(0,0,0,0)}
 #kisgApp .kc-city-btn{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;width:100%;color:var(--ink);font-weight:650;text-align:left;white-space:nowrap;cursor:pointer}
@@ -1371,7 +1392,7 @@ const CONFIG = Object.freeze({
   legal: { terms: '', privacy: '' },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.10.1',
+  version: '4.11.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -1555,6 +1576,27 @@ const ICONS = {
 };
 /* Professional navigation stili tek kaynaktan gelir: iframe içinde (satır içi mod) ve
    üst dokümandaki shadow root'ta (sabit mod) aynı metin kullanılır. */
+/* Bildirim listesi stilleri: aynı kurallar nav (üst doküman, masaüstü panel) ve iframe (mobil alt sayfa) için. */
+const KN_CSS = scope => `
+${scope} .kn-list{display:block}
+${scope} .kn-item{display:grid;grid-template-columns:40px minmax(0,1fr) 10px;align-items:start;column-gap:12px;width:100%;margin:0;padding:12px 14px;border:0;border-radius:12px;background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer;transition:background .12s}
+${scope} .kn-item.is-unread{background:rgba(20,26,36,.035)}
+${scope} .kn-item:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+${scope} .kn-av .k-avatar{width:40px;height:40px;font-size:13px}
+${scope} .kn-body{display:block;min-width:0}
+${scope} .kn-text{display:block;color:var(--ink);font-size:14px;line-height:1.4}
+${scope} .kn-text b{font-weight:700}
+${scope} .kn-item:not(.is-unread) .kn-text{color:#3b4453}
+${scope} .kn-snippet{display:-webkit-box;margin-top:2px;overflow:hidden;color:var(--muted);font-size:13px;line-height:1.4;overflow-wrap:anywhere;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+${scope} .kn-time{display:block;margin-top:3px;color:var(--faint);font-size:12px}
+${scope} .kn-item.is-unread .kn-time{color:var(--ink);font-weight:600}
+${scope} .kn-list .k-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+${scope} .kn-dot{width:8px;height:8px;margin-top:7px;border-radius:50%;background:var(--red)}
+${scope} .kn-empty,${scope} .kn-state{margin:0;padding:28px 16px;color:var(--muted);font-size:14px;text-align:center}
+${scope} .kn-state button{margin-left:6px;padding:0;border:0;background:none;color:var(--ink);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+${scope} .kn-all{padding:6px 2px;border:0;background:none;color:var(--red-text);font:inherit;font-size:13px;font-weight:650;white-space:nowrap;cursor:pointer}
+${scope} .kn-all:disabled{color:var(--faint);cursor:default}
+`;
 const NAV_CSS = `
 .kpn{--red:#e30a17;--red-text:#c7101b;--ink:#141a24;--muted:#5d6878;--faint:#8791a0;--line:#e6e9ee;--line-soft:#eff1f4;--line-strong:#d3d8df;--surface-2:#f5f6f8;--ease:cubic-bezier(.2,.7,.2,1);--bar:60px;
   position:relative;z-index:40;display:block;background:#fff;border-bottom:1px solid var(--line);color:var(--ink);
@@ -1637,8 +1679,20 @@ const NAV_CSS = `
   .kpn .ka-tab{font-size:13.5px}
 }
 @media(prefers-reduced-motion:reduce){.kpn,.kpn *{transition:none!important;animation:none!important}}
-`;
+.kpn .ka-notif{position:relative;display:flex;align-items:center;margin-right:2px}
+.kpn .ka-bell{position:relative;display:grid;place-items:center;width:42px;height:42px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--ink);transition:background .15s}
+.kpn .ka-bell:hover,.kpn .ka-bell[aria-expanded="true"]{background:var(--surface-2)}
+.kpn .ka-bell svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.kpn .ka-badge{position:absolute;top:4px;right:3px;min-width:18px;height:18px;padding:0 5px;border:2px solid #fff;border-radius:999px;background:var(--red);color:#fff;font-size:10.5px;font-weight:750;line-height:14px;text-align:center;box-sizing:border-box}
+.kpn .kn-panel{width:380px;max-width:calc(100vw - 24px);padding:6px}
+.kpn .kn-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px 10px}
+.kpn .kn-head strong{font-size:15.5px;font-weight:750}
+.kpn .kn-panel .kn-list{max-height:min(520px,68vh);overflow:auto;overscroll-behavior:contain}
+.kpn .kn-item:hover{background:var(--surface-2)}
+@media(max-width:720px){.kpn .ka-bell{width:44px;height:44px}.kpn .ka-notif{margin-right:0}}
+` + KN_CSS('.kpn');
 (() => { try { const st = document.createElement('style'); st.dataset.kisgNav = ''; st.textContent = NAV_CSS; document.head.append(st); } catch {} })();
+(() => { try { const st = document.createElement('style'); st.dataset.kisgNotif = ''; st.textContent = KN_CSS('#kisgApp'); document.head.append(st); } catch {} })();
 /* Keşif panelleri (Uzmanlar / Hizmetler) stili de tek kaynak: iframe içinde ve üst dokümandaki
    shadow root'ta aynı metin. Paneller üst dokümanda yerel position:sticky ile sabitlenir. */
 const SIDE_CSS = `
@@ -2538,6 +2592,194 @@ const authUI = (() => {
   return { render, require, open, maybeOnboard };
 })();
 const requireUser = resume => authUI.require(resume);
+
+/* =========================================================================
+   7b. Bildirimler (professional_notifications) — Web Notification Center V1
+   Kayıtları DB tetikleyicileri oluşturur; istemci yalnız okur ve read_at günceller (insert yok).
+   Zil yalnız giriş yapmış kullanıcıda. Masaüstü: nav paneli; mobil (≤720px): alt sayfa.
+   Realtime: kullanıcı başına tek kanal, filter recipient_id=eq.{uid}; olay gelince sayaç (ve açık liste) sunucudan tazelenir.
+   ========================================================================= */
+const notifications = (() => {
+  const TABLE = 'professional_notifications', LIMIT = 20;
+  const TEXT = { post_like: 'Postunu beğendi', post_comment: 'Postuna yorum yaptı', comment_like: 'Yorumunu beğendi' };
+  const wrap = $n('[data-notif]'), bell = $n('[data-notif-toggle]'), badge = $n('[data-notif-badge]'), panel = $n('[data-notif-panel]');
+  const sheet = $('#kaNotifDialog');
+  const lists = () => [$('[data-notif-list]', panel), $('[data-notif-list]', sheet)];
+  const allBtns = () => [$('[data-notif-all]', panel), $('[data-notif-all]', sheet)];
+  const mobile = () => window.matchMedia('(max-width:720px)').matches;
+  const st = { uid: null, unread: 0, items: [], loaded: false, loading: false, error: false, rev: 0, channel: null, joined: false, removing: null, poll: 0, timer: 0 };
+  const isOpen = () => !panel.hidden || sheet.open;
+
+  function renderBadge() {
+    const n = st.unread;
+    badge.hidden = !(n > 0);
+    badge.textContent = n > 9 ? '9+' : String(n);
+    bell.setAttribute('aria-label', n > 0 ? `Bildirimler, ${n} okunmamış` : 'Bildirimler');
+    allBtns().forEach(b => { b.hidden = !(n > 0); });
+  }
+  function itemHTML(x) {
+    const a = x.actor || {}, unread = !x.read_at, name = a.full_name || 'Kırmızı İSG üyesi';
+    const snippet = x.type === 'post_comment' && x.comment ? `<span class="kn-snippet">“${esc(x.comment.length > 140 ? x.comment.slice(0, 140) + '…' : x.comment)}”</span>` : '';
+    return `<button type="button" class="kn-item${unread ? ' is-unread' : ''}" data-notif-id="${esc(x.id)}">`
+      + `<span class="kn-av">${avatar({ ...a, id: undefined }, 'md')}</span>`
+      + `<span class="kn-body"><span class="kn-text"><b>${esc(name)}</b> ${esc(TEXT[x.type] || 'Postunla etkileşimde bulundu')}</span>${snippet}`
+      + `<span class="kn-time"><time datetime="${esc(x.created_at)}">${esc(relativeTime(x.created_at))}</time>${unread ? '<span class="k-sr"> · okunmadı</span>' : ''}</span></span>`
+      + `${unread ? '<span class="kn-dot" aria-hidden="true"></span>' : '<span></span>'}</button>`;
+  }
+  function renderList() {
+    const html = st.error && !st.items.length ? '<p class="kn-state">Bildirimler yüklenemedi.<button type="button" data-notif-retry>Tekrar dene</button></p>'
+      : !st.loaded ? '<p class="kn-state">Yükleniyor…</p>'
+        : !st.items.length ? '<p class="kn-empty">Henüz bildirimin yok.</p>'
+          : st.items.map(itemHTML).join('');
+    lists().forEach(l => { l.innerHTML = html; });
+    renderBadge();
+    if (sheet.open) host.place(sheet);
+  }
+  async function refreshCount() {
+    const uid = st.uid; if (!uid || !db) return;
+    try {
+      const { count, error } = await db.from(TABLE).select('id', { count: 'exact', head: true }).eq('recipient_id', uid).is('read_at', null);
+      if (error || uid !== st.uid || typeof count !== 'number') return;
+      st.unread = count; renderBadge();
+    } catch {}
+  }
+  async function loadList() {
+    const uid = st.uid; if (!uid || !db) return;
+    const rev = ++st.rev; st.loading = true;
+    try {
+      const { data, error } = await db.from(TABLE).select('id,type,post_id,comment_id,actor_id,created_at,read_at').eq('recipient_id', uid).order('created_at', { ascending: false }).order('id', { ascending: false }).limit(LIMIT);
+      if (error) throw error;
+      const rows = [], seen = new Set();
+      (data || []).forEach(r => { if (r && !seen.has(String(r.id))) { seen.add(String(r.id)); rows.push(r); } });   // aynı kayıt iki kez gösterilmez
+      const actorIds = [...new Set(rows.map(r => r.actor_id).filter(Boolean))];
+      const commentIds = [...new Set(rows.filter(r => r.type === 'post_comment' && r.comment_id != null).map(r => r.comment_id))];
+      const [pr, cm] = await Promise.all([
+        actorIds.length ? db.from('profiles').select('id,full_name,avatar_url').in('id', actorIds) : Promise.resolve({ data: [] }),
+        commentIds.length ? db.from('professional_post_comments').select('id,content').in('id', commentIds).eq('status', 'active') : Promise.resolve({ data: [] })
+      ]);
+      if (rev !== st.rev || uid !== st.uid) return;
+      const actors = new Map((pr.data || []).map(p => [p.id, p])), comments = new Map((cm.data || []).map(c => [String(c.id), clean(c.content)]));
+      st.items = rows.map(r => ({ ...r, actor: actors.get(r.actor_id) || null, comment: r.comment_id != null ? comments.get(String(r.comment_id)) || '' : '' }));
+      st.loaded = true; st.error = false;
+    } catch { if (rev === st.rev) st.error = true; }
+    finally { if (rev === st.rev) { st.loading = false; renderList(); } }
+  }
+  const refresh = () => { clearTimeout(st.timer); st.timer = setTimeout(() => { refreshCount(); if (isOpen()) loadList(); }, 150); };
+
+  /* ---- Realtime: tek kanal, yalnız kendi bildirimleri ---- */
+  const settle = async () => { for (let i = 0; i < 40 && db?.realtime?.isDisconnecting?.(); i++) await new Promise(r => setTimeout(r, 25)); };
+  async function subscribe(uid) {
+    if (!db?.channel || st.channel) return;
+    try { if (st.removing) await st.removing; await settle(); } catch {}
+    if (st.uid !== uid || st.channel) return;
+    try {
+      st.channel = db.channel(`kisg-pro-notif-${newId()}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: TABLE, filter: `recipient_id=eq.${uid}` }, payload => {
+          const r = payload?.new;
+          if (payload?.eventType === 'INSERT' && r && r.recipient_id && r.recipient_id !== st.uid) return;
+          refresh();
+        })
+        .subscribe(status => {
+          if (status === 'SUBSCRIBED') { st.joined = true; stopPoll(); refresh(); }
+          else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') { st.joined = false; if (st.channel) startPoll(); }
+        });
+    } catch { st.channel = null; startPoll(); }
+  }
+  function unsubscribe() {
+    stopPoll();
+    const c = st.channel; st.channel = null; st.joined = false;
+    if (c) { try { const r = st.removing = Promise.resolve(db.removeChannel(c)).catch(() => {}).then(() => { if (st.removing === r) st.removing = null; }); } catch {} }
+  }
+  function startPoll() { if (!st.poll) st.poll = setInterval(() => { if (!st.joined && !document.hidden) refresh(); }, 60000); }
+  function stopPoll() { clearInterval(st.poll); st.poll = 0; }
+
+  /* ---- Oturum ---- */
+  function onSession() {
+    const uid = session.user?.id || null;
+    if (uid === st.uid) return;
+    unsubscribe();
+    clearTimeout(st.timer);
+    st.uid = uid; st.unread = 0; st.items = []; st.loaded = false; st.error = false; st.rev++;
+    panel.hidden = true; bell.setAttribute('aria-expanded', 'false');
+    if (sheet.open) { dialogs.lock(sheet, false); dialogs.close(sheet); }
+    wrap.hidden = !uid;
+    renderList();
+    if (uid) { refreshCount(); subscribe(uid); }
+  }
+
+  /* ---- Okundu ---- */
+  async function markRead(id) {
+    const x = st.items.find(i => String(i.id) === String(id)); const uid = st.uid;
+    if (!x || x.read_at || !uid) return;
+    x.read_at = new Date().toISOString(); st.unread = Math.max(0, st.unread - 1); renderList();
+    try {
+      const { error } = await db.from(TABLE).update({ read_at: x.read_at }).eq('id', x.id).eq('recipient_id', uid).is('read_at', null);
+      if (error) throw error;
+    } catch { refreshCount(); }
+  }
+  async function markAll() {
+    const uid = st.uid; if (!uid || !(st.unread > 0)) return;
+    const at = new Date().toISOString(), prev = st.items.map(i => i.read_at);
+    st.items.forEach(i => { if (!i.read_at) i.read_at = at; }); st.unread = 0; renderList();
+    allBtns().forEach(b => { b.disabled = true; });
+    try {
+      const { error } = await db.from(TABLE).update({ read_at: at }).eq('recipient_id', uid).is('read_at', null);
+      if (error) throw error;
+    } catch { st.items.forEach((i, k) => { i.read_at = prev[k]; }); toast('Bildirimler güncellenemedi. Tekrar dene.'); refreshCount(); renderList(); }
+    finally { allBtns().forEach(b => { b.disabled = false; }); }
+  }
+  // İlgili yoruma kaydır + kısa vurgu (yorum ilk sayfada yüklüyse; değilse yalnız Post Detay açılır).
+  function focusComment(pid, cid) {
+    let tries = 0;
+    const tick = () => {
+      if (router.current !== 'work' || ++tries > 40) return;
+      const el = $(`[data-view="work"] [data-post-id="${CSS.escape(String(pid))}"] [data-comment-id="${CSS.escape(String(cid))}"]`);
+      if (!el) { setTimeout(tick, 150); return; }
+      // Görünüm geçişi / kaydırma kilidi kendi konumunu geri yükleyebilir: yorum görünene kadar birkaç kez doğrulanır.
+      const place = () => { const y = host.shellTop() + (el.getBoundingClientRect().top - root.getBoundingClientRect().top) - 140; host.scrollTo(Math.max(0, y)); };
+      const inView = () => { const r = host.frame?.getBoundingClientRect?.(), top = (r ? r.top : 0) + el.getBoundingClientRect().top, vh = (host.win || window).innerHeight; return top > 0 && top < vh - 40; };
+      place();
+      [120, 400, 900].forEach(ms => setTimeout(() => { if (router.current === 'work' && el.isConnected && !inView()) place(); }, ms));
+      el.classList.add('is-flash'); setTimeout(() => el.classList.remove('is-flash'), 2200);
+    };
+    setTimeout(tick, 200);
+  }
+  function openTarget(x) {
+    closePopovers(); if (sheet.open) dialogs.close(sheet);
+    if (!x?.post_id) return;
+    if (router.enabled) router.activate('work', { mode: 'push', params: { id: x.post_id } });
+    else { shellHooks.leave(); navigateTop(urls.work(x.post_id)); return; }
+    if (x.type === 'post_comment' && x.comment_id != null) focusComment(x.post_id, x.comment_id);
+  }
+  function openView() {
+    if (!st.uid) return;
+    if (!st.loaded || st.error) renderList();
+    loadList(); refreshCount();
+  }
+
+  onShellClick(e => {
+    const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
+    if (t.closest('[data-notif-toggle]')) {
+      if (mobile()) { e.stopImmediatePropagation(); closePopovers(); dialogs.open(sheet, 'sheet'); sheet.focus({ preventScroll: true }); openView(); return; }
+      if (panel.hidden) openView();            // masaüstü: panel genel popover düzeniyle açılır/kapanır
+      return;
+    }
+    if (t.closest('[data-notif-all]')) { e.stopImmediatePropagation(); markAll(); return; }
+    if (t.closest('[data-notif-retry]')) { e.stopImmediatePropagation(); loadList(); return; }
+    const item = t.closest('[data-notif-id]');
+    if (item) {
+      e.stopImmediatePropagation();
+      const x = st.items.find(i => String(i.id) === item.dataset.notifId);
+      markRead(item.dataset.notifId);
+      openTarget(x);
+    }
+  });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && st.uid) refresh(); });
+  window.addEventListener('online', () => { if (st.uid) refresh(); });
+  window.addEventListener('pagehide', e => { if (!e.persisted) unsubscribe(); });
+  renderList();
+  return { onSession, refresh, state: st };
+})();
 
 /* =========================================================================
    7b. Profil fotoğrafı: seç → kırp (sürükle/yakınlaştır) → 512×512 → WebP (≤150 KB hedef) →
@@ -5330,6 +5572,7 @@ function createWorkView() {
 const VIEWS = { works: createWorksView(), experts: createExpertsView(), services: createServicesView(), profile: createProfileView(), work: createWorkView(), service: createServiceView() };
 session.on(kind => {
   authUI.render(kind);
+  if (kind === 'user') notifications.onSession();
   if (kind === 'user') composer.onSession();
   Object.values(VIEWS).forEach(v => { try { v.onSession?.(kind); } catch (e) { console.error(e); } });
   host.schedule();
