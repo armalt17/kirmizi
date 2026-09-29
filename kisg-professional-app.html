@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.8.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.9.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,13 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.9.0: Web Auth V1 — tek pencerede Giriş Yap / Kayıt Ol / Şifremi Unuttum (masaüstü modal, mobil alt sayfa).
+ Mobil ile aynı Supabase Auth kullanıcıları. Profil satırını mevcut on_auth_user_created → handle_new_user()
+ trigger'ı oluşturur; web profiles'a insert/upsert yapmaz. Şifre sıfırlama mobil ile aynı OTP akışı
+ (e-posta → 8 haneli kod → verifyOtp(recovery) → yeni şifre); redirectTo verilmez, şablonlar değişmez.
+ Yalnız bu tarayıcıda web'den kayıt olan kullanıcıya 2 adımlı onboarding (yalnız boş/değişen alanlar yazılır).
+ verified(): geçici ağ/Supabase hatası artık kullanıcıyı çıkış yapmış göstermez (yalnız 401/403 reddi çıkış sayılır).
+ E-posta bağlantısıyla gelen #access_token… hash'i router'dan önce işlenir ve adresten silinir.
 v4.8.0: Kırmızı İSG Professional sitenin ana ürünü. Ana navigasyon: Akış | Uzmanlar | Hizmet Bul.
  Akış '/' route'u (eski /calisma legacy → '/'); logo Akış'a gider. Veri modeli ve içerik terminolojisi
  (professional_posts, Çalışma, Çalışma Detay) değişmedi. "Yeni Çalışmalar" Realtime '/' üzerinde çalışır.
@@ -271,24 +278,108 @@ Acil kapatma: CONFIG.historyRouting=false.
 </main>
 
 <!-- ORTAK DİALOGLAR -->
-<dialog id="kaLoginDialog" class="k-dialog k-dialog-sm k-login" aria-labelledby="kaLoginTitle">
-  <form id="kaLoginForm" novalidate>
-    <div class="k-login-top"><img class="k-login-art" src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/erferf.png" alt="" aria-hidden="true" decoding="async">
-      <img class="k-login-mark" src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/logo.jpg" alt="" width="44" height="44">
-      <button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button>
+<dialog id="kaLoginDialog" class="k-dialog k-dialog-sm k-login" aria-labelledby="kaLoginTitle" data-pane="login">
+  <div class="k-login-top"><img class="k-login-art" src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/erferf.png" alt="" aria-hidden="true" decoding="async">
+    <img class="k-login-mark" src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/logo.jpg" alt="" width="44" height="44">
+    <button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button>
+  </div>
+  <div class="k-dialog-body">
+    <div class="ku-steps" data-auth-steps hidden aria-hidden="true"><span></span><span></span></div>
+    <h2 id="kaLoginTitle">Kırmızı İSG'ye giriş yap</h2>
+    <p class="k-login-lead" data-auth-lead>Çalışmalarını paylaş, meslektaşlarını keşfet, hizmetlerini yayınla.</p>
+    <div class="ku-tabs" role="tablist" aria-label="Hesap" data-auth-tabs>
+      <button type="button" role="tab" data-auth-go="login" aria-selected="true">Giriş Yap</button>
+      <button type="button" role="tab" data-auth-go="signup" aria-selected="false">Kayıt Ol</button>
     </div>
-    <div class="k-dialog-body">
-      <h2 id="kaLoginTitle">Kırmızı İSG'ye giriş yap</h2>
-      <p class="k-login-lead">Çalışmalarını paylaş, meslektaşlarını keşfet, hizmetlerini yayınla.</p>
+
+    <form id="kaLoginForm" data-auth-pane="login" novalidate>
       <label class="k-label" for="kaLoginEmail">E-posta</label>
-      <input class="k-input" id="kaLoginEmail" type="email" autocomplete="username" inputmode="email" required placeholder="ornek@firma.com">
+      <input class="k-input" id="kaLoginEmail" type="email" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" required placeholder="ornek@firma.com">
       <label class="k-label" for="kaLoginPassword">Şifre</label>
       <input class="k-input" id="kaLoginPassword" type="password" autocomplete="current-password" required>
+      <div class="ku-row"><button type="button" class="ku-link" data-auth-go="forgot">Şifremi unuttum</button></div>
       <p id="kaLoginError" class="k-form-error" role="alert" hidden></p>
+      <p class="ku-inline" data-auth-unconfirmed hidden><button type="button" class="ku-link" data-auth-confirm>E-postamı şimdi doğrula</button></p>
       <button id="kaLoginSubmit" class="k-btn k-btn-primary k-btn-block k-btn-lg" type="submit">Giriş Yap</button>
-      <p class="k-login-foot">Hesabın yok mu? Kırmızı İSG mobil uygulamasından ücretsiz hesap oluşturabilirsin. Aynı hesapla buradan giriş yaparsın.</p>
+      <p class="k-login-foot">Kırmızı İSG mobil uygulamasındaki hesabınla da giriş yapabilirsin. Hesabın yok mu? <button type="button" class="ku-link" data-auth-go="signup">Ücretsiz kayıt ol</button></p>
+    </form>
+
+    <form id="kaSignupForm" data-auth-pane="signup" novalidate hidden>
+      <label class="k-label" for="kaSignupName">Ad Soyad</label>
+      <input class="k-input" id="kaSignupName" type="text" autocomplete="name" maxlength="80" required>
+      <label class="k-label" for="kaSignupEmail">E-posta</label>
+      <input class="k-input" id="kaSignupEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required placeholder="ornek@firma.com">
+      <label class="k-label" for="kaSignupPassword">Şifre</label>
+      <input class="k-input" id="kaSignupPassword" type="password" autocomplete="new-password" minlength="8" required aria-describedby="kaSignupPwHint">
+      <p class="ku-hint" id="kaSignupPwHint">En az 8 karakter.</p>
+      <label class="k-label" for="kaSignupPassword2">Şifre Tekrar</label>
+      <input class="k-input" id="kaSignupPassword2" type="password" autocomplete="new-password" required>
+      <label class="kpe-check ku-terms"><input type="checkbox" id="kaSignupTerms"><span data-auth-terms></span></label>
+      <p class="k-form-error" role="alert" hidden></p>
+      <p class="ku-inline" data-auth-exists hidden><button type="button" class="ku-link" data-auth-go="login">Giriş yap</button> · <button type="button" class="ku-link" data-auth-go="forgot">Şifremi unuttum</button></p>
+      <button class="k-btn k-btn-primary k-btn-block k-btn-lg ku-submit" type="submit">Hesap Oluştur</button>
+      <p class="k-login-foot">Web ve mobil uygulama aynı hesabı kullanır; kayıt olduktan sonra iki yerden de aynı bilgilerle giriş yaparsın.</p>
+    </form>
+
+    <form id="kaVerifyForm" data-auth-pane="verify" novalidate hidden>
+      <label class="k-label" for="kaVerifyCode">Doğrulama kodu</label>
+      <input class="k-input ku-code" id="kaVerifyCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" pattern="[0-9]*" required>
+      <p class="ku-hint">E-postada kod yerine bir bağlantı varsa bağlantıya dokun; ardından buradan giriş yapabilirsin.</p>
+      <p class="k-form-error" role="alert" hidden></p>
+      <button class="k-btn k-btn-primary k-btn-block k-btn-lg ku-submit" type="submit">Doğrula</button>
+      <div class="ku-actions"><button type="button" class="ku-link" data-auth-resend>Kodu tekrar gönder</button><button type="button" class="ku-link ku-muted" data-auth-go="login">Giriş ekranına dön</button></div>
+    </form>
+
+    <form id="kaForgotForm" data-auth-pane="forgot" novalidate hidden>
+      <label class="k-label" for="kaForgotEmail">E-posta</label>
+      <input class="k-input" id="kaForgotEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required placeholder="ornek@firma.com">
+      <p class="k-form-error" role="alert" hidden></p>
+      <button class="k-btn k-btn-primary k-btn-block k-btn-lg ku-submit" type="submit">Kod Gönder</button>
+      <div class="ku-actions"><button type="button" class="ku-link ku-muted" data-auth-go="login">Giriş ekranına dön</button></div>
+    </form>
+
+    <form id="kaCodeForm" data-auth-pane="code" novalidate hidden>
+      <label class="k-label" for="kaResetCode">8 haneli kod</label>
+      <input class="k-input ku-code" id="kaResetCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" pattern="[0-9]*" required>
+      <p class="k-form-error" role="alert" hidden></p>
+      <button class="k-btn k-btn-primary k-btn-block k-btn-lg ku-submit" type="submit">Kodu Doğrula</button>
+      <div class="ku-actions"><button type="button" class="ku-link" data-auth-resend>Kodu tekrar gönder</button><button type="button" class="ku-link ku-muted" data-auth-go="forgot">E-postayı değiştir</button></div>
+    </form>
+
+    <form id="kaNewPassForm" data-auth-pane="newpass" novalidate hidden>
+      <input type="email" autocomplete="username" hidden data-auth-username>
+      <label class="k-label" for="kaNewPassword">Yeni şifre</label>
+      <input class="k-input" id="kaNewPassword" type="password" autocomplete="new-password" minlength="8" required>
+      <p class="ku-hint">En az 8 karakter.</p>
+      <label class="k-label" for="kaNewPassword2">Yeni şifre tekrar</label>
+      <input class="k-input" id="kaNewPassword2" type="password" autocomplete="new-password" required>
+      <p class="k-form-error" role="alert" hidden></p>
+      <button class="k-btn k-btn-primary k-btn-block k-btn-lg ku-submit" type="submit">Şifremi Güncelle</button>
+    </form>
+
+    <form id="kaOnboardForm" data-auth-pane="onboard" novalidate hidden>
+      <label class="k-label" for="kaObProfession">Meslek / Unvan</label>
+      <input class="k-input" id="kaObProfession" type="text" maxlength="80" list="kaObProfessionList" autocomplete="organization-title" placeholder="Örn. İş Güvenliği Uzmanı" required>
+      <datalist id="kaObProfessionList"><option value="İş Güvenliği Uzmanı"><option value="İşyeri Hekimi"><option value="Diğer Sağlık Personeli"></datalist>
+      <label class="k-label" for="kaObCert">Mesleki Belge / Statü</label>
+      <select class="k-input" id="kaObCert"></select>
+      <div class="ku-grid2">
+        <div><label class="k-label" for="kaObCity">Şehir</label><select class="k-input" id="kaObCity" required></select></div>
+        <div data-ob-exp><label class="k-label" for="kaObExp">Deneyim</label><select class="k-input" id="kaObExp"></select></div>
+      </div>
+      <p class="k-form-error" role="alert" hidden></p>
+      <button class="k-btn k-btn-primary k-btn-block k-btn-lg ku-submit" type="submit">Devam Et</button>
+      <div class="ku-actions ku-center"><button type="button" class="ku-link ku-muted" data-auth-skip>Şimdilik geç</button></div>
+    </form>
+
+    <div data-auth-pane="photo" hidden>
+      <div class="ku-photo"><span class="k-avatar av-big" data-ob-avatar></span></div>
+      <p class="k-form-error" role="alert" hidden></p>
+      <button type="button" class="k-btn k-btn-block k-btn-lg" data-auth-photo>Fotoğraf ekle</button>
+      <button type="button" class="k-btn k-btn-primary k-btn-block k-btn-lg ku-submit" data-auth-finish>Akış'a Git</button>
+      <p class="ku-hint ku-center">Fotoğrafını daha sonra profilinden de ekleyebilirsin.</p>
     </div>
-  </form>
+  </div>
 </dialog>
 
 <dialog id="kaPostDialog" class="k-dialog k-dialog-lg" aria-labelledby="kaPostTitle">
@@ -813,6 +904,36 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .k-login-lead{margin:6px 0 20px;color:var(--muted);font-size:14.5px}
 #kisgApp #kaLoginSubmit{margin-top:20px}
 #kisgApp .k-login-foot{margin-top:16px;padding-top:16px;border-top:1px solid var(--line-soft);color:var(--muted);font-size:13px;line-height:1.55}
+#kisgApp .k-login-foot .ku-link{font-size:inherit}
+#kisgApp .ku-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:-4px 0 6px;padding:4px;border-radius:var(--r-pill);background:var(--surface-2)}
+#kisgApp .ku-tabs[hidden]{display:none}
+#kisgApp .ku-tabs button{min-height:40px;border:0;border-radius:var(--r-pill);background:transparent;color:var(--muted);font-size:14px;font-weight:700;cursor:pointer;transition:background var(--t-fast),color var(--t-fast)}
+#kisgApp .ku-tabs button[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(20,26,36,.12)}
+#kisgApp .ku-tabs button:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+#kisgApp .ku-link{padding:0;border:0;background:none;color:var(--red-text);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer;text-decoration:underline;text-decoration-color:var(--red-line);text-underline-offset:3px}
+#kisgApp .ku-link:hover{text-decoration-color:currentColor}
+#kisgApp .ku-link:disabled{color:var(--faint);cursor:default;text-decoration:none}
+#kisgApp .ku-link.ku-muted{color:var(--muted);text-decoration-color:var(--line-strong)}
+#kisgApp .ku-row{display:flex;justify-content:flex-end;margin-top:10px}
+#kisgApp .ku-inline{margin-top:8px;font-size:13.5px;color:var(--muted)}
+#kisgApp .ku-hint{margin-top:6px;color:var(--muted);font-size:12.5px;line-height:1.5}
+#kisgApp .ku-hint.ku-center{margin-top:14px;text-align:center}
+#kisgApp .ku-terms{align-items:flex-start;margin-top:16px;font-size:13.5px;line-height:1.5;color:var(--text)}
+#kisgApp .ku-terms input{flex:none;width:18px;height:18px;margin-top:1px;accent-color:var(--red)}
+#kisgApp .ku-terms a{color:var(--ink);font-weight:650;text-underline-offset:2px}
+#kisgApp .ku-code{font-size:22px;font-weight:750;letter-spacing:.28em;text-align:center;font-variant-numeric:tabular-nums}
+#kisgApp .ku-submit{margin-top:20px}
+#kisgApp .ku-actions{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 16px;margin-top:16px}
+#kisgApp .ku-actions.ku-center{justify-content:center}
+#kisgApp .ku-steps{display:flex;gap:6px;margin:0 0 14px}
+#kisgApp .ku-steps[hidden]{display:none}
+#kisgApp .ku-steps span{flex:1;height:4px;border-radius:4px;background:var(--line)}
+#kisgApp .ku-steps span.is-on{background:var(--red)}
+#kisgApp .ku-grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+#kisgApp .ku-grid2 [hidden]{display:none}
+#kisgApp .ku-photo{display:flex;justify-content:center;padding:4px 0 18px}
+#kisgApp .ku-photo .av-big{width:120px;height:120px;font-size:38px}
+#kisgApp [data-auth-pane="photo"] .k-btn + .k-btn{margin-top:10px}
 #kisgApp .k-media-dialog{width:min(1040px,calc(100% - 24px));background:#fff}
 #kisgApp .k-media-dialog .k-dialog-head{padding:10px 10px 10px 20px}
 #kisgApp .k-media-open{color:var(--ink);font-size:14px;font-weight:700}
@@ -1090,6 +1211,7 @@ Acil kapatma: CONFIG.historyRouting=false.
   @keyframes k-sheet{from{transform:translateY(40px);opacity:.4}}
   #kisgApp :is(.k-dialog-head,.k-dialog-body,.k-dialog-foot){padding-left:16px;padding-right:16px}
   #kisgApp .k-login-top{padding-left:16px}
+  #kisgApp .ku-grid2{grid-template-columns:1fr}
   #kisgApp .k-two{grid-template-columns:1fr}
   #kisgApp .k-media-dialog{width:100%;max-width:none;height:100dvh;max-height:none;margin:0;border-radius:0}
   #kisgApp .k-media-stage{max-height:none}
@@ -1157,9 +1279,11 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
+  // Kayıt formundaki sözleşme bağlantıları (boşsa metin bağlantısız gösterilir).
+  legal: { terms: '', privacy: '' },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.8.0',
+  version: '4.9.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -1616,8 +1740,19 @@ const host = (() => {
     floating.forEach(place);
   }
   function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; sync(); }); }
+  // Dialog açıkken iframe görünen alanın altına kadar uzatılır: içerik kısa olduğunda (yükleniyor, boş liste)
+  // mobil alt sayfa iframe'in altında kesilip altında site footer'ı görünmez. Kapanınca doğal yüksekliğe döner.
+  function reach(on) {
+    if (!framed || !win) return;
+    if (!on) { if (root.style.minHeight) { root.style.minHeight = ''; sync(); } return; }
+    const r = frameRect(); if (!r) return;
+    const vv = win.visualViewport, bottom = vv ? vv.offsetTop + vv.height : win.innerHeight;
+    if (r.bottom >= bottom) return;
+    root.style.minHeight = Math.ceil(bottom - r.top - root.getBoundingClientRect().top) + 'px';
+    sync();
+  }
   function float(el, on) { if (on) { floating.add(el); place(el); } else floating.delete(el); }
-  return { framed, win, frame, installHostWidth, doc: win ? win.document : null, canRoute: !!win && typeof win.history?.pushState === 'function', url, scrollY, scrollTo, shellTop, sync, schedule, float, place, lock, setCover: fn => { cover = fn; }, repositionFloating: () => floating.forEach(place) };
+  return { framed, win, frame, installHostWidth, doc: win ? win.document : null, canRoute: !!win && typeof win.history?.pushState === 'function', url, scrollY, scrollTo, shellTop, sync, schedule, float, place, lock, reach, setCover: fn => { cover = fn; }, repositionFloating: () => floating.forEach(place) };
 })();
 
 /* =========================================================================
@@ -1694,14 +1829,26 @@ const session = (() => {
     apply(null);
   }
   // Yazma işlemlerinden önce sunucu tarafında doğrulanmış kullanıcı.
+  // Yalnızca sunucu oturumu açıkça reddederse (401/403, oturum yok/geçersiz) çıkış yapılmış sayılır.
+  // Geçici ağ/Supabase hatasında yerel oturum korunur; yazma isteğini RLS yine JWT ile doğrular
+  // ve isteğin kendi hatası kullanıcıya gösterilir (arayüz "çıkış yapılmış" görünmez).
+  const REJECTED = ['session_not_found', 'bad_jwt', 'user_not_found', 'refresh_token_not_found', 'refresh_token_already_used', 'session_expired', 'user_banned', 'no_authorization'];
+  const rejected = e => !e || e.name === 'AuthSessionMissingError' || e.status === 401 || e.status === 403 || REJECTED.includes(e.code);
   async function verified() {
-    const { data, error } = await db.auth.getUser();
-    if (error || !data.user) { apply(null); return null; }
-    if (api.user?.id !== data.user.id) apply(data.user);
-    return data.user;
+    let data = null, error = null;
+    try { ({ data, error } = await db.auth.getUser()); } catch (e) { error = e; }
+    const user = data?.user || null;
+    if (user) { if (api.user?.id !== user.id) apply(user); return user; }
+    if (rejected(error)) {
+      if (api.user) { try { await db.auth.signOut({ scope: 'local' }); } catch {} }
+      apply(null); return null;
+    }
+    return api.user;
   }
   function patchMe(fields) { if (!api.user) return; api.me = { ...(api.me || { id: api.user.id }), ...fields }; writeJSON(local, ME_KEY, api.me); emit('me'); }
-  Object.assign(api, { on: fn => listeners.add(fn), start, fail, signIn, signOut, verified, patchMe, refreshMe: () => api.user && refreshMe(api.user.id, api.revision) });
+  // Kayıt / kod doğrulama gibi akışlarda Supabase'in döndürdüğü kullanıcı hemen uygulanır (olay beklenmez).
+  const adopt = user => { if (user?.id) apply(user); };
+  Object.assign(api, { on: fn => listeners.add(fn), start, fail, signIn, signOut, verified, patchMe, adopt, refreshMe: () => api.user && refreshMe(api.user.id, api.revision) });
   return api;
 })();
 
@@ -1731,6 +1878,7 @@ const dialogs = {
     this.triggers.set(d, document.activeElement);
     d.dataset.place = place;
     host.lock(true);
+    host.reach(true);
     d.showModal();
     host.float(d, true);
     shellHooks.modal(true);
@@ -1746,7 +1894,7 @@ $$('dialog').forEach(d => {
     host.float(d, false);
     shellHooks.modal(Boolean(root.querySelector('dialog[open]')));
     ['top', 'bottom', 'maxHeight', 'marginTop', 'height'].forEach(k => { d.style[k] = ''; });
-    if (!root.querySelector('dialog[open]')) host.lock(false);
+    if (!root.querySelector('dialog[open]')) { host.reach(false); host.lock(false); }
     const t = dialogs.triggers.get(d); if (t?.isConnected) t.focus({ preventScroll: true });
   });
   d.addEventListener('click', e => {
@@ -1829,8 +1977,29 @@ function meAvatarMarkup() {
 }
 const authUI = (() => {
   const account = $n('.ka-account'), slot = $n('[data-me-avatar]');
-  const dlg = $('#kaLoginDialog'), email = $('#kaLoginEmail'), password = $('#kaLoginPassword'), err = $('#kaLoginError'), submit = $('#kaLoginSubmit');
-  let pending = null, busy = false;
+  const dlg = $('#kaLoginDialog'), title = $('#kaLoginTitle'), lead = $('[data-auth-lead]', dlg), tabs = $('[data-auth-tabs]', dlg), steps = $('[data-auth-steps]', dlg);
+  const email = $('#kaLoginEmail'), password = $('#kaLoginPassword'), err = $('#kaLoginError'), submit = $('#kaLoginSubmit');
+  const unconfirmed = $('[data-auth-unconfirmed]', dlg), exists = $('[data-auth-exists]', dlg);
+  const forms = { login: $('#kaLoginForm'), signup: $('#kaSignupForm'), verify: $('#kaVerifyForm'), forgot: $('#kaForgotForm'), code: $('#kaCodeForm'), newpass: $('#kaNewPassForm'), onboard: $('#kaOnboardForm'), photo: $('[data-auth-pane="photo"]', dlg) };
+  const ob = { prof: $('#kaObProfession'), cert: $('#kaObCert'), city: $('#kaObCity'), exp: $('#kaObExp'), expWrap: $('[data-ob-exp]', dlg), avatar: $('[data-ob-avatar]', dlg), photoBtn: $('[data-auth-photo]', dlg) };
+  const ONBOARD_KEY = 'kisg:onboarding:v1', ONBOARD_TTL = 14 * 864e5, MIN_PASSWORD = 8, RESEND_SECONDS = 60;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const TEXT = {
+    login: ["Kırmızı İSG'ye giriş yap", 'Çalışmalarını paylaş, meslektaşlarını keşfet, hizmetlerini yayınla.'],
+    signup: ['Ücretsiz hesap oluştur', 'İSG profesyonelleriyle tanış, Çalışmalarını paylaş, hizmetlerini yayınla.'],
+    verify: ['E-postanı doğrula', m => `${m} adresine bir doğrulama e-postası gönderdik. E-postadaki kodu gir.`],
+    forgot: ['Şifreni sıfırla', 'Hesabına kayıtlı e-posta adresini yaz; sana 8 haneli bir kod gönderelim.'],
+    code: ['Kodu gir', m => `${m} adresi kayıtlıysa 8 haneli bir kod gönderdik. Gelen kutunu ve istenmeyen klasörünü kontrol et.`],
+    newpass: ['Yeni şifreni belirle', 'Kod doğrulandı. Hesabın için yeni bir şifre belirle.'],
+    onboard: ['Profilini tamamla', 'Adım 1 / 2 · Meslektaşların seni doğru tanısın.'],
+    photo: ['Profil fotoğrafı ekle', 'Adım 2 / 2 · İsteğe bağlı. Tanınır bir fotoğraf güven verir.']
+  };
+  const ONBOARD_PANES = ['onboard', 'photo'];
+  let pending = null, busy = false, pane = 'login', flowEmail = '', resendUntil = 0, resendTimer = 0;
+  let onboarding = null, handoff = false;
+
+  const normEmail = v => clean(v).toLocaleLowerCase('en-US');
+  const paneError = (name, msg) => { const e = $('.k-form-error', forms[name]); if (!e) return; e.textContent = msg || ''; e.hidden = !msg; };
 
   function render(kind) {
     account.dataset.state = !session.known ? 'loading' : session.user ? 'user' : 'guest';
@@ -1844,47 +2013,337 @@ const authUI = (() => {
       $n('[data-me-link="works"]').href = p + '#calismalar';
       $n('[data-me-link="services"]').href = p + '#hizmetler';
     }
+    if (kind === 'user') {
+      // Çıkış (başka sekmede de olabilir): hesaba bağlı adımlar kapanır.
+      if (!session.user && dlg.open && [...ONBOARD_PANES, 'newpass'].includes(pane)) { busy = false; dialogs.lock(dlg, false); dialogs.close(dlg); }
+      if (session.user) setTimeout(maybeOnboard, 0);
+    }
+    if (kind === 'me' && pane === 'photo' && dlg.open) renderPhoto();
   }
-  function open() {
-    err.hidden = true;
-    dialogs.open(dlg, 'sheet');
-    setTimeout(() => email.focus({ preventScroll: true }), 30);
+
+  /* ---- Pencere ve adımlar ---- */
+  function show(name) {
+    pane = name;
+    dlg.dataset.pane = name;
+    Object.entries(forms).forEach(([k, el]) => { el.hidden = k !== name; });
+    tabs.hidden = !(name === 'login' || name === 'signup');
+    $$('[data-auth-go]', tabs).forEach(b => b.setAttribute('aria-selected', String(b.dataset.authGo === name)));
+    steps.hidden = !ONBOARD_PANES.includes(name);
+    [...steps.children].forEach((sp, i) => sp.classList.toggle('is-on', i <= ONBOARD_PANES.indexOf(name)));
+    const [t, l] = TEXT[name];
+    title.textContent = t; lead.textContent = typeof l === 'function' ? l(flowEmail) : l;
+    Object.keys(forms).forEach(k => paneError(k, ''));
+    unconfirmed.hidden = true; exists.hidden = true;
+    renderResend();
+    if (dlg.open) { dlg.scrollTop = 0; host.place(dlg); focusFirst(); }
+  }
+  function focusFirst() {
+    setTimeout(() => {
+      if (!dlg.open) return;
+      const el = $(`[data-auth-pane="${pane}"] :is(input:not([type="checkbox"]):not([hidden]),select,button.ku-submit)`, dlg);
+      el?.focus({ preventScroll: true });
+    }, 30);
+  }
+  function open(name = 'login') {
+    if (session.user && !['newpass', ...ONBOARD_PANES].includes(name)) return;
+    show(name);
+    if (!dlg.open) dialogs.open(dlg, 'sheet');
+    focusFirst();
   }
   // Oturum hazır olunca kullanıcıyı döndürür; yoksa giriş açar ve başarıdan sonra resume çalışır.
   async function require(resume) {
     await session.ready;
     if (session.user) return session.user;
     pending = typeof resume === 'function' ? resume : null;
-    open();
+    open('login');
     return null;
   }
-  $('#kaLoginForm').addEventListener('submit', async e => {
+
+  // Tüm istekler aynı kalıpla: kilit, bekleme etiketi, hata eşleme. Başarıda fn'nin sonucu döner.
+  async function run(name, label, fn, messages = {}) {
+    if (busy) return undefined;
+    const form = forms[name], btn = $('.ku-submit, #kaLoginSubmit', form);
+    busy = true; paneError(name, ''); dialogs.lock(dlg, true); if (btn) setBusy(btn, true, label);
+    try { await dbReady; return await fn(); }
+    catch (e) { paneError(name, authMessage(e, messages)); return undefined; }
+    finally { busy = false; dialogs.lock(dlg, false); if (btn) setBusy(btn, false); }
+  }
+  function authMessage(e, m = {}) {
+    const code = String(e?.code || ''), status = Number(e?.status || 0), text = String(e?.message || '');
+    if (m[code]) return typeof m[code] === 'function' ? m[code](e) : m[code];
+    if (e?.name === 'AuthRetryableFetchError' || e instanceof TypeError || /failed to fetch|networkerror|network request failed|load failed/i.test(text)) return 'Bağlantı kurulamadı. İnternet bağlantını kontrol edip tekrar dene.';
+    if (status === 429 || /rate_limit/.test(code)) return 'Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.';
+    if (code === 'otp_expired' || code === 'otp_disabled' || /token has expired|invalid/i.test(text) && /otp|token/i.test(text)) return 'Kod hatalı veya süresi dolmuş. Kodu kontrol et ya da yeni kod iste.';
+    if (code === 'weak_password') return `Bu şifre yeterince güçlü değil.${e?.reasons?.includes?.('pwned') ? ' Sızdırılmış şifre listelerinde yer alıyor.' : ''} Harf, rakam ve sembol içeren daha uzun bir şifre dene.`;
+    if (code === 'same_password') return 'Yeni şifren eski şifrenden farklı olmalı.';
+    if (code === 'email_address_invalid' || code === 'validation_failed') return 'Geçerli bir e-posta adresi gir.';
+    if (code === 'signup_disabled' || code === 'email_provider_disabled') return 'Şu anda yeni kayıt alınamıyor. Lütfen daha sonra tekrar dene.';
+    if (code === 'user_already_exists' || code === 'email_exists') return 'Bu e-posta ile zaten bir hesap var. Giriş yapabilir veya şifreni sıfırlayabilirsin.';
+    if (status >= 500) return 'Şu anda işlem tamamlanamadı. Lütfen biraz sonra tekrar dene.';
+    return m.default || 'İşlem tamamlanamadı. Lütfen tekrar dene.';
+  }
+
+  /* ---- Kodu tekrar gönder: 60 sn bekleme ---- */
+  function renderResend() {
+    clearTimeout(resendTimer);
+    const left = Math.max(0, Math.ceil((resendUntil - Date.now()) / 1000));
+    $$('[data-auth-resend]', dlg).forEach(b => { b.disabled = left > 0; b.textContent = left > 0 ? `Kodu tekrar gönder (${left} sn)` : 'Kodu tekrar gönder'; });
+    if (left > 0 && dlg.open) resendTimer = setTimeout(renderResend, 1000);
+  }
+  function startCooldown() { resendUntil = Date.now() + RESEND_SECONDS * 1000; renderResend(); }
+
+  /* ---- Giriş ---- */
+  forms.login.addEventListener('submit', async e => {
     e.preventDefault();
     if (busy) return;
-    if (!email.value.trim() || !password.value) { err.textContent = 'E-posta ve şifrenizi girin.'; err.hidden = false; return; }
-    busy = true; err.hidden = true; dialogs.lock(dlg, true); setBusy(submit, true, 'Giriş yapılıyor...');
-    let ok = false;
-    try {
-      await dbReady;
-      await session.signIn(email.value.trim(), password.value);
-      ok = true;
-    } catch (error) {
-      err.textContent = error?.code === 'email_not_confirmed' ? 'Giriş yapmadan önce e-posta adresinizi doğrulayın.'
-        : error?.status === 429 ? 'Çok fazla deneme yapıldı. Biraz sonra tekrar deneyin.'
-        : 'Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.';
-      err.hidden = false;
-    } finally { busy = false; dialogs.lock(dlg, false); setBusy(submit, false); }
+    unconfirmed.hidden = true;
+    if (!email.value.trim() || !password.value) { paneError('login', 'E-posta ve şifrenizi girin.'); return; }
+    const ok = await run('login', 'Giriş yapılıyor...', async () => { await session.signIn(email.value.trim(), password.value); return true; }, {
+      email_not_confirmed: () => { flowEmail = normEmail(email.value); unconfirmed.hidden = false; return 'Giriş yapmadan önce e-posta adresinizi doğrulayın.'; },
+      invalid_credentials: 'Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.',
+      default: 'Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.'
+    });
     if (!ok) return;
     const resume = pending; pending = null;
     password.value = '';
+    if (maybeOnboard()) return;          // web'den kayıt olup e-postayı bağlantıyla doğrulayan kullanıcı
     dialogs.close(dlg);
     if (resume) { try { await resume(); } catch { toast('Giriş yapıldı. Lütfen yapmak istediğiniz işleme tekrar basın.'); } }
   });
-  dlg.addEventListener('close', () => { password.value = ''; if (!busy) pending = null; });
+  $('[data-auth-confirm]', dlg).addEventListener('click', async () => {
+    if (busy || !flowEmail) return;
+    const ok = await run('login', 'Gönderiliyor...', async () => { const { error } = await db.auth.resend({ type: 'signup', email: flowEmail }); if (error) throw error; return true; });
+    if (!ok) return;
+    startCooldown(); show('verify');
+  });
+
+  /* ---- Kayıt ---- */
+  const su = { name: $('#kaSignupName'), email: $('#kaSignupEmail'), pw: $('#kaSignupPassword'), pw2: $('#kaSignupPassword2'), terms: $('#kaSignupTerms') };
+  (() => {
+    const link = (url, text) => (httpUrl(url) ? `<a href="${esc(httpUrl(url))}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text));
+    $('[data-auth-terms]', dlg).innerHTML = `${link(CONFIG.legal?.terms, 'Kullanım Koşulları')}'nı ve ${link(CONFIG.legal?.privacy, 'KVKK Aydınlatma Metni')}'ni okudum, kabul ediyorum.`;
+  })();
+  forms.signup.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (busy) return;
+    exists.hidden = true;
+    const name = clean(su.name.value).replace(/\s+/g, ' '), mail = normEmail(su.email.value), pw = su.pw.value;
+    const problem = name.length < 3 || name.split(' ').length < 2 ? 'Adını ve soyadını yaz.'
+      : !EMAIL_RE.test(mail) ? 'Geçerli bir e-posta adresi gir.'
+        : pw.length < MIN_PASSWORD ? `Şifre en az ${MIN_PASSWORD} karakter olmalı.`
+          : pw !== su.pw2.value ? 'Şifreler birbiriyle eşleşmiyor.'
+            : !su.terms.checked ? 'Devam etmek için Kullanım Koşulları ve KVKK Aydınlatma Metni\'ni kabul etmelisin.' : '';
+    if (problem) { paneError('signup', problem); return; }
+    // Profil satırını mevcut on_auth_user_created → handle_new_user() trigger'ı oluşturur; web profiles'a insert/upsert yapmaz.
+    const data = await run('signup', 'Hesap oluşturuluyor...', async () => {
+      const { data, error } = await db.auth.signUp({ email: mail, password: pw, options: { data: { full_name: name } } });
+      if (error) throw error;
+      // E-posta doğrulaması açıkken kayıtlı adres için Supabase kimliksiz sahte kullanıcı döndürür.
+      if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) throw Object.assign(new Error('exists'), { code: 'user_already_exists' });
+      return data || {};
+    }, { user_already_exists: () => { exists.hidden = false; return 'Bu e-posta ile zaten bir hesap var. Giriş yapabilir veya şifreni sıfırlayabilirsin.'; }, email_exists: () => { exists.hidden = false; return 'Bu e-posta ile zaten bir hesap var. Giriş yapabilir veya şifreni sıfırlayabilirsin.'; } });
+    if (!data) return;
+    flowEmail = mail;
+    writeJSON(local, ONBOARD_KEY, { uid: data.user?.id || null, email: mail, name, t: Date.now() });
+    su.pw.value = su.pw2.value = '';
+    pending = null;
+    if (data.session?.user) { session.adopt(data.session.user); startOnboarding(); return; }
+    email.value = mail;
+    startCooldown(); show('verify');
+  });
+
+  /* ---- E-posta doğrulama kodu ---- */
+  const codeOf = input => input.value.replace(/\D/g, '');
+  forms.verify.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (busy) return;
+    const token = codeOf($('#kaVerifyCode'));
+    if (token.length < 6) { paneError('verify', 'E-postadaki kodu eksiksiz gir.'); return; }
+    const user = await run('verify', 'Doğrulanıyor...', async () => {
+      const { data, error } = await db.auth.verifyOtp({ email: flowEmail, token, type: 'signup' });
+      if (error || !data?.session?.user) throw error || new Error('verify');
+      return data.session.user;
+    });
+    if (!user) return;
+    $('#kaVerifyCode').value = '';
+    session.adopt(user);
+    const f = onboardingFlag(); if (f && !f.uid && normEmail(user.email) === f.email) writeJSON(local, ONBOARD_KEY, { ...f, uid: user.id });
+    if (!maybeOnboard()) { dialogs.close(dlg); toast('E-postan doğrulandı. Hoş geldin!'); }
+  });
+
+  /* ---- Şifremi unuttum: e-posta → 8 haneli kod → yeni şifre (mobil ile aynı OTP akışı) ---- */
+  forms.forgot.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (busy) return;
+    const mail = normEmail($('#kaForgotEmail').value);
+    if (!EMAIL_RE.test(mail)) { paneError('forgot', 'Geçerli bir e-posta adresi gir.'); return; }
+    // redirectTo verilmez: mevcut Reset Password şablonu ve Site URL aynen kullanılır.
+    const ok = await run('forgot', 'Gönderiliyor...', async () => { const { error } = await db.auth.resetPasswordForEmail(mail); if (error) throw error; return true; });
+    if (!ok) return;
+    flowEmail = mail; $('#kaResetCode').value = '';
+    startCooldown(); show('code');
+  });
+  forms.code.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (busy) return;
+    const token = codeOf($('#kaResetCode'));
+    if (token.length < 6) { paneError('code', 'E-postadaki 8 haneli kodu eksiksiz gir.'); return; }
+    const user = await run('code', 'Doğrulanıyor...', async () => {
+      const { data, error } = await db.auth.verifyOtp({ email: flowEmail, token, type: 'recovery' });
+      if (error || !data?.session?.user) throw error || new Error('verify');
+      return data.session.user;
+    });
+    if (!user) return;
+    $('#kaResetCode').value = '';
+    session.adopt(user);
+    $('[data-auth-username]', dlg).value = user.email || flowEmail;
+    show('newpass');
+  });
+  forms.newpass.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (busy) return;
+    const a = $('#kaNewPassword'), b = $('#kaNewPassword2');
+    if (a.value.length < MIN_PASSWORD) { paneError('newpass', `Şifre en az ${MIN_PASSWORD} karakter olmalı.`); return; }
+    if (a.value !== b.value) { paneError('newpass', 'Şifreler birbiriyle eşleşmiyor.'); return; }
+    const ok = await run('newpass', 'Kaydediliyor...', async () => { const { error } = await db.auth.updateUser({ password: a.value }); if (error) throw error; return true; },
+      { default: 'Şifre güncellenemedi. Lütfen tekrar dene.' });
+    if (!ok) return;
+    a.value = b.value = '';
+    const resume = pending; pending = null;
+    dialogs.close(dlg);
+    toast('Şifren güncellendi. Giriş yaptın.');
+    if (resume) { try { await resume(); } catch {} }
+  });
+  $$('[data-auth-resend]', dlg).forEach(btn => btn.addEventListener('click', async () => {
+    if (busy || Date.now() < resendUntil || !flowEmail) return;
+    const name = pane;
+    const ok = await run(name, null, async () => {
+      const { error } = name === 'code' ? await db.auth.resetPasswordForEmail(flowEmail) : await db.auth.resend({ type: 'signup', email: flowEmail });
+      if (error) throw error; return true;
+    });
+    if (!ok) return;
+    startCooldown(); toast('Yeni kod gönderildi.');
+  }));
+
+  /* ---- Onboarding: yalnız bu tarayıcıda web'den yeni kayıt olan kullanıcı için ---- */
+  function onboardingFlag() {
+    const v = readJSON(local, ONBOARD_KEY);
+    if (v && Date.now() - (v.t || 0) < ONBOARD_TTL) return v;
+    if (v) removeKey(local, ONBOARD_KEY);
+    return null;
+  }
+  function maybeOnboard() {
+    const u = session.user, f = onboardingFlag();
+    if (!u || !f || busy) return false;
+    if (!(f.uid ? f.uid === u.id : f.email && f.email === normEmail(u.email))) return false;
+    if (onboarding) return true;
+    startOnboarding();
+    return true;
+  }
+  const fillSelect = (sel, list, value, blank) => {
+    const v = clean(value), items = list.map(o => (Array.isArray(o) ? o : [o, o]));
+    const hit = items.find(([k]) => k.toLocaleLowerCase('tr-TR') === v.toLocaleLowerCase('tr-TR'));
+    sel.innerHTML = `<option value="">${esc(blank)}</option>` + items.map(([k, l]) => `<option value="${esc(k)}">${esc(l)}</option>`).join('') + (v && !hit ? `<option value="${esc(v)}">${esc(v)}</option>` : '');
+    sel.value = hit ? hit[0] : v;
+    return sel.value;
+  };
+  async function startOnboarding() {
+    const u = session.user; if (!u || onboarding) return;
+    const f = onboardingFlag() || {};
+    onboarding = { uid: u.id, name: clean(f.name), orig: {}, withExp: true };
+    const cols = 'full_name,profession,title,certificate_class,city';
+    try {
+      let r = await db.from('profiles').select(cols + ',experience_range').eq('id', u.id).maybeSingle();
+      if (r.error && /42703|PGRST204|experience_range/i.test(`${r.error.code} ${r.error.message}`)) { onboarding.withExp = false; r = await db.from('profiles').select(cols).eq('id', u.id).maybeSingle(); }
+      if (!r.error && r.data) onboarding.orig = r.data;
+    } catch {}
+    if (!onboarding || session.user?.id !== u.id) { onboarding = null; return; }
+    const o = onboarding.orig;
+    ob.prof.value = clean(o.profession);
+    onboarding.cert = fillSelect(ob.cert, STATUS_OPTIONS, identity.statusKey(o), 'Belge / statü yok');
+    onboarding.city = fillSelect(ob.city, CITIES, o.city, 'Şehir seç');
+    ob.expWrap.hidden = !onboarding.withExp;
+    onboarding.exp = onboarding.withExp ? fillSelect(ob.exp, EXPERIENCE_OPTIONS, o.experience_range, 'Belirtme') : '';
+    show('onboard');
+    if (!dlg.open) dialogs.open(dlg, 'sheet');
+    focusFirst();
+  }
+  forms.onboard.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (busy || !onboarding) return;
+    const o = onboarding, v = { profession: clean(ob.prof.value), certificate_class: ob.cert.value, city: ob.city.value, experience_range: o.withExp ? ob.exp.value : '' };
+    if (!v.profession) { paneError('onboard', 'Meslek / unvanını yaz.'); return; }
+    if (!v.city) { paneError('onboard', 'Şehrini seç.'); return; }
+    // Yalnız dolu ve değişen alanlar yazılır; mevcut değer asla boşaltılmaz. title/specialties/job_role yazılmaz.
+    const payload = {};
+    if (v.profession !== clean(o.orig.profession)) payload.profession = v.profession;
+    if (v.certificate_class && v.certificate_class !== o.cert) payload.certificate_class = v.certificate_class;
+    if (v.city !== o.city) payload.city = v.city;
+    if (o.withExp && v.experience_range && v.experience_range !== o.exp) payload.experience_range = v.experience_range;
+    if (!clean(o.orig.full_name) && o.name) payload.full_name = o.name;
+    if (Object.keys(payload).length) {
+      session.writes++;
+      const saved = await run('onboard', 'Kaydediliyor...', async () => {
+        const user = await session.verified();
+        if (!user || user.id !== o.uid) throw Object.assign(new Error('identity'), { code: 'kisg_identity' });
+        let r = await db.from('profiles').update(payload).eq('id', user.id).select('id').maybeSingle();
+        if (r.error && 'experience_range' in payload && /42703|PGRST204|experience_range/i.test(`${r.error.code} ${r.error.message}`)) { delete payload.experience_range; r = await db.from('profiles').update(payload).eq('id', user.id).select('id').maybeSingle(); }
+        if (r.error) throw r.error;
+        if (!r.data) throw Object.assign(new Error('no_row'), { code: 'kisg_no_row' });
+        return true;
+      }, {
+        kisg_identity: 'Oturumun doğrulanamadı. Lütfen tekrar giriş yap.',
+        kisg_no_row: 'Profilin henüz hazırlanıyor. Birkaç saniye sonra tekrar dene.',
+        23514: 'Seçilen belge / statü veya deneyim değeri kabul edilmedi. Başka bir değer seçip tekrar dene.',
+        default: 'Profil bilgilerin kaydedilemedi. Lütfen tekrar dene.'
+      }).finally(() => { session.writes--; });
+      if (!saved) return;
+      o.orig = { ...o.orig, ...payload }; o.cert = v.certificate_class || o.cert; o.city = v.city; o.exp = payload.experience_range || o.exp;
+      session.refreshMe();
+    }
+    renderPhoto(); show('photo');
+  });
+  function renderPhoto() {
+    const me = session.me || {}, url = httpUrl(me.avatar_url), text = initials(me.full_name || onboarding?.name);
+    ob.avatar.innerHTML = `${text ? esc(text) : ICONS.user}${url ? `<img src="${esc(url)}" alt="" decoding="async">` : ''}`;
+    ob.photoBtn.textContent = url ? 'Fotoğrafı değiştir' : 'Fotoğraf ekle';
+  }
+  ob.photoBtn.addEventListener('click', () => { if (busy) return; handoff = true; avatarManager.open(); });
+  $('#kaAvatarDialog').addEventListener('close', () => {
+    if (!handoff) return;
+    handoff = false;
+    if (onboarding && session.user?.id === onboarding.uid) { renderPhoto(); show('photo'); if (!dlg.open) dialogs.open(dlg, 'sheet'); }
+  });
+  function endOnboarding() { removeKey(local, ONBOARD_KEY); onboarding = null; }
+  $('[data-auth-finish]', dlg).addEventListener('click', () => {
+    if (busy) return;
+    endOnboarding(); dialogs.close(dlg);
+    toast('Hoş geldin! Profilin hazır.');
+    if (router.enabled) router.activate('works', { mode: 'push' });
+    else if (router.current !== 'works') { try { (host.win || window).location.assign(CONFIG.siteUrl + '/'); } catch {} }
+  });
+  $('[data-auth-skip]', dlg).addEventListener('click', () => { if (!busy) dialogs.close(dlg); });
+
+  dlg.addEventListener('close', () => {
+    $$('input[type="password"]', dlg).forEach(i => { i.value = ''; });
+    if (!busy) pending = null;
+    clearTimeout(resendTimer);
+    // Onboarding penceresi kapatıldıysa (fotoğraf adımına geçiş hariç) tekrar zorlanmaz.
+    if (onboarding && !handoff && ONBOARD_PANES.includes(pane)) endOnboarding();
+  });
+
+  dlg.addEventListener('click', e => {
+    const go = e.target?.closest?.('[data-auth-go]'); if (!go || busy) return;
+    const to = go.dataset.authGo;
+    if (to === 'forgot') { const m = normEmail(pane === 'signup' ? su.email.value : email.value); if (m) $('#kaForgotEmail').value = m; }
+    if (to === 'signup' && !su.email.value && email.value) su.email.value = email.value.trim();
+    if (to === 'login' && !email.value && (flowEmail || su.email.value)) email.value = flowEmail || su.email.value.trim();
+    show(to);
+  });
 
   onShellClick(async e => {
     const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
-    if (t.closest('[data-action="login"]')) { await session.ready; if (!session.user) open(); return; }
+    if (t.closest('[data-action="login"]')) { await session.ready; if (!session.user) open('login'); return; }
     const out = t.closest('[data-action="signout"]');
     if (out) {
       if (session.writes > 0) { toast('Kayıt tamamlandıktan sonra çıkış yapabilirsiniz.'); return; }
@@ -1893,7 +2352,7 @@ const authUI = (() => {
       finally { setBusy(out, false); }
     }
   });
-  return { render, require, open };
+  return { render, require, open, maybeOnboard };
 })();
 const requireUser = resume => authUI.require(resume);
 
@@ -4983,11 +5442,39 @@ if ('ResizeObserver' in window) new ResizeObserver(() => { host.schedule(); appC
 /* =========================================================================
    16. Başlat
    ========================================================================= */
+/* E-posta bağlantısıyla dönüş (Supabase implicit akışı: #access_token=…&refresh_token=…&type=…, ya da #error=…).
+   srcdoc iframe'de detectSessionInUrl üst sayfa adresini göremez; token'lar router'dan ÖNCE okunur ve adresten
+   silinir (geçmişe, snapshot'a, paylaşılan bağlantılara girmez). Başka hash'lere (#hizmetler vb.) dokunulmaz. */
+const authLanding = (() => {
+  try {
+    const w = host.win || window, raw = String(w.location.hash || '').replace(/^#/, '');
+    if (!/(^|&)(access_token|refresh_token|error_code|error_description)=/.test(raw)) return null;
+    const q = new URLSearchParams(raw);
+    const out = { access_token: q.get('access_token'), refresh_token: q.get('refresh_token'), type: q.get('type'), error: q.get('error_code') || q.get('error') };
+    w.history.replaceState(w.history.state, '', w.location.pathname + w.location.search);
+    return out;
+  } catch { return null; }
+})();
+async function applyAuthLanding(x) {
+  if (!x) return;
+  if (x.access_token && x.refresh_token) {
+    try {
+      const { data, error } = await db.auth.setSession({ access_token: x.access_token, refresh_token: x.refresh_token });
+      if (error || !data?.session?.user) throw error || new Error('session');
+      session.adopt(data.session.user);
+      if (x.type === 'recovery') authUI.open('newpass');
+      else if (x.type === 'signup' && !authUI.maybeOnboard()) toast('E-postan doğrulandı. Hoş geldin!');
+    } catch { toast('E-posta bağlantısının süresi dolmuş olabilir. Lütfen giriş yap.'); }
+    return;
+  }
+  if (x.error) toast(x.error === 'otp_expired' ? 'E-posta bağlantısının süresi dolmuş. Yeni bir kod isteyebilirsin.' : 'E-posta bağlantısı doğrulanamadı. Lütfen tekrar dene.');
+}
+
 appChrome.init();
 const initialView = router.init();
 router.start(initialView, snapshots.take());
 host.sync();
-dbReady.then(() => session.start()).catch(() => {
+dbReady.then(() => session.start()).then(() => applyAuthLanding(authLanding)).catch(() => {
   session.fail();
   toast('Bağlantı kurulamadı. Lütfen sayfayı yenileyin.');
 });
