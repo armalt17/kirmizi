@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.14.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.15.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,9 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.15.0: Security Fix Pack 1 (web): herkese açık telefon get_public_phone RPC'si, sahibin kendi telefonu
+ get_my_private_profile RPC'si ile okunur (RPC yoksa eski okumaya döner); hizmet aramasında sağlayıcı filtresi
+ profiles'tan yalnız (id) okur. DB: db/migrations/20260930_security_fix_pack1.sql.
 v4.14.0: Şikâyet / Bildir V1: Post, yorum, profil ve hizmet üç nokta menüsünde "Bildir" (kendi içeriğinde yok;
  misafirde giriş açılır, sonra kaldığı yerden devam). Kayıt public.professional_reports'a yalnız INSERT; içerik gizlenmez.
  DB: db/migrations/20260929_professional_reports.sql UYGULANMADAN "Bildirim şu anda gönderilemedi" görünür.
@@ -1450,7 +1453,7 @@ const CONFIG = Object.freeze({
   legal: { terms: '', privacy: '' },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.14.0',
+  version: '4.15.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -2051,6 +2054,25 @@ const dbReady = (async () => {
   return client;
 })();
 dbReady.catch(() => {});
+/* Telefon okumaları (Security Fix Pack 1): herkese açık telefon yalnız get_public_phone RPC'si ile,
+   sahibin kendi (gizli dahil) telefonu get_my_private_profile RPC'si ile okunur. RPC henüz yoksa
+   (migration uygulanmadan önceki dağıtım / rollback) eski filtreli okumaya döner. */
+const rpcMissing = e => /PGRST202|42883|could not find the function/i.test(`${e?.code || ''} ${e?.message || ''}`);
+async function readPublicPhone(profileId) {
+  if (!profileId) return null;
+  const r = await db.rpc('get_public_phone', { profile_id: profileId });
+  if (!r.error) return clean(r.data) || null;
+  if (!rpcMissing(r.error)) return null;
+  const f = await db.from('profiles').select('phone').eq('id', profileId).eq('show_phone_publicly', true).maybeSingle();
+  return f.error ? null : (f.data?.phone || null);
+}
+async function readMyPhone(uid) {
+  const r = await db.rpc('get_my_private_profile');
+  if (!r.error) { const row = Array.isArray(r.data) ? r.data[0] : r.data; return row && row.id === uid ? { phone: row.phone ?? null } : null; }
+  if (!rpcMissing(r.error)) return null;
+  const f = await db.from('profiles').select('phone').eq('id', uid).single();
+  return f.error || !f.data ? null : { phone: f.data.phone ?? null };
+}
 const storageUrl = path => (path && db ? db.storage.from(CONFIG.imageBucket).getPublicUrl(path).data.publicUrl : '');
 
 /* =========================================================================
@@ -4581,7 +4603,7 @@ function createServicesView() {
     afterRender: () => renderChips(),
     pageOf: r => ({ created_at: r.created_at, id: r.id }),
     async fetchPage({ search, filters, page, signal }) {
-      let qy = db.from('professional_services').select(SELECT + (search ? ',search_provider:profiles!professional_services_user_id_fkey()' : '')).eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(CONFIG.catalogPageSize + 1);
+      let qy = db.from('professional_services').select(SELECT + (search ? ',search_provider:profiles!professional_services_user_id_fkey(id)' : '')).eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(CONFIG.catalogPageSize + 1);
       const clauses = [];
       if (search) { const p = quote(likePattern(search)); qy = qy.ilike('search_provider.full_name', likePattern(search)); clauses.push('or(title.ilike.' + p + ',description.ilike.' + p + ',service_region.ilike.' + p + ',search_provider.not.is.null)'); }
       if (filters.category) qy = qy.eq('category_id', filters.category);
@@ -4850,10 +4872,7 @@ function createServiceView() {
       if (error) throw error;
       if (!data || data.status !== 'active') { showStatus('Hizmet bulunamadı', 'Bu hizmet kaldırılmış veya artık yayında olmayabilir.'); return; }
       let phone = null;
-      if (data.provider?.show_phone_publicly) {
-        const r = await db.from('profiles').select('phone').eq('id', data.user_id).eq('show_phone_publicly', true).maybeSingle();
-        if (!r.error) phone = r.data?.phone || null;
-      }
+      if (data.provider?.show_phone_publicly) phone = await readPublicPhone(data.user_id);
       await session.ready;
       if (rev !== s.rev) return;
       s.service = data; s.phone = phone;
@@ -5416,8 +5435,7 @@ function createProfileView() {
   }
   async function publicPhone(p) {
     if (!p?.show_phone_publicly) return null;
-    const r = await db.from('profiles').select('phone').eq('id', p.id).eq('show_phone_publicly', true).maybeSingle();
-    return r.error ? null : (r.data?.phone || null);
+    return readPublicPhone(p.id);
   }
   function setDocTitle() {
     if (!router.enabled || router.current !== 'profile' || !s.profile) return;
@@ -5502,8 +5520,8 @@ function createProfileView() {
       const user = await session.verified();
       if (!user || user.id !== ownerId) throw new Error('Profilini düzenlemek için tekrar giriş yap.');
       // Gizli telefon yalnız sahibin düzenleme eylemiyle okunur (Profil V1 kuralı).
-      const { data, error } = await db.from('profiles').select('phone').eq('id', ownerId).single();
-      if (error || !data) throw new Error('Telefon bilgisi alınamadı. Lütfen tekrar dene.');
+      const data = await readMyPhone(ownerId);
+      if (!data) throw new Error('Telefon bilgisi alınamadı. Lütfen tekrar dene.');
       if (!own() || rev !== s.rev) return;
       const p = s.profile;
       field('full_name').value = p.full_name || '';

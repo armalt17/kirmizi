@@ -27,7 +27,9 @@ const SUITES = [
   { name: 'comment-likes', file: 'comment-likes.test.mjs' },
   { name: 'services-v2', file: 'services-v2.test.mjs' },
   { name: 'reports-db', file: 'reports-db.test.mjs', note: 'yerel geçici PostgreSQL' },
-  { name: 'reports-ui', file: 'reports-ui.test.mjs' }
+  { name: 'reports-ui', file: 'reports-ui.test.mjs' },
+  { name: 'security-fix-pack1-db', file: 'security-fix-pack1-db.test.mjs', note: 'yerel geçici PostgreSQL' },
+  { name: 'security-fix-pack1-web', file: 'security-fix-pack1-web.test.mjs' }
 ];
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx > -1 ? process.argv[onlyIdx + 1] : null;

@@ -100,8 +100,28 @@ function withEmbeds(table, rows, sp) {
     return x;
   });
 }
+// PostgREST RPC mock'u (Security Fix Pack 1): get_public_phone / get_my_private_profile.
+// db._rpcMode: 'missing' → PGRST202 (migration uygulanmamış), 'error' → 500.
+const rpcCalls = [];
+function handleRpc(route, fn) {
+  const req = route.request(), H = { 'access-control-allow-origin': '*' };
+  const json = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: H, body: JSON.stringify(body) });
+  const body = JSON.parse(req.postData() || '{}'), auth = (req.headers()['authorization'] || '').replace(/^Bearer\s+/i, '');
+  rpcCalls.push({ fn, body, auth });
+  if (db._rpcMode === 'missing') return json({ code: 'PGRST202', message: `Could not find the function public.${fn} in the schema cache` }, 404);
+  if (db._rpcMode === 'error') return json({ code: 'XX000', message: 'boom' }, 500);
+  if (fn === 'get_public_phone') { const p = db.profiles.find(x => x.id === body.profile_id); return json(p && p.show_phone_publicly && p.phone ? p.phone : null); }
+  if (fn === 'get_my_private_profile') {
+    if (!auth || auth.startsWith('sb_publishable_')) return json({ code: '42501', message: 'permission denied for function get_my_private_profile' }, 401);
+    let sub = null; try { sub = JSON.parse(Buffer.from(auth.split('.')[1], 'base64url').toString()).sub; } catch {}
+    const p = db.profiles.find(x => x.id === sub) || db.profiles.find(x => x.id === U1);
+    return json(p ? [{ id: p.id, email: 'a@b.c', phone: p.phone ?? null, show_phone_publicly: !!p.show_phone_publicly, is_premium: false, daily_reports_used: 0, monthly_reports_used: 0, last_report_date: null, onesignal_notification_id: null }] : []);
+  }
+  return json({ code: 'PGRST202', message: 'unknown' }, 404);
+}
 async function handleRest(route) {
   const req = route.request(), u = new URL(req.url()), table = u.pathname.split('/').pop();
+  if (u.pathname.includes('/rest/v1/rpc/')) return handleRpc(route, table);
   const method = req.method(), accept = req.headers()['accept'] || '';
   const rows = db[table] || (db[table] = []);
   const json = (body, status = 200, headers = {}) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', ...headers }, body: JSON.stringify(body) });
@@ -232,4 +252,4 @@ const check = (ok, msg) => { console.log((ok ? 'PASS ' : 'FAIL ') + msg); if (!o
 const DEFAULT_CHROMIUM = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const LAUNCH = fs.existsSync(process.env.CHROMIUM_PATH || DEFAULT_CHROMIUM) ? { executablePath: process.env.CHROMIUM_PATH || DEFAULT_CHROMIUM } : {};
 
-export { chromium, fs, ROOT, ANON_DENIED_TABLES, APP, NM, OUT, U1, U2, now, iso, db, writes, uploads, IMG, DB0, resetDb, cursorOr, filterRows, seq, orderRows, withEmbeds, handleRest, libs, HOSTINGER_BASE_CSS, hostPage, errors, realtimeMock, postSeq, makePost, setup, frameOf, check, DEFAULT_CHROMIUM, LAUNCH };
+export { rpcCalls, handleRpc, chromium, fs, ROOT, ANON_DENIED_TABLES, APP, NM, OUT, U1, U2, now, iso, db, writes, uploads, IMG, DB0, resetDb, cursorOr, filterRows, seq, orderRows, withEmbeds, handleRest, libs, HOSTINGER_BASE_CSS, hostPage, errors, realtimeMock, postSeq, makePost, setup, frameOf, check, DEFAULT_CHROMIUM, LAUNCH };

@@ -4,12 +4,15 @@ Bu klasördeki SQL dosyaları **otomatik uygulanmaz**. Production'a uygulamadan 
 
 | Dosya | Durum |
 |---|---|
-| `migrations/20260929_professional_reports.sql` | Hazır, **uygulanmadı** (Şikâyet / Bildir V1, web v4.14.0) |
+| `migrations/20260929_professional_reports.sql` | Production'a uygulandı (Şikâyet / Bildir V1, web v4.14.0) |
 | `migrations/20260929_professional_reports.rollback.sql` | Geri alma (raporlar silinir) |
+| `migrations/20260930_security_fix_pack1.sql` | Production'a uygulandı, verify 25/25 `ok` (Security Fix Pack 1 / Migration 1: A3 + A5 + telefon RPC'leri, web v4.15.0) |
+| `migrations/20260930_security_fix_pack1.rollback.sql` | Geri alma (veri değiştirmez) |
+| `migrations/20260930_security_fix_pack1.verify.sql` | Uygulama sonrası salt okunur doğrulama (her satır `ok = true`) |
 
 Uygulama: Supabase SQL Editor'de dosyanın tamamı tek seferde çalıştırılır (kendi `begin/commit`'i var, tekrar çalıştırılabilir).
 
-Doğrulama: `npm test -- --only reports-db` migration'ı yerel geçici bir PostgreSQL kümesinde
+Doğrulama: `npm test -- --only reports-db` / `npm test -- --only security-fix-pack1` migration'ı yerel geçici bir PostgreSQL kümesinde
 `tests/helpers/supabase-stub.sql` üzerine uygular ve anon / authenticated / service_role davranışını sınar.
 Bu, gerçek Supabase şemasının birebir kopyası değildir; staging'de ayrıca kontrol edilmelidir:
 

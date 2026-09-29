@@ -53,7 +53,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
 
   // Telefonu gizli sağlayıcı (U1) → Ara / WhatsApp yok, telefon sorgulanmaz
   const phoneReqs = [];
-  page.on('request', r => { if (/\/rest\/v1\/profiles\?.*select=phone/.test(r.url())) phoneReqs.push(r.url()); });
+  page.on('request', r => { if (/\/rest\/v1\/profiles\?.*select=phone|\/rest\/v1\/rpc\/get_public_phone/.test(r.url())) phoneReqs.push(r.url()); });
   await page.goto(`https://isgcalisanplatformu.com/hizmet-detay?id=${S(3)}`); await settle(page, 1500);
   f = frameOf(page);
   await f.waitForSelector('#khTitle');
