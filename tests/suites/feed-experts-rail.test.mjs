@@ -45,7 +45,7 @@ const browser = await chromium.launch(LAUNCH);
   await page.goto('https://isgcalisanplatformu.com/'); await settle(page, 1800);
   const f = frameOf(page); await f.waitForSelector('[data-view="works"] [data-post-id]');
   let n = await sideNames(page);
-  check(JSON.stringify(n) === JSON.stringify(['Ayşe Yılmaz', 'Bora Aktif', 'Deniz Üç']), `sıralama aktif Postlara göre, en güncel 3, kendisi dahil: ${n.join(' > ')}`);
+  check(JSON.stringify(n) === JSON.stringify(['Ayşe Yılmaz', 'Bora Aktif', 'Deniz Üç', 'Fatih Beş']), `sıralama aktif Postlara göre, kendisi dahil: ${n.join(' > ')}`);
   check(!n.includes('Gizli Cem') && !n.includes('Postsuz Ece') && new Set(n).size === n.length, 'gizli profil ve Postu olmayan yok; B iki Postla bir kez');
   check(railReqs.some(q => /status=eq\.active/.test(q)) && railReqs.every(q => !/last_post_at/.test(q)), 'sorgu yalnız aktif Postlar; last_post_at kullanılmıyor');
   // Kendi en son Postunu sil → önceki aktif Postu (50 dk) esas alınır
@@ -55,13 +55,34 @@ const browser = await chromium.launch(LAUNCH);
   };
   await del(P(3));
   n = await sideNames(page);
-  check(JSON.stringify(n) === JSON.stringify(['Bora Aktif', 'Deniz Üç', 'Ayşe Yılmaz']), `son Post silindi → önceki aktif Post (50 dk) esas: ${n.join(' > ')}`);
+  check(JSON.stringify(n) === JSON.stringify(['Bora Aktif', 'Deniz Üç', 'Ayşe Yılmaz', 'Fatih Beş']), `son Post silindi → önceki aktif Post (50 dk) esas: ${n.join(' > ')}`);
   await del(P(7));
   n = await sideNames(page);
   check(JSON.stringify(n) === JSON.stringify(['Bora Aktif', 'Deniz Üç', 'Fatih Beş']) && !n.includes('Ayşe Yılmaz'), `aktif Postu kalmayınca listeden çıktı: ${n.join(' > ')}`);
   await page.reload(); await settle(page, 1800);
   n = await sideNames(page);
   check(JSON.stringify(n) === JSON.stringify(['Bora Aktif', 'Deniz Üç', 'Fatih Beş']), `yenilemede aynı sonuç: ${n.join(' > ')}`);
+  await ctx.close();
+}
+{
+  // v4.13.0: masaüstü sol panel en fazla 6 uzman; başlıkta "Tümünü gör →" (/uzmanlar)
+  resetDb(); seedRail();
+  const extra = [6, 7, 8, 9].map(i => person(10 + i, `Ek Uzman ${i}`, true));
+  db.profiles.push(...extra);
+  extra.forEach((x, i) => db.professional_posts.push({ ...db.professional_posts[2], id: P(20 + i), user_id: x.id, content: 'Ek', created_at: iso(70 + i), updated_at: iso(70 + i) }));
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+  await setup(ctx, true); await liveAuthors(ctx);
+  const page = await ctx.newPage();
+  page.on('pageerror', e => errors.push(`rail6: ${e.message}`));
+  await page.goto('https://isgcalisanplatformu.com/'); await settle(page, 1800);
+  const n = await sideNames(page);
+  check(JSON.stringify(n) === JSON.stringify(['Ayşe Yılmaz', 'Bora Aktif', 'Deniz Üç', 'Fatih Beş', 'Ek Uzman 6', 'Ek Uzman 7']), `masaüstü en fazla 6 uzman, aynı sıralama: ${n.join(' > ')}`);
+  const head = await page.evaluate(() => { const r = document.getElementById('kisg-pro-sides').shadowRoot; const h = r.querySelector('#kwExpertsTitle')?.closest('.kw-side-head'); const a = h?.querySelector('a'); return { t: h?.querySelector('h2')?.textContent.trim(), a: a?.textContent.trim(), href: a?.getAttribute('href'), bottom: r.querySelectorAll('.kw-side-link').length }; });
+  check(head.t === 'Uzmanlar' && /^Tümünü gör/.test(head.a) && head.href.endsWith('/uzmanlar') && head.bottom === 0, `sol panel başlık "Uzmanlar — Tümünü gör →", alt bağlantı yok: ${JSON.stringify(head)}`);
+  const mark = await page.evaluate(() => window.__bootMark);
+  await page.evaluate(() => document.getElementById('kisg-pro-sides').shadowRoot.querySelector('#kwExpertsTitle').closest('.kw-side-head').querySelector('a').click());
+  await settle(page, 800);
+  check(page.url().endsWith('/uzmanlar') && await page.evaluate(() => window.__bootMark) === mark, 'Tümünü gör → /uzmanlar (shell içi, reload yok)');
   await ctx.close();
 }
 {

@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.12.1
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.13.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,10 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.13.0: Hizmet Bul V2: kart hiyerarşisi başlık → açıklama → kategori/bölge/şekil → profesyonel + "Hizmeti İncele";
+ detayda "Kapsam", birincil "Profili Gör", telefon kuralı aynı. Akış sol panel 6 uzman (mobil şerit 3), iki panelde
+ başlık + "Tümünü gör →". Sağ panel: en yeni aktif hizmetler, sağlayıcı başına önce bir tane. "Öne Çıkan" taç rozeti
+ yalnız veride featured_until gibi güvenilir bir alan olursa basılır; bugün DB'de yok (gösterilmez).
 v4.12.1: Bildirim Realtime kanalı kullanıcı JWT'si Realtime'a aktarılmadan katılıyordu (anon rolü) → production'da
  "invalid column for filter recipient_id". Kanal artık setAuth() tamamlandıktan sonra açılır.
 v4.12.0: Yorum Beğenisi V1: Akış önizlemesi ve Post Detay'da "zaman · Beğen/Beğenildi · N beğeni"; kendi yorumunda aksiyon yok.
@@ -149,13 +153,12 @@ Acil kapatma: CONFIG.historyRouting=false.
     <aside class="kw-left" aria-labelledby="kwExpertsTitle">
       <div class="kw-side">
         <div class="kw-brandcard" aria-hidden="true"><img src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/erferf.png" alt="" loading="lazy" decoding="async"><p class="kw-brandcard-kicker">Kırmızı İSG Professional</p><p class="kw-brandcard-title">Sahada yapılanın görünür olduğu ağ.</p></div>
-        <div class="kw-side-head"><h2 id="kwExpertsTitle">Uzmanlar</h2><a href="https://isgcalisanplatformu.com/uzmanlar" target="_top" data-view-link="experts">Tümü</a></div>
+        <div class="kw-side-head"><h2 id="kwExpertsTitle">Uzmanlar</h2><a class="kw-side-all" href="https://isgcalisanplatformu.com/uzmanlar" target="_top" data-view-link="experts">Tümünü gör <span aria-hidden="true">→</span></a></div>
         <div class="kw-people" data-side-experts aria-live="polite">
           <div class="k-sk-person" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
           <div class="k-sk-person" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
           <div class="k-sk-person" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
         </div>
-        <a class="kw-side-link" href="https://isgcalisanplatformu.com/uzmanlar" target="_top" data-view-link="experts">Tüm uzmanları keşfet <span aria-hidden="true">→</span></a>
       </div>
     </aside>
 
@@ -182,12 +185,11 @@ Acil kapatma: CONFIG.historyRouting=false.
 
     <aside class="kw-right" aria-labelledby="kwServicesTitle">
       <div class="kw-side">
-        <div class="kw-vitrin-head"><p class="kw-vitrin-kicker">Hizmet vitrini</p><h2 id="kwServicesTitle">Uzmanından İSG hizmetleri</h2></div>
+        <div class="kw-side-head kw-side-head-services"><h2 id="kwServicesTitle">Hizmetler</h2><a class="kw-side-all kw-vitrin-link" href="https://isgcalisanplatformu.com/hizmetler" target="_top" data-view-link="services">Tümünü gör <span aria-hidden="true">→</span></a></div>
         <div class="kw-offers" data-side-services aria-live="polite">
           <div class="k-sk-offer" aria-hidden="true"><i class="k-sk k-sk-short"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>
           <div class="k-sk-offer" aria-hidden="true"><i class="k-sk k-sk-short"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>
         </div>
-        <a class="kw-side-link kw-vitrin-link" href="https://isgcalisanplatformu.com/hizmetler" target="_top" data-view-link="services">Tüm hizmetleri keşfet <span aria-hidden="true">→</span></a>
       </div>
     </aside>
   </div>
@@ -920,19 +922,26 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .ks-card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;color:var(--muted);font-size:12.5px;font-weight:600}
 #kisgApp .ks-cat{display:inline-flex;align-items:center;gap:8px;min-width:0;overflow:hidden;color:var(--ink);font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-overflow:ellipsis;white-space:nowrap}
 #kisgApp .ks-cat::before{content:"";flex:none;width:14px;height:2px;border-radius:2px;background:var(--red)}
-#kisgApp .ks-card h2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:16px;color:var(--ink);font-size:20.5px;font-weight:780;line-height:1.26;letter-spacing:-.022em}
+#kisgApp .ks-card-top+h2{margin-top:14px}
+#kisgApp .ks-card h2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:20.5px;font-weight:780;line-height:1.26;letter-spacing:-.022em}
 #kisgApp .ks-description{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-top:10px;color:var(--muted);font-size:14.5px;line-height:1.6}
-#kisgApp .ks-card>:is(h2,.ks-description):has(+.ks-pro){margin-bottom:22px}
-#kisgApp .ks-pro{display:flex;align-items:center;gap:12px;min-width:0;margin-top:auto;padding-top:18px;border-top:1px solid var(--line-soft)}
+#kisgApp .ks-facts{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:16px 0 20px;color:var(--muted);font-size:13px}
+#kisgApp .ks-facts .ks-cat{max-width:100%;color:var(--red-text)}
+#kisgApp .ks-facts .k-ico{width:15px;height:15px}
+#kisgApp .ks-pro{display:flex;align-items:center;gap:12px;min-width:0}
 #kisgApp .ks-pro-copy{display:grid;min-width:0}
 #kisgApp .ks-pro-copy strong{overflow:hidden;color:var(--ink);font-size:14.5px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
 #kisgApp .ks-pro-copy span{overflow:hidden;color:var(--muted);font-size:13px;text-overflow:ellipsis;white-space:nowrap}
-#kisgApp .ks-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:20px -24px 0;padding:14px 24px;border-top:1px solid var(--line-soft);color:var(--muted);font-size:13px}
-#kisgApp .ks-card:not(:has(.ks-pro)) .ks-foot{margin-top:auto}
-#kisgApp .ks-card:not(:has(.ks-pro)) .ks-description{margin-bottom:20px}
+#kisgApp .ks-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:auto -24px 0;padding:14px 24px;border-top:1px solid var(--line-soft);color:var(--muted);font-size:13px}
+#kisgApp .ks-cta{flex:none}
 #kisgApp .ks-cta{display:inline-flex;align-items:center;gap:6px;margin-left:auto;color:var(--ink);font-size:13.5px;font-weight:750;white-space:nowrap}
 #kisgApp .ks-cta span{transition:transform var(--t) var(--ease)}
 #kisgApp .ks-sk{padding:24px}
+/* Öne Çıkan: küçük taç rozeti; yalnız veride güvenilir işaret varsa basılır (serviceFeatured). */
+#kisgApp .k-featured{display:inline-flex;align-items:center;gap:5px;flex:none;height:24px;padding:0 9px 0 7px;border-radius:var(--r-pill);background:#fff;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);font-size:11.5px;font-weight:750;white-space:nowrap}
+#kisgApp .k-featured svg{width:13px;height:13px;fill:var(--red)}
+#kisgApp .ks-card.is-featured{box-shadow:inset 0 0 0 1px var(--line-strong)}
+#kisgApp .kh-head .k-featured{justify-self:start;margin-top:12px}
 /* Hizmet Detay */
 #kisgApp .kh-page{max-width:1120px;padding:18px 0 72px}
 #kisgApp .kh-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -946,7 +955,8 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kh-body{grid-area:body;display:grid;gap:10px;margin-top:32px;padding-top:32px;border-top:1px solid var(--line)}
 #kisgApp .kh-label{color:var(--faint);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 #kisgApp .kh-desc{color:var(--text);font-size:17px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}
-#kisgApp .kh-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;margin:24px 0 0;border-radius:16px;background:var(--line);box-shadow:0 0 0 1px var(--line);overflow:hidden}
+#kisgApp .kh-label-scope{margin-top:26px}
+#kisgApp .kh-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;margin:4px 0 0;border-radius:16px;background:var(--line);box-shadow:0 0 0 1px var(--line);overflow:hidden}
 #kisgApp .kh-facts div{padding:16px 18px;background:#fff}
 #kisgApp .kh-facts div:last-child:nth-child(odd){grid-column:1/-1}
 #kisgApp .kh-facts dt{color:var(--faint);font-size:12px;font-weight:700}
@@ -1308,9 +1318,12 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .ks-chips::-webkit-scrollbar{display:none}
   #kisgApp .ks-chip{flex:none;min-height:40px}
   #kisgApp .ks-card{padding:20px 18px 0;border-radius:18px}
-  #kisgApp .ks-card h2{margin-top:12px;font-size:18.5px}
+  #kisgApp .ks-card h2{font-size:18.5px}
+  #kisgApp .ks-card-top+h2{margin-top:12px}
+  #kisgApp .ks-facts{gap:5px 12px;margin:12px 0 16px;font-size:12.5px}
   #kisgApp .ks-description{font-size:14px;-webkit-line-clamp:2}
-  #kisgApp .ks-foot{margin-inline:-18px;padding:13px 18px}
+  #kisgApp .ks-foot{margin-inline:-18px;padding:12px 18px}
+  #kisgApp .ks-cta{font-size:13px}
   #kisgApp .kh-page{width:100%;padding:0 0 40px}
   #kisgApp .kh-top{padding:4px var(--gutter) 0}
   #kisgApp .kh-layout{margin-top:6px}
@@ -1405,7 +1418,7 @@ const CONFIG = Object.freeze({
   legal: { terms: '', privacy: '' },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.12.1',
+  version: '4.13.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -1416,7 +1429,8 @@ const CONFIG = Object.freeze({
   snapshotMaxAgeMs: 15 * 60 * 1000,
   postsPageSize: 10,
   catalogPageSize: 18,
-  railExperts: 3,
+  railExperts: 6,        // masaüstü sol panel
+  railExpertsStrip: 3,   // mobil akış içi şerit (değişmedi)
   railServices: 3,
   maxActiveServices: 5,
   debounceMs: 350,
@@ -1718,24 +1732,23 @@ const SIDE_CSS = `
 .kw-side-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 10px;margin-bottom:4px;border-bottom:1px solid var(--line)}
 .kw-side-head h2{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:15px;font-weight:800;letter-spacing:-.01em}
 .kw-side-head h2::before{content:"";width:4px;height:14px;border-radius:2px;background:var(--red)}
-.kw-side .kw-side-head a{color:var(--muted);font-size:13px;font-weight:700}
-.kw-side .kw-side-link{display:inline-flex;align-items:center;gap:6px;min-height:40px;margin-top:6px;padding:0 2px;color:var(--ink);font-size:13.5px;font-weight:750;transition:gap .15s}
-.kw-side .kw-side-link:hover{gap:10px}
+.kw-side .kw-side-head a{display:inline-flex;align-items:center;gap:5px;min-height:32px;color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap;transition:color .12s,gap .15s}
+.kw-side .kw-side-head a:hover{gap:8px;color:var(--ink)}
 .kw-people{display:grid;gap:2px}
-.kw-vitrin-head{padding:0 2px 12px}
-.kw-vitrin-kicker{display:flex;align-items:center;gap:8px;color:var(--red-text);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
-.kw-vitrin-kicker::before{content:"";width:14px;height:2px;border-radius:2px;background:var(--red)}
-.kw-vitrin-head h2{margin-top:6px!important;color:var(--ink);font-size:17px;font-weight:800;line-height:1.25;letter-spacing:-.02em}
+.kw-side-head-services{margin-bottom:12px}
 .kw-offers{display:grid;gap:10px}
-.kw-offer{display:grid;gap:6px;padding:14px 16px 13px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow .15s,transform .15s}
+.kw-offer{position:relative;display:grid;gap:6px;padding:14px 16px 13px 18px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px var(--line),0 1px 2px rgba(20,26,36,.04);overflow:hidden;transition:box-shadow .15s,transform .15s}
+.kw-offer::before{content:"";position:absolute;left:0;top:15px;width:3px;height:15px;border-radius:0 3px 3px 0;background:var(--red)}
 .kw-offer:hover{box-shadow:inset 0 0 0 1px var(--ink);transform:translateY(-1px)}
-.kw-offer-cat{overflow:hidden;color:var(--muted);font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-overflow:ellipsis;white-space:nowrap}
+.kw-offer-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.kw-side .k-featured{display:inline-flex;align-items:center;gap:4px;flex:none;height:20px;padding:0 7px 0 6px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);font-size:10.5px;font-weight:750;white-space:nowrap}
+.kw-side .k-featured svg{width:11px;height:11px;fill:var(--red)}
+.kw-offer-cat{overflow:hidden;color:var(--red-text);font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-overflow:ellipsis;white-space:nowrap}
 .kw-offer strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:14.5px;font-weight:750;line-height:1.32;letter-spacing:-.01em;overflow-wrap:anywhere}
 .kw-offer-by{display:flex;align-items:center;gap:8px;min-width:0;margin-top:2px;color:var(--text);font-size:12.5px;font-weight:650}
 .kw-offer-by>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kw-offer .k-avatar{width:22px;height:22px;font-size:9.5px}
 .kw-offer-meta{overflow:hidden;color:var(--faint);font-size:11.5px;text-overflow:ellipsis;white-space:nowrap}
-.kw-side .kw-vitrin-link{margin-top:10px}
 .kw-person{display:flex;align-items:center;gap:12px;margin:0 -10px;padding:9px 10px;border-radius:12px;transition:background .12s}
 .kw-person:hover{background:var(--surface-2)}
 .kw-person .k-avatar{width:42px;height:42px;font-size:14.5px;transition:box-shadow .15s}
@@ -3831,14 +3844,15 @@ function createWorksView() {
       + (clean(p.city) ? `<span class="kw-person-meta">${placeMeta(p.city)}</span>` : '')
       + `</span>${ICONS.chev}</a>`;
   }
-  // Sağ sütun mini hizmet vitrini: kategori → hizmet → hizmeti veren profesyonel; şekil/bölge küçük ikincil bilgi.
+  // Sağ sütun hizmetleri: kategori (kırmızı vurgu) → hizmet → bölge/şekil → hizmeti veren profesyonel.
+  // "Öne Çıkan" (taç) yalnız veride güvenilir bir işaret varsa gösterilir (bkz. serviceFeatured); bugün DB'de yok.
   function offerRow(v) {
-    const p = v.provider, meta = compact([SERVICE_MODES[v.service_mode], clean(v.service_region)]);
-    return `<a class="kw-offer" href="${esc(urls.service(v.id))}" target="_top">`
-      + `<span class="kw-offer-cat">${esc(v.category?.name || 'Hizmet')}</span>`
+    const p = v.provider, meta = compact([clean(v.service_region), SERVICE_MODES[v.service_mode]]), featured = serviceFeatured(v);
+    return `<a class="kw-offer${featured ? ' is-featured' : ''}" href="${esc(urls.service(v.id))}" target="_top">`
+      + `<span class="kw-offer-top"><span class="kw-offer-cat">${esc(v.category?.name || 'Hizmet')}</span>${featured ? featuredBadge() : ''}</span>`
       + `<strong>${esc(v.title)}</strong>`
-      + (p ? `<span class="kw-offer-by">${avatar(p, 'xs')}<span>${esc(p.full_name || 'Kırmızı İSG üyesi')}</span></span>` : '')
       + (meta ? `<span class="kw-offer-meta">${esc(meta)}</span>` : '')
+      + (p ? `<span class="kw-offer-by">${avatar(p, 'xs')}<span>${esc(p.full_name || 'Kırmızı İSG üyesi')}</span></span>` : '')
       + `</a>`;
   }
   function renderSide() {
@@ -3847,7 +3861,7 @@ function createWorksView() {
     sideServices.innerHTML = s.services.length ? s.services.map(offerRow).join('')
       : `<div class="k-muted-note">${s.servicesFailed ? 'Hizmetler şu anda görüntülenemiyor.' : 'Henüz yayınlanmış hizmet yok. İlk hizmeti sen yayınla.'}</div>`;
   }
-  const railExperts = () => `<section class="kw-rail kw-rail-experts" aria-label="İSG profesyonellerini keşfet"><div class="kw-rail-head"><h2>İSG profesyonellerini keşfet</h2><a href="${esc(urls.view('experts'))}" target="_top" data-view-link="experts">Tümü →</a></div><div class="kw-rail-track">${s.experts.map(p => {
+  const railExperts = () => `<section class="kw-rail kw-rail-experts" aria-label="İSG profesyonellerini keşfet"><div class="kw-rail-head"><h2>İSG profesyonellerini keşfet</h2><a href="${esc(urls.view('experts'))}" target="_top" data-view-link="experts">Tümü →</a></div><div class="kw-rail-track">${s.experts.slice(0, CONFIG.railExpertsStrip).map(p => {
     const role = identity.role(p) || identity.feedLine(p), meta = compact([identity.certTag(p), clean(p.city)]);
     return `<a class="kw-rail-expert" href="${esc(urls.profile(p.id))}" target="_top">${avatar(p, 'xl')}<strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${role ? `<span>${esc(role)}</span>` : ''}${meta ? `<span>${esc(meta)}</span>` : ''}</a>`;
   }).join('')}</div></section>`;
@@ -3900,8 +3914,10 @@ function createWorksView() {
     })());
     if (services) jobs.push((async () => {
       try {
-        const { data, error } = await db.from('professional_services').select('id,user_id,title,service_region,service_mode,category:professional_service_categories(name),provider:profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class)').eq('status', 'active').order('created_at', { ascending: false }).limit(CONFIG.railServices);
-        if (error) throw error; s.services = data || []; s.servicesFailed = false;
+        // En yeni aktif hizmetler; sağlayıcı başına önce bir hizmet (tek kişi alanı doldurmasın), eksik kalırsa
+        // sıradaki en yenilerle tamamlanır. Öne Çıkan işareti olan hizmet (ileride) en üste alınır.
+        const { data, error } = await db.from('professional_services').select('id,user_id,title,service_region,service_mode,created_at,category:professional_service_categories(name),provider:profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class)').eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(CONFIG.railServices * 8);
+        if (error) throw error; s.services = pickRailServices(data || [], CONFIG.railServices); s.servicesFailed = false;
       } catch { s.services = []; s.servicesFailed = true; }
     })());
     await Promise.all(jobs);
@@ -4423,17 +4439,35 @@ function createExpertsView() {
 /* =========================================================================
    11. Görünüm: Hizmetler (mevcut /hizmetler V1 davranışı korunur)
    ========================================================================= */
-// Hizmet kartı: Hizmetler vitrini ve Profil > Verdiği Hizmetler aynı tasarımı kullanır.
-// Hiyerarşi: kategori → hizmet → kısa açıklama → hizmeti sunan profesyonel → bölge / incele.
+/* Öne Çıkan (ücretli vitrin) altyapısı: professional_services'ta bugün güvenilir bir işaret yok, bu yüzden hiçbir
+   hizmet öne çıkan gösterilmez. İleride DB'ye örn. featured_until eklenip sorguya dahil edilince yalnız bu fonksiyon
+   değişir; kart ve sıralama hazırdır. Sahte popülerlik üretilmez. */
+function serviceFeatured(v) {
+  const until = v?.featured_until ? Date.parse(v.featured_until) : NaN;
+  return Number.isFinite(until) && until > Date.now();
+}
+const featuredBadge = () => '<span class="k-featured"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 8l4 3 4-6 4 6 4-3-2 10H6z"/></svg>Öne Çıkan</span>';
+function pickRailServices(rows, n) {
+  const featured = rows.filter(serviceFeatured), rest = rows.filter(v => !serviceFeatured(v));
+  const out = [...featured.slice(0, n)], seen = new Set(out.map(v => v.user_id));
+  for (const v of rest) { if (out.length >= n) break; if (!seen.has(v.user_id)) { out.push(v); seen.add(v.user_id); } }
+  for (const v of rest) { if (out.length >= n) break; if (!out.includes(v)) out.push(v); }
+  return out;
+}
+// Meslek ve statü aynıysa (ör. "İşyeri Hekimi · İşyeri Hekimi") tek kez yazılır.
+const providerLine = (p, status) => [...new Set([identity.role(p), status].map(clean).filter(Boolean))].join(' · ');
+// Hizmet kartı: Hizmet Bul ve Profil > Verdiği Hizmetler aynı tasarımı kullanır.
+// Hiyerarşi: hizmet → kısa açıklama → kategori · bölge · şekil → hizmeti sunan profesyonel → Hizmeti İncele.
 function serviceCard(v, { provider = true } = {}) {
   const p = provider ? v.provider : null;
-  const line = p ? compact([identity.role(p), identity.certTag(p)]) : '';
-  return `<a class="kc-card ks-card" data-service-id="${esc(v.id)}" href="${esc(urls.service(v.id))}" target="_top">`
-    + `<div class="ks-card-top">${v.category?.name ? `<span class="ks-cat">${esc(v.category.name)}</span>` : '<span class="ks-cat">Hizmet</span>'}${modeMeta(v.service_mode)}</div>`
+  const line = p ? providerLine(p, identity.certTag(p)) : '';
+  const facts = [`<span class="ks-cat">${esc(v.category?.name || 'Hizmet')}</span>`, clean(v.service_region) ? placeMeta(v.service_region) : '', modeMeta(v.service_mode)].filter(Boolean).join('');
+  return `<a class="kc-card ks-card${serviceFeatured(v) ? ' is-featured' : ''}" data-service-id="${esc(v.id)}" href="${esc(urls.service(v.id))}" target="_top">`
+    + (serviceFeatured(v) ? `<div class="ks-card-top">${featuredBadge()}</div>` : '')
     + `<h2>${esc(v.title)}</h2>`
     + (v.description ? `<p class="ks-description">${esc(v.description)}</p>` : '')
-    + (p ? `<div class="ks-pro">${avatar(p, 'lg')}<span class="ks-pro-copy"><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${line ? `<span>${esc(line)}</span>` : ''}</span></div>` : '')
-    + `<div class="ks-foot">${clean(v.service_region) ? placeMeta(v.service_region) : '<span></span>'}<span class="ks-cta">İncele <span aria-hidden="true">→</span></span></div></a>`;
+    + `<div class="ks-facts">${facts}</div>`
+    + `<div class="ks-foot">${p ? `<span class="ks-pro">${avatar(p, 'md')}<span class="ks-pro-copy"><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${line ? `<span>${esc(line)}</span>` : ''}</span></span>` : '<span></span>'}<span class="ks-cta">Hizmeti İncele <span aria-hidden="true">→</span></span></div></a>`;
 }
 // Hizmet kayıt olayları: katalog, profil ve detay aynı hizmeti anında günceller.
 const serviceBus = new Set();
@@ -4683,18 +4717,20 @@ function createServiceView() {
   function render() {
     const v = s.service, p = v.provider || null;
     const phone = p?.show_phone_publicly ? s.phone : null, digits = phone ? phoneDigits(phone) : '';
-    headBox.innerHTML = `<p class="ks-cat">${esc(v.category?.name || 'Hizmet')}</p><h1 id="khTitle">${esc(v.title)}</h1>`
-      + `<div class="kh-meta">${modeMeta(v.service_mode)}${placeMeta(v.service_region)}${v.created_at ? `<span class="k-meta-item">Yayın: ${esc(date(v.created_at))}</span>` : ''}</div>`;
+    // Hiyerarşi: kategori → hizmet adı → açıklama → kapsam (şekil · bölge · kategori) → sağlayıcı → Profili Gör → izin varsa Ara/WhatsApp.
+    headBox.innerHTML = `<p class="ks-cat">${esc(v.category?.name || 'Hizmet')}</p>${serviceFeatured(v) ? featuredBadge() : ''}<h1 id="khTitle">${esc(v.title)}</h1>`
+      + `<div class="kh-meta">${placeMeta(v.service_region)}${modeMeta(v.service_mode)}${v.created_at ? `<span class="k-meta-item">Yayın: ${esc(date(v.created_at))}</span>` : ''}</div>`;
     body.innerHTML = `<h2 class="kh-label">Hizmet hakkında</h2><div class="kh-desc">${esc(v.description)}</div>`
-      + `<dl class="kh-facts">${[['Kategori', v.category?.name], ['Hizmet şekli', SERVICE_MODES[v.service_mode]], ['Hizmet bölgesi', v.service_region], ['Yayın tarihi', v.created_at ? date(v.created_at) : '']].filter(([, x]) => clean(x)).map(([k, x]) => `<div><dt>${k}</dt><dd>${esc(x)}</dd></div>`).join('')}</dl>`;
-    const line = p ? compact([identity.role(p), identity.statusShort(p)]) : '';
+      + `<h2 class="kh-label kh-label-scope">Kapsam</h2>`
+      + `<dl class="kh-facts">${[['Hizmet şekli', SERVICE_MODES[v.service_mode]], ['Hizmet bölgesi', v.service_region], ['Kategori', v.category?.name], ['Yayın tarihi', v.created_at ? date(v.created_at) : '']].filter(([, x]) => clean(x)).map(([k, x]) => `<div><dt>${k}</dt><dd>${esc(x)}</dd></div>`).join('')}</dl>`;
+    const line = p ? providerLine(p, identity.statusShort(p)) : '';
     side.innerHTML = `<div class="kh-card">`
       + `<p class="kh-label">Hizmeti sunan profesyonel</p>`
       + (p ? `<a class="kh-pro" href="${esc(urls.profile(v.user_id))}" target="_top">${avatar(p, 'xl')}<span class="kh-pro-copy"><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${line ? `<span>${esc(line)}</span>` : ''}${compact([p.current_company, p.city]) ? `<small>${esc(compact([p.current_company, p.city]))}</small>` : ''}</span></a>`
         : '<p class="k-hint">Profesyonel bilgileri şu anda görüntülenemiyor.</p>')
       + `<div class="kh-actions">`
-      + (digits ? `<a class="k-btn k-btn-primary k-btn-block" href="https://wa.me/${esc(digits)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:currentColor;stroke:none">${SOCIAL_ICONS.whatsapp}</svg>WhatsApp ile yaz</a><a class="k-btn k-btn-block" href="tel:+${esc(digits)}">${PICONS.phone}${esc(phoneDisplay(phone))}</a>` : '')
-      + `<a class="k-btn ${digits ? '' : 'k-btn-primary '}k-btn-block" href="${esc(urls.profile(v.user_id))}" target="_top">Profili Gör</a>`
+      + `<a class="k-btn k-btn-primary k-btn-block" href="${esc(urls.profile(v.user_id))}" target="_top">Profili Gör</a>`
+      + (digits ? `<a class="k-btn k-btn-block" href="tel:+${esc(digits)}">${PICONS.phone}Ara · ${esc(phoneDisplay(phone))}</a><a class="k-btn k-btn-block" href="https://wa.me/${esc(digits)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:currentColor;stroke:none">${SOCIAL_ICONS.whatsapp}</svg>WhatsApp</a>` : '')
       + `<button type="button" class="k-btn k-btn-block" data-service-action="share">${ICONS.share}Hizmeti Paylaş</button></div>`
       + (digits ? '' : '<p class="kh-note">İletişim bilgileri profesyonelin izin verdiği ölçüde gösterilir; profilinden ulaşabilirsin.</p>')
       + `</div>`;

@@ -740,7 +740,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   const side = await page.evaluate(() => { const r = document.getElementById('kisg-pro-sides').shadowRoot; return [...r.querySelectorAll('.kw-offer')].map(a => ({ cat: a.querySelector('.kw-offer-cat')?.textContent, title: a.querySelector('strong')?.textContent, by: a.querySelector('.kw-offer-by')?.textContent, av: !!a.querySelector('.kw-offer-by .k-avatar'), href: a.getAttribute('href') })); });
   check(side.length >= 2 && side.length <= 3 && side.every(x => x.cat && x.title && x.by && x.av && x.href.includes('/hizmet-detay?id=')), `vitrin: 2–3 hizmet kartı kategori/başlık/profesyonel ile (${side.length})`);
   const link = await page.evaluate(() => { const a = document.getElementById('kisg-pro-sides').shadowRoot.querySelector('.kw-vitrin-link'); return a ? a.textContent.trim() : ''; });
-  check(/Tüm hizmetleri keşfet/.test(link), 'vitrin: "Tüm hizmetleri keşfet" bağlantısı');
+  check(/^Tümünü gör/.test(link), 'vitrin: başlıkta "Tümünü gör" bağlantısı');
   const feedW = await f.evaluate(() => document.querySelector('[data-view="works"] .kw-feed').getBoundingClientRect().width);
   check(feedW >= 560, `vitrin: ana akış genişliği korunuyor (${Math.round(feedW)}px)`);
   await page.screenshot({ path: `${OUT}/desktop-works-vitrin.png`, clip: { x: 0, y: 64, width: 1366, height: 836 } });
@@ -751,7 +751,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await page.goBack(); await page.waitForTimeout(500);
   await page.evaluate(() => document.getElementById('kisg-pro-sides').shadowRoot.querySelector('.kw-vitrin-link').click());
   await f.waitForSelector('[data-view="services"] .ks-card');
-  check(page.url().endsWith('/hizmetler') && await page.evaluate(() => window.__bootMark) === mark, 'vitrin: Tüm hizmetleri keşfet → /hizmetler');
+  check(page.url().endsWith('/hizmetler') && await page.evaluate(() => window.__bootMark) === mark, 'vitrin: Tümünü gör → /hizmetler');
   check(await f.locator('.ks-band,[data-band]').count() === 0 && !(await f.textContent('[data-view="services"]')).includes("Uzmanlığını Kırmızı İSG'de sun") && await f.locator('[data-view="services"] .ks-hero-cta').count() === 1, 'Hizmetler: alt CTA bandı yok, hero butonu duruyor');
   await ctx.close();
 }

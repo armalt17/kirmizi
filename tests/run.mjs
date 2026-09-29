@@ -24,7 +24,8 @@ const SUITES = [
   { name: 'terminology-city-filter', file: 'terminology-city-filter.test.mjs' },
   { name: 'feed-experts-rail', file: 'feed-experts-rail.test.mjs' },
   { name: 'notifications', file: 'notifications.test.mjs' },
-  { name: 'comment-likes', file: 'comment-likes.test.mjs' }
+  { name: 'comment-likes', file: 'comment-likes.test.mjs' },
+  { name: 'services-v2', file: 'services-v2.test.mjs' }
 ];
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx > -1 ? process.argv[onlyIdx + 1] : null;
