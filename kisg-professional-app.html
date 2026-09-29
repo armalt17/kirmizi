@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.13.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.14.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,9 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.14.0: Şikâyet / Bildir V1: Post, yorum, profil ve hizmet üç nokta menüsünde "Bildir" (kendi içeriğinde yok;
+ misafirde giriş açılır, sonra kaldığı yerden devam). Kayıt public.professional_reports'a yalnız INSERT; içerik gizlenmez.
+ DB: db/migrations/20260929_professional_reports.sql UYGULANMADAN "Bildirim şu anda gönderilemedi" görünür.
 v4.13.0: Hizmet Bul V2: kart hiyerarşisi başlık → açıklama → kategori/bölge/şekil → profesyonel + "Hizmeti İncele";
  detayda "Kapsam", birincil "Profili Gör", telefon kuralı aynı. Akış sol panel 6 uzman (mobil şerit 3), iki panelde
  başlık + "Tümünü gör →". Sağ panel: en yeni aktif hizmetler, sağlayıcı başına önce bir tane. "Öne Çıkan" taç rozeti
@@ -259,6 +262,10 @@ Acil kapatma: CONFIG.historyRouting=false.
         <button type="button" class="kw-more-btn" data-popover-trigger aria-label="Hizmeti yönet" aria-expanded="false">···</button>
         <div class="k-popover kw-menu" hidden><button type="button" data-service-action="edit">Düzenle</button><button type="button" class="is-danger" data-service-action="remove">Kaldır</button></div>
       </div>
+      <div class="kh-owner" data-service-report hidden>
+        <button type="button" class="kw-dots" data-popover-trigger aria-label="Hizmet seçenekleri" aria-expanded="false">···</button>
+        <div class="k-popover kw-menu" hidden><button type="button" data-service-action="report">Bildir</button></div>
+      </div>
     </div>
     <div class="k-empty kd-state" data-service-status role="status" hidden></div>
     <div class="kh-layout" data-service-main hidden>
@@ -470,6 +477,20 @@ Acil kapatma: CONFIG.historyRouting=false.
   <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button type="button" id="kaConfirmOk" class="k-btn k-btn-danger">Onayla</button></footer>
 </dialog>
 
+<dialog id="kaReportDialog" class="k-dialog k-dialog-sm" aria-labelledby="kaReportTitle">
+  <form id="kaReportForm" novalidate>
+    <header class="k-dialog-head"><h2 id="kaReportTitle">Bildir</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
+    <div class="k-dialog-body">
+      <p class="kr-lead" data-report-lead></p>
+      <fieldset class="kr-reasons" data-report-reasons><legend class="k-label">Neden bildiriyorsun?</legend></fieldset>
+      <label class="k-label" for="kaReportDetails">Açıklama <span class="kr-optional">(isteğe bağlı)</span></label>
+      <textarea class="k-input k-textarea" id="kaReportDetails" maxlength="1000" rows="3" placeholder="Ekibimizin anlaması için kısa bir not ekleyebilirsin."></textarea>
+      <p id="kaReportError" class="k-form-error" role="alert" hidden></p>
+    </div>
+    <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button type="submit" id="kaReportSubmit" class="k-btn k-btn-primary">Bildir</button></footer>
+  </form>
+</dialog>
+
 <dialog id="kaFilterDialog" class="k-dialog k-dialog-sm" aria-labelledby="kaFilterTitle">
   <form id="kaFilterForm">
     <header class="k-dialog-head"><h2 id="kaFilterTitle">Filtrele</h2><button type="button" class="k-icon-btn" data-close aria-label="Filtre panelini kapat">×</button></header>
@@ -673,7 +694,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kw-post-time{flex:none;color:var(--faint);white-space:nowrap}
 #kisgApp .kw-post-profession+.kw-post-time::before{content:"·";margin:0 6px}
 #kisgApp .kw-owner{position:relative;flex:none;margin:-8px -10px 0 0}
-#kisgApp .kw-more-btn{display:grid;width:40px;height:40px;place-items:center;border:0;border-radius:var(--r-pill);background:transparent;color:var(--muted);font-size:20px;line-height:1;letter-spacing:.05em;transition:background var(--t-fast)}
+#kisgApp :is(.kw-more-btn,.kw-dots){display:grid;width:40px;height:40px;place-items:center;border:0;border-radius:var(--r-pill);background:transparent;color:var(--muted);font-size:20px;line-height:1;letter-spacing:.05em;transition:background var(--t-fast)}
 #kisgApp .kw-menu{top:42px}
 #kisgApp .kw-menu button.is-danger{color:var(--red-text)}
 #kisgApp .kw-post-detail{display:block}
@@ -946,6 +967,16 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kh-page{max-width:1120px;padding:18px 0 72px}
 #kisgApp .kh-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 #kisgApp .kh-owner{position:relative}
+/* Şikâyet / Bildir */
+#kisgApp .kr-lead{margin:0 0 14px;color:var(--muted);font-size:14px;line-height:1.5}
+#kisgApp .kr-reasons{display:grid;gap:6px;min-width:0;margin:0 0 16px;padding:0;border:0}
+#kisgApp .kr-reasons legend{margin:0 0 8px;padding:0}
+#kisgApp .kr-reason{display:flex;align-items:center;gap:12px;min-height:46px;padding:10px 14px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);font-size:14.5px;font-weight:550;line-height:1.35;cursor:pointer;transition:box-shadow var(--t-fast),background var(--t-fast)}
+#kisgApp .kr-reason:has(input:checked){background:var(--surface-2);box-shadow:inset 0 0 0 1.5px var(--ink)}
+#kisgApp .kr-reason input{flex:none;width:18px;height:18px;margin:0;accent-color:var(--red)}
+#kisgApp .kr-optional{color:var(--faint);font-weight:500}
+#kisgApp #kaReportDetails{min-height:96px}
+@media(max-width:640px){#kisgApp .kr-lead{margin-bottom:10px;font-size:13.5px}#kisgApp .kr-reasons{gap:5px;margin-bottom:12px}#kisgApp .kr-reason{min-height:44px;padding:8px 14px}#kisgApp #kaReportDetails{min-height:76px}}
 #kisgApp .kh-layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;grid-template-areas:"head side" "body side";grid-template-rows:auto 1fr;column-gap:56px;align-items:start;margin-top:14px}
 #kisgApp .kh-head{grid-area:head;display:grid;gap:0}
 #kisgApp .kh-head h1{margin-top:14px;color:var(--ink);font-size:42px;font-weight:800;line-height:1.1;letter-spacing:-.035em;overflow-wrap:anywhere}
@@ -1108,6 +1139,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kp-card{position:relative;display:flex;flex-direction:column;gap:18px;padding:22px 22px 20px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;box-shadow:0 1px 2px rgba(20,26,36,.03);overflow-wrap:anywhere;animation:ka-enter .24s var(--ease)}
 #kisgApp .kp-card::before{content:"";position:absolute;left:22px;top:0;width:44px;height:3px;border-radius:0 0 3px 3px;background:var(--red)}
 #kisgApp .kp-kicker .k-badge{font-size:9.5px}
+#kisgApp .kp-more{position:absolute;top:12px;right:12px;z-index:2}
 #kisgApp .kp-head{display:flex;flex-direction:column;align-items:flex-start;gap:14px}
 #kisgApp .kp-av{position:relative;flex:none}
 #kisgApp .k-avatar-profile{width:104px;height:104px;font-size:32px;box-shadow:0 0 0 1px var(--line),0 0 0 5px #fff,0 0 0 6px var(--line-soft)}
@@ -1192,7 +1224,7 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .k-btn-outline:hover{background:var(--red-tint)}
   #kisgApp .kc-publish:hover{background:var(--surface-2)}
   #kisgApp .k-btn-danger:hover{background:#000}
-  #kisgApp :is(.k-icon-btn,.kw-more-btn):hover{background:var(--surface-2);color:var(--ink)}
+  #kisgApp :is(.k-icon-btn,.kw-more-btn,.kw-dots):hover{background:var(--surface-2);color:var(--ink)}
   #kisgApp .k-popover :is(a,button):hover{background:var(--surface-2)}
   #kisgApp .kw-composer-main:hover .kw-composer-field{background:#fff;box-shadow:inset 0 0 0 1px var(--line-strong)}
   #kisgApp .kw-tool:hover{background:var(--surface-2);color:var(--ink)}
@@ -1418,7 +1450,7 @@ const CONFIG = Object.freeze({
   legal: { terms: '', privacy: '' },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.13.0',
+  version: '4.14.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -2195,6 +2227,50 @@ const filterSheet = (() => {
       dialogs.open(d, 'sheet');
     }
   };
+})();
+
+/* Şikâyet / Bildir V1 — public.professional_reports (db/migrations/20260929_professional_reports.sql).
+   Yalnız INSERT: reporter_id / status / created_at'i DB belirler; aynı hedef bir kez (unique).
+   Kendi içeriğini bildirme hem burada hem DB tetikleyicisinde engellenir. İçerik gizlenmez/silinmez. */
+const reports = (() => {
+  const d = $('#kaReportDialog'), form = $('#kaReportForm'), list = $('[data-report-reasons]', d), lead = $('[data-report-lead]', d);
+  const details = $('#kaReportDetails'), err = $('#kaReportError'), submit = $('#kaReportSubmit');
+  const REASONS = [['spam', 'Spam veya reklam'], ['inappropriate', 'Uygunsuz / rahatsız edici içerik'], ['misleading', 'Yanıltıcı bilgi'], ['harassment', 'Taciz / hakaret'], ['fake_profile', 'Sahte profil / yanıltıcı kimlik'], ['other', 'Diğer']];
+  const NAMES = { post: ['Postu bildir', 'Bu Post'], comment: ['Yorumu bildir', 'Bu yorum'], profile: ['Profili bildir', 'Bu profil'], service: ['Hizmeti bildir', 'Bu hizmet'] };
+  let target = null, busy = false;
+  const setErr = m => { err.textContent = m || ''; err.hidden = !m; };
+  async function open(t) {
+    if (!t || !NAMES[t.type] || t.id == null || t.id === '') return;
+    const user = await requireUser(() => open(t)); if (!user) return;
+    if (t.ownerId && String(t.ownerId) === user.id) { toast('Kendi içeriğini bildiremezsin.'); return; }
+    target = { type: t.type, id: String(t.id), uid: user.id };
+    $('#kaReportTitle').textContent = NAMES[t.type][0];
+    lead.textContent = `${NAMES[t.type][1]} Kırmızı İSG ekibi tarafından incelenir. Bildirimin karşı tarafa gösterilmez.`;
+    list.innerHTML = '<legend class="k-label">Neden bildiriyorsun?</legend>' + REASONS.filter(([k]) => k !== 'fake_profile' || t.type === 'profile')
+      .map(([k, label]) => `<label class="kr-reason"><input type="radio" name="reason" value="${k}"><span>${esc(label)}</span></label>`).join('');
+    details.value = ''; setErr('');
+    dialogs.open(d, 'sheet');
+  }
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (busy || !target) return;
+    const reason = $('input[name="reason"]:checked', list)?.value;
+    if (!reason) { setErr('Bir neden seç.'); return; }
+    if (session.user?.id !== target.uid) { dialogs.close(d); return; }
+    busy = true; setErr(''); setBusy(submit, true, 'Gönderiliyor...'); dialogs.lock(d, true);
+    let error = null;
+    try { await dbReady; ({ error } = await db.from('professional_reports').insert({ target_type: target.type, target_id: target.id, reason, details: clean(details.value) || null })); }
+    catch (x) { error = x || {}; }
+    busy = false; setBusy(submit, false); dialogs.lock(d, false);
+    const msg = String(error?.message || '');
+    if (!error) { dialogs.close(d); toast('Bildiriminiz alındı.'); return; }
+    if (error.code === '23505') { dialogs.close(d); toast('Bunu daha önce bildirdin. Bildirimin inceleniyor.'); return; }
+    if (/KISG_REPORT_OWN/.test(msg)) { dialogs.close(d); toast('Kendi içeriğini bildiremezsin.'); return; }
+    if (/KISG_REPORT_TARGET/.test(msg)) { dialogs.close(d); toast('Bu içerik artık bulunamadı.'); return; }
+    setErr('Bildirim şu anda gönderilemedi. Lütfen tekrar dene.');
+  });
+  d.addEventListener('close', () => { if (!busy) target = null; });
+  return { open, onSession() { if (d.open && !busy && session.user?.id !== target?.uid) dialogs.close(d); } };
 })();
 
 async function copyText(text) {
@@ -3033,7 +3109,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
 
   /* ---- Render ---- */
   function ownerMenu(p) {
-    if (!isOwn(p)) return '';
+    if (!isOwn(p)) return `<button type="button" class="kw-dots" data-popover-trigger aria-label="Post seçenekleri" aria-expanded="false">···</button><div class="k-popover kw-menu" hidden><button type="button" data-post-action="report">Bildir</button></div>`;
     return `<button type="button" class="kw-more-btn" data-popover-trigger aria-label="Post seçenekleri" aria-expanded="false">···</button><div class="k-popover kw-menu" hidden>`
       + `<button type="button" data-post-action="edit">Düzenle</button>`
       + `<button type="button" data-post-action="feature">${p.profile_featured_order ? 'Öne çıkandan kaldır' : 'Profilde öne çıkar'}</button>`
@@ -3213,6 +3289,13 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       return `<span class="cm-sep" aria-hidden="true">·</span><button type="button" class="cm-like${c.liked ? ' is-liked' : ''}" data-comment-like="${esc(c.id)}" aria-pressed="${!!c.liked}"${liking.has(String(c.id)) ? ' disabled' : ''}>${c.liked ? 'Beğenildi' : 'Beğen'}</button>`
         + (n ? `<span class="cm-sep" aria-hidden="true">·</span>${n}` : '');
     }
+    // Kendi yorumu: Düzenle/Sil (değişmedi). Başkasının yorumu (misafir dahil): Bildir.
+    function commentMenu(c, own) {
+      const items = own
+        ? `<button type="button" data-comment-act="edit" data-id="${esc(c.id)}">Düzenle</button><button type="button" class="is-danger" data-comment-act="delete" data-id="${esc(c.id)}">Sil</button>`
+        : `<button type="button" data-comment-act="report" data-id="${esc(c.id)}" data-owner="${esc(c.user_id)}">Bildir</button>`;
+      return `<div class="cm-more"><button type="button" class="cm-more-btn" data-popover-trigger aria-label="Yorum seçenekleri" aria-expanded="false">···</button><div class="k-popover cm-menu" hidden>${items}</div></div>`;
+    }
     function itemHTML(c, t) {
       const a = author(c), own = !!session.user && c.user_id === session.user.id, role = identity.role(a);
       const editing = t.editing != null && String(t.editing) === String(c.id);
@@ -3220,7 +3303,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
         ? `<form class="cm-edit" data-comment-edit="${esc(c.id)}"><textarea class="cm-input" maxlength="2000" rows="2" aria-label="Yorumu düzenle">${esc(c.content)}</textarea><div class="cm-edit-actions"><button type="button" class="cm-link" data-comment-cancel>Vazgeç</button><button type="submit" class="cm-save">Kaydet</button></div></form>`
         : `<p class="cm-text">${esc(c.content)}</p>`;
       const like = likeActions(c, own);
-      const menu = own && !editing ? `<div class="cm-more"><button type="button" class="cm-more-btn" data-popover-trigger aria-label="Yorum seçenekleri" aria-expanded="false">···</button><div class="k-popover cm-menu" hidden><button type="button" data-comment-act="edit" data-id="${esc(c.id)}">Düzenle</button><button type="button" class="is-danger" data-comment-act="delete" data-id="${esc(c.id)}">Sil</button></div></div>` : '';
+      const menu = editing ? '' : commentMenu(c, own);
       return `<li class="cm-item" data-comment-id="${esc(c.id)}"><a class="cm-av" href="${esc(urls.profile(c.user_id))}" target="_top" aria-label="${esc(a.full_name || 'Kullanıcı')} profili">${avatar(a, 'sm')}</a>`
         + `<div class="cm-bubble"><div class="cm-meta"><a class="cm-name" href="${esc(urls.profile(c.user_id))}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a>${role ? `<span class="cm-role">${esc(role)}</span>` : ''}</div>${body}</div>`
         + `<div class="cm-foot"><time datetime="${esc(c.created_at)}">${esc(relativeTime(c.created_at))}${c.updated_at && c.updated_at !== c.created_at ? ' · düzenlendi' : ''}</time>${like}${menu}</div></li>`;
@@ -3233,7 +3316,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
         ? `<form class="cm-edit" data-comment-edit="${esc(c.id)}"><textarea class="cm-input" maxlength="2000" rows="2" aria-label="Yorumu düzenle">${esc(c.content)}</textarea><div class="cm-edit-actions"><button type="button" class="cm-link" data-comment-cancel>Vazgeç</button><button type="submit" class="cm-save">Kaydet</button></div></form>`
         : `<a class="cp-text" href="${esc(urls.work(c.post_id))}" target="_top">${esc(c.content)}</a>`;
       const like = likeActions(c, own);
-      const menu = own && !editing ? `<div class="cm-more"><button type="button" class="cm-more-btn" data-popover-trigger aria-label="Yorum seçenekleri" aria-expanded="false">···</button><div class="k-popover cm-menu" hidden><button type="button" data-comment-act="edit" data-id="${esc(c.id)}">Düzenle</button><button type="button" class="is-danger" data-comment-act="delete" data-id="${esc(c.id)}">Sil</button></div></div>` : '';
+      const menu = editing ? '' : commentMenu(c, own);
       const edited = c.updated_at && c.updated_at !== c.created_at ? ' · düzenlendi' : '';
       return `<div class="cp" data-comment-id="${esc(c.id)}"><a class="cp-av" href="${esc(prof)}" target="_top" aria-label="${esc(a.full_name || 'Kullanıcı')} profili">${avatar(a, 'sm')}</a>`
         + `<div class="cp-main"><div class="cp-meta"><a class="cp-name" href="${esc(prof)}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a>${role ? `<span class="cp-role">${esc(role)}</span>` : ''}<span class="cp-time"><span aria-hidden="true">· </span><time datetime="${esc(c.created_at)}" title="${esc(relativeTime(c.created_at) + edited)}">${esc(shortTime(c.created_at))}</time>${edited ? '<span class="cp-edited"> · düzenlendi</span>' : ''}</span></div>${body}`
@@ -3476,7 +3559,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
     if (pid && t.closest('[data-thread]')) {
       if (t.closest('[data-popover-trigger]')) return;
       const act = t.closest('[data-comment-act]');
-      if (act) { closePopovers(); if (act.dataset.commentAct === 'edit') { threads.get(pid).editing = act.dataset.id; threads.render(pid); setTimeout(() => card0.querySelector('[data-comment-edit] textarea')?.focus(), 30); } else threads.remove(pid, act.dataset.id); return; }
+      if (act) { closePopovers(); if (act.dataset.commentAct === 'report') { reports.open({ type: 'comment', id: act.dataset.id, ownerId: act.dataset.owner }); return; } if (act.dataset.commentAct === 'edit') { threads.get(pid).editing = act.dataset.id; threads.render(pid); setTimeout(() => card0.querySelector('[data-comment-edit] textarea')?.focus(), 30); } else threads.remove(pid, act.dataset.id); return; }
       if (t.closest('[data-comment-cancel]')) { threads.get(pid).editing = null; threads.render(pid); return; }
       const lk = t.closest('[data-comment-like]'); if (lk) { threads.like(pid, lk.dataset.commentLike); return; }
       if (t.closest('[data-comment-more]')) { threads.get(pid).open = true; threads.loadMore(pid); return; }
@@ -3504,6 +3587,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       case 'edit': composer.open(p); break;
       case 'feature': setFeatured(p); break;
       case 'delete': deletePost(p); break;
+      case 'report': reports.open({ type: 'post', id: p.id, ownerId: p.user_id }); break;
     }
   });
   // Görsel doğal oranında gösterilir; alan sınırına küçültülen uzun görsellerde "Tamamını gör" belirir.
@@ -4702,7 +4786,7 @@ function createServiceView() {
   const el = $('[data-view="service"]');
   const statusBox = $('[data-service-status]', el), main = $('[data-service-main]', el);
   const headBox = $('[data-service-head]', el), side = $('[data-service-side]', el), body = $('[data-service-body]', el), more = $('[data-service-more]', el);
-  const owner = $('[data-service-owner]', el);
+  const owner = $('[data-service-owner]', el), reportBox = $('[data-service-report]', el);
   const SELECT = 'id,user_id,title,category_id,description,service_region,service_mode,status,created_at,updated_at,category:professional_service_categories(id,name,slug),provider:profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company,city,show_phone_publicly)';
   const s = { id: '', rev: 0, service: null, phone: null, mounted: false };
   const owns = v => !!v && v.status === 'active' && v.user_id === session.user?.id;
@@ -4710,10 +4794,10 @@ function createServiceView() {
 
   function showStatus(title, text = '', retry = false) {
     statusBox.innerHTML = title ? `<strong>${esc(title)}</strong>${text ? `<p>${esc(text)}</p>` : ''}<div class="k-empty-actions">${retry ? '<button type="button" class="k-btn" data-service-action="retry">Yeniden dene</button>' : ''}<a class="k-btn" href="${esc(urls.view('services'))}" target="_top" data-view-link="services">Hizmetlere Dön</a></div>` : '';
-    statusBox.hidden = !title; main.hidden = !!title; more.hidden = true; owner.hidden = true;
+    statusBox.hidden = !title; main.hidden = !!title; more.hidden = true; owner.hidden = true; reportBox.hidden = true;
     host.schedule();
   }
-  function renderOwner() { owner.hidden = !owns(s.service); }
+  function renderOwner() { owner.hidden = !owns(s.service); reportBox.hidden = !s.service || s.service.user_id === session.user?.id; }
   function render() {
     const v = s.service, p = v.provider || null;
     const phone = p?.show_phone_publicly ? s.phone : null, digits = phone ? phoneDigits(phone) : '';
@@ -4753,7 +4837,7 @@ function createServiceView() {
   }
   async function load(id) {
     const rev = ++s.rev;
-    s.id = id; s.service = null; s.phone = null; owner.hidden = true; more.hidden = true;
+    s.id = id; s.service = null; s.phone = null; owner.hidden = true; reportBox.hidden = true; more.hidden = true;
     if (!UUID_RE.test(id)) { showStatus('Hizmet bulunamadı'); return; }
     statusBox.hidden = true; main.hidden = false;
     headBox.innerHTML = '<i class="k-sk k-sk-short"></i><i class="k-sk kh-sk-title"></i><i class="k-sk k-sk-short"></i>';
@@ -4789,6 +4873,7 @@ function createServiceView() {
       case 'share': if (v) shareLink({ url: urls.service(v.id), title: v.title, text: compact([v.title, v.provider?.full_name], ' — '), copied: 'Hizmet bağlantısı kopyalandı.' }); break;
       case 'edit': VIEWS.services.edit(v); break;
       case 'remove': VIEWS.services.remove(v); break;
+      case 'report': if (v) reports.open({ type: 'service', id: v.id, ownerId: v.user_id }); break;
       case 'retry': load(s.id); break;
     }
   });
@@ -5144,6 +5229,7 @@ function createProfileView() {
     const facts = fact(ICONS.pin, 'Şehir', p.city) + fact(PICONS.clock, 'Mesleki deneyim', experienceText(p.experience_range)) + fact(PICONS.building, 'Çalıştığı firma', p.current_company);
     const missing = own() ? [['city', 'şehir'], ['experience_range', 'deneyim'], ['current_company', 'firma'], ['about', 'hakkında']].filter(([k]) => (k !== 'experience_range' || s.withExperience) && !clean(p[k])).map(([, l]) => l) : [];
     return `<article class="kp-card" aria-labelledby="kpName">`
+      + (own() ? '' : `<div class="kp-more"><button type="button" class="kw-dots" data-popover-trigger aria-label="Profil seçenekleri" aria-expanded="false">···</button><div class="k-popover kw-menu" hidden><button type="button" data-profile-action="report">Profili bildir</button></div></div>`)
       + `<p class="kp-kicker"><span class="k-badge">KIRMIZI İSG KİŞİ KARTI</span></p>`
       + `<div class="kp-head"><div class="kp-av">${avatar(p, 'profile')}${own() ? `<button type="button" class="kp-av-edit" data-profile-action="avatar" aria-label="Profil fotoğrafını değiştir">${PICONS.camera}</button>` : ''}</div>`
       + `<div class="kp-idn"><h1 id="kpName">${esc(p.full_name || 'Kırmızı İSG üyesi')}</h1>${role ? `<p class="kp-role">${esc(role)}</p>` : ''}`
@@ -5536,6 +5622,7 @@ function createProfileView() {
       case 'avatar': avatarManager.open(); break;
       case 'share': if (s.profile) shareLink({ url: urls.profile(s.profile.id), title: `${s.profile.full_name || 'Profil'} | Kırmızı İSG`, text: compact([s.profile.full_name, identity.role(s.profile)], ' — '), copied: 'Profil bağlantısı kopyalandı.' }); break;
       case 'pdf': downloadPdf(a); break;
+      case 'report': closePopovers(); if (s.profile) reports.open({ type: 'profile', id: s.profile.id, ownerId: s.profile.id }); break;
       case 'about': { const p = $('[data-about]', cardSlot); const open = p.classList.toggle('is-clamped'); a.textContent = open ? 'Devamını gör' : 'Daha az göster'; host.schedule(); break; }
       case 'compose': composer.open(null, a.dataset.intent || ''); break;
       case 'publish': VIEWS.services.publish(); break;
@@ -5655,6 +5742,7 @@ session.on(kind => {
   authUI.render(kind);
   if (kind === 'user') notifications.onSession();
   if (kind === 'user') composer.onSession();
+  reports.onSession();
   Object.values(VIEWS).forEach(v => { try { v.onSession?.(kind); } catch (e) { console.error(e); } });
   host.schedule();
 });

@@ -20,7 +20,8 @@ function seedCL({ preLikedByMe = false } = {}) {
   );
 }
 const req = [];
-const cm = (f, scope, cid) => f.evaluate(([sc, id]) => { const el = document.querySelector(`${sc} [data-comment-id="${id}"]`); if (!el) return null; const b = el.querySelector('[data-comment-like]'); const foot = el.querySelector('.cp-acts, .cm-foot'); return { btn: b ? b.textContent : null, pressed: b?.getAttribute('aria-pressed'), count: el.querySelector('.cm-lcount')?.textContent || '', foot: foot ? foot.textContent.replace(/\s+/g, ' ').trim() : '' }; }, [scope, cid]);
+// v4.14.0: başkasının yorumunda da üç nokta (Bildir) menüsü var; beğeni satırı karşılaştırmasında menü metni hariç
+const cm = (f, scope, cid) => f.evaluate(([sc, id]) => { const el = document.querySelector(`${sc} [data-comment-id="${id}"]`); if (!el) return null; const b = el.querySelector('[data-comment-like]'); const foot = el.querySelector('.cp-acts, .cm-foot'); return { btn: b ? b.textContent : null, pressed: b?.getAttribute('aria-pressed'), count: el.querySelector('.cm-lcount')?.textContent || '', foot: foot ? (() => { const x = foot.cloneNode(true); x.querySelectorAll('.cm-more').forEach(m => m.remove()); return x.textContent.replace(/\s+/g, ' ').trim(); })() : '' }; }, [scope, cid]);
 const FEED = '[data-view="works"]', DET = '[data-view="work"]';
 const clickLike = (f, scope, cid, times = 1) => f.evaluate(([sc, id, n]) => { for (let i = 0; i < n; i++) document.querySelector(`${sc} [data-comment-id="${id}"] [data-comment-like]`)?.click(); }, [scope, cid, times]);
 const likeWrites = () => req.filter(r => r.url.includes('/professional_comment_likes') && ['POST', 'DELETE'].includes(r.m));
