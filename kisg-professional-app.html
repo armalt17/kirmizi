@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.6.2
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.7.0
 Çalışmalar | Uzmanlar | Hizmetler | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki ALTI Hostinger sayfasındaki Custom HTML/Embed
@@ -7,6 +7,10 @@ içeriğinin yerine BİREBİR AYNI şekilde yapıştırılır:
   /calisma   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
 (/profil, /calisma-detay ve /hizmet-detay'daki eski V1 embed'lerinin yerine bu dosya gelir.)
 
+v4.7.0: "Yeni Çalışmalar" (Supabase Realtime, yalnız professional_posts INSERT, status=active).
+ Supabase'de gerekli: professional_posts tablosu supabase_realtime yayınında olmalı
+   (alter publication supabase_realtime add table public.professional_posts;). RLS okuma kuralı
+   aynen geçerlidir. Realtime yoksa akış etkilenmez; gösterge yalnız doğrulanmış yeni kayıtla çıkar.
 v4.6.2: Çalışma Detay (ve akış) yorumları gömülü yorum sayısına güvenmeden okunur — sayı boş/0 gelse de
  mevcut yorumlar yüklenir; yorum kimlikleri tip-güvenli (bigint/uuid) eşlenir, detaya dönüşte yorumlar tazelenir.
  Hizmetler alt CTA bandı kaldırıldı. Çalışmalar sağ sütunu: mini hizmet vitrini.
@@ -120,6 +124,7 @@ Acil kapatma: CONFIG.historyRouting=false.
           <button type="button" class="kw-tool" data-composer data-composer-intent="photo" aria-label="Fotoğraflı Çalışma paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span>Fotoğraf</span></button>
           <button type="button" class="k-btn k-btn-primary kw-composer-cta" data-composer aria-label="Yeni Çalışma"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Paylaş</span></button>
         </div>
+        <button type="button" class="kw-newposts" data-new-posts data-place="pill" hidden aria-live="polite"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 19V5m0 0-6 6m6-6 6 6"/></svg><span data-new-posts-label>Yeni Çalışma</span></button>
         <p class="kw-live" data-live hidden><span class="kw-live-dot" aria-hidden="true"></span><span data-live-text></span></p>
         <div class="kw-notice" data-notice role="alert" hidden></div>
         <div class="kw-list" data-list aria-live="polite">
@@ -503,6 +508,12 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kw-tool svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 #kisgApp .kw-composer-cta{height:44px;padding:0 20px}
 #kisgApp .kw-live{display:flex;align-items:center;gap:8px;padding:10px var(--pad);border-bottom:1px solid var(--line-soft);color:var(--muted);font-size:12.5px;font-weight:550}
+/* Yeni Çalışmalar göstergesi: görünen alanın üstünde, akış sütununa hizalı küçük koyu hap */
+#kisgApp .kw-newposts{position:fixed;top:76px;left:50%;z-index:60;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px 0 12px;border:0;border-radius:var(--r-pill);background:var(--ink);color:#fff;font-size:13.5px;font-weight:700;letter-spacing:-.005em;white-space:nowrap;box-shadow:0 10px 24px -10px rgba(20,26,36,.45),0 0 0 1px rgba(255,255,255,.06) inset;transform:translateX(-50%);animation:k-newposts .28s var(--ease)}
+#kisgApp .kw-newposts::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--red);box-shadow:0 0 0 3px rgba(227,10,23,.22)}
+#kisgApp .kw-newposts svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .kw-newposts:active{transform:translateX(-50%) scale(.97)}
+@keyframes k-newposts{from{opacity:0;transform:translate(-50%,-8px)}}
 #kisgApp .kw-live-dot{position:relative;flex:none;width:7px;height:7px;border-radius:50%;background:var(--red)}
 #kisgApp .kw-live-dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid var(--red);opacity:0;animation:k-ring 1.2s ease-out .4s 2}
 #kisgApp .kw-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px var(--pad);border-bottom:1px solid var(--line-soft);font-size:14px}
@@ -918,6 +929,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 @media(hover:hover) and (pointer:fine){
   #kisgApp .kp-social:hover{background:var(--surface-2);color:var(--ink)}
   #kisgApp .kd-back:hover{color:var(--ink)}
+  #kisgApp .kw-newposts:hover{background:#000}
   #kisgApp .ks-chip:hover:not([aria-pressed="true"]){box-shadow:inset 0 0 0 1px var(--ink);color:var(--ink)}
   #kisgApp .ks-card:hover{transform:translateY(-3px);box-shadow:inset 0 0 0 1px var(--line-strong),0 14px 34px -18px rgba(20,26,36,.28)}
   #kisgApp .ks-card:hover .ks-cta span{transform:translateX(3px)}
@@ -1143,7 +1155,7 @@ const CONFIG = Object.freeze({
   siteUrl: 'https://isgcalisanplatformu.com',
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.6.2',
+  version: '4.7.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/calisma', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -1562,6 +1574,7 @@ const host = (() => {
   function place(el) {
     if (!el.isConnected || (el.tagName === 'DIALOG' && !el.open)) return;
     const box = visible();
+    if (el.dataset.place === 'pill') { el.style.top = box ? (box.top + 14) + 'px' : ''; el._placeX?.(); return; }
     if (!box) { ['top', 'bottom', 'maxHeight', 'marginTop', 'height'].forEach(k => { el.style[k] = ''; }); return; }
     if (el.dataset.place === 'toast') { el.style.bottom = 'auto'; el.style.top = (box.top + box.height - el.offsetHeight - 16) + 'px'; return; }
     el.style.bottom = 'auto'; el.style.marginTop = '0';
@@ -2820,6 +2833,7 @@ function createWorksView() {
       notice.hidden = true;
       feed.syncLikes(fresh.map(p => p.id));
       feed.threads.preview(fresh);
+      if (reset) newPosts.afterLoad();
     } catch {
       $$('.kw-sk', list).forEach(n => n.remove());
       showNotice('Çalışmalar şu anda yüklenemedi.');
@@ -2859,6 +2873,109 @@ function createWorksView() {
     if (t.closest('[data-retry]')) loadPosts({ reset: !F.posts.length });
   });
 
+  /* ---- Yeni Çalışmalar (Supabase Realtime) ----
+     Realtime yalnızca "yeni kayıt olabilir" sinyalidir. Sayaç her kanal (yeniden) bağlandığında, sekme
+     görünür olduğunda, çevrimiçi olunca ve görünüme dönüldüğünde created_at/id ile sunucudan doğrulanır;
+     göstergeye basılınca yeni Çalışmalar sunucudan okunur ve akışın başına bir kez eklenir.
+     Akış kendiliğinden değişmez, scroll oynamaz. Realtime yoksa akış aynen çalışır, kullanıcı hata görmez. */
+  const newPosts = (() => {
+    const pill = $('[data-new-posts]', el), label = $('[data-new-posts-label]', pill);
+    const pending = new Map();        // id → user_id (kendi Çalışmaları sayılmaz)
+    let channel = null, joined = false, lost = false, catching = false, merging = false, poll = 0;
+    const known = id => F.posts.some(p => String(p.id) === String(id));
+    const time = v => { const t = Date.parse(v); return Number.isFinite(t) ? t : 0; };
+    const head = () => F.posts.reduce((m, p) => (!m || time(p.created_at) > time(m.created_at) || (p.created_at === m.created_at && String(p.id) > String(m.id)) ? p : m), null);
+    const newerThan = h => `created_at.gt.${quote(h.created_at)},and(created_at.eq.${quote(h.created_at)},id.gt.${quote(h.id)})`;
+    const active = () => s.mounted && router.current === 'works';
+    const mine = uid => !!session.user && uid === session.user.id;
+    function prune() { pending.forEach((uid, id) => { if (known(id) || mine(uid)) pending.delete(id); }); }
+    function render() {
+      prune();
+      const n = pending.size, show = n > 0 && active() && !merging;
+      if (show) label.textContent = n === 1 ? 'Yeni Çalışma' : `${n} yeni Çalışma`;
+      if (show === !pill.hidden) { if (show) host.place(pill); return; }
+      pill.hidden = !show;
+      host.float(pill, show);
+    }
+    // Yatay konum akış sütununa hizalanır (dikey konum host.place ile görünen alanın üstü).
+    pill._placeX = () => { const r = $('.kw-feed', el).getBoundingClientRect(); if (r.width) pill.style.left = Math.round(r.left + r.width / 2) + 'px'; };
+    function onInsert(payload) {
+      const r = payload?.new; if (!r || r.id == null) return;
+      if (r.status && r.status !== 'active') return;
+      if (mine(r.user_id) || known(r.id) || pending.has(String(r.id))) return;
+      const h = head();
+      if (h && r.created_at && time(r.created_at) < time(h.created_at)) return;
+      pending.set(String(r.id), r.user_id || null);
+      render();
+    }
+    async function catchUp() {
+      const h = head();
+      if (!h || catching || !active() || !db) return;
+      catching = true;
+      try {
+        const { data, error } = await db.from('professional_posts').select('id,user_id,created_at').eq('status', 'active').or(newerThan(h)).order('created_at', { ascending: false }).limit(50);
+        if (!error) (data || []).forEach(r => { if (!mine(r.user_id) && !known(r.id)) pending.set(String(r.id), r.user_id || null); });
+      } catch {} finally { catching = false; render(); }
+    }
+    function startPoll() { if (!poll) poll = setInterval(() => { if (!joined && !document.hidden) catchUp(); }, 60000); }
+    function stopPoll() { clearInterval(poll); poll = 0; }
+    function start() {
+      if (channel || !active() || !db?.channel) return;
+      try {
+        channel = db.channel(`kisg-pro-posts-${newId()}`)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'professional_posts', filter: 'status=eq.active' }, onInsert)
+          .subscribe(status => {
+            if (status === 'SUBSCRIBED') { joined = true; lost = false; stopPoll(); catchUp(); }
+            else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') { if (joined || !lost) { joined = false; lost = true; } if (channel) startPoll(); }
+          });
+      } catch { channel = null; startPoll(); }
+    }
+    function stop() {
+      stopPoll();
+      const c = channel; channel = null; joined = false;
+      if (c) { try { db.removeChannel(c); } catch {} }
+    }
+    async function merge() {
+      if (merging) return;
+      merging = true; render();
+      const h = head(), LIMIT = CONFIG.postsPageSize * 3;
+      try {
+        if (!h) { pending.clear(); await loadPosts({ reset: true }); return; }
+        const { data, error } = await postData.run(q => q.eq('status', 'active').or(newerThan(h)).order('created_at', { ascending: false }).order('id', { ascending: false }).limit(LIMIT));
+        if (error) throw error;
+        if ((data || []).length >= LIMIT) { pending.clear(); await loadPosts({ reset: true }); return; }   // çok fazla: akışı baştan kur
+        const rows = (data || []).map(postData.normalize).filter(p => !known(p.id));
+        if (rows.length) {
+          F.posts.unshift(...rows);
+          $('.kw-empty-card', list)?.remove();
+          list.insertAdjacentHTML('afterbegin', rows.map(p => feed.card(p)).join(''));
+          placeRails(); renderLive();
+          more.hidden = !s.hasMore || !F.posts.length;
+          feed.syncLikes(rows.map(p => p.id));
+          feed.threads.preview(rows);
+        }
+        pending.clear();
+      } catch { toast('Yeni Çalışmalar şu anda yüklenemedi.'); }
+      finally {
+        merging = false; render(); host.schedule();
+        host.scrollTo(host.shellTop(), true);
+      }
+    }
+    pill.addEventListener('click', merge);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) catchUp(); });
+    window.addEventListener('online', () => catchUp());
+    try { if (host.win && host.win !== window) host.win.addEventListener('online', () => catchUp()); } catch {}
+    window.addEventListener('pagehide', e => { if (!e.persisted) stop(); });
+    return {
+      // Görünüm değişimi: yalnız Çalışmalar açıkken tek kanal; dönüşte kaçırılanlar doğrulanır.
+      onView(name) { if (name === 'works') { start(); catchUp(); } else stop(); render(); },
+      afterLoad() { if (active()) { start(); catchUp(); } render(); },
+      onUser() { render(); catchUp(); },
+      render
+    };
+  })();
+  postBus.add(kind => { if (kind === 'saved' || kind === 'removed') newPosts.render(); });
+
   // Composer daveti: İSG sahasına özgü sorular, sakin geçişle döner (reduced-motion'da sabit).
   const PROMPTS = ['Sahada ne yaptın? Bir Çalışma paylaş…', 'Bugün hangi riski azalttın?', 'Son denetiminde ne dikkatini çekti?', 'Verdiğin eğitimden bir kare paylaş…', 'Hangi iyi uygulamayı hayata geçirdin?', 'Bir ramak kaladan ne öğrendin?'];
   const promptEl = $('.kw-composer-desktop', el);
@@ -2891,6 +3008,7 @@ function createWorksView() {
       feed.syncLikes(F.posts.map(p => p.id));
       feed.threads.preview(F.posts);
       idle(() => composer.ensureCategories().catch(() => {}));
+      newPosts.afterLoad();   // geri dönüş kaydından açıldı: aradaki yeni Çalışmalar doğrulanır
       await settleImages(1500);
       return;
     }
@@ -2902,6 +3020,7 @@ function createWorksView() {
     renderComposerAvatar();
     if (kind !== 'user' || !s.mounted) return;
     feed.onSession(kind);
+    newPosts.onUser();
   }
   function snapshot() {
     if (!s.mounted || !F.posts.length) return null;
@@ -2915,7 +3034,7 @@ function createWorksView() {
     s.experts.forEach(p => { if (p.id === uid) p.avatar_url = url; });
     s.services.forEach(v => { if (v.user_id === uid && v.provider) v.provider.avatar_url = url; });
   })(shellHooks.avatarChanged);
-  return { name: 'works', el, mount, onSession, snapshot, isMounted: () => s.mounted };
+  return { name: 'works', el, mount, onSession, snapshot, isMounted: () => s.mounted, onView: name => newPosts.onView(name) };
 }
 
 /* =========================================================================
@@ -4443,6 +4562,7 @@ const router = (() => {
     if (name === 'profile') VIEWS.profile.route({ ...params });
     if (name === 'work') VIEWS.work.route({ ...params });
     if (name === 'service') VIEWS.service.route({ ...params });
+    VIEWS.works.onView?.(name);
   }
   function activate(name, { mode = 'push', params: next = {} } = {}) {
     if (!VIEWS[name]) return;
