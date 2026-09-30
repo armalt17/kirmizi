@@ -33,7 +33,9 @@ const SUITES = [
   { name: 'security-fix-pack2-db', file: 'security-fix-pack2-db.test.mjs', note: 'yerel geçici PostgreSQL' },
   { name: 'admin-v1-a-db', file: 'admin-v1-a-db.test.mjs', note: 'yerel geçici PostgreSQL' },
   { name: 'admin-v1-b-db', file: 'admin-v1-b-db.test.mjs', note: 'yerel geçici PostgreSQL' },
-  { name: 'pro-admin-ui', file: 'pro-admin-ui.test.mjs', note: '/pro-admin arayüzü' }
+  { name: 'pro-admin-ui', file: 'pro-admin-ui.test.mjs', note: '/pro-admin arayüzü' },
+  { name: 'legal-db', file: 'legal-db.test.mjs', note: 'yerel geçici PostgreSQL' },
+  { name: 'legal-v1-web', file: 'legal-v1-web.test.mjs', note: '/yasal + App Shell' }
 ];
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx > -1 ? process.argv[onlyIdx + 1] : null;

@@ -19,6 +19,9 @@ Bu klasördeki SQL dosyaları **otomatik uygulanmaz**. Production'a uygulamadan 
 | `migrations/20261003_admin_v1_b.sql` | Production'a uygulandı, verify 35/35 `ok` (Admin V1 / Migration B: admin RPC fonksiyonları + get_my_sanctions) |
 | `migrations/20261003_admin_v1_b.rollback.sql` | Geri alma (yalnız fonksiyonlar kaldırılır, veri değişmez) |
 | `migrations/20261003_admin_v1_b.verify.sql` | Uygulama sonrası salt okunur doğrulama (her satır `ok = true`) |
+| `migrations/20261004_legal_acceptances.sql` | Production'a uygulandı, verify 21/21 `ok` (Legal V1: legal_acceptances, append-only kabul/bilgilendirme kaydı, web v4.16.0) |
+| `migrations/20261004_legal_acceptances.rollback.sql` | Geri alma (legal_acceptances kayıtları silinir) |
+| `migrations/20261004_legal_acceptances.verify.sql` | Uygulama sonrası salt okunur doğrulama (her satır `ok = true`) |
 
 Uygulama: Supabase SQL Editor'de dosyanın tamamı tek seferde çalıştırılır (kendi `begin/commit`'i var, tekrar çalıştırılabilir).
 

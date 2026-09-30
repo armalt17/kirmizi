@@ -27,7 +27,7 @@ for (const vp of VPS.slice(0, +(process.env.NVP || 2))) {
       [{ email: 'zeynep@' }, 'Geçerli bir e-posta adresi gir.'],
       [{ pw: 'kisa1', pw2: 'kisa1' }, 'Şifre en az 8 karakter olmalı.'],
       [{ pw2: 'Baska12345' }, 'Şifreler birbiriyle eşleşmiyor.'],
-      [{ terms: false }, 'kabul etmelisin']
+      [{ terms: false }, 'onaylamalısın']
     ];
     for (const [c, msg] of cases) { await fillSignup(f, c); await submitPane(f, 'signup'); await settle(page, 150); const m = await errOf(f, 'signup'); if (!m.includes(msg)) check(false, `${N} kayıt doğrulama: ${JSON.stringify(c)} → "${m}"`); }
     check(!auth.calls.some(c => c.path === '/signup'), `${N} kayıt: geçersiz formlar Supabase'e gitmedi (5 kural)`);

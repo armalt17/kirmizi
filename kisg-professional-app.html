@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.15.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.16.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,10 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.16.0: Legal V1: hukuki metinler ayrı /yasal sayfasında (bu dosyada metin yok). Kayıt onayı: "Kullanım Koşulları'nı okudum
+ ve kabul ediyorum; KVKK Aydınlatma Metni hakkında bilgilendirildim." (iki bağlantı yeni sekmede /yasal'ı açar). Onay, ilk oturumda
+ public.legal_acceptances'a yazılır (terms_of_use + kvkk_notice_informed, sürüm 2026-09-30); yazılamazsa kayıt akışı etkilenmez,
+ sonraki oturumda tekrar denenir. Post ve hizmet formlarında Topluluk Kuralları notu. DB: db/migrations/20261004_legal_acceptances.sql.
 v4.15.0: Security Fix Pack 1 (web): herkese açık telefon get_public_phone RPC'si, sahibin kendi telefonu
  get_my_private_profile RPC'si ile okunur (RPC yoksa eski okumaya döner); hizmet aramasında sağlayıcı filtresi
  profiles'tan yalnız (id) okur. DB: db/migrations/20260930_security_fix_pack1.sql.
@@ -445,6 +449,7 @@ Acil kapatma: CONFIG.historyRouting=false.
         <select id="kaPostCategory" class="k-input k-select-inline"><option value="">Kategori seçme</option></select>
       </div>
       <p class="k-hint">Metin veya tek bir görsel yeterli. Kategori isteğe bağlı.</p>
+      <p class="k-legal-note">Paylaşımlar Kırmızı İSG <a href="https://isgcalisanplatformu.com/yasal#topluluk-kurallari" target="_blank" rel="noopener" data-legal-link="community">Topluluk Kuralları</a>'na tabidir.</p>
       <div id="kaPostError" class="k-form-error" role="alert" hidden></div>
     </div>
     <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button id="kaPostSubmit" type="submit" class="k-btn k-btn-primary">Post Yayınla</button></footer>
@@ -462,6 +467,7 @@ Acil kapatma: CONFIG.historyRouting=false.
         <div><label class="k-label" for="kaServiceRegion">Hizmet Bölgesi</label><input class="k-input" id="kaServiceRegion" maxlength="160" placeholder="Örn. İstanbul, Kocaeli"></div>
         <div><label class="k-label" for="kaServiceMode">Hizmet Şekli *</label><select class="k-input" id="kaServiceMode" required><option value="">Seçin</option><option value="onsite">Yerinde</option><option value="remote">Uzaktan</option><option value="both">Yerinde + Uzaktan</option></select></div>
       </div>
+      <p class="k-legal-note">Paylaşımlar Kırmızı İSG <a href="https://isgcalisanplatformu.com/yasal#topluluk-kurallari" target="_blank" rel="noopener" data-legal-link="community">Topluluk Kuralları</a>'na tabidir.</p>
       <p id="kaServiceError" class="k-form-error" role="alert" hidden></p>
     </div>
     <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button type="submit" id="kaServiceSave" class="k-btn k-btn-primary">Hizmeti Yayınla</button></footer>
@@ -1036,6 +1042,8 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .k-select-inline{width:auto;min-width:180px;flex:1;min-height:42px;border-radius:var(--r-pill)}
 #kisgApp .k-two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 #kisgApp .k-hint{margin-top:12px;color:var(--muted);font-size:13px;line-height:1.55}
+#kisgApp .k-legal-note{margin-top:8px;color:var(--faint);font-size:12px;line-height:1.5}
+#kisgApp .k-legal-note a{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
 #kisgApp .k-form-error{margin-top:12px;padding:10px 12px;border:1px solid var(--red-line);border-radius:12px;background:#fff;color:var(--red-text);font-size:13.5px;font-weight:600;animation:ka-enter .2s var(--ease)}
 #kisgApp .k-file-button{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 16px;border:1px solid var(--line-strong);border-radius:var(--r-pill);background:#fff;color:var(--ink);font-size:14px;font-weight:650;cursor:pointer}
 #kisgApp .k-file-button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -1067,7 +1075,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .ku-hint.ku-center{margin-top:14px;text-align:center}
 #kisgApp .ku-terms{align-items:flex-start;margin-top:16px;font-size:13.5px;line-height:1.5;color:var(--text)}
 #kisgApp .ku-terms input{flex:none;width:18px;height:18px;margin-top:1px;accent-color:var(--red)}
-#kisgApp .ku-terms a{color:var(--ink);font-weight:650;text-underline-offset:2px}
+#kisgApp .ku-terms a{color:var(--ink);font-weight:650;text-decoration:underline;text-underline-offset:2px}
 #kisgApp .ku-switch{position:relative;display:flex;align-items:flex-start;gap:14px;margin-top:18px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);cursor:pointer}
 #kisgApp .ku-switch-text{flex:1;min-width:0}
 #kisgApp .ku-switch-text strong{display:block;color:var(--ink);font-size:14.5px;font-weight:700}
@@ -1450,10 +1458,15 @@ const CONFIG = Object.freeze({
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
   // Kayıt formundaki sözleşme bağlantıları (boşsa metin bağlantısız gösterilir).
-  legal: { terms: '', privacy: '' },
+  legal: {
+    terms: 'https://isgcalisanplatformu.com/yasal#kullanim-kosullari',
+    kvkk: 'https://isgcalisanplatformu.com/yasal#kvkk',
+    community: 'https://isgcalisanplatformu.com/yasal#topluluk-kurallari',
+    version: '2026-09-30'   // legal_acceptances.document_version
+  },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.15.0',
+  version: '4.16.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -2151,6 +2164,34 @@ const session = (() => {
   return api;
 })();
 
+/* Legal V1 — kayıt onayının kaydı (public.legal_acceptances, db/migrations/20261004_legal_acceptances.sql).
+   Kayıt formundaki onay bu tarayıcıda bekletilir; kullanıcının ilk oturumunda (e-posta doğrulaması sonrası dahil)
+   iki satır yazılır: terms_of_use (kabul) ve kvkk_notice_informed (aydınlatma yapıldı — açık rıza DEĞİL).
+   Yazım signUp'tan ayrıdır: hata olursa hesap oluşturma etkilenmez, kayıt bekletilir ve sonraki oturumda
+   tekrar denenir (30 gün). user_id ve accepted_at sunucuda belirlenir. */
+const legal = (() => {
+  const KEY = 'kisg:legal-pending:v1', TTL = 30 * 864e5;
+  let inflight = false;
+  const mailOf = v => String(v || '').trim().toLocaleLowerCase('en-US');
+  function remember(email, uid) {
+    writeJSON(local, KEY, { email: mailOf(email), uid: uid || null, version: CONFIG.legal.version, t: Date.now() });
+  }
+  async function flush(user) {
+    const p = readJSON(local, KEY);
+    if (!p || !user?.id || inflight) return;
+    if (!p.t || Date.now() - p.t > TTL) { removeKey(local, KEY); return; }
+    if (p.uid ? p.uid !== user.id : p.email !== mailOf(user.email)) return;
+    inflight = true;
+    try {
+      const rows = ['terms_of_use', 'kvkk_notice_informed'].map(t => ({ document_type: t, document_version: p.version, source: 'web_signup' }));
+      const { error } = await db.from('legal_acceptances').insert(rows);
+      if (!error || error.code === '23505') removeKey(local, KEY);
+    } catch {} finally { inflight = false; }
+  }
+  session.on(kind => { if (kind === 'user' && session.user) flush(session.user); });
+  return { remember, flush };
+})();
+
 /* =========================================================================
    6. UI temel parçaları: toast, dialog, popover, onay, filtre paneli
    ========================================================================= */
@@ -2464,7 +2505,7 @@ const authUI = (() => {
   const su = { name: $('#kaSignupName'), email: $('#kaSignupEmail'), pw: $('#kaSignupPassword'), pw2: $('#kaSignupPassword2'), terms: $('#kaSignupTerms'), discoverable: $('#kaSignupDiscoverable') };
   (() => {
     const link = (url, text) => (httpUrl(url) ? `<a href="${esc(httpUrl(url))}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text));
-    $('[data-auth-terms]', dlg).innerHTML = `${link(CONFIG.legal?.terms, 'Kullanım Koşulları')}'nı ve ${link(CONFIG.legal?.privacy, 'KVKK Aydınlatma Metni')}'ni okudum, kabul ediyorum.`;
+    $('[data-auth-terms]', dlg).innerHTML = `${link(CONFIG.legal?.terms, 'Kullanım Koşulları')}'nı okudum ve kabul ediyorum; ${link(CONFIG.legal?.kvkk, 'KVKK Aydınlatma Metni')} hakkında bilgilendirildim.`;
   })();
   forms.signup.addEventListener('submit', async e => {
     e.preventDefault();
@@ -2475,7 +2516,7 @@ const authUI = (() => {
       : !EMAIL_RE.test(mail) ? 'Geçerli bir e-posta adresi gir.'
         : pw.length < MIN_PASSWORD ? `Şifre en az ${MIN_PASSWORD} karakter olmalı.`
           : pw !== su.pw2.value ? 'Şifreler birbiriyle eşleşmiyor.'
-            : !su.terms.checked ? 'Devam etmek için Kullanım Koşulları ve KVKK Aydınlatma Metni\'ni kabul etmelisin.' : '';
+            : !su.terms.checked ? 'Devam etmek için Kullanım Koşulları\'nı kabul ettiğini ve KVKK Aydınlatma Metni hakkında bilgilendirildiğini onaylamalısın.' : '';
     if (problem) { paneError('signup', problem); return; }
     // Profil satırını mevcut on_auth_user_created → handle_new_user() trigger'ı oluşturur; web profiles'a insert/upsert yapmaz.
     const data = await run('signup', 'Hesap oluşturuluyor...', async () => {
@@ -2489,6 +2530,7 @@ const authUI = (() => {
     flowEmail = mail;
     // "Uzmanlarda Görün" tercihi onboarding sırasında mevcut profile UPDATE ile yazılır (signUp'a eklenmez).
     writeJSON(local, ONBOARD_KEY, { uid: data.user?.id || null, email: mail, name, discoverable: su.discoverable.checked, t: Date.now() });
+    legal.remember(mail, data.user?.id || null);
     su.pw.value = su.pw2.value = '';
     pending = null;
     if (data.session?.user) { session.adopt(data.session.user); startOnboarding(); return; }
