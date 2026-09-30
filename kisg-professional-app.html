@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.21.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.22.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,11 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.22.0: Harici Link Uyarısı: Kırmızı İSG dışındaki http/https bağlantılar (Post/hizmet linkleri, sosyal bağlantılar,
+ WhatsApp) önce "Kırmızı İSG’den ayrılıyorsunuz" penceresini açar; "Siteye Git" yeni sekmede noopener/noreferrer ile
+ açar. isgcalisanplatformu.com bağlantıları ve tel:/mailto: değişmedi.
+ Destek formu: açıklama 10–5000 karakter (support_requests DB kısıtı; kısa mesaj DB'de reddediliyordu), user_id sunucuda
+ doğrulanmış oturumdan; Supabase hatası console'a yazılır ve kodu ekranda gösterilir.
 v4.21.0: Akış → Uzmanlar: masaüstü sol panel 12 uzman; aktif Post sahipleri önce, yer kalırsa Post atmamış
  is_discoverable=true uzmanlarla tamamlanır (mobil şerit 3, tasarım aynı). Destek & Geri Bildirim: hesap menüsü ve
  Hesap & Gizlilik'ten açılan form (konu + açıklama) public.support_requests'e INSERT (user_id oturumdan); Bildir'den ayrı.
@@ -558,6 +563,12 @@ Acil kapatma: CONFIG.historyRouting=false.
   <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Kapat</button></footer>
 </dialog>
 
+<dialog id="kaExtDialog" class="k-dialog k-dialog-sm" aria-labelledby="kaExtTitle" aria-describedby="kaExtText">
+  <header class="k-dialog-head"><h2 id="kaExtTitle">Kırmızı İSG’den ayrılıyorsunuz</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
+  <div class="k-dialog-body"><p id="kaExtText">Bu bağlantı harici bir web sitesine yönlendiriyor.</p><p class="k-ext-host" data-ext-host></p></div>
+  <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button type="button" class="k-btn k-btn-primary" data-ext-go>Siteye Git</button></footer>
+</dialog>
+
 <dialog id="kaSupportDialog" class="k-dialog k-dialog-sm" aria-labelledby="kaSupportTitle">
   <form id="kaSupportForm" novalidate>
     <header class="k-dialog-head"><h2 id="kaSupportTitle">Destek &amp; Geri Bildirim</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
@@ -570,7 +581,7 @@ Acil kapatma: CONFIG.historyRouting=false.
         <label class="kr-reason"><input type="radio" name="category" value="other"><span>Diğer</span></label>
       </fieldset>
       <label class="k-label" for="kaSupportMessage">Açıklama</label>
-      <textarea class="k-input k-textarea" id="kaSupportMessage" maxlength="2000" rows="4" placeholder="Ne oldu veya ne önermek istersin? Kısaca anlat."></textarea>
+      <textarea class="k-input k-textarea" id="kaSupportMessage" minlength="10" maxlength="5000" rows="4" placeholder="Ne oldu veya ne önermek istersin? Kısaca anlat (en az 10 karakter)."></textarea>
       <p id="kaSupportError" class="k-form-error" role="alert" hidden></p>
     </div>
     <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button type="submit" id="kaSupportSubmit" class="k-btn k-btn-primary">Gönder</button></footer>
@@ -802,6 +813,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kw-post-content{color:var(--text);font-size:15.5px;line-height:1.62;white-space:pre-wrap;overflow-wrap:anywhere}
 #kisgApp .k-ext-link{color:var(--red-text);text-decoration:underline;text-decoration-color:var(--red-line);text-underline-offset:2px;overflow-wrap:anywhere;word-break:break-word;cursor:pointer}
 #kisgApp .k-ext-link:hover{text-decoration-color:currentColor}
+#kisgApp .k-ext-host{margin-top:10px;padding:10px 12px;border-radius:var(--r-md);background:var(--surface-2);color:var(--ink);font-size:14px;font-weight:600;overflow-wrap:anywhere}
 #kisgApp .kw-post-content.is-clamped{display:-webkit-box;-webkit-line-clamp:8;-webkit-box-orient:vertical;overflow:hidden}
 #kisgApp .kw-more-link{display:inline-block;margin-top:4px;color:var(--ink);font-size:14px;font-weight:700}
 /* Medya: doğal oran, kırpma yok, büyütme yok */
@@ -1597,7 +1609,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.21.0',
+  version: '4.22.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
@@ -1673,15 +1685,41 @@ function linkify(text, { inert = false } = {}) {
 }
 // Linkify öğeleri: span (kart içinde) yeni sekmede açılır, kartın/uygulama yönlendirmesinin tıklaması durdurulur;
 // gerçek <a> kendi target=_blank davranışıyla açılır, uygulama yönlendirmesine düşmez.
+// v4.22.0 Harici Link Uyarısı: Kırmızı İSG dışındaki http/https bağlantılar (linkify, sosyal, WhatsApp vb.)
+// doğrudan açılmaz; önce onay penceresi, "Siteye Git" → yeni sekme, noopener/noreferrer. İç bağlantılar aynı.
+const openExternal = href => { try { window.open(href, '_blank', 'noopener,noreferrer'); } catch {} };
+const isExternalUrl = href => { try { return !CONFIG.siteOrigins.includes(new URL(href).origin); } catch { return false; } };
+const extWarn = (() => {
+  let pending = null;
+  const d = () => $('#kaExtDialog');
+  return {
+    open(href) {
+      const dlg = d(); if (!dlg) { openExternal(href); return; }
+      pending = href;
+      $('[data-ext-host]', dlg).textContent = new URL(href).hostname.replace(/^www\./, '');
+      if (!dlg.dataset.bound) {
+        dlg.dataset.bound = '1';
+        $('[data-ext-go]', dlg).addEventListener('click', () => { const h = pending; pending = null; dialogs.close(dlg); if (h) openExternal(h); });
+        dlg.addEventListener('close', () => { pending = null; });
+      }
+      dialogs.open(dlg);
+    }
+  };
+})();
 (() => {
   const act = e => {
-    const el = e.target?.nodeType === 1 ? e.target.closest('.k-ext-link') : null;
-    if (!el || !root.contains(el)) return;
-    e.stopImmediatePropagation();
-    if (el.tagName === 'A') { e.stopPropagation(); return; }
+    const t = e.target?.nodeType === 1 ? e.target : null; if (!t || !root.contains(t)) return;
+    const el = t.closest('.k-ext-link');
+    const a = el ? null : t.closest('a[href]');
+    const raw = el ? (el.tagName === 'A' ? el.getAttribute('href') : el.dataset.extHref) : a?.href;
+    const href = raw ? safeHttpUrl(raw) : null;
+    if (a && !(href && isExternalUrl(href))) return;   // iç bağlantılar ve http dışı (tel:, mailto:) aynen
+    if (!el && !a) return;
+    e.stopImmediatePropagation(); e.stopPropagation();
+    if (href && isExternalUrl(href)) { e.preventDefault(); extWarn.open(href); return; }
+    if (el.tagName === 'A') return;   // iç linkify bağlantısı: kendi target=_blank davranışı
     e.preventDefault();
-    const href = safeHttpUrl(el.dataset.extHref);
-    if (href) { try { window.open(href, '_blank', 'noopener,noreferrer'); } catch {} }
+    if (href) openExternal(href);
   };
   root.addEventListener('click', act, true);
   root.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target?.matches?.('span.k-ext-link')) act(e); }, true);
@@ -2533,15 +2571,24 @@ const support = (() => {
     if (busy) return;
     const category = $('input[name="category"]:checked', cats)?.value, message = clean(msg.value);
     if (!category) { setErr('Bir konu seç.'); return; }
-    if (!message) { setErr('Kısa bir açıklama yaz.'); msg.focus(); return; }
+    // support_requests.message: 10–5000 karakter (DB kısıtı); daha kısa mesaj DB'de reddediliyordu.
+    if (message.length < 10) { setErr(message ? 'Açıklama en az 10 karakter olmalı.' : 'Kısa bir açıklama yaz.'); msg.focus(); return; }
+    if (message.length > 5000) { setErr('Açıklama en fazla 5000 karakter olabilir.'); msg.focus(); return; }
     if (!session.user || session.user.id !== uid) { dialogs.close(d); return; }
     busy = true; setErr(''); setBusy(submit, true, 'Gönderiliyor...'); dialogs.lock(d, true);
     let error = null;
-    try { await dbReady; ({ error } = await db.from('support_requests').insert({ user_id: uid, category, message })); }
-    catch (x) { error = x || {}; }
+    try {
+      await dbReady;
+      // RLS: user_id = auth.uid() → sunucuda doğrulanmış (token yenilenmiş) oturumun kullanıcısı gönderilir.
+      const user = await session.verified();
+      if (!user || user.id !== uid) error = { code: 'no_session', message: 'Oturum doğrulanamadı' };
+      else ({ error } = await db.from('support_requests').insert({ user_id: user.id, category, message }));
+    } catch (x) { error = x || {}; }
     busy = false; setBusy(submit, false); dialogs.lock(d, false);
     if (!error) { dialogs.close(d); form.reset(); toast('Mesajın alındı. Teşekkürler!'); return; }
-    setErr('Mesajın şu anda gönderilemedi. Lütfen tekrar dene.');
+    console.warn('support_requests insert hatası:', error?.code, error?.message, error?.details, error?.hint);
+    if (error?.code === 'no_session') { setErr('Oturumun doğrulanamadı. Çıkış yapıp tekrar giriş yap.'); return; }
+    setErr(`Mesajın şu anda gönderilemedi. Lütfen tekrar dene.${error?.code ? ` (Kod: ${error.code})` : ''}`);
   });
   onShellClick(e => { const t = e.target?.nodeType === 1 ? e.target : null; if (t?.closest('[data-action="support"]')) { closePopovers(); open(); } });
   return { open, onSession() { if (d.open && !busy && session.user?.id !== uid) dialogs.close(d); } };

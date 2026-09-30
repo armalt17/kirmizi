@@ -69,11 +69,16 @@ try {
     check(/konu seç/.test(await f.textContent('#kaSupportError')) && !writes.length, `${N}: konu seçilmeden gönderilmez`);
     await f.click('#kaSupportDialog label:has([value="account"])'); await f.click('#kaSupportSubmit'); await settle(page, 200);
     check(/açıklama/.test(await f.textContent('#kaSupportError')) && !writes.length, `${N}: açıklama boşken gönderilmez`);
+    await f.fill('#kaSupportMessage', ' Çok kısa. '); await f.click('#kaSupportSubmit'); await settle(page, 200);
+    check(/en az 10 karakter/.test(await f.textContent('#kaSupportError')) && !writes.length, `${N}: 10 karakterden kısa mesaj DB'ye gönderilmez (DB kısıtı 10–5000)`);
+    check(await f.getAttribute('#kaSupportMessage', 'maxlength') === '5000', `${N}: üst sınır 5000`);
     // Hata
-    await ctx.route(/\/rest\/v1\/support_requests/, r => r.request().method() === 'POST' ? r.fulfill({ status: 500, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: '{"message":"x"}' }) : r.fallback());
+    await ctx.route(/\/rest\/v1\/support_requests/, r => r.request().method() === 'POST' ? r.fulfill({ status: 500, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: '{"code":"23514","message":"new row violates check constraint","details":null,"hint":null}' }) : r.fallback());
+    const warns = []; page.on('console', m => { if (m.type() === 'warning') warns.push(m.text()); });
     await f.fill('#kaSupportMessage', '  Profil fotoğrafım güncellenmiyor.\nAndroid.  ');
     await f.click('#kaSupportSubmit');
     check(await until(async () => /gönderilemedi/.test(await f.textContent('#kaSupportError'))) && await f.evaluate(() => document.getElementById('kaSupportDialog').open), `${N}: hata → pencere açık kalır, sade hata mesajı`);
+    check((await f.textContent('#kaSupportError')).includes('(Kod: 23514)') && warns.some(w => /support_requests insert hatası: 23514 new row violates check constraint/.test(w)), `${N}: gerçek Supabase hatası gizlenmiyor (kod ekranda, ayrıntı console'da)`);
     await ctx.unroute(/\/rest\/v1\/support_requests/);
     // Başarı
     writes.length = 0;

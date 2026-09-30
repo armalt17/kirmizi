@@ -37,6 +37,17 @@ async function linkState(f, sel) {
   }, sel);
 }
 
+// v4.22.0: harici bağlantı önce "Kırmızı İSG’den ayrılıyorsunuz" penceresini açar; "Siteye Git" yeni sekmede açar.
+async function viaWarn(ctx, page, f, click) {
+  const early = ctx.waitForEvent('page', { timeout: 700 }).catch(() => null);
+  await click();
+  const shown = await f.waitForFunction(() => document.getElementById('kaExtDialog')?.open, null, { timeout: 3000 }).then(() => true).catch(() => false);
+  const direct = await early;
+  if (!shown || direct) { if (direct) await direct.close(); return null; }
+  const [pop] = await Promise.all([ctx.waitForEvent('page', { timeout: 4000 }).catch(() => null), f.click('#kaExtDialog [data-ext-go]')]);
+  return pop;
+}
+
 const browser = await chromium.launch(LAUNCH);
 try {
   for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile', width: 390, height: 844, isMobile: true, hasTouch: true }]) {
@@ -62,7 +73,7 @@ try {
     check(st && st.text.split('\n').length === 4 && st.ws === 'pre-wrap', `${N} akış: satır sonları korundu`);
     check(st && st.links[0].text === 'https://ornek.com/a?b=1&c=2' && st.text.includes('&c=2. Devamı'), `${N} akış: bağlantı metni URL'nin kendisi, nokta dışarıda`);
     const url0 = page.url();
-    const [pop] = await Promise.all([ctx.waitForEvent('page', { timeout: 4000 }).catch(() => null), f.click(`${feedSel} .k-ext-link >> nth=0`)]);
+    const pop = await viaWarn(ctx, page, f, () => f.click(`${feedSel} .k-ext-link >> nth=0`));
     await settle(page, 500);
     check(pop && pop.url() === 'https://ornek.com/a?b=1&c=2' && page.url() === url0, `${N} akış: tıklama URL'yi yeni sekmede açtı, kart post detayına gitmedi (${pop?.url()})`);
     if (pop) await pop.close();
@@ -78,7 +89,7 @@ try {
     check(st && JSON.stringify(st.links.map(l => l.href)) === JSON.stringify(EXPECT) && st.links.every(l => l.tag === 'A' && l.target === '_blank' && /\bnoopener\b/.test(l.rel) && /\bnoreferrer\b/.test(l.rel)), `${N} Post Detay: gerçek <a>, yeni sekme, rel=noopener noreferrer`);
     check(st && st.injected === 0, `${N} Post Detay: enjeksiyon yok`);
     const detUrl = page.url();
-    const [pop2] = await Promise.all([ctx.waitForEvent('page', { timeout: 4000 }).catch(() => null), f.click(`${detSel} .k-ext-link >> nth=2`)]);
+    const pop2 = await viaWarn(ctx, page, f, () => f.click(`${detSel} .k-ext-link >> nth=2`));
     await settle(page, 500);
     check(pop2 && pop2.url() === 'https://tr.wikipedia.org/wiki/Test_(bilim)' && page.url() === detUrl, `${N} Post Detay: bağlantı yeni sekmede, sayfa yerinde (${pop2?.url()})`);
     if (pop2) await pop2.close();
@@ -91,12 +102,12 @@ try {
     st = await linkState(f, cardSel);
     check(st && JSON.stringify(st.links.map(l => l.href)) === JSON.stringify(['https://ornek.com/hizmet', 'https://ornek.com/iletisim']) && st.links.every(l => l.tag === 'SPAN') && st.nestedA === 0, `${N} Hizmet Bul kartı: linkler (nokta/parantez hariç), iç içe <a> yok ${JSON.stringify(st?.links.map(l => l.href))}`);
     const svcUrl = page.url();
-    const [pop3] = await Promise.all([ctx.waitForEvent('page', { timeout: 4000 }).catch(() => null), f.click(`${cardSel} .k-ext-link >> nth=0`)]);
+    const pop3 = await viaWarn(ctx, page, f, () => f.click(`${cardSel} .k-ext-link >> nth=0`));
     await settle(page, 500);
     check(pop3 && pop3.url() === 'https://ornek.com/hizmet' && page.url() === svcUrl, `${N} Hizmet Bul kartı: bağlantı yeni sekmede, kart detaya gitmedi`);
     if (pop3) await pop3.close();
     // klavye: Enter
-    const [pop4] = await Promise.all([ctx.waitForEvent('page', { timeout: 4000 }).catch(() => null), (async () => { await f.focus(`${cardSel} .k-ext-link >> nth=1`); await page.keyboard.press('Enter'); })()]);
+    const pop4 = await viaWarn(ctx, page, f, async () => { await f.focus(`${cardSel} .k-ext-link >> nth=1`); await page.keyboard.press('Enter'); });
     await settle(page, 400);
     check(pop4 && pop4.url() === 'https://ornek.com/iletisim' && page.url() === svcUrl, `${N} Hizmet Bul kartı: klavye (Enter) ile de açılır`);
     if (pop4) await pop4.close();
