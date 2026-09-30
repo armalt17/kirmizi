@@ -25,7 +25,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
     featured: c.querySelectorAll('.k-featured').length, price: /₺|TL\b|fiyat|teklif|puan/i.test(c.textContent)
   })));
   check(cards.length === 6, `${vp.name}: 6 hizmet kartı`);
-  check(cards.every(c => JSON.stringify(c.order.filter(x => x !== 'ks-card-top')) === JSON.stringify(['H2', 'ks-description', 'ks-facts', 'ks-foot'])), `${vp.name}: kart sırası başlık → açıklama → bilgiler → alt satır (${cards[0].order.join(',')})`);
+  check(cards.every(c => JSON.stringify(c.order.filter(x => x !== 'ks-card-top')) === JSON.stringify(['ks-head', 'ks-description', 'ks-facts', 'ks-foot'])), `${vp.name}: kart sırası başlık → açıklama → bilgiler → alt satır (${cards[0].order.join(',')})`);
   check(cards.every(c => c.title && c.cat && c.pro && /^Hizmeti İncele/.test(c.cta)), `${vp.name}: her kartta kategori, profesyonel avatar+ad, "Hizmeti İncele"`);
   check(cards.find(c => c.title === 'Gürültü ve Toz Ölçümü')?.line === 'İşyeri Hekimi' && /İş Güvenliği Uzmanı/.test(cards.find(c => c.title === 'Uzaktan İSG Danışmanlığı')?.line), `${vp.name}: meslek/statü satırı`);
   check(cards.every(c => c.featured === 0), `${vp.name}: DB'de öne çıkarma alanı yok → taç rozeti yok`);
