@@ -31,7 +31,7 @@ function server(ctx) {
     admin_overview: () => ({ users_total: 1296, users_new_7d: 12, posts: { active: 14, hidden: 1, deleted: 3 }, comments: { active: 9, deleted: 3 }, services: { active: 3, archived: 1 }, reports: { pending: 2 }, active_suspensions: 1, active_bans: 0, warnings_30d: 2, admin_actions_7d: 4 }),
     admin_list_audit_log: () => withTotal([{ id: 'l1', admin_id: X, admin_name: 'Admin', action: 'post.hide', target_type: 'post', target_id: posts[1].id, reason: 'spam', before: {}, after: {}, created_at: iso(20) }]),
     admin_list_users: a => withTotal(users.filter(u => !a.p_q || u.full_name.toLowerCase().includes(String(a.p_q).toLowerCase()) || u.email.includes(a.p_q))),
-    admin_get_user: a => { const u = users.find(x => x.id === a.p_user_id); return { profile: { id: u.id, full_name: u.full_name, email: u.email, phone: '+905324445566', show_phone_publicly: false, title: u.title, city: u.city, profession: 'İş Güvenliği Uzmanı', current_company: null, experience_range: '5-10 yıl', about: 'Hakkında metni', is_discoverable: u.is_discoverable, is_premium: u.is_premium, created_at: u.created_at, avatar_url: null, linkedin_url: null, instagram_url: null, website_url: null, certificate_class: null }, is_admin: false, counts: { posts: { active: 1, hidden: 1 }, comments: {}, services: { active: 1 }, reports_made: 0 }, reports_against: reports.filter(r => r.target_owner_id === u.id).map(r => ({ id: r.id, target_type: r.target_type, target_id: r.target_id, reason: r.reason, status: r.status, created_at: r.created_at })), sanctions: u.id === A ? [{ id: 'ssssssss-0000-4000-8000-000000000001'.replace(/s/g, 'e'), user_id: A, type: 'suspension', reason: 'spam', starts_at: iso(100), ends_at: iso(-3000), revoked_at: null, created_at: iso(100) }] : [], recent_admin_actions: [] }; },
+    admin_get_user: a => { const u = users.find(x => x.id === a.p_user_id); return { profile: { id: u.id, full_name: u.full_name, email: u.email, phone: '+905324445566', show_phone_publicly: false, title: u.title, city: u.id === A ? 'istanbul' : u.city, profession: 'İş Güvenliği Uzmanı', current_company: null, experience_range: '5-10 yıl', about: 'Hakkında metni', is_discoverable: u.is_discoverable, is_premium: u.is_premium, created_at: u.created_at, avatar_url: null, linkedin_url: null, instagram_url: null, website_url: null, certificate_class: u.id === A ? 'A Sınıfı' : 'Uzman Hekim' }, is_admin: false, counts: { posts: { active: 1, hidden: 1 }, comments: {}, services: { active: 1 }, reports_made: 0 }, reports_against: reports.filter(r => r.target_owner_id === u.id).map(r => ({ id: r.id, target_type: r.target_type, target_id: r.target_id, reason: r.reason, status: r.status, created_at: r.created_at })), sanctions: u.id === A ? [{ id: 'ssssssss-0000-4000-8000-000000000001'.replace(/s/g, 'e'), user_id: A, type: 'suspension', reason: 'spam', starts_at: iso(100), ends_at: iso(-3000), revoked_at: null, created_at: iso(100) }] : [], recent_admin_actions: [] }; },
     admin_list_content: a => withTotal(a.p_kind === 'post' ? posts.filter(p => !a.p_status || p.status === a.p_status) : []),
     admin_list_reports: a => withTotal(reports.filter(r => !a.p_status || r.status === a.p_status).filter(r => !a.p_target_type || r.target_type === a.p_target_type)),
     admin_update_profile: a => ({ changed: Object.keys(a.p_patch) }),
@@ -142,7 +142,15 @@ try {
     check(await until(async () => (await f.textContent('.pa-drawer')).includes('mehmet@ornek.com')), 'kullanıcı paneli: e-posta ve ayrıntılar (admin_get_user)');
     // Profil düzenle: gerekçesiz → hata, çağrı yok
     await f.click('.pa-drawer button:has-text("Profili düzenle")');
-    await f.fill('.pa-dialog input[name="city"]', 'Ankara');
+    // Admin V1.1: Şehir (81 il) ve Mesleki Belge / Statü dropdown'ları, mevcut değer seçili
+    const sel = await f.evaluate(() => { const c = document.querySelector('.pa-dialog select[name="city"]'), k = document.querySelector('.pa-dialog select[name="certificate_class"]');
+      return { cityTag: c?.tagName, cityN: c?.options.length, cityV: c?.value, cityFirst: c?.options[1]?.value, cityLast: c?.options[c.options.length - 1]?.value,
+        certV: k?.value, certOpts: k ? [...k.options].map(o => o.value + '=' + o.textContent) : [] }; });
+    check(sel.cityTag === 'SELECT' && sel.cityN === 82 && sel.cityV === 'Kocaeli' && sel.cityFirst === 'Adana' && sel.cityLast === 'Zonguldak', `Şehir: 81 il dropdown, mevcut değer seçili ${JSON.stringify(sel).slice(0, 120)}`);
+    check(JSON.stringify(sel.certOpts) === JSON.stringify(['=—', 'Uzman Hekim=(mevcut) Uzman Hekim', 'A=A Sınıfı', 'B=B Sınıfı', 'C=C Sınıfı', 'İşyeri Hekimi=İşyeri Hekimi', 'DSP=DSP']) && sel.certV === 'Uzman Hekim',
+      `Mesleki Belge / Statü: 5 seçenek; listede olmayan mevcut değer kaybolmadan seçili ${JSON.stringify(sel.certOpts)}`);
+    await f.selectOption('.pa-dialog select[name="city"]', 'Ankara');
+    await f.selectOption('.pa-dialog select[name="certificate_class"]', 'B');
     const before = st.rpc.filter(x => x.name === 'admin_update_profile').length;
     await f.click('.pa-dialog button[type="submit"]');
     check(await until(async () => (await f.textContent('.pa-dialog .pa-error')).includes('Gerekçe')) && st.rpc.filter(x => x.name === 'admin_update_profile').length === before, 'gerekçe boşsa kaydetmez (istek gönderilmez)');
@@ -150,7 +158,7 @@ try {
     await f.click('.pa-dialog button[type="submit"]');
     check(await until(() => lastRpc(st, 'admin_update_profile')), 'admin_update_profile çağrıldı');
     const up = lastRpc(st, 'admin_update_profile').args;
-    check(JSON.stringify(up.p_patch) === '{"city":"Ankara"}' && up.p_reason === 'şehir düzeltmesi' && up.p_user_id === M, `yalnız değişen alan gönderildi ${JSON.stringify(up)}`);
+    check(JSON.stringify(up.p_patch) === '{"certificate_class":"B","city":"Ankara"}' && up.p_reason === 'şehir düzeltmesi' && up.p_user_id === M, `yalnız değişen alan gönderildi ${JSON.stringify(up)}`);
     check(await until(async () => (await f.textContent('[data-toast]')).includes('Profil güncellendi')), 'başarı bildirimi');
     // Yaptırım
     await until(() => visible(f, '.pa-drawer button:has-text("Yaptırım uygula")'));
@@ -163,6 +171,21 @@ try {
     check(await until(() => lastRpc(st, 'admin_sanction_user')), 'admin_sanction_user çağrıldı');
     const sa = lastRpc(st, 'admin_sanction_user').args, days = (Date.parse(sa.p_ends_at) - Date.now()) / 86400000;
     check(sa.p_type === 'suspension' && sa.p_hide_content === true && sa.p_reason === 'tekrarlayan spam' && days > 2.9 && days < 3.1, `askı: tür, 3 gün, içerik gizleme, gerekçe ${JSON.stringify(sa)}`);
+    await f.click('.pa-drawer button:has-text("Kapat")').catch(() => {});
+    // Yazımı farklı mevcut değerler (istanbul, "A Sınıfı") seçenekle eşleşir; dokunulmazsa kayda girmez
+    await f.fill('.pa-search', '');
+    await until(() => f.locator('[data-user]').count().then(n => n === 2));
+    await f.click(`[data-user="${A}"]`);
+    await until(async () => (await f.textContent('.pa-drawer')).includes('ayse@ornek.com'));
+    await f.click('.pa-drawer button:has-text("Profili düzenle")');
+    const selA = await f.evaluate(() => ({ city: document.querySelector('.pa-dialog select[name="city"]').value, cert: document.querySelector('.pa-dialog select[name="certificate_class"]').value, n: document.querySelector('.pa-dialog select[name="certificate_class"]').options.length }));
+    check(selA.city === 'İstanbul' && selA.cert === 'A' && selA.n === 6, `küçük harf "istanbul" → İstanbul, "A Sınıfı" → A seçili ${JSON.stringify(selA)}`);
+    await f.fill('.pa-dialog textarea[name="about"]', 'Yeni hakkında');
+    await f.fill('.pa-dialog textarea[name="reason"]', 'metin düzeltmesi');
+    const nUp = st.rpc.filter(x => x.name === 'admin_update_profile').length;
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => st.rpc.filter(x => x.name === 'admin_update_profile').length === nUp + 1), 'ikinci profil kaydı gönderildi');
+    check(JSON.stringify(lastRpc(st, 'admin_update_profile').args.p_patch) === '{"about":"Yeni hakkında"}', `dokunulmayan şehir/statü kayda girmedi ${JSON.stringify(lastRpc(st, 'admin_update_profile').args.p_patch)}`);
     await f.click('.pa-drawer button:has-text("Kapat")').catch(() => {});
 
     // Postlar
