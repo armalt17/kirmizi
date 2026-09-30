@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.16.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.18.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,11 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.18.0: Tıklanabilir Linkler V1: Post içeriği ve hizmet açıklamasındaki http/https URL'leri güvenli bağlantı olur (metin önce
+ kaçırılır; yeni sekme, rel=noopener noreferrer). Kart içinde (akış, Hizmet Bul) iç içe <a> yerine role=link öğe kullanılır.
+v4.17.0: Hizmet Bölgesi V1.1: hizmet formunda "Tüm Türkiye" + 81 il seçimi (service_region metin alanı; listede olmayan eski
+ değer "(mevcut)" olarak korunur). Hizmet Bul il filtresi o ilin ve "Tüm Türkiye" hizmetlerini birlikte listeler.
+ Masaüstünde iframe'in varsayılan kenarlığı (sayfa kenarlarındaki dikey çizgiler) kaldırıldı.
 v4.16.0: Legal V1: hukuki metinler ayrı /yasal sayfasında (bu dosyada metin yok). Kayıt onayı: "Kullanım Koşulları'nı okudum
  ve kabul ediyorum; KVKK Aydınlatma Metni hakkında bilgilendirildim." (iki bağlantı yeni sekmede /yasal'ı açar). Onay, ilk oturumda
  public.legal_acceptances'a yazılır (terms_of_use + kvkk_notice_informed, sürüm 2026-09-30); yazılamazsa kayıt akışı etkilenmez,
@@ -464,7 +469,7 @@ Acil kapatma: CONFIG.historyRouting=false.
       <label class="k-label" for="kaServiceCategory">Kategori *</label><select class="k-input" id="kaServiceCategory" required><option value="">Seçin</option></select>
       <label class="k-label" for="kaServiceDescription">Açıklama *</label><textarea class="k-input k-textarea" id="kaServiceDescription" required maxlength="5000" rows="6"></textarea>
       <div class="k-two">
-        <div><label class="k-label" for="kaServiceRegion">Hizmet Bölgesi</label><input class="k-input" id="kaServiceRegion" maxlength="160" placeholder="Örn. İstanbul, Kocaeli"></div>
+        <div><label class="k-label" for="kaServiceRegion">Hizmet Bölgesi</label><select class="k-input" id="kaServiceRegion"><option value="">Seçin</option></select></div>
         <div><label class="k-label" for="kaServiceMode">Hizmet Şekli *</label><select class="k-input" id="kaServiceMode" required><option value="">Seçin</option><option value="onsite">Yerinde</option><option value="remote">Uzaktan</option><option value="both">Yerinde + Uzaktan</option></select></div>
       </div>
       <p class="k-legal-note">Paylaşımlar Kırmızı İSG <a href="https://isgcalisanplatformu.com/yasal#topluluk-kurallari" target="_blank" rel="noopener" data-legal-link="community">Topluluk Kuralları</a>'na tabidir.</p>
@@ -709,6 +714,8 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kw-post-detail{display:block}
 #kisgApp .kw-post-text{margin-top:8px}
 #kisgApp .kw-post-content{color:var(--text);font-size:15.5px;line-height:1.62;white-space:pre-wrap;overflow-wrap:anywhere}
+#kisgApp .k-ext-link{color:var(--red-text);text-decoration:underline;text-decoration-color:var(--red-line);text-underline-offset:2px;overflow-wrap:anywhere;word-break:break-word;cursor:pointer}
+#kisgApp .k-ext-link:hover{text-decoration-color:currentColor}
 #kisgApp .kw-post-content.is-clamped{display:-webkit-box;-webkit-line-clamp:8;-webkit-box-orient:vertical;overflow:hidden}
 #kisgApp .kw-more-link{display:inline-block;margin-top:4px;color:var(--ink);font-size:14px;font-weight:700}
 /* Medya: doğal oran, kırpma yok, büyütme yok */
@@ -1466,7 +1473,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.16.0',
+  version: '4.18.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -1511,6 +1518,50 @@ const onShellClick = fn => { shellClickHandlers.push(fn); root.addEventListener(
 const shellHooks = { modal() {}, viewChanged() {}, leave() {}, avatarChanged() {} };
 const avatarScopes = new Set([root, navEl]);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/* Tıklanabilir Linkler V1: kullanıcı metnindeki http/https URL'leri. Metnin tamamı esc() ile kaçırılır; yalnız doğrulanmış
+   URL parçası kontrollü bir öğeye dönüşür (ham HTML yok). Sondaki noktalama ve eşleşmeyen kapanış parantezi linke girmez.
+   inert: metin başka bir bağlantının içindeyse (akış kartı, hizmet kartı) iç içe <a> yerine role=link span; tıklama aşağıdaki
+   dinleyiciyle yeni sekmede açılır ve kartın kendi gezinmesi engellenir. */
+const LINK_RE = /\bhttps?:\/\/[^\s<>"'`]+/gi;
+const LINK_PAIRS = { ')': '(', ']': '[', '}': '{' };
+function trimUrl(u) {
+  let s = u;
+  for (;;) {
+    const last = s.slice(-1);
+    if (/[.,;:!?'"»”’…*]/.test(last)) { s = s.slice(0, -1); continue; }
+    if (LINK_PAIRS[last] && s.split(last).length > s.split(LINK_PAIRS[last]).length) { s = s.slice(0, -1); continue; }
+    return s;
+  }
+}
+const safeHttpUrl = raw => { try { const u = new URL(raw); return (u.protocol === 'http:' || u.protocol === 'https:') && u.hostname.includes('.') && !u.username && !u.password ? u.href : null; } catch { return null; } };
+function linkify(text, { inert = false } = {}) {
+  const src = String(text ?? '');
+  let out = '', last = 0;
+  for (const m of src.matchAll(LINK_RE)) {
+    const url = trimUrl(m[0]), href = safeHttpUrl(url);
+    if (!href) continue;
+    out += esc(src.slice(last, m.index)) + (inert
+      ? `<span class="k-ext-link" role="link" tabindex="0" data-ext-href="${esc(href)}">${esc(url)}</span>`
+      : `<a class="k-ext-link" href="${esc(href)}" target="_blank" rel="noopener noreferrer nofollow ugc">${esc(url)}</a>`);
+    last = m.index + url.length;
+  }
+  return out + esc(src.slice(last));
+}
+// Linkify öğeleri: span (kart içinde) yeni sekmede açılır, kartın/uygulama yönlendirmesinin tıklaması durdurulur;
+// gerçek <a> kendi target=_blank davranışıyla açılır, uygulama yönlendirmesine düşmez.
+(() => {
+  const act = e => {
+    const el = e.target?.nodeType === 1 ? e.target.closest('.k-ext-link') : null;
+    if (!el || !root.contains(el)) return;
+    e.stopImmediatePropagation();
+    if (el.tagName === 'A') { e.stopPropagation(); return; }
+    e.preventDefault();
+    const href = safeHttpUrl(el.dataset.extHref);
+    if (href) { try { window.open(href, '_blank', 'noopener,noreferrer'); } catch {} }
+  };
+  root.addEventListener('click', act, true);
+  root.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target?.matches?.('span.k-ext-link')) act(e); }, true);
+})();
 const clean = v => (typeof v === 'string' ? v.trim() : '');
 const compact = (values, sep = ' · ') => values.filter(Boolean).join(sep);
 // PostgREST mantıksal ifadeleri için ayrı tırnaklama (URL kodlamasından bağımsız).
@@ -1581,7 +1632,8 @@ const trFold = v => String(v || '').toLocaleLowerCase('tr-TR').replace(/[çğı�
 // Veritabanında aynı il farklı yazılmış olabilir (İstanbul / istanbul / İSTANBUL / Istanbul); ILIKE Türkçe İ/ı'yı
 // tek başına eşlemez — bu yüzden tüm yazımlar tek bir or(...) koşulunda aranır.
 const cityVariants = v => [...new Set([v, v.toLocaleLowerCase('tr-TR'), v.toLocaleUpperCase('tr-TR'), v.replace(/[ÇĞİÖŞÜçğıöşü]/g, c => ({ Ç: 'C', Ğ: 'G', İ: 'I', Ö: 'O', Ş: 'S', Ü: 'U', ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u' })[c])])];
-const cityClause = (column, city) => 'or(' + cityVariants(city).map(v => column + '.ilike.' + quote(likePattern(v))).join(',') + ')';
+const cityClause = (column, city, ...also) => 'or(' + [city, ...also].flatMap(cityVariants).map(v => column + '.ilike.' + quote(likePattern(v))).join(',') + ')';
+const REGION_ALL = 'Tüm Türkiye';
 const cityPicker = (() => {
   const chevron = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg>';
   function markup(id, key) {
@@ -1914,6 +1966,8 @@ const host = (() => {
           + `[${A}="desktop-layout"],[${A}="layout"]{grid-template-rows:auto!important;grid-auto-rows:auto!important;row-gap:0!important;align-content:start!important;align-items:start!important}`
           + `[${A}="desktop-layout"]>[${A}],[${A}="layout"]>[${A}]{grid-row:1/2!important;align-self:start!important}`
           + `[${A}="element"],[${A}="wrapper"]{margin-top:0!important;margin-bottom:0!important;top:auto!important;bottom:auto!important;height:auto!important;min-height:0!important}`
+          // iframe'in tarayıcı varsayılan kenarlığı (2px inset) masaüstünde içeriğin iki yanında dikey çizgi olarak görünüyordu.
+          + `iframe[${A}="frame"]{border:0!important}`
           + `@media (max-width:920px){[${A}]{box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:none!important;margin-left:0!important;margin-right:0!important;padding-left:0!important;padding-right:0!important}`
           + `[${A}="layout"],[${A}="desktop-layout"]{grid-template-columns:minmax(0,1fr)!important;column-gap:0!important}`
           + `[${A}="element"],[${A}="layout"]>[${A}],[${A}="desktop-layout"]>[${A}]{grid-column:1/-1!important;justify-self:stretch!important}`
@@ -3204,7 +3258,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       + `<div class="kw-post-sub">${line ? `<span class="kw-post-profession" title="${esc(line)}">${esc(line)}</span>` : ''}<span class="kw-post-time"><time datetime="${esc(p.created_at)}">${esc(when)}</time>${edited}</span></div></div>`
       + `<div class="kw-owner" data-owner-slot>${ownerMenu(p)}</div></header>`
       + `<div class="kw-post-body">`
-      + (p.content ? (detail ? `<div class="kw-post-text"><p class="kw-post-content">${esc(p.content)}</p></div>` : `<a class="kw-post-detail kw-post-text" href="${esc(work)}" target="_top"><p class="kw-post-content${long ? ' is-clamped' : ''}">${esc(p.content)}</p></a>`) : '')
+      + (p.content ? (detail ? `<div class="kw-post-text"><p class="kw-post-content">${linkify(p.content)}</p></div>` : `<a class="kw-post-detail kw-post-text" href="${esc(work)}" target="_top"><p class="kw-post-content${long ? ' is-clamped' : ''}">${linkify(p.content, { inert: true })}</p></a>`) : '')
       + (long ? `<a class="kw-more-link" href="${esc(work)}" target="_top">Devamını oku</a>` : '')
       + (image ? `<button type="button" class="kw-media" data-media="${esc(image)}" data-work="${esc(work)}" aria-label="Görseli tam boyut aç"><img class="kw-post-image" src="${esc(image)}" alt="${esc((p.content || 'Post görseli').slice(0, 120))}" loading="${eager ? 'eager' : 'lazy'}" decoding="async"><span class="kw-media-more" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4h5v5M9 20H4v-5M20 4l-6 6M4 20l6-6"/></svg>Tamamını gör</span></button>` : '')
       + (p.category?.name ? `<div class="kw-post-tags"><span class="k-tag">${esc(p.category.name)}</span></div>` : '')
@@ -4613,7 +4667,7 @@ function serviceCard(v, { provider = true } = {}) {
   return `<a class="kc-card ks-card${serviceFeatured(v) ? ' is-featured' : ''}" data-service-id="${esc(v.id)}" href="${esc(urls.service(v.id))}" target="_top">`
     + (serviceFeatured(v) ? `<div class="ks-card-top">${featuredBadge()}</div>` : '')
     + `<h2>${esc(v.title)}</h2>`
-    + (v.description ? `<p class="ks-description">${esc(v.description)}</p>` : '')
+    + (v.description ? `<p class="ks-description">${linkify(v.description, { inert: true })}</p>` : '')
     + `<div class="ks-facts">${facts}</div>`
     + `<div class="ks-foot">${p ? `<span class="ks-pro">${avatar(p, 'md')}<span class="ks-pro-copy"><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${line ? `<span>${esc(line)}</span>` : ''}</span></span>` : '<span></span>'}<span class="ks-cta">Hizmeti İncele <span aria-hidden="true">→</span></span></div></a>`;
 }
@@ -4651,7 +4705,8 @@ function createServicesView() {
       if (filters.category) qy = qy.eq('category_id', filters.category);
       if (filters.mode) qy = qy.eq('service_mode', filters.mode);
       // service_region serbest metindir ("Kocaeli, Sakarya" gibi birden çok il içerebilir): seçilen il metinde aranır.
-      if (filters.region) clauses.push(cityClause('service_region', filters.region));
+      // Hizmet Bölgesi V1.1: il seçildiğinde "Tüm Türkiye" hizmetleri de listelenir (her ile hizmet verir).
+      if (filters.region) clauses.push(cityClause('service_region', filters.region, REGION_ALL));
       if (page) clauses.push(`or(created_at.lt.${quote(page.created_at)},and(created_at.eq.${quote(page.created_at)},id.lt.${quote(page.id)}))`);
       if (clauses.length) qy = qy.or('and(' + clauses.join(',') + ')');
       const { data, error } = await qy.abortSignal(signal);
@@ -4706,6 +4761,16 @@ function createServicesView() {
   }
   const formError = text => { ed.error.textContent = text; ed.error.hidden = !text; host.schedule(); };
   const setPublishDisabled = on => $$('[data-publish]', el).forEach(b => { b.disabled = on; });
+  // Hizmet Bölgesi V1.1: "Tüm Türkiye" + 81 il (service_region metin alanı, yeni DB alanı yok).
+  // Yazım farkı olan kayıt (istanbul) ilgili ile eşlenir; listede olmayan eski değer ("Kocaeli, Sakarya") "(mevcut)"
+  // seçeneği olarak korunur — düzenlenirken kaybolmaz.
+  function fillRegion(current) {
+    const cur = clean(current), low = v => v.toLocaleLowerCase('tr-TR');
+    const canon = cur && [REGION_ALL, ...CITIES].find(c => low(c) === low(cur));
+    const opts = [['', 'Seçin'], ...(cur && !canon ? [[cur, `${cur} (mevcut)`]] : []), [REGION_ALL, REGION_ALL], ...CITIES.map(c => [c, c])];
+    ed.region.innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('');
+    ed.region.value = canon || cur;
+  }
   // Yeni hizmet veya (sahibi için) mevcut hizmeti düzenleme — Hizmet Detay V1 kuralları.
   function openEditor(user, service = null) {
     st.editingUser = user.id; st.edit = service;
@@ -4716,8 +4781,9 @@ function createServicesView() {
     ed.save.textContent = service ? 'Değişiklikleri Kaydet' : 'Hizmeti Yayınla';
     if (service) {
       ed.title.value = service.title || ''; ed.category.value = service.category_id || ''; ed.description.value = service.description || '';
-      ed.region.value = service.service_region || ''; ed.mode.value = service.service_mode || '';
+      ed.mode.value = service.service_mode || '';
     }
+    fillRegion(service?.service_region);
     formError('');
     dialogs.open(ed.root, 'sheet');
     setTimeout(() => ed.title.focus({ preventScroll: true }), 30);
@@ -4868,7 +4934,7 @@ function createServiceView() {
     // Hiyerarşi: kategori → hizmet adı → açıklama → kapsam (şekil · bölge · kategori) → sağlayıcı → Profili Gör → izin varsa Ara/WhatsApp.
     headBox.innerHTML = `<p class="ks-cat">${esc(v.category?.name || 'Hizmet')}</p>${serviceFeatured(v) ? featuredBadge() : ''}<h1 id="khTitle">${esc(v.title)}</h1>`
       + `<div class="kh-meta">${placeMeta(v.service_region)}${modeMeta(v.service_mode)}${v.created_at ? `<span class="k-meta-item">Yayın: ${esc(date(v.created_at))}</span>` : ''}</div>`;
-    body.innerHTML = `<h2 class="kh-label">Hizmet hakkında</h2><div class="kh-desc">${esc(v.description)}</div>`
+    body.innerHTML = `<h2 class="kh-label">Hizmet hakkında</h2><div class="kh-desc">${linkify(v.description)}</div>`
       + `<h2 class="kh-label kh-label-scope">Kapsam</h2>`
       + `<dl class="kh-facts">${[['Hizmet şekli', SERVICE_MODES[v.service_mode]], ['Hizmet bölgesi', v.service_region], ['Kategori', v.category?.name], ['Yayın tarihi', v.created_at ? date(v.created_at) : '']].filter(([, x]) => clean(x)).map(([k, x]) => `<div><dt>${k}</dt><dd>${esc(x)}</dd></div>`).join('')}</dl>`;
     const line = p ? providerLine(p, identity.statusShort(p)) : '';
