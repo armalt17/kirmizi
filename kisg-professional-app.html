@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.18.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.19.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,8 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.19.0: Profil PDF V2: "PDF Olarak İndir" yalnız kendi profilinde. PDF: profil bilgileri + Verdiği Hizmetler (kategori,
+ şekil, bölge ve tam açıklama); Postlar yok; içerik uzunsa sayfa eklenir, QR son sayfada.
 v4.18.0: Tıklanabilir Linkler V1: Post içeriği ve hizmet açıklamasındaki http/https URL'leri güvenli bağlantı olur (metin önce
  kaçırılır; yeni sekme, rel=noopener noreferrer). Kart içinde (akış, Hizmet Bul) iç içe <a> yerine role=link öğe kullanılır.
 v4.17.0: Hizmet Bölgesi V1.1: hizmet formunda "Tüm Türkiye" + 81 il seçimi (service_region metin alanı; listede olmayan eski
@@ -98,6 +100,7 @@ v4.4: Profil Detay V2 — /profil?id={user_id} App Shell route'u olarak çalış
    title/specialties/job_role yazılmaz, yalnız değişen alanlar gönderilir.
  - Çalışma kartı sistemi (beğeni, yorum, yorum beğenisi, paylaşım, sahip menüsü) akış ile ortak.
  - "PDF Olarak İndir": ayrı tasarlanmış A4 Kişi Kartı + canlı profile QR (kütüphaneler tıklanınca yüklenir).
+   (v4.19.0 Profil PDF V2: yalnız profil sahibinde; Postlar yok, Verdiği Hizmetler tam açıklamayla, gerekirse çok sayfa.)
  - Şema varsayımı: profiles.experience_range (yoksa alan otomatik gizlenir);
    certificate_class için "İşyeri Hekimi"/"DSP" değerlerini DB kısıtı reddederse kullanıcıya açık hata gösterilir.
 
@@ -1473,7 +1476,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.18.0',
+  version: '4.19.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
@@ -5236,55 +5239,55 @@ const profilePdf = (() => {
       y += Math.ceil(Math.min(contacts.length, 6) / 2) * 6.2 + 4;
     }
 
-    // Alt blok (QR) sabit yer kaplar; içerik ona kadar akar.
-    const FOOT = H - 16 - 36;
+    // Profil PDF V2: Postlar YOK. Hakkında + Verdiği Hizmetler (tam açıklama) akar; sığmazsa yeni sayfa açılır.
+    // Her sayfanın altında künye; QR bloğu son sayfada.
+    const BOTTOM = H - 18, QRH = 32;
+    const footer = () => {
+      font('normal', 7, FAINT); doc.text(T('Kırmızı İSG Professional · isgcalisanplatformu.com'), M, H - 9);
+      doc.text(T('Bu belge profil sahibinin paylaştığı bilgilerden otomatik oluşturulmuştur.'), W - M, H - 9, { align: 'right' });
+    };
+    const newPage = () => {
+      footer(); doc.addPage(); y = 18;
+      doc.setFillColor(...RED); doc.rect(0, 0, W, 2.2, 'F');
+      font('bold', 8, FAINT); doc.text(T(`${p.full_name || 'Kırmızı İSG üyesi'} · Kişi Kartı`), M, 11);
+    };
+    const ensure = h => { if (y + h > BOTTOM) newPage(); };
     const section = (title, count) => {
+      ensure(18);
       doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, y, W - M, y); y += 7;
       font('bold', 8, RED); doc.text(T(title.toLocaleUpperCase('tr-TR')), M, y, { charSpace: 0.5 });
-      if (count != null) { font('normal', 8, FAINT); doc.text(T(`${count} toplam`), W - M, y, { align: 'right' }); }
+      if (count != null) { font('normal', 8, FAINT); doc.text(T(`${count} hizmet`), W - M, y, { align: 'right' }); }
       y += 5.5;
     };
-    const fits = h => y + h <= FOOT - 4;
+    // Uzun metni satır satır basar, gerektiğinde sayfa değiştirir.
+    const flow = (lines, size, x, color) => {
+      for (const line of lines) { ensure(lh(size)); font('normal', size, color); doc.text(line, x, y); y += lh(size); }
+    };
 
-    if (clean(p.about) && fits(20)) {
+    if (clean(p.about)) {
       section('Hakkında');
-      font('normal', 9.5, TEXT);
-      // Hakkında, altındaki Çalışma/Hizmet özetlerine yer bırakacak kadar satır alır.
-      const reserve = (data.posts.length ? 34 : 0) + (data.services.length ? 30 : 0);
-      const room = Math.max(2, Math.min(7, Math.floor((FOOT - 16 - reserve - y) / lh(9.5))));
-      const lines = wrap(p.about, CW, room); doc.text(lines, M, y + 1); y += lines.length * lh(9.5) + 5;
+      font('normal', 9.5, TEXT); flow(wrap(p.about, CW), 9.5, M, TEXT); y += 4;
     }
-    if (data.posts.length && fits(26)) {
-      section('Postlar', data.postCount);
-      for (const w of data.posts.slice(0, 3)) {
-        font('normal', 9.5, TEXT); const lines = wrap(w.content || 'Görselli Post', CW - 6, 2);
-        const h = 5 + lines.length * lh(9.5) + 3.5;
-        if (!fits(h + (data.services.length ? 28 : 0))) break;   // hizmet özetine yer kalsın
-        doc.setFillColor(...RED); doc.rect(M, y - 2.6, 0.7, h - 2.5, 'F');
-        font('bold', 7.5, MUTED);
-        const meta = compact([new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(w.created_at)), w.category?.name, w.profile_featured_order ? 'Öne çıkan' : '']);
-        doc.textWithLink(T(meta), M + 4, y, { url: urls.work(w.id) });
-        font('normal', 9.5, TEXT); doc.text(lines, M + 4, y + 4.6);
-        y += h;
-      }
-      y += 2;
-    }
-    if (data.services.length && fits(26)) {
+    if (data.services.length) {
       section('Verdiği Hizmetler', data.services.length);
-      for (const v of data.services.slice(0, 5)) {
-        font('normal', 8.5, MUTED); const desc = v.description ? wrap(v.description, CW - 6, 1) : [];
-        const h = 5 + (desc.length ? lh(8.5) + 1 : 0) + 4.5;
-        if (!fits(h)) break;
-        font('bold', 10); doc.textWithLink(wrap(v.title, CW - 60, 1)[0], M, y, { url: urls.service(v.id) });
-        font('normal', 8, MUTED); doc.text(T(compact([v.category?.name, SERVICE_MODES[v.service_mode], clean(v.service_region)])), W - M, y, { align: 'right' });
-        if (desc.length) { font('normal', 8.5, MUTED); doc.text(desc, M, y + 4.6); }
-        y += h;
-      }
+      data.services.forEach((v, i) => {
+        font('bold', 11); const title = wrap(v.title, CW - 4, 3);
+        const meta = compact([v.category?.name, SERVICE_MODES[v.service_mode], clean(v.service_region)]);
+        ensure(title.length * lh(11) + 14);
+        if (i) { doc.setDrawColor(...LINE); doc.setLineWidth(0.2); doc.line(M, y - 2, W - M, y - 2); y += 3; }
+        doc.setFillColor(...RED); doc.rect(M, y - 3.4, 0.8, title.length * lh(11) + (meta ? 5 : 0), 'F');
+        font('bold', 11); title.forEach((t, k) => doc.textWithLink(t, M + 4, y + k * lh(11), { url: urls.service(v.id) }));
+        y += (title.length - 1) * lh(11) + 5;
+        if (meta) { font('normal', 8.5, MUTED); doc.text(T(meta), M + 4, y); y += 5.5; }
+        if (clean(v.description)) { font('normal', 9.5, TEXT); flow(wrap(v.description, CW - 4), 9.5, M + 4, TEXT); }
+        y += 5;
+      });
     }
 
-    // QR + canlı profil
-    const fy = H - 16 - 32;
-    doc.setFillColor(...SOFT); doc.roundedRect(M, fy, CW, 32, 3, 3, 'F');
+    // QR + canlı profil (son sayfa)
+    if (y + QRH + 6 > BOTTOM) newPage();
+    const fy = Math.max(y + 4, BOTTOM - QRH - 2);
+    doc.setFillColor(...SOFT); doc.roundedRect(M, fy, CW, QRH, 3, 3, 'F');
     const qr = window.qrcode(0, 'M'); qr.addData(url); qr.make();
     const n = qr.getModuleCount(), QS = 24, cell = QS / n, qx = W - M - 4 - QS, qy = fy + 4;
     doc.setFillColor(255, 255, 255); doc.rect(qx - 1.5, qy - 1.5, QS + 3, QS + 3, 'F');
@@ -5292,10 +5295,9 @@ const profilePdf = (() => {
     for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) doc.rect(qx + c * cell, qy + r * cell, cell + 0.01, cell + 0.01, 'F');
     doc.link(qx, qy, QS, QS, { url });
     font('bold', 11); doc.text(T('Güncel profili görüntüle'), M + 6, fy + 10);
-    font('normal', 8.5, MUTED); doc.text(wrap('Karekodu okut veya bağlantıyı aç: Postlar, hizmetler ve iletişim bilgileri Kırmızı İSG Professional’da her zaman güncel.', CW - QS - 22, 2), M + 6, fy + 15.5);
+    font('normal', 8.5, MUTED); doc.text(wrap('Karekodu okut veya bağlantıyı aç: hizmetler ve iletişim bilgileri Kırmızı İSG Professional’da her zaman güncel.', CW - QS - 22, 2), M + 6, fy + 15.5);
     font('bold', 8.5, RED); doc.textWithLink(T(url.replace(/^https?:\/\//, '')), M + 6, fy + 26, { url });
-    font('normal', 7, FAINT); doc.text(T('Kırmızı İSG Professional · isgcalisanplatformu.com'), M, H - 9);
-    doc.text(T('Bu belge profil sahibinin paylaştığı bilgilerden otomatik oluşturulmuştur.'), W - M, H - 9, { align: 'right' });
+    footer();
 
     doc.setProperties({ title: T(`${p.full_name || 'Profil'} — Kırmızı İSG Kişi Kartı`), subject: 'Kırmızı İSG Kişi Kartı', creator: 'Kırmızı İSG Professional' });
     return { blob: doc.output('blob'), name: `kirmizi-isg-${slug(p.full_name)}.pdf`, title: T(`${p.full_name || 'Profil'} — Kırmızı İSG Kişi Kartı`) };
@@ -5367,7 +5369,7 @@ function createProfileView() {
       + `<div class="kp-actions">`
       + (own() ? `<button type="button" class="k-btn k-btn-primary kp-act-main kp-act-keep" data-profile-action="edit">${PICONS.edit}<span>Profili Düzenle</span></button>` : '')
       + `<button type="button" class="k-btn${own() ? '' : ' k-btn-primary kp-act-keep'}" data-profile-action="share">${ICONS.share}<span>Profili Paylaş</span></button>`
-      + `<button type="button" class="k-btn" data-profile-action="pdf">${PICONS.download}<span data-pdf-label>${s.pdfReady?.id === p.id ? 'PDF hazır · Kaydet' : 'PDF Olarak İndir'}</span></button></div>`
+      + (own() ? `<button type="button" class="k-btn" data-profile-action="pdf">${PICONS.download}<span data-pdf-label>${s.pdfReady?.id === p.id ? 'PDF hazır · Kaydet' : 'PDF Olarak İndir'}</span></button>` : '') + `</div>`
       + (missing.length ? `<p class="kp-hint">Kişi kartını tamamla: ${esc(missing.join(', '))} ekle. <button type="button" class="k-text-button" data-profile-action="edit">Şimdi ekle</button></p>` : '')
       + `</article>`;
   }
@@ -5716,7 +5718,7 @@ function createProfileView() {
 
   /* ---- Paylaş / PDF ---- */
   async function downloadPdf(btn) {
-    if (s.pdfBusy || !s.profile) return;
+    if (s.pdfBusy || !s.profile || !own()) return;   // Profil PDF V2: yalnız profil sahibi
     const label = $('[data-pdf-label]', btn), idle = 'PDF Olarak İndir';
     if (s.pdfReady?.id === s.profile.id) {
       const ready = s.pdfReady; s.pdfReady = null; if (label) label.textContent = idle;
@@ -5732,7 +5734,7 @@ function createProfileView() {
       const file = await profilePdf.create({
         profile: p, url: urls.profile(p.id), role: identity.role(p), status: identity.statusLong(p),
         phone: p.show_phone_publicly ? s.phone : null, socials: socialLinks(p),
-        posts: [...featuredPosts(), ...chronoPosts()], postCount: s.counts.posts, services: s.services
+        services: s.services   // Postlar PDF'e girmez
       });
       if (profilePdf.needsTap()) { s.pdfReady = { id: p.id, file }; text = 'PDF hazır · Kaydet'; toast('PDF hazır. Kaydetmek için tekrar dokun.'); }
       else await profilePdf.deliver(file);

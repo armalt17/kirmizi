@@ -48,12 +48,8 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   check(page.url().endsWith('#hizmetler'), `${vp.name}: sekme hash (${page.url()})`);
   check(await f.locator('[data-view="profile"] .ks-card').count() === 3, `${vp.name}: 3 hizmet kartı`);
   await page.screenshot({ path: `${OUT}/${vp.name}-services.png`, fullPage: false });
-  // PDF
-  const dl = page.waitForEvent('download', { timeout: 20000 });
-  await f.click('.kp-card [data-profile-action="pdf"]');
-  const d = await dl; const pth = `${OUT}/${vp.name}-${d.suggestedFilename()}`; await d.saveAs(pth);
-  const buf = fs.readFileSync(pth);
-  check(buf.slice(0, 4).toString() === '%PDF' && buf.length > 20000, `${vp.name}: PDF indirildi ${d.suggestedFilename()} ${buf.length}B`);
+  // PDF (v4.19.0 Profil PDF V2: yalnız kendi profilinde; indirme testi profile-pdf-v2.test.mjs)
+  check(await f.locator('.kp-card [data-profile-action="pdf"]').count() === 0, `${vp.name}: başkasının profilinde PDF yok`);
   // Geri
   await page.goBack();
   await page.waitForTimeout(500);
@@ -279,7 +275,7 @@ function dims(b) {
   const avWrite = writes.find(w => w.table === 'profiles' && 'avatar_url' in (w.body || {}));
   check(/avatar\.webp\?v=/.test(avWrite?.body?.avatar_url || ''), 'avatar_url sürüm parametreli (cache-bust yalnız URL ile)');
   // === Silinen Çalışmanın görseli Storage'dan kaldırılır ===
-  await page.goto(`https://isgcalisanplatformu.com/profil?id=${U2}`); await page.waitForTimeout(500);
+  await page.goto(`https://isgcalisanplatformu.com/profil?id=${U1}`); await page.waitForTimeout(500);   // v4.19.0: PDF yalnız kendi profilinde
   // === PDF mobil (dokunmatik) ===
   const g = frameOf(page); await g.waitForSelector('.kp-card [data-profile-action="pdf"]');
   const dl = page.waitForEvent('download', { timeout: 20000 });
