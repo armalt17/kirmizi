@@ -3,6 +3,8 @@ import { chromium, fs, ROOT, APP, NM, OUT, U1, U2, now, iso, db, writes, uploads
 import { b64, tokenFor, uidOf, uidSeq, authMock, boot, acct, paneOf, errOf, navLogin, go, submitPane, fillSignup, visibleView, navClick, settle, flag, noProfileInsert } from '../helpers/auth.mjs';
 
 // ===== Akış sol panel: son aktif Post paylaşan uzmanlar =====
+// v4.21.0: Post sahipleri önce (aktif Postlara göre); yer kalırsa Post atmamış is_discoverable=true uzmanlar
+// (Uzmanlar sayfasıyla aynı sıra: last_post_at desc nulls last, id desc). Masaüstü 12, mobil şerit 3.
 const P = n => `ffffffff-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const person = (n, name, disc) => ({ id: `abababab-0000-4000-8000-${String(n).padStart(12, '0')}`, full_name: name, avatar_url: null, profession: 'İş Güvenliği Uzmanı', title: null, certificate_class: 'B', city: 'Ankara', current_company: null, is_discoverable: disc, specialties: [], last_post_at: null });
 const B = person(1, 'Bora Aktif', true), C = person(2, 'Gizli Cem', false), D = person(3, 'Deniz Üç', true), E = person(4, 'Postsuz Ece', true), F = person(5, 'Fatih Beş', true);
@@ -45,8 +47,8 @@ const browser = await chromium.launch(LAUNCH);
   await page.goto('https://isgcalisanplatformu.com/'); await settle(page, 1800);
   const f = frameOf(page); await f.waitForSelector('[data-view="works"] [data-post-id]');
   let n = await sideNames(page);
-  check(JSON.stringify(n) === JSON.stringify(['Ayşe Yılmaz', 'Bora Aktif', 'Deniz Üç', 'Fatih Beş']), `sıralama aktif Postlara göre, kendisi dahil: ${n.join(' > ')}`);
-  check(!n.includes('Gizli Cem') && !n.includes('Postsuz Ece') && new Set(n).size === n.length, 'gizli profil ve Postu olmayan yok; B iki Postla bir kez');
+  check(JSON.stringify(n) === JSON.stringify(['Ayşe Yılmaz', 'Bora Aktif', 'Deniz Üç', 'Fatih Beş', 'Postsuz Ece', 'Mehmet Şahin Öztürk']), `Post sahipleri aktif Postlara göre önce (kendisi dahil), ardından Post atmamış görünür uzmanlar: ${n.join(' > ')}`);
+  check(!n.includes('Gizli Cem') && n.includes('Postsuz Ece') && new Set(n).size === n.length, 'gizli profil yok; Post atmamış görünür uzman var; B iki Postla bir kez');
   check(railReqs.some(q => /status=eq\.active/.test(q)) && railReqs.every(q => !/last_post_at/.test(q)), 'sorgu yalnız aktif Postlar; last_post_at kullanılmıyor');
   // Kendi en son Postunu sil → önceki aktif Postu (50 dk) esas alınır
   const del = async id => {
@@ -55,20 +57,21 @@ const browser = await chromium.launch(LAUNCH);
   };
   await del(P(3));
   n = await sideNames(page);
-  check(JSON.stringify(n) === JSON.stringify(['Bora Aktif', 'Deniz Üç', 'Ayşe Yılmaz', 'Fatih Beş']), `son Post silindi → önceki aktif Post (50 dk) esas: ${n.join(' > ')}`);
+  check(JSON.stringify(n) === JSON.stringify(['Bora Aktif', 'Deniz Üç', 'Ayşe Yılmaz', 'Fatih Beş', 'Postsuz Ece', 'Mehmet Şahin Öztürk']), `son Post silindi → önceki aktif Post (50 dk) esas: ${n.join(' > ')}`);
   await del(P(7));
   n = await sideNames(page);
-  check(JSON.stringify(n) === JSON.stringify(['Bora Aktif', 'Deniz Üç', 'Fatih Beş']) && !n.includes('Ayşe Yılmaz'), `aktif Postu kalmayınca listeden çıktı: ${n.join(' > ')}`);
+  check(JSON.stringify(n) === JSON.stringify(['Bora Aktif', 'Deniz Üç', 'Fatih Beş', 'Postsuz Ece', 'Mehmet Şahin Öztürk', 'Ayşe Yılmaz']), `aktif Postu kalmayınca Post sahipleri bölümünden çıktı, görünür uzman olarak kaldı: ${n.join(' > ')}`);
   await page.reload(); await settle(page, 1800);
   n = await sideNames(page);
-  check(JSON.stringify(n) === JSON.stringify(['Bora Aktif', 'Deniz Üç', 'Fatih Beş']), `yenilemede aynı sonuç: ${n.join(' > ')}`);
+  check(JSON.stringify(n) === JSON.stringify(['Bora Aktif', 'Deniz Üç', 'Fatih Beş', 'Postsuz Ece', 'Mehmet Şahin Öztürk', 'Ayşe Yılmaz']), `yenilemede aynı sonuç: ${n.join(' > ')}`);
   await ctx.close();
 }
 {
-  // v4.13.0: masaüstü sol panel en fazla 6 uzman; başlıkta "Tümünü gör →" (/uzmanlar)
+  // v4.21.0: masaüstü sol panel en fazla 12 uzman (v4.13.0: 6); başlıkta "Tümünü gör →" (/uzmanlar)
   resetDb(); seedRail();
   const extra = [6, 7, 8, 9].map(i => person(10 + i, `Ek Uzman ${i}`, true));
   db.profiles.push(...extra);
+  db.profiles.push(...[30, 31, 32, 33, 34, 35].map(i => person(i, `Postsuz ${i}`, true)));
   extra.forEach((x, i) => db.professional_posts.push({ ...db.professional_posts[2], id: P(20 + i), user_id: x.id, content: 'Ek', created_at: iso(70 + i), updated_at: iso(70 + i) }));
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
   await setup(ctx, true); await liveAuthors(ctx);
@@ -76,7 +79,7 @@ const browser = await chromium.launch(LAUNCH);
   page.on('pageerror', e => errors.push(`rail6: ${e.message}`));
   await page.goto('https://isgcalisanplatformu.com/'); await settle(page, 1800);
   const n = await sideNames(page);
-  check(JSON.stringify(n) === JSON.stringify(['Ayşe Yılmaz', 'Bora Aktif', 'Deniz Üç', 'Fatih Beş', 'Ek Uzman 6', 'Ek Uzman 7']), `masaüstü en fazla 6 uzman, aynı sıralama: ${n.join(' > ')}`);
+  check(JSON.stringify(n) === JSON.stringify(['Ayşe Yılmaz', 'Bora Aktif', 'Deniz Üç', 'Fatih Beş', 'Ek Uzman 6', 'Ek Uzman 7', 'Ek Uzman 8', 'Ek Uzman 9', 'Postsuz Ece', 'Mehmet Şahin Öztürk', 'Postsuz 35', 'Postsuz 34']), `masaüstü en fazla 12 uzman, aynı sıralama: ${n.join(' > ')}`);
   const head = await page.evaluate(() => { const r = document.getElementById('kisg-pro-sides').shadowRoot; const h = r.querySelector('#kwExpertsTitle')?.closest('.kw-side-head'); const a = h?.querySelector('a'); return { t: h?.querySelector('h2')?.textContent.trim(), a: a?.textContent.trim(), href: a?.getAttribute('href'), bottom: r.querySelectorAll('.kw-side-link').length }; });
   check(head.t === 'Uzmanlar' && /^Tümünü gör/.test(head.a) && head.href.endsWith('/uzmanlar') && head.bottom === 0, `sol panel başlık "Uzmanlar — Tümünü gör →", alt bağlantı yok: ${JSON.stringify(head)}`);
   const mark = await page.evaluate(() => window.__bootMark);

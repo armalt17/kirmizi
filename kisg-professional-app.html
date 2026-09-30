@@ -1,12 +1,19 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.19.0
-Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay tek uygulama.
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.21.0
+Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
 BİREBİR AYNI şekilde kullanılır:
-  /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay
+  /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.21.0: Akış → Uzmanlar: masaüstü sol panel 12 uzman; aktif Post sahipleri önce, yer kalırsa Post atmamış
+ is_discoverable=true uzmanlarla tamamlanır (mobil şerit 3, tasarım aynı). Destek & Geri Bildirim: hesap menüsü ve
+ Hesap & Gizlilik'ten açılan form (konu + açıklama) public.support_requests'e INSERT (user_id oturumdan); Bildir'den ayrı.
+v4.20.0: Hesap & Gizlilik (/hesaplar-ve-gizlilik, 7. sayfa): Uzmanlarda görünürlük (profiles.is_discoverable) ve telefon
+ görünürlüğü (profiles.show_phone_publicly) anahtarları yalnız kendi profiline UPDATE ile kaydedilir; e-posta salt okunur;
+ Çıkış mevcut oturum kapatma akışını kullanır. Hesap silme: güvenli sunucu altyapısı olmadığından silme yapılmaz,
+ onay penceresi durumu açıklar. DB değişikliği yok. Hesap menüsüne "Hesap & Gizlilik" bağlantısı eklendi.
 v4.19.0: Profil PDF V2: "PDF Olarak İndir" yalnız kendi profilinde. PDF: profil bilgileri + Verdiği Hizmetler (kategori,
  şekil, bölge ve tam açıklama); Postlar yok; içerik uzunsa sayfa eklenir, QR son sayfada.
 v4.18.0: Tıklanabilir Linkler V1: Post içeriği ve hizmet açıklamasındaki http/https URL'leri güvenli bağlantı olur (metin önce
@@ -154,6 +161,8 @@ Acil kapatma: CONFIG.historyRouting=false.
           <a data-me-link="works" target="_top">Postlarım</a>
           <a data-me-link="services" target="_top">Hizmetlerim</a>
           <button type="button" data-action="avatar">Profil fotoğrafı</button>
+          <a data-view-link="account" href="https://isgcalisanplatformu.com/hesaplar-ve-gizlilik" target="_top">Hesap &amp; Gizlilik</a>
+          <button type="button" data-action="support">Destek &amp; Geri Bildirim</button>
           <button type="button" data-action="signout">Çıkış</button>
         </div>
       </div>
@@ -333,6 +342,52 @@ Acil kapatma: CONFIG.historyRouting=false.
   </div>
 </section>
 
+<!-- HESAP & GİZLİLİK (/hesaplar-ve-gizlilik) -->
+<section class="ka-view kg" data-view="account" hidden aria-labelledby="kgTitle">
+  <div class="k-page kg-page">
+    <header class="kg-head">
+      <h1 id="kgTitle">Hesap &amp; Gizlilik</h1>
+      <p>Profilinin kimlere görüneceğini ve hesabını buradan yönet.</p>
+    </header>
+    <div class="k-empty kg-state" data-account-status role="status" hidden></div>
+    <div class="kg-main" data-account-main hidden>
+      <section class="kg-group" aria-labelledby="kgPrivacy">
+        <h2 id="kgPrivacy">Gizlilik</h2>
+        <div class="kg-row">
+          <div class="kg-text"><label for="kgDiscoverable">Uzmanlarda profilimi göster</label>
+            <p id="kgDiscoverableHelp">Açıkken profilin Uzmanlar bölümünde listelenebilir. Kapalıyken orada görünmez; profilin ve paylaşımların silinmez.</p>
+            <p class="kg-note" data-account-note="is_discoverable" aria-live="polite" hidden></p></div>
+          <span class="kg-switch"><input type="checkbox" role="switch" id="kgDiscoverable" data-account-toggle="is_discoverable" aria-describedby="kgDiscoverableHelp"><span aria-hidden="true"></span></span>
+        </div>
+        <div class="kg-row">
+          <div class="kg-text"><label for="kgPhone">Telefonumu profilimde göster</label>
+            <p id="kgPhoneHelp">Açıkken numaran profilinde ve hizmetlerinde ziyaretçilere gösterilebilir. Kapalıyken gösterilmez; numaran silinmez.</p>
+            <p class="kg-note" data-account-note="show_phone_publicly" aria-live="polite" hidden></p></div>
+          <span class="kg-switch"><input type="checkbox" role="switch" id="kgPhone" data-account-toggle="show_phone_publicly" aria-describedby="kgPhoneHelp"><span aria-hidden="true"></span></span>
+        </div>
+      </section>
+      <section class="kg-group" aria-labelledby="kgAccount">
+        <h2 id="kgAccount">Hesap</h2>
+        <div class="kg-row">
+          <div class="kg-text"><span class="kg-label">E-posta</span><p class="kg-value" data-account-email></p><p>Giriş yaptığın e-posta adresi. Buradan değiştirilemez.</p></div>
+        </div>
+        <div class="kg-row">
+          <div class="kg-text"><span class="kg-label">Destek &amp; Geri Bildirim</span><p>Teknik sorun, hesap sorunu veya önerini ekibimize ilet.</p></div>
+          <button type="button" class="k-btn" data-action="support">Mesaj Gönder</button>
+        </div>
+        <div class="kg-row">
+          <div class="kg-text"><span class="kg-label">Oturum</span><p>Bu cihazdaki oturumunu kapatır.</p></div>
+          <button type="button" class="k-btn" data-action="signout">Çıkış Yap</button>
+        </div>
+        <div class="kg-row">
+          <div class="kg-text"><span class="kg-label">Hesabı sil</span><p>Hesabını ve profil bilgilerini kalıcı olarak siler.</p></div>
+          <button type="button" class="k-btn kg-danger" data-account-delete>Hesabı Sil</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <!-- ORTAK DİALOGLAR -->
@@ -492,6 +547,34 @@ Acil kapatma: CONFIG.historyRouting=false.
   <header class="k-dialog-head"><h2 id="kaConfirmTitle">Emin misiniz?</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
   <div class="k-dialog-body"><p id="kaConfirmText"></p></div>
   <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button type="button" id="kaConfirmOk" class="k-btn k-btn-danger">Onayla</button></footer>
+</dialog>
+
+<dialog id="kaDeleteDialog" class="k-dialog k-dialog-sm" aria-labelledby="kaDeleteTitle">
+  <header class="k-dialog-head"><h2 id="kaDeleteTitle">Hesabı sil</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
+  <div class="k-dialog-body kg-delete">
+    <p>Hesap silme kalıcıdır; profilin, paylaşımların ve hizmetlerin geri getirilemez.</p>
+    <p class="kg-delete-info" role="note">Hesap silme şu anda web üzerinden yapılamıyor. Bu işlem güvenli sunucu altyapısı hazır olduğunda bu adımdan onayla yapılabilecek. Bu sırada profilini “Uzmanlarda profilimi göster” ayarını kapatarak gizleyebilirsin.</p>
+  </div>
+  <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Kapat</button></footer>
+</dialog>
+
+<dialog id="kaSupportDialog" class="k-dialog k-dialog-sm" aria-labelledby="kaSupportTitle">
+  <form id="kaSupportForm" novalidate>
+    <header class="k-dialog-head"><h2 id="kaSupportTitle">Destek &amp; Geri Bildirim</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
+    <div class="k-dialog-body">
+      <p class="kr-lead">Mesajın hesabınla birlikte Kırmızı İSG ekibine iletilir.</p>
+      <fieldset class="kr-reasons" data-support-categories><legend class="k-label">Konu</legend>
+        <label class="kr-reason"><input type="radio" name="category" value="technical"><span>Teknik sorun</span></label>
+        <label class="kr-reason"><input type="radio" name="category" value="account"><span>Hesap / profil sorunu</span></label>
+        <label class="kr-reason"><input type="radio" name="category" value="suggestion"><span>Öneri / geri bildirim</span></label>
+        <label class="kr-reason"><input type="radio" name="category" value="other"><span>Diğer</span></label>
+      </fieldset>
+      <label class="k-label" for="kaSupportMessage">Açıklama</label>
+      <textarea class="k-input k-textarea" id="kaSupportMessage" maxlength="2000" rows="4" placeholder="Ne oldu veya ne önermek istersin? Kısaca anlat."></textarea>
+      <p id="kaSupportError" class="k-form-error" role="alert" hidden></p>
+    </div>
+    <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button type="submit" id="kaSupportSubmit" class="k-btn k-btn-primary">Gönder</button></footer>
+  </form>
 </dialog>
 
 <dialog id="kaReportDialog" class="k-dialog k-dialog-sm" aria-labelledby="kaReportTitle">
@@ -1227,6 +1310,44 @@ Acil kapatma: CONFIG.historyRouting=false.
 /* =====================================================================
    HOVER (yalnızca gerçek imleç)
    ===================================================================== */
+/* Hesap & Gizlilik (v4.20.0) — sade tek sütun */
+#kisgApp .kg-page{width:min(720px,calc(100% - var(--gutter) * 2));padding:28px 0 56px}
+#kisgApp .kg-head{margin-bottom:20px}
+#kisgApp .kg-head h1{color:var(--ink);font-size:26px;font-weight:750;letter-spacing:-.01em;line-height:1.25}
+#kisgApp .kg-head p{margin-top:6px;color:var(--muted);font-size:14.5px}
+#kisgApp .kg-group{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:4px 20px}
+#kisgApp .kg-group+.kg-group{margin-top:16px}
+#kisgApp .kg-group h2{padding:16px 0 4px;color:var(--red-text);font-size:12px;font-weight:750;letter-spacing:.06em;text-transform:uppercase}
+#kisgApp .kg-row{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 0}
+#kisgApp .kg-row+.kg-row{border-top:1px solid var(--line-soft)}
+#kisgApp .kg-text{min-width:0;flex:1}
+#kisgApp .kg-text :is(label,.kg-label){display:block;color:var(--ink);font-size:15px;font-weight:650}
+#kisgApp .kg-text label{cursor:pointer}
+#kisgApp .kg-text p{margin-top:3px;color:var(--muted);font-size:13.5px;line-height:1.5}
+#kisgApp .kg-text .kg-value{color:var(--ink);font-size:14.5px;font-weight:500;overflow-wrap:anywhere}
+#kisgApp .kg-note{font-weight:600}
+#kisgApp .kg-note[data-tone="ok"]{color:#177245}
+#kisgApp .kg-note[data-tone="error"]{color:var(--red-text)}
+#kisgApp .kg-switch{position:relative;flex:none;width:46px;height:28px}
+#kisgApp .kg-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:1}
+#kisgApp .kg-switch input:disabled{cursor:progress}
+#kisgApp .kg-switch span{position:absolute;inset:0;border-radius:var(--r-pill);background:var(--line-strong);transition:background var(--t-fast)}
+#kisgApp .kg-switch span::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(20,26,36,.25);transition:transform var(--t-fast) var(--ease)}
+#kisgApp .kg-switch input:checked+span{background:var(--red)}
+#kisgApp .kg-switch input:checked+span::after{transform:translateX(18px)}
+#kisgApp .kg-switch input:disabled+span{opacity:.6}
+#kisgApp .kg-switch input:focus-visible+span{outline:2px solid var(--red);outline-offset:2px}
+#kisgApp .kg-danger{border-color:var(--red-line);color:var(--red-text)}
+#kisgApp .kg-state{border:1px solid var(--line);border-radius:var(--r-lg)}
+#kisgApp .kg-delete p+p{margin-top:12px}
+#kisgApp .kg-delete-info{padding:12px 14px;border-radius:var(--r-md);background:var(--surface-2);color:var(--text);font-size:14px}
+@media(max-width:640px){
+  #kisgApp .kg-page{padding:18px 0 40px}
+  #kisgApp .kg-head h1{font-size:22px}
+  #kisgApp .kg-group{padding:2px 16px}
+  #kisgApp .kg-row{gap:14px}
+  #kisgApp .kg-row .k-btn{padding-inline:14px}
+}
 @media(hover:hover) and (pointer:fine){
   #kisgApp .kp-social:hover{background:var(--surface-2);color:var(--ink)}
   #kisgApp .kd-back:hover{color:var(--ink)}
@@ -1476,10 +1597,10 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.19.0',
+  version: '4.21.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
-  routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay' },
+  routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
   // Eski adresler: açılınca Akış gösterilir ve adres (geçmiş kaydı eklemeden) '/' yapılır.
   legacyRoutes: { '/calisma': 'works' },
   defaultView: 'works',
@@ -1487,7 +1608,7 @@ const CONFIG = Object.freeze({
   snapshotMaxAgeMs: 15 * 60 * 1000,
   postsPageSize: 10,
   catalogPageSize: 18,
-  railExperts: 6,        // masaüstü sol panel
+  railExperts: 12,       // masaüstü sol panel (v4.21.0: 6 → 12)
   railExpertsStrip: 3,   // mobil akış içi şerit (değişmedi)
   railServices: 3,
   maxActiveServices: 5,
@@ -1502,7 +1623,7 @@ const CONFIG = Object.freeze({
   // WebKit (iPhone/Safari) canvas'tan WebP üretemez; bu cihazlarda aynı yola JPEG yüklenir.
   allowJpegFallback: true
 });
-const LABELS = { works: 'Akış', experts: 'Uzmanlar', services: 'Hizmet Bul', profile: 'Profil', work: 'Post', service: 'Hizmet' };
+const LABELS = { works: 'Akış', experts: 'Uzmanlar', services: 'Hizmet Bul', profile: 'Profil', work: 'Post', service: 'Hizmet', account: 'Hesap & Gizlilik' };
 // Mesleki Belge / Statü: [certificate_class değeri, etiket]. A/B/C mevcut veriyle aynı (tek harf) yazılır.
 const STATUS_OPTIONS = [['A', 'A Sınıfı'], ['B', 'B Sınıfı'], ['C', 'C Sınıfı'], ['İşyeri Hekimi', 'İşyeri Hekimi'], ['DSP', 'DSP (Diğer Sağlık Personeli)']];
 const SERVICE_MODES = { onsite: 'Yerinde', remote: 'Uzaktan', both: 'Yerinde + Uzaktan' };
@@ -2391,6 +2512,39 @@ const reports = (() => {
   });
   d.addEventListener('close', () => { if (!busy) target = null; });
   return { open, onSession() { if (d.open && !busy && session.user?.id !== target?.uid) dialogs.close(d); } };
+})();
+
+/* Destek & Geri Bildirim V1 — public.support_requests (tablo ve RLS Supabase'de hazır; bu dosya DB değiştirmez).
+   Yalnız INSERT: user_id oturumdaki kullanıcı, category + message; status/created_at DB varsayılanı.
+   Bildir (professional_reports) moderasyon sisteminden ayrıdır. */
+const support = (() => {
+  const d = $('#kaSupportDialog'), form = $('#kaSupportForm'), cats = $('[data-support-categories]', d);
+  const msg = $('#kaSupportMessage'), err = $('#kaSupportError'), submit = $('#kaSupportSubmit');
+  let uid = null, busy = false;
+  const setErr = m => { err.textContent = m || ''; err.hidden = !m; };
+  async function open() {
+    const user = await requireUser(() => open()); if (!user) return;
+    uid = user.id;
+    if (!d.open) { form.reset(); setErr(''); }
+    dialogs.open(d);
+  }
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (busy) return;
+    const category = $('input[name="category"]:checked', cats)?.value, message = clean(msg.value);
+    if (!category) { setErr('Bir konu seç.'); return; }
+    if (!message) { setErr('Kısa bir açıklama yaz.'); msg.focus(); return; }
+    if (!session.user || session.user.id !== uid) { dialogs.close(d); return; }
+    busy = true; setErr(''); setBusy(submit, true, 'Gönderiliyor...'); dialogs.lock(d, true);
+    let error = null;
+    try { await dbReady; ({ error } = await db.from('support_requests').insert({ user_id: uid, category, message })); }
+    catch (x) { error = x || {}; }
+    busy = false; setBusy(submit, false); dialogs.lock(d, false);
+    if (!error) { dialogs.close(d); form.reset(); toast('Mesajın alındı. Teşekkürler!'); return; }
+    setErr('Mesajın şu anda gönderilemedi. Lütfen tekrar dene.');
+  });
+  onShellClick(e => { const t = e.target?.nodeType === 1 ? e.target : null; if (t?.closest('[data-action="support"]')) { closePopovers(); open(); } });
+  return { open, onSession() { if (d.open && !busy && session.user?.id !== uid) dialogs.close(d); } };
 })();
 
 async function copyText(text) {
@@ -4087,7 +4241,9 @@ function createWorksView() {
   }
   /* "Son Post paylaşan uzmanlar": sıralama profiles.last_post_at'e değil, kullanıcının AKTİF Postlarına dayanır.
      Aktif Postlar en yeniden taranır; her kullanıcı ilk (en yeni aktif) Postuyla bir kez alınır. Silinen/gizlenen
-     Postlar sayılmaz (bir önceki aktif Post esas olur); aktif Postu kalmayan listeden çıkar. Yalnız is_discoverable. */
+     Postlar sayılmaz (bir önceki aktif Post esas olur). Yalnız is_discoverable.
+     v4.21.0: Liste yalnız Post atanlara bağlı değil — Post sahipleri önce gelir, yer kalırsa hiç Post atmamış
+     is_discoverable=true uzmanlarla tamamlanır (Uzmanlar sayfasıyla aynı sıra: last_post_at, sonra id). */
   async function recentExperts() {
     const out = [], seen = new Set(), PAGE = 60;
     let cursor = null;
@@ -4106,6 +4262,11 @@ function createWorksView() {
       }
       if (!data || data.length < PAGE) break;
       cursor = data[data.length - 1];
+    }
+    if (out.length < CONFIG.railExperts) {
+      const { data, error } = await db.from('profiles').select('id,full_name,avatar_url,profession,title,certificate_class,current_company,city')
+        .eq('is_discoverable', true).order('last_post_at', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(CONFIG.railExperts + seen.size);
+      if (!error) for (const a of data || []) { if (out.length >= CONFIG.railExperts) break; if (!seen.has(a.id)) { seen.add(a.id); out.push(a); } }
     }
     return out;
   }
@@ -5779,6 +5940,8 @@ function createProfileView() {
     name: 'profile', el, route,
     mount() { s.mounted = true; return Promise.resolve(); },
     onSession, snapshot: () => null, isMounted: () => s.mounted,
+    // Hesap & Gizlilik ayarı değişti: bu profil bir sonraki açılışta sunucudan yeniden okunur.
+    invalidate(uid) { if (uid && s.id === uid) s.id = ''; },
     get id() { return s.id; }, get tab() { return s.tab; }
   };
 }
@@ -5865,12 +6028,95 @@ function createWorkView() {
 /* =========================================================================
    12. Görünümler + oturum aboneliği
    ========================================================================= */
-const VIEWS = { works: createWorksView(), experts: createExpertsView(), services: createServicesView(), profile: createProfileView(), work: createWorkView(), service: createServiceView() };
+/* =========================================================================
+   11d. Görünüm: Hesap & Gizlilik (/hesaplar-ve-gizlilik)
+   Yalnız oturum sahibinin kendi profiles satırı: is_discoverable ve show_phone_publicly okunur ve
+   tek alanlık UPDATE ile yazılır (RLS: kendi satırı). E-posta oturumdan, salt okunur. Çıkış mevcut
+   data-action="signout" akışını kullanır. Hesap silme: güvenli sunucu altyapısı yok → silme yapılmaz,
+   pencere durumu açıklar (istemcide silme mekanizması kurulmaz).
+   ========================================================================= */
+function createAccountView() {
+  const el = $('[data-view="account"]');
+  const statusBox = $('[data-account-status]', el), main = $('[data-account-main]', el), emailBox = $('[data-account-email]', el);
+  const FIELDS = ['is_discoverable', 'show_phone_publicly'];
+  const s = { mounted: false, uid: null, row: null, rev: 0, timers: {} };
+  const toggle = f => $(`[data-account-toggle="${f}"]`, el), note = f => $(`[data-account-note="${f}"]`, el);
+
+  function state(kind) {
+    main.hidden = kind !== 'ready';
+    statusBox.hidden = kind === 'ready';
+    if (kind === 'loading') statusBox.innerHTML = '<p>Ayarların yükleniyor…</p>';
+    if (kind === 'guest') statusBox.innerHTML = '<strong>Hesap ayarların için giriş yap</strong><p>Gizlilik ayarlarını ve hesabını görmek için Kırmızı İSG hesabınla giriş yapmalısın.</p><div class="k-empty-actions"><button type="button" class="k-btn k-btn-primary" data-action="login">Giriş Yap</button></div>';
+    if (kind === 'error') statusBox.innerHTML = '<strong>Ayarlar yüklenemedi</strong><p>Bağlantını kontrol edip tekrar dene.</p><div class="k-empty-actions"><button type="button" class="k-btn" data-account-retry>Tekrar dene</button></div>';
+    host.schedule();
+  }
+  function setNote(f, text, tone) {
+    const n = note(f); clearTimeout(s.timers[f]);
+    n.textContent = text || ''; n.hidden = !text;
+    if (tone) n.dataset.tone = tone; else delete n.dataset.tone;
+    if (tone === 'ok') s.timers[f] = setTimeout(() => { n.hidden = true; host.schedule(); }, 3000);
+    host.schedule();
+  }
+  function render() {
+    FIELDS.forEach(f => { const t = toggle(f); t.checked = s.row?.[f] === true; t.disabled = false; setNote(f, ''); });
+  }
+  async function load() {
+    await session.ready;
+    const rev = ++s.rev, user = session.user;
+    if (!user) { s.uid = null; s.row = null; state('guest'); return; }
+    s.uid = user.id;
+    emailBox.textContent = clean(user.email) || '—';
+    state('loading');
+    try {
+      const { data, error } = await db.from('profiles').select('id,is_discoverable,show_phone_publicly').eq('id', user.id).maybeSingle();
+      if (rev !== s.rev) return;
+      if (error || !data) throw error || new Error('no_profile');
+      s.row = data; render(); state('ready');
+    } catch { if (rev === s.rev) state('error'); }
+  }
+  async function save(input) {
+    const f = input.dataset.accountToggle; if (!FIELDS.includes(f) || !s.uid) return;
+    const value = input.checked, uid = s.uid, rev = s.rev;
+    input.disabled = true; setNote(f, 'Kaydediliyor…');
+    session.writes++;
+    try {
+      const user = await session.verified();
+      if (!user || user.id !== uid) throw new Error('auth');
+      const { data, error } = await db.from('profiles').update({ [f]: value }).eq('id', uid).select('id,is_discoverable,show_phone_publicly').maybeSingle();
+      if (error || !data || data[f] !== value) throw error || new Error('not_updated');
+      if (rev !== s.rev) return;
+      s.row = { ...s.row, ...data };
+      setNote(f, 'Kaydedildi.', 'ok');
+      if (f === 'is_discoverable') session.patchMe({ is_discoverable: value });
+      VIEWS.profile.invalidate?.(uid);
+    } catch {
+      if (rev !== s.rev) return;
+      input.checked = s.row?.[f] === true;
+      setNote(f, 'Kaydedilemedi. Bağlantını kontrol edip tekrar dene.', 'error');
+    } finally { session.writes--; if (rev === s.rev) input.disabled = false; }
+  }
+  el.addEventListener('change', e => { const t = e.target?.closest?.('[data-account-toggle]'); if (t) save(t); });
+  el.addEventListener('click', e => {
+    const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
+    if (t.closest('[data-account-retry]')) { load(); return; }
+    if (t.closest('[data-account-delete]')) dialogs.open($('#kaDeleteDialog'));
+  });
+  function onSession(kind) { if (kind === 'user' && s.mounted) load(); }
+  return {
+    name: 'account', el,
+    route() { if (s.mounted) load(); },
+    mount() { s.mounted = true; return load(); },
+    onSession, snapshot: () => null, isMounted: () => s.mounted
+  };
+}
+
+const VIEWS = { works: createWorksView(), experts: createExpertsView(), services: createServicesView(), profile: createProfileView(), work: createWorkView(), service: createServiceView(), account: createAccountView() };
 session.on(kind => {
   authUI.render(kind);
   if (kind === 'user') notifications.onSession();
   if (kind === 'user') composer.onSession();
   reports.onSession();
+  support.onSession();
   Object.values(VIEWS).forEach(v => { try { v.onSession?.(kind); } catch (e) { console.error(e); } });
   host.schedule();
 });
@@ -5891,7 +6137,7 @@ const shellVersion = (() => {
 root.dataset.version = CONFIG.version;
 
 /* =========================================================================
-   13. Router: parent.history üzerinden / (Akış) | /uzmanlar | /hizmetler (Hizmet Bul) | /profil | /calisma-detay | /hizmet-detay
+   13. Router: parent.history üzerinden / (Akış) | /uzmanlar | /hizmetler (Hizmet Bul) | /profil | /calisma-detay | /hizmet-detay | /hesaplar-ve-gizlilik
    ========================================================================= */
 const router = (() => {
   const bootId = newId();
@@ -5950,6 +6196,7 @@ const router = (() => {
     if (name === 'profile') VIEWS.profile.route({ ...params });
     if (name === 'work') VIEWS.work.route({ ...params });
     if (name === 'service') VIEWS.service.route({ ...params });
+    if (name === 'account') VIEWS.account.route();
     VIEWS.works.onView?.(name);
   }
   function activate(name, { mode = 'push', params: next = {} } = {}) {

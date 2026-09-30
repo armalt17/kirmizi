@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL ADMIN v1.1.0
+KIRMIZI İSG — PROFESSIONAL ADMIN v1.2.0
 
 KURULUM: Bu dosyanın TAMAMI Hostinger'da /pro-admin sayfasının Custom HTML/Embed içeriği olarak kullanılır.
 Ana uygulama (kisg-professional-app.html) ile aynı Supabase projesi ve aynı oturum (tarayıcı depolaması) kullanılır;
@@ -10,8 +10,10 @@ GÜVENLİK
  - Tüm veri okuma ve değişiklikleri Admin V1 / Migration B RPC'leri ile yapılır (admin_*). Doğrudan tablo
    okuma/yazma yoktur. Her RPC sunucuda gerçek admin rolünü (user_roles) doğrular ve audit log'a yazar.
  - Arayüzdeki "yönetici" kontrolü (kisg_is_admin) yalnız ekranı göstermek içindir; yetki sunucudadır.
+ - v1.2.0 Destek sekmesi: public.support_requests için RPC yoktur; liste ve durum (open/resolved) değişikliği
+   doğrudan tablodan, Supabase'de hazır olan RLS ile yapılır (bu dosya DB değiştirmez).
 
-BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler · Şikâyetler
+BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler · Şikâyetler · Destek
 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -59,6 +61,7 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
       <button type="button" data-sec="comments">Yorumlar</button>
       <button type="button" data-sec="services">Hizmetler</button>
       <button type="button" data-sec="reports">Şikâyetler <span class="pa-count" data-pending hidden></span></button>
+      <button type="button" data-sec="support">Destek</button>
     </nav>
     <main class="pa-main" data-main tabindex="-1"></main>
   </div>
@@ -175,7 +178,7 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
 /* Durum rozetleri */
 #kisgAdmin .pa-badge{display:inline-flex;align-items:center;min-height:22px;padding:2px 9px;border-radius:var(--r-pill);background:var(--surface-2);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap}
 #kisgAdmin .pa-badge.is-active,#kisgAdmin .pa-badge.is-resolved{background:var(--ok-tint);color:var(--ok)}
-#kisgAdmin .pa-badge.is-hidden,#kisgAdmin .pa-badge.is-pending,#kisgAdmin .pa-badge.is-warning,#kisgAdmin .pa-badge.is-reviewed{background:var(--warn-tint);color:var(--warn)}
+#kisgAdmin .pa-badge.is-hidden,#kisgAdmin .pa-badge.is-pending,#kisgAdmin .pa-badge.is-warning,#kisgAdmin .pa-badge.is-reviewed,#kisgAdmin .pa-badge.is-open{background:var(--warn-tint);color:var(--warn)}
 #kisgAdmin .pa-badge.is-deleted,#kisgAdmin .pa-badge.is-ban,#kisgAdmin .pa-badge.is-suspension{background:var(--red-tint);color:var(--red-text)}
 
 /* Şikâyet kartları */
@@ -236,7 +239,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.1.0',
+  version: '1.2.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -326,6 +329,8 @@ const num = n => nf.format(Number(n) || 0);
 const LABEL = {
   status: { active: 'Aktif', hidden: 'Gizli', deleted: 'Silindi', archived: 'Arşivde', pending: 'Bekliyor', reviewed: 'İncelendi', resolved: 'Sonuçlandı', dismissed: 'Reddedildi' },
   sanction: { warning: 'Uyarı', suspension: 'Askı', ban: 'Ban' },
+  support: { open: 'Açık', resolved: 'Çözüldü' },
+  supportCategory: { technical: 'Teknik sorun', account: 'Hesap / profil sorunu', suggestion: 'Öneri / geri bildirim', other: 'Diğer' },
   target: { post: 'Post', comment: 'Yorum', profile: 'Profil', service: 'Hizmet' },
   reason: { spam: 'Spam', inappropriate: 'Uygunsuz içerik', misleading: 'Yanıltıcı', harassment: 'Taciz / hakaret', fake_profile: 'Sahte profil', other: 'Diğer' },
   action_taken: { none: 'İşlem yok', content_hidden: 'İçerik gizlendi', content_deleted: 'İçerik silindi', user_warned: 'Uyarıldı', user_suspended: 'Askıya alındı', user_banned: 'Banlandı', other: 'Diğer' },
@@ -526,9 +531,10 @@ const SECTIONS = {
   posts: { title: 'Postlar', render: () => renderContent('post') },
   comments: { title: 'Yorumlar', render: () => renderContent('comment') },
   services: { title: 'Hizmetler', render: () => renderContent('service') },
-  reports: { title: 'Şikâyetler', render: renderReports }
+  reports: { title: 'Şikâyetler', render: renderReports },
+  support: { title: 'Destek', render: renderSupport }
 };
-const view = { users: { q: '', filter: 'all', offset: 0 }, post: { status: 'active', q: '', offset: 0 }, comment: { status: 'active', q: '', offset: 0 }, service: { status: 'active', q: '', offset: 0 }, reports: { status: 'pending', type: null, offset: 0 } };
+const view = { users: { q: '', filter: 'all', offset: 0 }, post: { status: 'active', q: '', offset: 0 }, comment: { status: 'active', q: '', offset: 0 }, service: { status: 'active', q: '', offset: 0 }, reports: { status: 'pending', type: null, offset: 0 }, support: { status: 'open', category: null, offset: 0 } };
 
 function show(section, opts = {}) {
   state.section = section;
@@ -864,6 +870,53 @@ function resolveReport(r) {
       renderReports();
     }
   });
+}
+
+/* ----- Destek (support_requests; RPC yok, doğrudan tablo + RLS) ----- */
+async function renderSupport() {
+  const seq = ++renderSeq, v = view.support;
+  const bodyBox = h('div', null, loading());
+  main.replaceChildren(head('Destek', 'Kullanıcıların Destek & Geri Bildirim mesajları'),
+    h('div', { class: 'pa-tools' },
+      chips([['open', 'Açık'], ['resolved', 'Çözüldü'], [null, 'Tümü']], v.status, x => { v.status = x; v.offset = 0; renderSupport(); }),
+      chips([[null, 'Tüm konular'], ...Object.entries(LABEL.supportCategory)], v.category, x => { v.category = x; v.offset = 0; renderSupport(); })),
+    bodyBox);
+  let rows, total, names = {};
+  try {
+    const c = await client();
+    let q = c.from('support_requests').select('id,user_id,category,message,status,created_at,updated_at', { count: 'exact' })
+      .order('created_at', { ascending: false }).order('id', { ascending: false }).range(v.offset, v.offset + CONFIG.pageSize - 1);
+    if (v.status) q = q.eq('status', v.status);
+    if (v.category) q = q.eq('category', v.category);
+    const { data, error, count } = await q;
+    if (error) { const e = explain(error); if (e.auth) onAuthLost(e); throw e; }
+    rows = data || []; total = Number(count) || rows.length;
+    const ids = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+    if (ids.length) { const p = await c.from('profiles').select('id,full_name').in('id', ids); (p.data || []).forEach(x => { names[x.id] = x.full_name; }); }
+  } catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, renderSupport)); return; }
+  if (seq !== renderSeq) return;
+  if (!rows.length) { bodyBox.replaceChildren(h('div', { class: 'pa-card pa-empty', text: v.status === 'open' ? 'Açık destek talebi yok.' : 'Kayıt yok.' })); host.sync(); return; }
+  bodyBox.replaceChildren(h('div', { class: 'pa-reports' }, rows.map(r => h('article', { class: 'pa-card pa-report', 'data-support': r.id },
+    h('div', null,
+      h('div', { class: 'pa-report-meta' }, badge('support', r.status), h('b', { style: 'color:var(--ink)', text: LABEL.supportCategory[r.category] || r.category || '—' })),
+      h('p', { class: 'pa-small', text: `${clean(names[r.user_id]) || 'İsimsiz kullanıcı'} · ${fmtDate(r.created_at)}` }),
+      h('p', { class: 'pa-body', style: 'margin-top:6px;white-space:pre-wrap', text: clean(r.message) || '—' })),
+    h('div', { class: 'pa-actions' },
+      r.user_id ? h('button', { type: 'button', class: 'pa-btn pa-btn-sm', text: 'Kullanıcı', onclick: () => openUser(r.user_id) }) : null,
+      h('button', { type: 'button', class: `pa-btn pa-btn-sm${r.status === 'open' ? ' pa-btn-primary' : ''}`, text: r.status === 'open' ? 'Çözüldü yap' : 'Yeniden aç', onclick: ev => setSupportStatus(r, r.status === 'open' ? 'resolved' : 'open', ev.currentTarget) }))))),
+    h('div', { class: 'pa-card', style: 'margin-top:12px' }, pager(total, v.offset, off => { v.offset = off; renderSupport(); })));
+  host.sync();
+}
+async function setSupportStatus(r, status, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    const c = await client();
+    const { data, error } = await c.from('support_requests').update({ status }).eq('id', r.id).select('id,status').maybeSingle();
+    if (error) { const e = explain(error); if (e.auth) onAuthLost(e); throw e; }
+    if (!data || data.status !== status) throw new AdminError('Durum değiştirilemedi (yetki veya kayıt bulunamadı).', 'state');
+    toast(status === 'resolved' ? 'Talep çözüldü olarak işaretlendi.' : 'Talep yeniden açıldı.');
+    renderSupport();
+  } catch (e) { toast(e.message || 'İşlem tamamlanamadı.', true); if (btn) btn.disabled = false; }
 }
 
 /* ---------------------------------------------------------------------------

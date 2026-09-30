@@ -16,7 +16,9 @@ const iso = m => new Date(Date.now() - m * 60000).toISOString();
 const hostPage = p => `<!doctype html><html><head><meta charset="utf-8"><title>${p}</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{height:100%}body{margin:0;font-family:sans-serif}header{height:64px;background:#222;color:#fff}footer{height:200px;background:#eee}</style></head><body><header>Hostinger header</header><section><div class="block-layout"><div><iframe style="width:100%;border:0" srcdoc="${ADMIN_HTML.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"></iframe></div></div></section><footer>footer</footer></body></html>`;
 
 function server(ctx) {
-  const st = { rpc: [], table: [], fail: {} };
+  const st = { rpc: [], table: [], fail: {}, support: [
+    { id: 'cccccccc-0000-4000-8000-000000000001', user_id: A, category: 'technical', message: 'Fotoğraf yüklenmiyor.\nAndroid telefondayım.', status: 'open', created_at: iso(15), updated_at: iso(15) },
+    { id: 'cccccccc-0000-4000-8000-000000000002', user_id: M, category: 'suggestion', message: 'Karanlık tema olsa iyi olur.', status: 'resolved', created_at: iso(300), updated_at: iso(100) }] };
   const users = [
     { id: M, full_name: 'Mehmet Öztürk', email: 'mehmet@ornek.com', title: 'İSG Uzmanı', city: 'Kocaeli', avatar_url: null, is_discoverable: true, is_premium: false, created_at: iso(5000), post_count: 2, service_count: 1, open_report_count: 2, active_sanction: null, active_sanction_ends_at: null },
     { id: A, full_name: 'Ayşe Yılmaz', email: 'ayse@ornek.com', title: null, city: 'İstanbul', avatar_url: null, is_discoverable: false, is_premium: true, created_at: iso(9000), post_count: 1, service_count: 0, open_report_count: 0, active_sanction: 'suspension', active_sanction_ends_at: iso(-3000) }];
@@ -61,7 +63,24 @@ function server(ctx) {
       const req = r.request(), u = new URL(req.url());
       if (req.method() === 'OPTIONS') return r.fulfill({ status: 200, headers: H });
       const m = /\/rest\/v1\/rpc\/([a-z_]+)$/.exec(u.pathname);
-      if (!m) { st.table.push({ method: req.method(), path: u.pathname }); return r.fulfill({ status: 404, headers: H, body: '[]' }); }
+      if (!m) {
+        st.table.push({ method: req.method(), path: u.pathname, q: u.search, body: req.postData() || null });
+        // v1.2.0 Destek: support_requests doğrudan tablo (RLS: yalnız admin okur/günceller) + isimler için profiles
+        const tbl = u.pathname.split('/').pop(), who = uidOf((req.headers().authorization || '').replace(/^Bearer /i, ''));
+        const eq = k => (u.searchParams.get(k) || '').replace(/^eq\./, '');
+        const J = (b, status = 200, extra = {}) => r.fulfill({ status, headers: { ...H, ...extra }, contentType: 'application/json', body: JSON.stringify(b) });
+        if (tbl === 'support_requests' && req.method() === 'GET') {
+          const rows = who === X ? st.support.filter(x => (!u.searchParams.get('status') || x.status === eq('status')) && (!u.searchParams.get('category') || x.category === eq('category'))) : [];
+          return J(rows, 200, { 'content-range': `0-${Math.max(0, rows.length - 1)}/${rows.length}` });
+        }
+        if (tbl === 'support_requests' && req.method() === 'PATCH') {
+          const row = who === X ? st.support.find(x => x.id === eq('id')) : null;
+          if (row) Object.assign(row, JSON.parse(req.postData() || '{}'));
+          return row ? J({ id: row.id, status: row.status }) : J({ code: 'PGRST116', message: 'no rows' }, 406);
+        }
+        if (tbl === 'profiles' && req.method() === 'GET') return J(users.map(x => ({ id: x.id, full_name: x.full_name })));
+        return r.fulfill({ status: 404, headers: H, body: '[]' });
+      }
       const name = m[1], args = JSON.parse(req.postData() || '{}'), uid = uidOf((req.headers().authorization || '').replace(/^Bearer /i, ''));
       st.rpc.push({ name, args, uid, method: req.method() });
       const J = (b, status = 200) => r.fulfill({ status, headers: H, contentType: 'application/json', body: JSON.stringify(b) });
@@ -94,7 +113,8 @@ const ALLOWED = new Set(['kisg_is_admin', 'admin_overview', 'admin_list_users', 
 // ---------------- statik ----------------
 check(!/service_role|service-role|serviceRole/i.test(ADMIN_HTML.replace(/service_role YOKTUR|service_role YOK/g, '')), 'admin HTML\'de service role anahtarı/kullanımı yok');
 check(/sb_publishable_/.test(ADMIN_HTML) && !/eyJhbGciOi/.test(ADMIN_HTML), 'yalnız publishable anahtar var (JWT biçimli gizli anahtar yok)');
-check(!/\.from\(\s*['"]/.test(ADMIN_HTML), 'kodda doğrudan tablo erişimi (db.from) yok');
+{ const t = [...ADMIN_HTML.matchAll(/\.from\(\s*['"]([a-z_]+)/g)].map(x => x[1]);
+  check(t.length && t.every(n => n === 'support_requests' || n === 'profiles'), `doğrudan tablo erişimi yalnız Destek sekmesinde (support_requests + isim için profiles): ${t.join(', ')}`); }
 check(!/<a[^>]+data-view-link|kisgApp/.test(ADMIN_HTML), 'Professional App Shell\'e bağlı değil (ayrı ve bağımsız sayfa)');
 
 const browser = await chromium.launch(LAUNCH);
@@ -260,6 +280,30 @@ try {
     st.fail.admin_list_users = { code: '42501', message: 'KISG_ADMIN_ONLY' };
     await f.click('.pa-nav [data-sec="users"]');
     check(await until(() => visible(f, '[data-gate-pane="denied"]')), 'sunucu yetkiyi reddederse arayüz "Yetkiniz yok" ekranına döner');
+    await ctx.close();
+  }
+  // ---------------- 4b) Destek sekmesi (v1.2.0) ----------------
+  for (const vp of [{ n: 'masaüstü', width: 1280, height: 900 }, { n: 'mobil', width: 390, height: 844 }]) {
+    const { ctx, page, f, st, errs } = await open(browser, { uid: X, width: vp.width, height: vp.height });
+    await until(() => visible(f, '.pa-stats'));
+    check(await visible(f, '.pa-nav [data-sec="support"]'), `${vp.n}: menüde "Destek" sekmesi`);
+    await f.click('.pa-nav [data-sec="support"]');
+    check(await until(() => f.locator('[data-support]').count().then(n => n === 1)), `${vp.n}: varsayılan filtre Açık → 1 talep`);
+    const card = await f.textContent('[data-support]');
+    check(card.includes('Teknik sorun') && card.includes('Açık') && card.includes('Ayşe Yılmaz') && card.includes('Fotoğraf yüklenmiyor.') && /\d{4}/.test(card), `${vp.n}: kullanıcı, kategori, mesaj, tarih ve durum görünüyor`);
+    check(await f.evaluate(() => getComputedStyle(document.querySelector('[data-support] .pa-body')).whiteSpace) === 'pre-wrap', `${vp.n}: mesaj satır sonları korunuyor`);
+    await f.click('.pa-chip:text-is("Tümü")');
+    check(await until(() => f.locator('[data-support]').count().then(n => n === 2)), `${vp.n}: Tümü → 2 talep`);
+    await f.click('[data-support="cccccccc-0000-4000-8000-000000000001"] button:text-is("Çözüldü yap")');
+    check(await until(() => st.support[0].status === 'resolved') && await until(async () => (await f.textContent('[data-support="cccccccc-0000-4000-8000-000000000001"]')).includes('Çözüldü')), `${vp.n}: open → resolved`);
+    const patch = st.table.filter(x => x.method === 'PATCH');
+    check(patch.length === 1 && patch[0].body === '{"status":"resolved"}' && patch[0].q.includes('id=eq.cccccccc-0000-4000-8000-000000000001'), `${vp.n}: yalnız status alanı, yalnız bu talep güncellendi ${JSON.stringify(patch)}`);
+    await f.click('[data-support="cccccccc-0000-4000-8000-000000000001"] button:text-is("Yeniden aç")');
+    check(await until(() => st.support[0].status === 'open'), `${vp.n}: resolved → open`);
+    check(st.table.every(x => /\/(support_requests|profiles)$/.test(x.path)) && st.table.every(x => x.method !== 'POST' && x.method !== 'DELETE'), `${vp.n}: tablo isteği yalnız support_requests/profiles, ekleme/silme yok`);
+    const ov = await f.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    check(ov <= 1 && !errs.length, `${vp.n}: yatay taşma ve sayfa hatası yok ${errs.join(' ')}`);
+    await page.screenshot({ path: path.join(OUT, `pro-admin-support-${vp.width}.png`), fullPage: true });
     await ctx.close();
   }
   // ---------------- 5) mobil ----------------

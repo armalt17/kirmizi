@@ -81,8 +81,9 @@ function filterRows(rows, sp) {
 let seq = 1000;
 function orderRows(rows, sp) {
   const o = sp.get('order'); if (!o) return rows;
-  const keys = o.split(',').map(x => { const [k, dir] = x.split('.'); return [k, dir === 'desc' ? -1 : 1]; });
-  return rows.slice().sort((a, b) => { for (const [k, d] of keys) { if (a[k] < b[k]) return -d; if (a[k] > b[k]) return d; } return 0; });
+  // Postgres gibi NULL sırası: varsayılan asc → nulls last, desc → nulls first; .nullsfirst/.nullslast uyulur.
+  const keys = o.split(',').map(x => { const [k, ...m] = x.split('.'), d = m.includes('desc') ? -1 : 1; return [k, d, m.includes('nullsfirst') ? true : m.includes('nullslast') ? false : d === -1]; });
+  return rows.slice().sort((a, b) => { for (const [k, d, nf] of keys) { const an = a[k] == null, bn = b[k] == null; if (an !== bn) return an === nf ? -1 : 1; if (an) continue; if (a[k] < b[k]) return -d; if (a[k] > b[k]) return d; } return 0; });
 }
 // Gerçek PostgREST gibi: gömülü sayaçlar satırlardan canlı hesaplanır (comments.status filtresiyle).
 function withEmbeds(table, rows, sp) {
