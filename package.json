@@ -5,6 +5,7 @@
   "description": "Kırmızı İSG Professional App Shell — tek HTML (kisg-professional-app.html) + tarayıcı regresyon testleri",
   "type": "module",
   "scripts": {
+    "build": "node tools/build-embed.mjs",
     "test": "node tests/run.mjs",
     "test:one": "node tests/run.mjs --only"
   },

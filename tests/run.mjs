@@ -13,6 +13,7 @@ fs.mkdirSync(OUT, { recursive: true });
 
 // Sıra: temel App Shell → özellik paketleri. env: paket için ek ortam değişkenleri.
 const SUITES = [
+  { name: 'embed-build', file: 'embed-build.test.mjs', note: 'Hostinger yayın dosyası güncel ve boyut sınırında' },
   { name: 'app-shell', file: 'app-shell.test.mjs' },
   { name: 'app-shell-safari', file: 'app-shell.test.mjs', env: { SAFARI: '1' }, note: 'WebKit canvas WebP üretemez simülasyonu' },
   { name: 'comments', file: 'comments.test.mjs' },

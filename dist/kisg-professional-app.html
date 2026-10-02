@@ -1,148 +1,11 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.25.0
-Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.25.0 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app.html yapıştırılır (npm run build ile
 üretilir; yorumları çıkarılmış, ~500 bin karakterin altında). Yayın dosyasının TAMAMI, aşağıdaki Hostinger sayfalarındaki
 Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
-
-v4.25.0: Profil V2: Profili Düzenle'den görünürlük/telefon anahtarları kaldırıldı (değerler korunur, gönderilmez; yönetim
- /hesaplar-ve-gizlilik'te); sahibin kartında Hesap & Gizlilik bağlantısı. Aktif hizmeti olan profilde nötr "Hizmet veriyor ·
- N aktif hizmet" işareti (Verdiği Hizmetler'i açar), sekme sayacı belirginleşir; Postu olmayan profili ziyaretçi hizmetlerde açar.
- Hizmet Bul V3 (yalnız görünüm): arama daha belirgin, hizmet şekli/şehir filtreleri aynı bileşen dilinde; mobilde kahraman
- alanı yeniden kurgulandı (baret zemin üzerinde), arama/çipler kompakt, sonuç sayısı ikincil. Uzmanlar V2: sıralama
- Son Aktif (last_post_at) / Yeni Katılanlar (created_at) / A–Z (full_name), her biri imleçli; datalist üçgeni gizlendi;
- arama tek çerçeve; aktif hizmeti olan kartta "Hizmet veriyor". Akış: vitrin kartı dönüşümlü üç mesajlı sakin marka alanı;
- "Son Post · …" satırı kaldırıldı. DB değişikliği yok.
-v4.24.0: Küçük düzeltmeler: Akış composer placeholder'ları saha/denetim/eğitim/iyileştirme odaklı yeni 6 metin (dönüşüm aynı);
- Post penceresi alt notu yenilendi. Hesap & Gizlilik'e sade "Yasal & Politikalar" (/yasal bölümleri). İçeriğin altına küçük
- yasal satır (© · /yasal bağlantıları · Destek → mevcut Destek & Geri Bildirim formu). Ad Soyad: tamamı BÜYÜK/küçük yazılmış
- ad kayıt ve Profil Düzenle'de kaydedilmeden önce tr-TR kurallarıyla düzeltilir (personName; karışık yazım korunur). DB değişikliği yok.
-v4.23.0: Hizmet kartı kimliği: her kartta kategoriye özgü çizgisel işaret (tek kırmızı detay) ve sağ üstte çok soluk teknik
- motif (risk matrisi, Ex/altıgen, teknik çizim, ölçüm dalgası, EKG, belge…); kategori etiketi sade hap. Hiyerarşi, veri,
- filtreler ve davranış aynı; Hizmet Bul ve Profil > Verdiği Hizmetler aynı kart.
-v4.22.0: Harici Link Uyarısı: Kırmızı İSG dışındaki http/https bağlantılar (Post/hizmet linkleri, sosyal bağlantılar,
- WhatsApp) önce "Kırmızı İSG’den ayrılıyorsunuz" penceresini açar; "Siteye Git" yeni sekmede noopener/noreferrer ile
- açar. isgcalisanplatformu.com bağlantıları ve tel:/mailto: değişmedi.
- Destek formu: açıklama 10–5000 karakter (support_requests DB kısıtı; kısa mesaj DB'de reddediliyordu), user_id sunucuda
- doğrulanmış oturumdan; Supabase hatası console'a yazılır ve kodu ekranda gösterilir.
-v4.21.0: Akış → Uzmanlar: masaüstü sol panel 12 uzman; aktif Post sahipleri önce, yer kalırsa Post atmamış
- is_discoverable=true uzmanlarla tamamlanır (mobil şerit 3, tasarım aynı). Destek & Geri Bildirim: hesap menüsü ve
- Hesap & Gizlilik'ten açılan form (konu + açıklama) public.support_requests'e INSERT (user_id oturumdan); Bildir'den ayrı.
-v4.20.0: Hesap & Gizlilik (/hesaplar-ve-gizlilik, 7. sayfa): Uzmanlarda görünürlük (profiles.is_discoverable) ve telefon
- görünürlüğü (profiles.show_phone_publicly) anahtarları yalnız kendi profiline UPDATE ile kaydedilir; e-posta salt okunur;
- Çıkış mevcut oturum kapatma akışını kullanır. Hesap silme: güvenli sunucu altyapısı olmadığından silme yapılmaz,
- onay penceresi durumu açıklar. DB değişikliği yok. Hesap menüsüne "Hesap & Gizlilik" bağlantısı eklendi.
-v4.19.0: Profil PDF V2: "PDF Olarak İndir" yalnız kendi profilinde. PDF: profil bilgileri + Verdiği Hizmetler (kategori,
- şekil, bölge ve tam açıklama); Postlar yok; içerik uzunsa sayfa eklenir, QR son sayfada.
-v4.18.0: Tıklanabilir Linkler V1: Post içeriği ve hizmet açıklamasındaki http/https URL'leri güvenli bağlantı olur (metin önce
- kaçırılır; yeni sekme, rel=noopener noreferrer). Kart içinde (akış, Hizmet Bul) iç içe <a> yerine role=link öğe kullanılır.
-v4.17.0: Hizmet Bölgesi V1.1: hizmet formunda "Tüm Türkiye" + 81 il seçimi (service_region metin alanı; listede olmayan eski
- değer "(mevcut)" olarak korunur). Hizmet Bul il filtresi o ilin ve "Tüm Türkiye" hizmetlerini birlikte listeler.
- Masaüstünde iframe'in varsayılan kenarlığı (sayfa kenarlarındaki dikey çizgiler) kaldırıldı.
-v4.16.0: Legal V1: hukuki metinler ayrı /yasal sayfasında (bu dosyada metin yok). Kayıt onayı: "Kullanım Koşulları'nı okudum
- ve kabul ediyorum; KVKK Aydınlatma Metni hakkında bilgilendirildim." (iki bağlantı yeni sekmede /yasal'ı açar). Onay, ilk oturumda
- public.legal_acceptances'a yazılır (terms_of_use + kvkk_notice_informed, sürüm 2026-09-30); yazılamazsa kayıt akışı etkilenmez,
- sonraki oturumda tekrar denenir. Post ve hizmet formlarında Topluluk Kuralları notu. DB: db/migrations/20261004_legal_acceptances.sql.
-v4.15.0: Security Fix Pack 1 (web): herkese açık telefon get_public_phone RPC'si, sahibin kendi telefonu
- get_my_private_profile RPC'si ile okunur (RPC yoksa eski okumaya döner); hizmet aramasında sağlayıcı filtresi
- profiles'tan yalnız (id) okur. DB: db/migrations/20260930_security_fix_pack1.sql.
-v4.14.0: Şikâyet / Bildir V1: Post, yorum, profil ve hizmet üç nokta menüsünde "Bildir" (kendi içeriğinde yok;
- misafirde giriş açılır, sonra kaldığı yerden devam). Kayıt public.professional_reports'a yalnız INSERT; içerik gizlenmez.
- DB: db/migrations/20260929_professional_reports.sql UYGULANMADAN "Bildirim şu anda gönderilemedi" görünür.
-v4.13.0: Hizmet Bul V2: kart hiyerarşisi başlık → açıklama → kategori/bölge/şekil → profesyonel + "Hizmeti İncele";
- detayda "Kapsam", birincil "Profili Gör", telefon kuralı aynı. Akış sol panel 6 uzman (mobil şerit 3), iki panelde
- başlık + "Tümünü gör →". Sağ panel: en yeni aktif hizmetler, sağlayıcı başına önce bir tane. "Öne Çıkan" taç rozeti
- yalnız veride featured_until gibi güvenilir bir alan olursa basılır; bugün DB'de yok (gösterilmez).
-v4.12.1: Bildirim Realtime kanalı kullanıcı JWT'si Realtime'a aktarılmadan katılıyordu (anon rolü) → production'da
- "invalid column for filter recipient_id". Kanal artık setAuth() tamamlandıktan sonra açılır.
-v4.12.0: Yorum Beğenisi V1: Akış önizlemesi ve Post Detay'da "zaman · Beğen/Beğenildi · N beğeni"; kendi yorumunda aksiyon yok.
- Misafir → giriş → bekleyen beğeni (sunucu kontrolüyle); Akış ↔ Post Detay senkron; bildirimi DB tetikleyicisi üretir.
-v4.11.0: Web Notification Center V1 (professional_notifications). Giriş yapmış kullanıcıda zil + okunmamış sayısı (1–9, 9+);
- masaüstü nav paneli, mobil alt sayfa; son 20 bildirim; tıklayınca yalnız o kaydın read_at'i + Post Detay (yorumsa vurgu);
- "Tümünü okundu işaretle". Realtime: filter recipient_id=eq.{uid}, oturum değişiminde kanal kapanır. İstemci INSERT yapmaz.
-v4.10.1: Akış sol panel uzmanları: profiles.last_post_at yerine kullanıcıların AKTİF Postlarındaki en yeni tarihe göre
- (kullanıcı başına bir kez, yalnız is_discoverable, en güncel 3). Silinen Post sayılmaz; aktif Postu kalmayan çıkar.
-v4.10.0: Kullanıcıya görünen terminoloji "Çalışma" → "Post" (teknik adlar, tablolar ve /calisma-detay route'u aynı).
- Uzmanlar ve Hizmet Bul'da serbest metin şehir/bölge alanı yerine 81 il + "Tüm Şehirler" aramalı seçici;
- Uzmanlar profiles.city, Hizmet Bul service_region üzerinde Türkçe yazım varyantlarıyla (İstanbul/istanbul/Istanbul) eşleşir.
-v4.9.4: Dialog/overlay düzeltmesi. Scroll kilidi Hostinger'ın html,body{height:100%} kuralında body'yi görünen alan
- kadar kırpıyordu (dialog açıkken ekranın altı beyaz). Görüntüleyici başka bir dialog için kapanınca geçmiş
- kaydını geri alırken oluşan popstate yeni açılan giriş penceresini kapatıyordu. Yan paneller dialog açıkken gizlenir.
-v4.9.3: Mobil fotoğraf yükleme düzeltmesi (Çalışma oluştur/düzenle). Seçilen fotoğrafın baytları seçim anında
- belleğe alınır (Android galeri dosyaları sonradan okunamaz olabiliyordu → önizleme açılıp yayınlarken
- "Bu görsel açılamadı"). Biçim MIME/uzantıdan değil dosya içeriğinden (imza) belirlenir; boyut ve EXIF yönü
- başlıktan okunur, büyük fotoğraflar doğrudan ≤1600 px decode edilir. Bozuk/desteklenmeyen dosya seçimde reddedilir.
- 1600 px, WebP (Safari'de JPEG), 500 KB hedef, 1 MB sınır ve storage yolu değişmedi.
-v4.9.2: Akış yorum önizlemesi yenilendi: yalnız en güncel 1 yorum (kutu/balon/gri alan yok; küçük avatar,
- isim · meslek · kısa zaman, en fazla 2 satır). 2+ yorumda "X yorumun tümünü gör →"; bu satır ve kartın yorum
- sayısı Çalışma Detay'ı açar. Akışta liste yüklenmez; "Yorum Yap" hızlı yanıt alanını açar. Çalışma Detay'da
- 10'dan fazla yorumda "Önceki yorumları gör" butonunun görünmemesi düzeltildi.
-v4.9.1: Kayıt formunda "Uzmanlarda Görün" (varsayılan açık). Tercih onboarding'de mevcut profile UPDATE ile
- profiles.is_discoverable'a yazılır (onboarding atlanırsa da yalnız bu alan); insert/upsert yok. Profil
- düzenleyicideki anahtar aynı alanı kullanır; kendi görünürlüğü değişince açık Uzmanlar listesi tazelenir.
-v4.9.0: Web Auth V1 — tek pencerede Giriş Yap / Kayıt Ol / Şifremi Unuttum (masaüstü modal, mobil alt sayfa).
- Mobil ile aynı Supabase Auth kullanıcıları. Profil satırını mevcut on_auth_user_created → handle_new_user()
- trigger'ı oluşturur; web profiles'a insert/upsert yapmaz. Şifre sıfırlama mobil ile aynı OTP akışı
- (e-posta → 8 haneli kod → verifyOtp(recovery) → yeni şifre); redirectTo verilmez, şablonlar değişmez.
- Yalnız bu tarayıcıda web'den kayıt olan kullanıcıya 2 adımlı onboarding (yalnız boş/değişen alanlar yazılır).
- verified(): geçici ağ/Supabase hatası artık kullanıcıyı çıkış yapmış göstermez (yalnız 401/403 reddi çıkış sayılır).
- E-posta bağlantısıyla gelen #access_token… hash'i router'dan önce işlenir ve adresten silinir.
-v4.8.0: Kırmızı İSG Professional sitenin ana ürünü. Ana navigasyon: Akış | Uzmanlar | Hizmet Bul.
- Akış '/' route'u (eski /calisma legacy → '/'); logo Akış'a gider. Veri modeli ve içerik terminolojisi
- (professional_posts, Çalışma, Çalışma Detay) değişmedi. "Yeni Çalışmalar" Realtime '/' üzerinde çalışır.
- Düzeltme: Akış → detay → hızlı geri dönüşte Realtime kanalı kapanmakta olan sokete bağlanıp sessiz
- kalıyordu; yeni kanal önceki kapanış bitince açılır, bağlanamazsa bekçi yeniden bağlar/yoklamaya geçer.
-v4.7.0: "Yeni Çalışmalar" (Supabase Realtime, yalnız professional_posts INSERT, status=active).
- Supabase'de gerekli: professional_posts tablosu supabase_realtime yayınında olmalı
-   (alter publication supabase_realtime add table public.professional_posts;). RLS okuma kuralı
-   aynen geçerlidir. Realtime yoksa akış etkilenmez; gösterge yalnız doğrulanmış yeni kayıtla çıkar.
-v4.6.2: Çalışma Detay (ve akış) yorumları gömülü yorum sayısına güvenmeden okunur — sayı boş/0 gelse de
- mevcut yorumlar yüklenir; yorum kimlikleri tip-güvenli (bigint/uuid) eşlenir, detaya dönüşte yorumlar tazelenir.
- Hizmetler alt CTA bandı kaldırıldı. Çalışmalar sağ sütunu: mini hizmet vitrini.
-v4.6.1: Tüm sayfalarda AYNI sürüm şarttır — eski embed kalan sayfa (ör. /uzmanlar) sekme geçişinde kendi
- eski Hizmetler görünümünü çizer. Bu sürümden itibaren sürüm koruması var (bkz. shellVersion).
- Kompakt Hizmetler başlığı; yayınlama formundaki "En fazla 5 aktif hizmet" açıklaması kaldırıldı.
- Mobil pencereler (giriş vb.) görsel viewport'a göre yerleşir: iOS araç çubuğu/klavye altında kalmaz;
- giriş penceresi mobilde alt sayfa olarak açılır.
-v4.6: Hizmetler profesyonel hizmet vitrini olarak yeniden tasarlandı (vitrin başlığı, kategori şeridi,
- sağlayıcıyı öne çıkaran hizmet kartı, yayınlama bandı). Hizmet Detay /hizmet-detay?id= App Shell
- route'u: reload yok, geri tuşunda Hizmetler filtre/arama/scroll korunur, doğrudan URL çalışır.
- Detay: sağlayıcı kartı (izinli telefon/WhatsApp — Profil ile aynı gizlilik kuralı), paylaşım,
- sahibi için Düzenle / Kaldır (status=archived), aynı profesyonelin diğer hizmetleri.
-
-v4.5: Çalışma Detay — /calisma-detay?id={post_id} App Shell route'u. Akıştan geçiş pushState ile
- (reload yok), geri tuşunda akışın durumu ve scroll konumu korunur; doğrudan URL ile de açılır.
- Detay, akıştaki ortak kart sistemini kullanır: tam metin, görsel + görüntüleyici, beğeni, yorumlar ve
- yorum beğenileri (açık gelir), paylaşım, sahip menüsü (Düzenle / öne çıkar / Sil — soft-delete).
-
-v4.4.1: Mobil görsel görüntüleyici (X / dışarı dokunma / geri tuşu / nav altında tam ekran),
- modal açıkken arka plan scroll kilidi, mobilde PDF teslimi (paylaş / üst dokümandan indirme),
- Çalışma görsellerine uzun süreli cache. (Soft-delete edilen Çalışmanın görseli Storage'da korunur.)
-v4.4: Profil Detay V2 — /profil?id={user_id} App Shell route'u olarak çalışır.
- - Uygulama içinden profile geçiş pushState ile olur (iframe/shell yeniden yüklenmez);
-   geri tuşunda önceki görünümün feed/filtre/arama durumu ve scroll konumu korunur.
- - Profil V1 veri, telefon gizliliği, sosyal bağlantı ve kayıt kuralları korunur;
-   title/specialties/job_role yazılmaz, yalnız değişen alanlar gönderilir.
- - Çalışma kartı sistemi (beğeni, yorum, yorum beğenisi, paylaşım, sahip menüsü) akış ile ortak.
- - "PDF Olarak İndir": ayrı tasarlanmış A4 Kişi Kartı + canlı profile QR (kütüphaneler tıklanınca yüklenir).
-   (v4.19.0 Profil PDF V2: yalnız profil sahibinde; Postlar yok, Verdiği Hizmetler tam açıklamayla, gerekirse çok sayfa.)
- - Şema varsayımı: profiles.experience_range (yoksa alan otomatik gizlenir);
-   certificate_class için "İşyeri Hekimi"/"DSP" değerlerini DB kısıtı reddederse kullanıcıya açık hata gösterilir.
-
-v3.0: Referans tasarıma göre yeniden kurulan arayüz + Hostinger genişlik entegrasyonu.
-Genişlik: Dokümanlar/İş İlanları production yöntemi (parent wrapper zinciri işaretlenir,
-parent'a style#kisg-professional-width-v2 enjekte edilir, attribute: data-kisg-professional-width).
-v2.1'deki deneysel fullBleed mekanizması tamamen kaldırıldı.
-v3.0.1: Hostinger satır yerleşimi normalize edildi (iframe üstündeki boşluk giderildi).
-Router, history, snapshot, session, CRUD, sorgular ve pagination değişmedi.
-
-Navigasyon modları (otomatik):
- - shell    : same-origin erişim varsa sekme geçişi yalnızca görünümü değiştirir (pushState).
- - document : erişim yoksa sekmeler normal tam sayfa linkidir.
-Acil kapatma: CONFIG.historyRouting=false.
 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -1757,7 +1620,6 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  // Kayıt formundaki sözleşme bağlantıları (boşsa metin bağlantısız gösterilir).
   legal: {
     terms: 'https://isgcalisanplatformu.com/yasal#kullanim-kosullari',
     kvkk: 'https://isgcalisanplatformu.com/yasal#kvkk',
@@ -1767,10 +1629,8 @@ const CONFIG = Object.freeze({
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
   version: '4.25.0',
-  // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
-  // Eski adresler: açılınca Akış gösterilir ve adres (geçmiş kaydı eklemeden) '/' yapılır.
   legacyRoutes: { '/calisma': 'works' },
   defaultView: 'works',
   returnPaths: ['/calisma-detay', '/hizmet-detay', '/profil'],
@@ -1789,11 +1649,9 @@ const CONFIG = Object.freeze({
   imageMaxEdge: 1600,
   imageTargetBytes: 500 * 1024,
   imageHardLimitBytes: 1024 * 1024,
-  // WebKit (iPhone/Safari) canvas'tan WebP üretemez; bu cihazlarda aynı yola JPEG yüklenir.
   allowJpegFallback: true
 });
 const LABELS = { works: 'Akış', experts: 'Uzmanlar', services: 'Hizmet Bul', profile: 'Profil', work: 'Post', service: 'Hizmet', account: 'Hesap & Gizlilik' };
-// Mesleki Belge / Statü: [certificate_class değeri, etiket]. A/B/C mevcut veriyle aynı (tek harf) yazılır.
 const STATUS_OPTIONS = [['A', 'A Sınıfı'], ['B', 'B Sınıfı'], ['C', 'C Sınıfı'], ['İşyeri Hekimi', 'İşyeri Hekimi'], ['DSP', 'DSP (Diğer Sağlık Personeli)']];
 const SERVICE_MODES = { onsite: 'Yerinde', remote: 'Uzaktan', both: 'Yerinde + Uzaktan' };
 
@@ -1840,10 +1698,6 @@ function linkify(text, { inert = false } = {}) {
   }
   return out + esc(src.slice(last));
 }
-// Linkify öğeleri: span (kart içinde) yeni sekmede açılır, kartın/uygulama yönlendirmesinin tıklaması durdurulur;
-// gerçek <a> kendi target=_blank davranışıyla açılır, uygulama yönlendirmesine düşmez.
-// v4.22.0 Harici Link Uyarısı: Kırmızı İSG dışındaki http/https bağlantılar (linkify, sosyal, WhatsApp vb.)
-// doğrudan açılmaz; önce onay penceresi, "Siteye Git" → yeni sekme, noopener/noreferrer. İç bağlantılar aynı.
 const openExternal = href => { try { window.open(href, '_blank', 'noopener,noreferrer'); } catch {} };
 const isExternalUrl = href => { try { return !CONFIG.siteOrigins.includes(new URL(href).origin); } catch { return false; } };
 const extWarn = (() => {
@@ -1882,15 +1736,12 @@ const extWarn = (() => {
   root.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target?.matches?.('span.k-ext-link')) act(e); }, true);
 })();
 const clean = v => (typeof v === 'string' ? v.trim() : '');
-// Ad Soyad: tamamı BÜYÜK ya da tamamı küçük yazılmışsa Türkçe kurallarıyla (tr-TR: I↔ı, İ↔i) kelime başı büyük yazılır;
-// karışık yazım (ör. "McAllister", "ahmet Yılmaz") kullanıcının tercihi sayılır ve yalnız boşlukları düzeltilir.
 const personName = v => {
   const s = clean(v).replace(/\s+/g, ' '), up = s.toLocaleUpperCase('tr-TR'), low = s.toLocaleLowerCase('tr-TR');
   if (up === low || (s !== up && s !== low)) return s;
   return low.replace(/(^|[\s-])(\p{L})/gu, (m, sep, ch) => sep + ch.toLocaleUpperCase('tr-TR'));
 };
 const compact = (values, sep = ' · ') => values.filter(Boolean).join(sep);
-// PostgREST mantıksal ifadeleri için ayrı tırnaklama (URL kodlamasından bağımsız).
 const quote = v => '"' + String(v).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
 const likePattern = v => '%' + String(v).replace(/\\/g, '\\\\').replace(/[%_*]/g, c => '\\' + c) + '%';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -1918,7 +1769,6 @@ function relativeTime(value) {
   if (abs < 6048e5) return rtf.format(Math.round(delta / 864e5), 'day');
   return new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value));
 }
-// Kısa zaman (akış yorum önizlemesi): "şimdi", "5 dk", "3 sa", "2 g", sonra "12 Mar" / "12 Mar 2024".
 function shortTime(value) {
   const d = new Date(value), abs = Date.now() - d.getTime();
   if (!Number.isFinite(abs)) return '';
@@ -1955,8 +1805,6 @@ const writeValues = (box, values) => $$('[data-filter]', box).forEach(i => { i.v
    Değerin kaynağı gizli native <select data-filter> — mevcut readValues/writeValues ve mobil filtre penceresi aynen çalışır.
    Arama Türkçe karakterden bağımsızdır (istanbul / İstanbul / Istanbul). */
 const trFold = v => String(v || '').toLocaleLowerCase('tr-TR').replace(/[çğıöşüâîû]/g, c => ({ ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', â: 'a', î: 'i', û: 'u' })[c]).replace(/\u0307/g, '');
-// Veritabanında aynı il farklı yazılmış olabilir (İstanbul / istanbul / İSTANBUL / Istanbul); ILIKE Türkçe İ/ı'yı
-// tek başına eşlemez — bu yüzden tüm yazımlar tek bir or(...) koşulunda aranır.
 const cityVariants = v => [...new Set([v, v.toLocaleLowerCase('tr-TR'), v.toLocaleUpperCase('tr-TR'), v.replace(/[ÇĞİÖŞÜçğıöşü]/g, c => ({ Ç: 'C', Ğ: 'G', İ: 'I', Ö: 'O', Ş: 'S', Ü: 'U', ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u' })[c])])];
 const cityClause = (column, city, ...also) => 'or(' + [city, ...also].flatMap(cityVariants).map(v => column + '.ilike.' + quote(likePattern(v))).join(',') + ')';
 const REGION_ALL = 'Tüm Türkiye';
@@ -2224,13 +2072,8 @@ const urls = {
 
 /* Profil kimliği: mevcut sayfalardaki fallback kuralları birebir korunur. */
 const identity = {
-  // Çalışmalar feed'i: profession||title · certificate_class · current_company
-  // Alan önceliği aynı; yalnızca meslek metninde zaten yazan belge sınıfı tekrar edilmez.
   feedLine: p => compact([p?.profession || p?.title, identity.certTag(p), p?.current_company]),
-  // Hizmetler / profil: profession, yoksa title
   role: p => clean(p?.profession) || clean(p?.title),
-  // Mesleki Belge / Statü: dolu certificate_class belirleyici (A/B/C, İşyeri Hekimi, DSP);
-  // boşsa title'daki "A Sınıfı" (mobil profiller) — Profil V1 kuralı.
   statusKey(p) {
     const v = clean(p?.certificate_class);
     if (v) {
@@ -2242,7 +2085,6 @@ const identity = {
   cert: p => (/^[ABC]$/.test(identity.statusKey(p)) ? identity.statusKey(p) : ''),
   statusShort: p => { const k = identity.statusKey(p); return /^[ABC]$/.test(k) ? `${k} Sınıfı` : k; },
   statusLong: p => { const k = identity.statusKey(p); return /^[ABC]$/.test(k) ? `${k} Sınıfı İş Güvenliği Uzmanı` : k === 'DSP' ? 'Diğer Sağlık Personeli (DSP)' : k; },
-  // Rol metninde zaten geçmiyorsa gösterilecek kısa belge sinyali.
   certTag(p) {
     const c = identity.statusShort(p); if (!c) return '';
     return identity.role(p).toLocaleUpperCase('tr-TR').includes(c.toLocaleUpperCase('tr-TR')) ? '' : c;
@@ -2272,7 +2114,6 @@ const host = (() => {
   const fallbackViewport = window.innerHeight;
   const floating = new Set();
   let raf = 0, lastHeight = 0;
-  // Kendi iframe dokümanımızda html/body boşlukları sıfırlanır (Dokümanlar embed'iyle aynı).
   if (framed) {
     try {
       const de = document.documentElement, body = document.body;
@@ -2295,13 +2136,10 @@ const host = (() => {
         const style = doc.createElement('style');
         style.id = styleId;
         style.textContent =
-          // Satır/yükseklik normalizasyonu: Hostinger tasarım satırları (grid-template-rows) ve alt satıra
-          // yerleşim, genişlik düzeltmesinden sonra iframe'in üstünde boş alan bırakmasın.
           `[${A}="section"],[${A}="desktop-layout"],[${A}="layout"]{min-height:0!important;height:auto!important}`
           + `[${A}="desktop-layout"],[${A}="layout"]{grid-template-rows:auto!important;grid-auto-rows:auto!important;row-gap:0!important;align-content:start!important;align-items:start!important}`
           + `[${A}="desktop-layout"]>[${A}],[${A}="layout"]>[${A}]{grid-row:1/2!important;align-self:start!important}`
           + `[${A}="element"],[${A}="wrapper"]{margin-top:0!important;margin-bottom:0!important;top:auto!important;bottom:auto!important;height:auto!important;min-height:0!important}`
-          // iframe'in tarayıcı varsayılan kenarlığı (2px inset) masaüstünde içeriğin iki yanında dikey çizgi olarak görünüyordu.
           + `iframe[${A}="frame"]{border:0!important}`
           + `@media (max-width:920px){[${A}]{box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:none!important;margin-left:0!important;margin-right:0!important;padding-left:0!important;padding-right:0!important}`
           + `[${A}="layout"],[${A}="desktop-layout"]{grid-template-columns:minmax(0,1fr)!important;column-gap:0!important}`
@@ -2309,7 +2147,6 @@ const host = (() => {
           + `iframe[${A}="frame"]{display:block!important;border:0!important}}`
           + `@media (min-width:921px){[${A}="section"]{overflow:visible!important}`
           + `[${A}="desktop-layout"]{box-sizing:border-box!important;width:min(${CONFIG.hostWidthDesktopMax}px,calc(100vw - 32px))!important;max-width:none!important;margin-left:auto!important;margin-right:auto!important;padding-left:0!important;padding-right:0!important;grid-template-columns:minmax(0,1fr)!important}`
-          // Hostinger elemanları 12 kolonluk grid'e grid-area ile yerleşir; tek kolona indirilen grid'de örtük kolona düşmesinler.
           + `[${A}="desktop-layout"]>[${A}],[${A}="layout"]>[${A}]{grid-column:1/-1!important;justify-self:stretch!important}`
           + `[${A}="desktop-layout"] [${A}="wrapper"],[${A}="desktop-layout"] [${A}="layout"],[${A}="desktop-layout"] [${A}="element"],iframe[${A}="frame"]{box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:none!important;margin-left:0!important;margin-right:0!important;padding-left:0!important;padding-right:0!important}}`;
         doc.head.appendChild(style);
@@ -2335,8 +2172,6 @@ const host = (() => {
     try { if (/^https?:/.test(location.href)) return new URL(location.href); } catch {}
     return new URL(CONFIG.siteUrl);
   }
-  // Modal açıkken sayfa kaydırması kilitlenir (mobilde arka plan kaymaz, dialog yerinden oynamaz).
-  // iOS Safari'de yalnız overflow:hidden yetmediği için body sabitlenir; kapanınca konum aynen geri gelir.
   let locked = null;
   function lock(on) {
     const w = win || window;
@@ -2345,8 +2180,6 @@ const host = (() => {
       if (on && !locked) {
         locked = { y: w.scrollY, html: d.documentElement.getAttribute('style'), body: b.getAttribute('style') };
         d.documentElement.style.setProperty('overflow', 'hidden');
-        // height:auto — Hostinger html,body{height:100%} kullanır; sabitlenen body görünen alan yüksekliğinde kalıp
-        // top:-scrollY kadar yukarı kaydığı için altı kırpılıyor, dialog açıkken ekranın altı beyaz görünüyordu.
         Object.assign(b.style, { position: 'fixed', top: -locked.y + 'px', left: '0', right: '0', width: '100%', height: 'auto', minHeight: '100%', maxHeight: 'none', overflow: 'hidden' });
       } else if (!on && locked) {
         const l = locked; locked = null;
@@ -2369,14 +2202,10 @@ const host = (() => {
     const r = frameRect();
     return r && win ? r.top + win.scrollY + inner : inner;
   }
-  // Üst dokümanda iframe'in üstünü örten sabit alan (Professional nav) — dialoglar bunun altına yerleşir.
   let cover = () => 0;
-  // İframe dokümanı koordinatlarında görünen alan. Çerçevesiz kullanımda null (CSS yeterli).
   function visible() {
     if (!framed || !win) return null;
     const r = frameRect(); if (!r) return null;
-    // Görünen alan görsel viewport'tan hesaplanır: iOS'ta alt araç çubuğu ve klavye bu alanın dışındadır
-    // (innerHeight bunları içerir → dialog ekranın altına taşar). Klavye açıkken offsetTop da hesaba katılır.
     const vv = win.visualViewport, vTop = vv ? vv.offsetTop : 0, vH = vv ? vv.height : win.innerHeight;
     const edge = Math.max(0, r.top, cover(), vTop);
     const bottom = Math.min(vTop + vH, r.bottom);
@@ -2389,7 +2218,6 @@ const host = (() => {
     if (!box) { ['top', 'bottom', 'maxHeight', 'marginTop', 'height'].forEach(k => { el.style[k] = ''; }); return; }
     if (el.dataset.place === 'toast') { el.style.bottom = 'auto'; el.style.top = (box.top + box.height - el.offsetHeight - 16) + 'px'; return; }
     el.style.bottom = 'auto'; el.style.marginTop = '0';
-    // Tam ekran görüntüleyici (mobil) görünen alanın tamamını kaplar.
     if (el.dataset.place === 'full' && window.matchMedia('(max-width:640px)').matches) { el.style.maxHeight = el.style.height = box.height + 'px'; el.style.top = box.top + 'px'; return; }
     el.style.maxHeight = Math.max(220, box.height - 24) + 'px';
     const h = el.getBoundingClientRect().height;
@@ -2408,7 +2236,6 @@ const host = (() => {
     } catch {}
     root.style.setProperty('--ka-available', Math.max(240, viewport - Math.max(0, top) - footer) + 'px');
   }
-  // Yalnızca doğal root yüksekliği ölçülür; viewport'tan türetilmez (geri besleme döngüsü olmaz).
   function sync() {
     available();
     if (framed) {
@@ -2422,8 +2249,6 @@ const host = (() => {
     floating.forEach(place);
   }
   function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; sync(); }); }
-  // Dialog açıkken iframe görünen alanın altına kadar uzatılır: içerik kısa olduğunda (yükleniyor, boş liste)
-  // mobil alt sayfa iframe'in altında kesilip altında site footer'ı görünmez. Kapanınca doğal yüksekliğe döner.
   function reach(on) {
     if (!framed || !win) return;
     if (!on) { if (root.style.minHeight) { root.style.minHeight = ''; sync(); } return; }
@@ -2495,7 +2320,6 @@ const session = (() => {
     api.known = true;
     if (!changed) return;
     api.revision++;
-    // Önbellek yalnızca aynı kullanıcı kimliğiyle eşleşirse kullanılır; başka kullanıcıya sızmaz.
     api.me = next ? cachedMe(next) : null;
     if (!next) removeKey(local, ME_KEY);
     emit('user');
@@ -2529,10 +2353,6 @@ const session = (() => {
     removeKey(local, ME_KEY);
     apply(null);
   }
-  // Yazma işlemlerinden önce sunucu tarafında doğrulanmış kullanıcı.
-  // Yalnızca sunucu oturumu açıkça reddederse (401/403, oturum yok/geçersiz) çıkış yapılmış sayılır.
-  // Geçici ağ/Supabase hatasında yerel oturum korunur; yazma isteğini RLS yine JWT ile doğrular
-  // ve isteğin kendi hatası kullanıcıya gösterilir (arayüz "çıkış yapılmış" görünmez).
   const REJECTED = ['session_not_found', 'bad_jwt', 'user_not_found', 'refresh_token_not_found', 'refresh_token_already_used', 'session_expired', 'user_banned', 'no_authorization'];
   const rejected = e => !e || e.name === 'AuthSessionMissingError' || e.status === 401 || e.status === 403 || REJECTED.includes(e.code);
   async function verified() {
@@ -2547,7 +2367,6 @@ const session = (() => {
     return api.user;
   }
   function patchMe(fields) { if (!api.user) return; api.me = { ...(api.me || { id: api.user.id }), ...fields }; writeJSON(local, ME_KEY, api.me); emit('me'); }
-  // Kayıt / kod doğrulama gibi akışlarda Supabase'in döndürdüğü kullanıcı hemen uygulanır (olay beklenmez).
   const adopt = user => { if (user?.id) apply(user); };
   Object.assign(api, { on: fn => listeners.add(fn), start, fail, signIn, signOut, verified, patchMe, adopt, refreshMe: () => api.user && refreshMe(api.user.id, api.revision) });
   return api;
@@ -2611,7 +2430,6 @@ const dialogs = {
     d.showModal();
     host.float(d, true);
     shellHooks.modal(true);
-    // iOS/Android: kilitle birlikte araç çubukları yer değiştirebilir; yerleşim oturunca tekrar hesaplanır.
     requestAnimationFrame(() => host.place(d)); setTimeout(() => host.place(d), 350);
   },
   close(d) { if (!d.open || d.dataset.locked === 'true') return false; d.close(); return true; },
@@ -2744,7 +2562,6 @@ const support = (() => {
     if (busy) return;
     const category = $('input[name="category"]:checked', cats)?.value, message = clean(msg.value);
     if (!category) { setErr('Bir konu seç.'); return; }
-    // support_requests.message: 10–5000 karakter (DB kısıtı); daha kısa mesaj DB'de reddediliyordu.
     if (message.length < 10) { setErr(message ? 'Açıklama en az 10 karakter olmalı.' : 'Kısa bir açıklama yaz.'); msg.focus(); return; }
     if (message.length > 5000) { setErr('Açıklama en fazla 5000 karakter olabilir.'); msg.focus(); return; }
     if (!session.user || session.user.id !== uid) { dialogs.close(d); return; }
@@ -2752,7 +2569,6 @@ const support = (() => {
     let error = null;
     try {
       await dbReady;
-      // RLS: user_id = auth.uid() → sunucuda doğrulanmış (token yenilenmiş) oturumun kullanıcısı gönderilir.
       const user = await session.verified();
       if (!user || user.id !== uid) error = { code: 'no_session', message: 'Oturum doğrulanamadı' };
       else ({ error } = await db.from('support_requests').insert({ user_id: user.id, category, message }));
@@ -2829,7 +2645,6 @@ const authUI = (() => {
       $n('[data-me-link="services"]').href = p + '#hizmetler';
     }
     if (kind === 'user') {
-      // Çıkış (başka sekmede de olabilir): hesaba bağlı adımlar kapanır.
       if (!session.user && dlg.open && [...ONBOARD_PANES, 'newpass'].includes(pane)) { busy = false; dialogs.lock(dlg, false); dialogs.close(dlg); }
       if (session.user) setTimeout(maybeOnboard, 0);
     }
@@ -2865,7 +2680,6 @@ const authUI = (() => {
     if (!dlg.open) dialogs.open(dlg, 'sheet');
     focusFirst();
   }
-  // Oturum hazır olunca kullanıcıyı döndürür; yoksa giriş açar ve başarıdan sonra resume çalışır.
   async function require(resume) {
     await session.ready;
     if (session.user) return session.user;
@@ -2874,7 +2688,6 @@ const authUI = (() => {
     return null;
   }
 
-  // Tüm istekler aynı kalıpla: kilit, bekleme etiketi, hata eşleme. Başarıda fn'nin sonucu döner.
   async function run(name, label, fn, messages = {}) {
     if (busy) return undefined;
     const form = forms[name], btn = $('.ku-submit, #kaLoginSubmit', form);
@@ -2949,17 +2762,14 @@ const authUI = (() => {
           : pw !== su.pw2.value ? 'Şifreler birbiriyle eşleşmiyor.'
             : !su.terms.checked ? 'Devam etmek için Kullanım Koşulları\'nı kabul ettiğini ve KVKK Aydınlatma Metni hakkında bilgilendirildiğini onaylamalısın.' : '';
     if (problem) { paneError('signup', problem); return; }
-    // Profil satırını mevcut on_auth_user_created → handle_new_user() trigger'ı oluşturur; web profiles'a insert/upsert yapmaz.
     const data = await run('signup', 'Hesap oluşturuluyor...', async () => {
       const { data, error } = await db.auth.signUp({ email: mail, password: pw, options: { data: { full_name: name } } });
       if (error) throw error;
-      // E-posta doğrulaması açıkken kayıtlı adres için Supabase kimliksiz sahte kullanıcı döndürür.
       if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) throw Object.assign(new Error('exists'), { code: 'user_already_exists' });
       return data || {};
     }, { user_already_exists: () => { exists.hidden = false; return 'Bu e-posta ile zaten bir hesap var. Giriş yapabilir veya şifreni sıfırlayabilirsin.'; }, email_exists: () => { exists.hidden = false; return 'Bu e-posta ile zaten bir hesap var. Giriş yapabilir veya şifreni sıfırlayabilirsin.'; } });
     if (!data) return;
     flowEmail = mail;
-    // "Uzmanlarda Görün" tercihi onboarding sırasında mevcut profile UPDATE ile yazılır (signUp'a eklenmez).
     writeJSON(local, ONBOARD_KEY, { uid: data.user?.id || null, email: mail, name, discoverable: su.discoverable.checked, t: Date.now() });
     legal.remember(mail, data.user?.id || null);
     su.pw.value = su.pw2.value = '';
@@ -2994,7 +2804,6 @@ const authUI = (() => {
     if (busy) return;
     const mail = normEmail($('#kaForgotEmail').value);
     if (!EMAIL_RE.test(mail)) { paneError('forgot', 'Geçerli bir e-posta adresi gir.'); return; }
-    // redirectTo verilmez: mevcut Reset Password şablonu ve Site URL aynen kullanılır.
     const ok = await run('forgot', 'Gönderiliyor...', async () => { const { error } = await db.auth.resetPasswordForEmail(mail); if (error) throw error; return true; });
     if (!ok) return;
     flowEmail = mail; $('#kaResetCode').value = '';
@@ -3091,7 +2900,6 @@ const authUI = (() => {
     const o = onboarding, v = { profession: clean(ob.prof.value), certificate_class: ob.cert.value, city: ob.city.value, experience_range: o.withExp ? ob.exp.value : '' };
     if (!v.profession) { paneError('onboard', 'Meslek / unvanını yaz.'); return; }
     if (!v.city) { paneError('onboard', 'Şehrini seç.'); return; }
-    // Yalnız dolu ve değişen alanlar yazılır; mevcut değer asla boşaltılmaz. title/specialties/job_role yazılmaz.
     const payload = {};
     if (v.profession !== clean(o.orig.profession)) payload.profession = v.profession;
     if (v.certificate_class && v.certificate_class !== o.cert) payload.certificate_class = v.certificate_class;
@@ -3122,8 +2930,6 @@ const authUI = (() => {
     o.discSaved = true;
     renderPhoto(); show('photo');
   });
-  // Onboarding 1. adım kaydedilmeden kapatılırsa bile kayıt formundaki "Uzmanlarda Görün" tercihi uygulanır
-  // (yalnız is_discoverable, yalnız mevcut profile UPDATE; değer zaten aynıysa istek yok).
   async function applyDiscoverability(o) {
     if (!o || o.discSaved || o.discoverable === null || o.orig.is_discoverable === o.discoverable) return;
     o.discSaved = true;
@@ -3162,7 +2968,6 @@ const authUI = (() => {
     $$('input[type="password"]', dlg).forEach(i => { i.value = ''; });
     if (!busy) pending = null;
     clearTimeout(resendTimer);
-    // Onboarding penceresi kapatıldıysa (fotoğraf adımına geçiş hariç) tekrar zorlanmaz.
     if (onboarding && !handoff && ONBOARD_PANES.includes(pane)) { const o = onboarding; endOnboarding(); applyDiscoverability(o); }
   });
 
@@ -3269,9 +3074,6 @@ const notifications = (() => {
     if (!db?.channel || st.channel) return;
     try { if (st.removing) await st.removing; await settle(); } catch {}
     if (st.uid !== uid || st.channel) return;
-    // Katılma (phx_join) kullanıcı JWT'siyle gitmeli: Realtime filtreyi katılan rolün kolon yetkisiyle doğrular.
-    // Token henüz Realtime'a aktarılmadan katılınca istek anon rolüyle gidiyor ve sunucu
-    // "invalid column for filter recipient_id" ile reddediyordu (kanal ancak yeniden denemede açılıyordu).
     try { await db.realtime?.setAuth?.(); } catch {}
     const token = db.realtime?.accessTokenValue;
     if (st.uid !== uid || st.channel) return;
@@ -3332,14 +3134,12 @@ const notifications = (() => {
     } catch { st.items.forEach((i, k) => { i.read_at = prev[k]; }); toast('Bildirimler güncellenemedi. Tekrar dene.'); refreshCount(); renderList(); }
     finally { allBtns().forEach(b => { b.disabled = false; }); }
   }
-  // İlgili yoruma kaydır + kısa vurgu (yorum ilk sayfada yüklüyse; değilse yalnız Post Detay açılır).
   function focusComment(pid, cid) {
     let tries = 0;
     const tick = () => {
       if (router.current !== 'work' || ++tries > 40) return;
       const el = $(`[data-view="work"] [data-post-id="${CSS.escape(String(pid))}"] [data-comment-id="${CSS.escape(String(cid))}"]`);
       if (!el) { setTimeout(tick, 150); return; }
-      // Görünüm geçişi / kaydırma kilidi kendi konumunu geri yükleyebilir: yorum görünene kadar birkaç kez doğrulanır.
       const place = () => { const y = host.shellTop() + (el.getBoundingClientRect().top - root.getBoundingClientRect().top) - 140; host.scrollTo(Math.max(0, y)); };
       const inView = () => { const r = host.frame?.getBoundingClientRect?.(), top = (r ? r.top : 0) + el.getBoundingClientRect().top, vh = (host.win || window).innerHeight; return top > 0 && top < vh - 40; };
       place();
@@ -3485,7 +3285,6 @@ const avatarManager = (() => {
     lock(true); setBusy(save, true, 'Kaydediliyor…'); showError('');
     try {
       const blob = await encode();
-      // Tek kanonik dosya; upsert eskisinin üzerine yazar. Yükleme başarısızsa mevcut dosya/URL korunur.
       const up = await db.storage.from(CONFIG.avatarBucket).upload(`${user.id}/avatar.webp`, blob, { upsert: true, contentType: blob.type, cacheControl: '31536000' });
       if (up.error) throw up.error;
       const url = versioned(user.id);
@@ -3511,7 +3310,6 @@ const avatarManager = (() => {
     } catch { showError('Fotoğraf kaldırılamadı. Tekrar dene.'); }
     finally { setBusy(removeBtn, false); lock(false); }
   }
-  // Professional içindeki tüm avatarlar (feed, yorumlar, paneller, nav) anında güncellenir.
   function apply(uid, url) {
     session.patchMe({ avatar_url: url || '' });
     shellHooks.avatarChanged(uid, url || '');
@@ -3522,7 +3320,6 @@ const avatarManager = (() => {
     }));
   }
 
-  // Sürükle / sıkıştırma olmadan tek parmakla konumlandırma; tekerlek ve kaydırıcı ile yakınlaştırma.
   const toCanvas = e => { const r = canvas.getBoundingClientRect(); return [(e.clientX - r.left) * (S / r.width), (e.clientY - r.top) * (S / r.height)]; };
   canvas.addEventListener('pointerdown', e => { if (!src) return; canvas.setPointerCapture(e.pointerId); const [x, y] = toCanvas(e); drag = { x, y, ox, oy }; });
   canvas.addEventListener('pointermove', e => { if (!drag) return; const [x, y] = toCanvas(e); ox = drag.ox + (x - drag.x); oy = drag.oy + (y - drag.y); draw(); });
@@ -3557,7 +3354,6 @@ const postData = (() => {
     if (withCommentCount) q = q.eq('comments.status', 'active');
     return q;
   };
-  // Embedded yorum sayısı desteklenmiyorsa (ilişki/adlandırma farkı) akış yorum sayısız çalışmaya devam eder.
   async function run(build) {
     let res = await build(query());
     if (res.error && withCommentCount && /PGRST2\d\d|42703|relationship|could not find/i.test(`${res.error.code} ${res.error.message}`)) {
@@ -3565,7 +3361,6 @@ const postData = (() => {
     }
     return res;
   }
-  // Gömülü yorum sayısı yalnız bir ipucudur: dizi boşsa veya sayı yoksa "bilinmiyor" (null) kabul edilir, 0 değil.
   const commentCount = c => { const n = Array.isArray(c) && c.length ? Number(c[0]?.count) : NaN; return Number.isFinite(n) ? Math.max(0, n) : null; };
   const normalize = row => ({ ...row, liked: false, like_count: Math.max(0, Number(row.likes?.[0]?.count) || 0), comment_count: commentCount(row.comments) });
   async function fetch(id) {
@@ -3595,7 +3390,6 @@ const mediaViewer = (() => {
   };
 })();
 
-// detail=true: Çalışma Detay görünümü — metin kırpılmaz, kart kendine bağlanmaz, tam tarih gösterilir.
 function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
   const f = { posts: [], liking: new Set(), likeStamp: 0, ownerBusy: false };
   const find = id => f.posts.find(p => p.id === id);
@@ -3616,13 +3410,11 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       ? `<span class="kw-likes-static" data-like-static${p.like_count > 0 ? '' : ' hidden'}>${ICONS.heart}<span data-like-count>${likeNum(p)}</span><span class="k-sr"> beğeni</span></span>`
       : `<button type="button" class="kw-act kw-act-like${p.liked ? ' is-liked' : ''}" data-post-action="like" aria-pressed="${p.liked}"${f.liking.has(p.id) ? ' disabled' : ''}><span class="kw-act-ico">${ICONS.heart}</span><span class="kw-like-num" data-like-count>${likeNum(p)}</span><span class="kw-act-label">Beğen</span></button>`;
     const cc = p.comment_count > 0 ? String(p.comment_count) : '';
-    // Akış kartında yorum sayısı Çalışma Detay'a götürür (tüm yorumlar orada); "Yorum Yap" hızlı yanıt alanını açar.
     const comment = !detail && cc
       ? `<span class="kw-act-pair"><a class="kw-act kw-act-count" href="${esc(urls.work(p.id))}" target="_top" data-comment-count-link aria-label="${cc} yorumun tümünü gör"><span class="kw-act-ico">${ICONS.comment}</span><span class="kw-like-num" data-comment-count>${cc}</span></a><button type="button" class="kw-act kw-act-comment" data-post-action="comment" aria-expanded="${!!threads.isOpen(p.id)}"><span class="kw-act-label">Yorum Yap</span></button></span>`
       : `<button type="button" class="kw-act kw-act-comment" data-post-action="comment" aria-expanded="${!!threads.isOpen(p.id)}"><span class="kw-act-ico">${ICONS.comment}</span><span class="kw-like-num" data-comment-count>${cc}</span><span class="kw-act-label">Yorum Yap</span></button>`;
     return `${like}${comment}<button type="button" class="kw-act kw-act-share" data-post-action="share"><span class="kw-act-ico">${ICONS.send}</span><span class="kw-act-label">Paylaş</span></button>`;
   }
-  // Uzun Çalışma kartta kırpılır; tamamı Çalışma Detay'da okunur.
   const isLong = text => text.length > 520 || (text.match(/\n/g) || []).length > 9;
   function card(p, eager = false) {
     const a = p.author || {}, image = storageUrl(p.image_path), profile = urls.profile(p.user_id), work = urls.work(p.id), line = identity.feedLine(a);
@@ -3648,7 +3440,6 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
     $$('[data-like-count]', c).forEach(n => { n.textContent = likeNum(p); });
     const st = $('[data-like-static]', c); if (st) st.hidden = p.like_count <= 0;
   }
-  // Kimlik değişince yalnızca sahiplik bölgeleri yenilenir; görseller ve metin yeniden kurulmaz.
   function patchOwnership(p) {
     const c = cardOf(p.id); if (!c) return;
     $('[data-owner-slot]', c).innerHTML = ownerMenu(p);
@@ -3692,7 +3483,6 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
     } finally { f.liking.delete(id); patchLike(p); }
     if (ok) emitPost('liked', { id, liked: p.liked, like_count: p.like_count });
   }
-  // Girişten sonra: zaten beğenilmişse geri almaz, yalnızca beğenilmemişse beğenir.
   async function likeAfterLogin(id) {
     const p = find(id), uid = session.user?.id;
     if (!p || !uid) return;
@@ -3770,21 +3560,18 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       ]);
       (pr.data || []).forEach(p => profiles.set(p.id, p));
       const uid = session.user?.id, counts = new Map(), mine = new Set();
-      // Kimlikler tipten bağımsız eşlenir (uuid/bigint; JSON'da sayı ya da metin gelebilir).
       (lk.data || []).forEach(l => { const k = String(l.comment_id); counts.set(k, (counts.get(k) || 0) + 1); if (uid && l.user_id === uid) mine.add(k); });
       rows.forEach(r => { r.like_count = counts.get(String(r.id)) || 0; r.liked = mine.has(String(r.id)); });
       return rows;
     }
     const author = c => profiles.get(c.user_id) || {};
 
-    // Yorum beğenisi: "Beğen / Beğenildi · N beğeni". Kendi yorumunda aksiyon yok, yalnız sayı (varsa).
     function likeActions(c, own) {
       const n = c.like_count > 0 ? `<span class="cm-lcount">${c.like_count} beğeni</span>` : '';
       if (own) return n ? `<span class="cm-sep" aria-hidden="true">·</span>${n}` : '';
       return `<span class="cm-sep" aria-hidden="true">·</span><button type="button" class="cm-like${c.liked ? ' is-liked' : ''}" data-comment-like="${esc(c.id)}" aria-pressed="${!!c.liked}"${liking.has(String(c.id)) ? ' disabled' : ''}>${c.liked ? 'Beğenildi' : 'Beğen'}</button>`
         + (n ? `<span class="cm-sep" aria-hidden="true">·</span>${n}` : '');
     }
-    // Kendi yorumu: Düzenle/Sil (değişmedi). Başkasının yorumu (misafir dahil): Bildir.
     function commentMenu(c, own) {
       const items = own
         ? `<button type="button" data-comment-act="edit" data-id="${esc(c.id)}">Düzenle</button><button type="button" class="is-danger" data-comment-act="delete" data-id="${esc(c.id)}">Sil</button>`
@@ -3803,7 +3590,6 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
         + `<div class="cm-bubble"><div class="cm-meta"><a class="cm-name" href="${esc(urls.profile(c.user_id))}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a>${role ? `<span class="cm-role">${esc(role)}</span>` : ''}</div>${body}</div>`
         + `<div class="cm-foot"><time datetime="${esc(c.created_at)}">${esc(relativeTime(c.created_at))}${c.updated_at && c.updated_at !== c.created_at ? ' · düzenlendi' : ''}</time>${like}${menu}</div></li>`;
     }
-    // Akış önizlemesi: kutu/balon yok; küçük avatar, tek satır kimlik + zaman, en fazla 2 satır metin.
     function previewHTML(c, t) {
       const a = author(c), own = !!session.user && c.user_id === session.user.id, role = identity.role(a), prof = urls.profile(c.user_id);
       const editing = t.editing != null && String(t.editing) === String(c.id);
@@ -3842,8 +3628,6 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       const PREVIEW = 2;
       const hasItems = t.items.length > 0;
       if (!hasItems && !t.open) { box.hidden = true; box.innerHTML = ''; return; }
-      // Toplam, gönderinin yorum sayısından da okunur; liste tamamlanmadıysa (sunucuda daha eski yorum var)
-      // buton sayı bilinmese de gösterilir — detaya her girişte liste tazelendiği için t.total sıfırdan başlar.
       const total = Math.max(t.total, t.items.length, p?.comment_count || 0);
       const rest = total - t.items.length;
       const moreBtn = !t.full && (rest > 0 || t.items.length > 0)
@@ -3868,7 +3652,6 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       if (bar) { bar.innerHTML = actions(p); patchLike(p); }
     }
     const newestFirst = q => q.eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false });
-    // Akış kartı için en güncel yorum (silme sonrası sıradaki yorum da buradan gelir).
     async function latest(id) {
       try {
         const { data, error } = await newestFirst(db.from('professional_post_comments').select(C_SELECT).eq('post_id', id)).limit(1);
@@ -3879,8 +3662,6 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       render(id);
     }
 
-    // Akış önizlemesi: sayfa başına tek toplu sorgu, gönderi başına yalnız en güncel yorum.
-    // Toplu sorgu limitine takılan gönderiler tek tek tamamlanır; gömülü sayı boşsa sayı ayrıca okunur.
     async function preview(posts) {
       const list = posts.filter(p => p.comment_count === null || p.comment_count > 0);
       if (!list.length) return;
@@ -3924,8 +3705,6 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       } catch (e) { t.error = true; console.warn('Yorumlar yüklenemedi:', e?.code || e?.message || e); toast('Yorumlar yüklenemedi. Tekrar dene.'); }
       finally { t.loading = false; render(id); }
     }
-    // Detay: yorumlar açık gelir ve liste HER ZAMAN sunucudan okunur (gömülü sayı ipucuna göre atlanmaz);
-    // fresh=true: detaya tekrar girişte liste tazelenir (taslak korunur). Klavye açılmasın diye odak verilmez.
     async function expand(id, fresh = false) {
       const t = get(id);
       if (fresh && !t.loading && !t.editing) { t.items = []; t.full = false; t.total = 0; t.error = false; }
@@ -3990,7 +3769,6 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       const was = c.liked; liking.add(String(cid)); c.liked = !was; c.like_count = Math.max(0, c.like_count + (was ? -1 : 1)); render(id);
       let ok = false;
       try {
-        // Satırın kendi kimliği gönderilir (DOM'daki dataset daima metindir). Bildirimi DB tetikleyicisi üretir/kaldırır.
         const { error } = await (was ? db.from('professional_comment_likes').delete().eq('comment_id', c.id).eq('user_id', user.id)
           : db.from('professional_comment_likes').insert({ comment_id: c.id, user_id: user.id }));
         if (error && !was && String(error.code) === '23505') { await hydrate([c]); ok = true; }   // zaten beğenilmiş (başka sekme): sunucu durumu esas
@@ -4000,7 +3778,6 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       finally { liking.delete(String(cid)); render(id); }
       if (ok) emitPost('commentLiked', { cid: String(c.id), liked: c.liked, like_count: c.like_count, source: threadsId });
     }
-    // Girişten sonra: sunucuda zaten beğenilmişse geri almaz; yalnız beğenilmemişse beğenir.
     async function likeAfterLogin(id, cid) {
       const t = get(id), c = t.items.find(x => String(x.id) === String(cid)), uid = session.user?.id;
       if (!c || !uid || c.user_id === uid) { render(id); return; }
@@ -4010,7 +3787,6 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       if (data) { if (!c.liked) { c.liked = true; } render(id); return; }
       c.liked = false; await like(id, cid);
     }
-    // Aynı yorum başka bir akışta (Akış ↔ Post Detay) beğenilince burada da güncellenir.
     const threadsId = newId();
     function syncCommentLike(x) {
       if (!x || x.source === threadsId || liking.has(x.cid)) return;
@@ -4022,7 +3798,6 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       if (session.user && all.length) { try { await hydrate(all); } catch {} }
       map.forEach((_, id) => render(id));
     }
-    // Yeniden çizim sonrası mevcut önizlemeleri yerine koy.
     function rerenderAll() { map.forEach((_, id) => render(id)); }
     function reset() { map.clear(); }
     const avatarChanged = (uid, url) => { const p = profiles.get(uid); if (p) p.avatar_url = url; };
@@ -4062,8 +3837,6 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       if (t.closest('[data-comment-login]')) { requireUser(() => threads.render(pid)); return; }
       return;
     }
-    // Kartın boş alanına tıklama Çalışma Detay'a götürür (etkileşimli öğeler ve metin seçimi hariç).
-    // Uygulama içinde /calisma-detay route'u açılır (reload yok); yönlendirme yoksa tam sayfa.
     if (card0 && !detail && !t.closest('a,button,input,textarea,select,label,form,.k-popover,[data-owner-slot]')) {
       if (String(window.getSelection?.() || '').trim()) return;
       if (router.enabled) router.activate('work', { mode: 'push', params: { id: pid } });
@@ -4085,7 +3858,6 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       case 'report': reports.open({ type: 'post', id: p.id, ownerId: p.user_id }); break;
     }
   });
-  // Görsel doğal oranında gösterilir; alan sınırına küçültülen uzun görsellerde "Tamamını gör" belirir.
   scope.addEventListener('load', e => {
     const img = e.target; if (img?.tagName !== 'IMG' || !img.classList.contains('kw-post-image')) return;
     const box = img.closest('.kw-media'); if (!box) return;
@@ -4332,7 +4104,6 @@ const composer = (() => {
         const img = await compressImage(file);
         newPath = `${userId}/${postId}-${newId()}.${img.ext}`;
         if (session.user?.id !== userId) throw new Error('Oturum değişti.');
-        // Yol her yüklemede benzersiz: uzun tarayıcı/CDN önbelleği güvenli, tekrar indirme olmaz.
         const { error } = await db.storage.from(CONFIG.imageBucket).upload(newPath, img.blob, { contentType: img.type, upsert: false, cacheControl: '31536000' });
         if (error) throw error;
         uploaded = true;
@@ -4356,7 +4127,6 @@ const composer = (() => {
     if (!committed) return;
     dialogs.close(d.root);
     toast(current ? 'Post güncellendi.' : 'Post yayınlandı.');
-    // Kaydedilen Çalışma açık akışlara yerinde yansıtılır; liste yeniden yüklenmez, scroll kaymaz.
     let fresh = null, failed = false;
     try { fresh = await postData.fetch(savedId); } catch { failed = true; }
     emitPost('saved', { id: savedId, fresh, previous: current, failed });
@@ -4376,7 +4146,6 @@ const composer = (() => {
     s.file = picked; if (s.previewUrl) URL.revokeObjectURL(s.previewUrl);
     s.previewUrl = URL.createObjectURL(picked.blob); showPreview(s.previewUrl);
   });
-  // Önizleme bile açılamıyorsa (bozuk dosya / bu tarayıcıda HEIC) seçim hemen geri alınır; yayınlarken şaşırtmaz.
   $('img', d.preview).addEventListener('error', () => {
     if (!s.file || $('img', d.preview).getAttribute('src') !== s.previewUrl) return;
     const heic = !!s.file.info?.heic;
@@ -4423,8 +4192,6 @@ function createWorksView() {
       + (clean(p.city) ? `<span class="kw-person-meta">${placeMeta(p.city)}</span>` : '')
       + `</span>${ICONS.chev}</a>`;
   }
-  // Sağ sütun hizmetleri: kategori (kırmızı vurgu) → hizmet → bölge/şekil → hizmeti veren profesyonel.
-  // "Öne Çıkan" (taç) yalnız veride güvenilir bir işaret varsa gösterilir (bkz. serviceFeatured); bugün DB'de yok.
   function offerRow(v) {
     const p = v.provider, meta = compact([clean(v.service_region), SERVICE_MODES[v.service_mode]]), featured = serviceFeatured(v);
     return `<a class="kw-offer${featured ? ' is-featured' : ''}" href="${esc(urls.service(v.id))}" target="_top">`
@@ -4494,8 +4261,6 @@ function createWorksView() {
     })());
     if (services) jobs.push((async () => {
       try {
-        // En yeni aktif hizmetler; sağlayıcı başına önce bir hizmet (tek kişi alanı doldurmasın), eksik kalırsa
-        // sıradaki en yenilerle tamamlanır. Öne Çıkan işareti olan hizmet (ileride) en üste alınır.
         const { data, error } = await db.from('professional_services').select('id,user_id,title,service_region,service_mode,created_at,category:professional_service_categories(name),provider:profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class)').eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(CONFIG.railServices * 8);
         if (error) throw error; s.services = pickRailServices(data || [], CONFIG.railServices); s.servicesFailed = false;
       } catch { s.services = []; s.servicesFailed = true; }
@@ -4544,9 +4309,7 @@ function createWorksView() {
       if (s.queuedReset) { s.queuedReset = false; loadPosts({ reset: true }); }
     }
   }
-  // Düzenleyiciden gelen kayıt: yeni Çalışma başa eklenir, düzenlenen yerinde güncellenir.
   postBus.add((kind, x) => {
-    // Post silinince "son Post paylaşan uzmanlar" yeniden hesaplanır (önceki aktif Post esas alınır).
     if (kind === 'removed' && s.mounted) { loadRails({ experts: true, services: false }); return; }
     if (kind !== 'saved' || !s.mounted) return;
     if (x.failed) { loadPosts({ reset: true }); return; }
@@ -4601,7 +4364,6 @@ function createWorksView() {
       pill.hidden = !show;
       host.float(pill, show);
     }
-    // Yatay konum akış sütununa hizalanır (dikey konum host.place ile görünen alanın üstü).
     pill._placeX = () => { const r = $('.kw-feed', el).getBoundingClientRect(); if (r.width) pill.style.left = Math.round(r.left + r.width / 2) + 'px'; };
     function onInsert(payload) {
       const r = payload?.new; if (!r || r.id == null) return;
@@ -4623,9 +4385,6 @@ function createWorksView() {
     }
     function startPoll() { if (!poll) poll = setInterval(() => { if (!joined && !document.hidden) catchUp(); }, 60000); }
     function stopPoll() { clearInterval(poll); poll = 0; }
-    // removeChannel son kanalda soketi de kapatır; soket "disconnecting" iken (≈100 ms) gelen subscribe
-    // realtime-js'te bağlantı açmaz ve kanal sessizce bekler. Hızlı Akış → detay → geri dönüşünde
-    // yeni kanal, önceki kapanış bitince açılır; yine de bağlanamazsa bekçi soketi yeniden başlatır.
     let removing = null, starting = false, watchdog = 0;
     const settle = async () => { for (let i = 0; i < 40 && db.realtime?.isDisconnecting?.(); i++) await new Promise(r => setTimeout(r, 25)); };
     async function start() {
@@ -4686,7 +4445,6 @@ function createWorksView() {
     try { if (host.win && host.win !== window) host.win.addEventListener('online', () => catchUp()); } catch {}
     window.addEventListener('pagehide', e => { if (!e.persisted) stop(); });
     return {
-      // Görünüm değişimi: yalnız Çalışmalar açıkken tek kanal; dönüşte kaçırılanlar doğrulanır.
       onView(name) { if (name === 'works') { start(); catchUp(); } else stop(); render(); },
       afterLoad() { if (active()) { start(); catchUp(); } render(); },
       onUser() { render(); catchUp(); },
@@ -4695,7 +4453,6 @@ function createWorksView() {
   })();
   postBus.add(kind => { if (kind === 'saved' || kind === 'removed') newPosts.render(); });
 
-  // Composer daveti: İSG sahasına özgü sorular, sakin geçişle döner (reduced-motion'da sabit).
   const PROMPTS = ['Sahada bugün neyi düzelttin?', 'Son denetiminde ne dikkatini çekti?', 'Eğitimde ekip en çok neyi sordu?', 'Hangi riski, nasıl azalttın?', 'Bir ramak kala olayından ne öğrendin?', 'Bir iyileştirmenin öncesi ve sonrası…'];
   const promptEl = $('.kw-composer-desktop', el);
   let promptIdx = Math.floor(Math.random() * PROMPTS.length);
@@ -4707,7 +4464,6 @@ function createWorksView() {
       setTimeout(() => { promptIdx = (promptIdx + 1) % PROMPTS.length; promptEl.textContent = PROMPTS[promptIdx]; promptEl.classList.remove('is-out'); }, 260);
     }, 6500);
   }
-  // Professional vitrin: üç mesaj sakin geçişle döner; panel ana sayfaya taşınsa da düğüm referansı korunur.
   const brand = $('[data-brandcard]', el);
   if (brand && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const msgs = $$('.kw-brandcard-msgs span', brand), ticks = $$('.kw-brandcard-ticks i', brand);
@@ -4783,7 +4539,6 @@ function createCatalog(opt) {
   const filtered = () => Boolean(s.search || Object.values(s.filters).some(Boolean));
 
   function renderFilters() {
-    // DOM'daki (henüz debounce edilmemiş) değer öncelikli; boşsa state'teki değer korunur.
     const dom = readValues(ui.filters), merged = { ...s.filters };
     Object.entries(dom).forEach(([k, v]) => { if (v) merged[k] = v; });
     ui.filters.innerHTML = opt.filterMarkup('d-' + opt.name);
@@ -4877,7 +4632,6 @@ function createCatalog(opt) {
     });
   });
 
-  // Dar ekranda kısa arama ipucu (kesik placeholder yerine).
   const longHint = ui.search.placeholder, shortHint = ui.search.dataset.shortPlaceholder || longHint;
   const narrow = window.matchMedia('(max-width:640px)');
   const syncHint = () => { ui.search.placeholder = narrow.matches ? shortHint : longHint; };
@@ -4946,7 +4700,6 @@ function createExpertsView() {
   const filterMarkup = prefix => fields.map(([key, label, listId, placeholder]) => key === 'city' ? cityPicker.markup(`${prefix}-${key}`, key) : `<label class="kc-field" for="${prefix}-${key}"><span class="kc-flabel">${label}</span>${key === 'certificate_class'
     ? `<select id="${prefix}-${key}" data-filter="${key}"><option value="">Tüm belgeler / statüler</option>${STATUS_OPTIONS.map(([v]) => `<option value="${esc(v)}">${esc(/^[ABC]$/.test(v) ? v + ' Sınıfı' : v)}</option>`).join('')}</select>`
     : `<input id="${prefix}-${key}" data-filter="${key}" type="text" maxlength="120" list="${listId}" autocomplete="off" placeholder="${placeholder}">`}</label>`).join('');
-  // specialties text[]: tam dizi öğesi eşleşmesi (cs), büyük/küçük harf varyantlarıyla.
   const variants = v => [...new Set([v, v.toLocaleLowerCase('tr-TR'), v.toLocaleUpperCase('tr-TR'), v.toLocaleLowerCase('tr-TR').replace(/(^|\s)\S/g, x => x.toLocaleUpperCase('tr-TR'))])];
   const specialty = v => variants(v).map(x => 'specialties.cs.{' + quote(x) + '}');
   function conditions(search, f, cursor) {
@@ -4956,10 +4709,8 @@ function createExpertsView() {
     if (f.city) c.push(cityClause('city', f.city));
     if (f.certificate_class) {
       const k = f.certificate_class;
-      // İşyeri Hekimi / DSP: yalnız certificate_class değeriyle eşleşir.
       if (!/^[ABC]$/.test(k)) c.push('certificate_class.ilike.' + quote(k));
       else {
-        // Dolu certificate_class belirleyicidir; null/boşsa title'a bakılır (mobil profiller).
         const match = field => [field + '.ilike.' + quote(k), field + '.ilike.' + quote(k + ' Sınıfı'), field + '.ilike.' + quote(k + ' Sınıfı %')].join(',');
         c.push('or(' + match('certificate_class') + ',and(or(certificate_class.is.null,certificate_class.eq.""),or(' + match('title') + ')))');
       }
@@ -5006,7 +4757,6 @@ function createExpertsView() {
     pageOf: r => SORTS[sort].page(r),
     async fetchPage({ search, filters, page, signal }) {
       let res = await build(signal, search, filters, page);
-      // Sayaçlar opsiyoneldir; FK/count sorunu dizini gizlememeli.
       if (res.error && withCounts && ['PGRST200', 'PGRST201', 'PGRST123', '42703'].includes(res.error.code)) { withCounts = false; res = await build(signal, search, filters, page); }
       if (res.error) throw res.error;
       const data = res.data || [], rows = data.slice(0, CONFIG.catalogPageSize), last = rows[rows.length - 1];
@@ -5041,7 +4791,6 @@ function createExpertsView() {
     mount: snap => { sort = sortOf(snap?.sort); sortSel.value = sort; renderDiscovery(); return catalog.mount(snap); },
     onSession(kind) {
       if (kind === 'user') catalog.notice('');
-      // Kendi görünürlüğü değiştiyse (onboarding / Profili Düzenle) açık liste tazelenir.
       const d = session.user && session.me?.id === session.user.id ? session.me.is_discoverable : undefined;
       if (kind === 'me' && lastDisc !== undefined && d !== undefined && d !== null && d !== lastDisc && catalog.isMounted()) catalog.load();
       lastDisc = d;
@@ -5069,11 +4818,7 @@ function pickRailServices(rows, n) {
   for (const v of rest) { if (out.length >= n) break; if (!out.includes(v)) out.push(v); }
   return out;
 }
-// Meslek ve statü aynıysa (ör. "İşyeri Hekimi · İşyeri Hekimi") tek kez yazılır.
 const providerLine = (p, status) => [...new Set([identity.role(p), status].map(clean).filter(Boolean))].join(' · ');
-// Hizmet kartı kimliği (v4.23.0): kategori renkle değil, kontrollü çizgisel işaret + çok soluk teknik motifle ayrışır
-// (risk → matris, patlamadan korunma → Ex/altıgen, mühendislik → teknik çizim, ölçüm → dalga/skala, eğitim → satırlar,
-// sağlık → EKG, yangın/acil → yaylar, danışmanlık/denetim → belge). Tanınmayan kategori: kalkan + nokta ızgara. Veri değişmez.
 const SERVICE_KIND_ICONS = {
   risk: '<rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/><rect class="f" x="15.3" y="4" width="4.7" height="4.7" rx=".8"/>',
   atex: '<path d="M12 2.8 20 7.4v9.2L12 21.2 4 16.6V7.4z"/><text class="f" x="12" y="14.9" text-anchor="middle" font-size="7.4" font-weight="800" font-family="Inter,Arial,sans-serif">Ex</text>',
@@ -5093,8 +4838,6 @@ function serviceKind(v) {
   return (SERVICE_KINDS.find(([, re]) => re.test(t)) || ['general'])[0];
 }
 const serviceMark = kind => `<span class="ks-mark" aria-hidden="true"><svg viewBox="0 0 24 24">${SERVICE_KIND_ICONS[kind] || SERVICE_KIND_ICONS.general}</svg></span>`;
-// Hizmet kartı: Hizmet Bul ve Profil > Verdiği Hizmetler aynı tasarımı kullanır.
-// Hiyerarşi: hizmet → kısa açıklama → kategori · bölge · şekil → hizmeti sunan profesyonel → Hizmeti İncele.
 function serviceCard(v, { provider = true } = {}) {
   const p = provider ? v.provider : null;
   const line = p ? providerLine(p, identity.certTag(p)) : '';
@@ -5107,7 +4850,6 @@ function serviceCard(v, { provider = true } = {}) {
     + `<div class="ks-facts">${facts}</div>`
     + `<div class="ks-foot">${p ? `<span class="ks-pro">${avatar(p, 'md')}<span class="ks-pro-copy"><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${line ? `<span>${esc(line)}</span>` : ''}</span></span>` : '<span></span>'}<span class="ks-cta">Hizmeti İncele <span aria-hidden="true">→</span></span></div></a>`;
 }
-// Hizmet kayıt olayları: katalog, profil ve detay aynı hizmeti anında günceller.
 const serviceBus = new Set();
 const emitService = (kind, payload) => serviceBus.forEach(fn => { try { fn(kind, payload); } catch (e) { console.error(e); } });
 const SERVICE_SELECT = 'id,user_id,title,category_id,description,service_region,service_mode,status,created_at,updated_at,category:professional_service_categories(id,name,slug),provider:profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company)';
@@ -5140,8 +4882,6 @@ function createServicesView() {
       if (search) { const p = quote(likePattern(search)); qy = qy.ilike('search_provider.full_name', likePattern(search)); clauses.push('or(title.ilike.' + p + ',description.ilike.' + p + ',service_region.ilike.' + p + ',search_provider.not.is.null)'); }
       if (filters.category) qy = qy.eq('category_id', filters.category);
       if (filters.mode) qy = qy.eq('service_mode', filters.mode);
-      // service_region serbest metindir ("Kocaeli, Sakarya" gibi birden çok il içerebilir): seçilen il metinde aranır.
-      // Hizmet Bölgesi V1.1: il seçildiğinde "Tüm Türkiye" hizmetleri de listelenir (her ile hizmet verir).
       if (filters.region) clauses.push(cityClause('service_region', filters.region, REGION_ALL));
       if (page) clauses.push(`or(created_at.lt.${quote(page.created_at)},and(created_at.eq.${quote(page.created_at)},id.lt.${quote(page.id)}))`);
       if (clauses.length) qy = qy.or('and(' + clauses.join(',') + ')');
@@ -5176,7 +4916,6 @@ function createServicesView() {
     } catch {}
   }
 
-  // Kategoriler sonuç sorgusunu bloklamaz; hazır olunca filtre seçenekleri doldurulur.
   function loadCategories() {
     if (st.categoriesReady) return Promise.resolve();
     st.categoriesPromise ||= (async () => {
@@ -5197,9 +4936,6 @@ function createServicesView() {
   }
   const formError = text => { ed.error.textContent = text; ed.error.hidden = !text; host.schedule(); };
   const setPublishDisabled = on => $$('[data-publish]', el).forEach(b => { b.disabled = on; });
-  // Hizmet Bölgesi V1.1: "Tüm Türkiye" + 81 il (service_region metin alanı, yeni DB alanı yok).
-  // Yazım farkı olan kayıt (istanbul) ilgili ile eşlenir; listede olmayan eski değer ("Kocaeli, Sakarya") "(mevcut)"
-  // seçeneği olarak korunur — düzenlenirken kaybolmaz.
   function fillRegion(current) {
     const cur = clean(current), low = v => v.toLocaleLowerCase('tr-TR');
     const canon = cur && [REGION_ALL, ...CITIES].find(c => low(c) === low(cur));
@@ -5207,7 +4943,6 @@ function createServicesView() {
     ed.region.innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('');
     ed.region.value = canon || cur;
   }
-  // Yeni hizmet veya (sahibi için) mevcut hizmeti düzenleme — Hizmet Detay V1 kuralları.
   function openEditor(user, service = null) {
     st.editingUser = user.id; st.edit = service;
     ed.form.reset();
@@ -5250,7 +4985,6 @@ function createServicesView() {
     } catch { toast('Hizmet formu açılamadı. Oturumunuzu ve bağlantınızı kontrol edip yeniden deneyin.'); }
     finally { st.publishing = false; }
   }
-  // Kaldırma: kullanıcı yalnız 'archived' yazar (hidden moderasyona ayrılmış) — Hizmet Detay V1 kuralı.
   async function remove(service) {
     if (!owns(service) || st.writing) return;
     if (!(await confirmBox({ title: 'Hizmeti kaldır', text: 'Bu hizmet aktif katalogdan kaldırılacak.', confirm: 'Kaldır' }))) return;
@@ -5313,7 +5047,6 @@ function createServicesView() {
   ed.root.addEventListener('close', () => { st.editingUser = null; st.edit = null; });
   el.addEventListener('click', e => { if (e.target?.nodeType === 1 && e.target.closest('[data-publish]')) publish(); });
 
-  // Katalogdaki kart yerinde güncellenir / kaldırılır; liste yeniden yüklenmez, scroll kaymaz.
   serviceBus.add(async (kind, x) => {
     if (!catalog.isMounted()) return;
     const rows = catalog.state.rows, i = rows.findIndex(r => r.id === x.id);
@@ -5367,7 +5100,6 @@ function createServiceView() {
   function render() {
     const v = s.service, p = v.provider || null;
     const phone = p?.show_phone_publicly ? s.phone : null, digits = phone ? phoneDigits(phone) : '';
-    // Hiyerarşi: kategori → hizmet adı → açıklama → kapsam (şekil · bölge · kategori) → sağlayıcı → Profili Gör → izin varsa Ara/WhatsApp.
     headBox.innerHTML = `<p class="ks-cat">${esc(v.category?.name || 'Hizmet')}</p>${serviceFeatured(v) ? featuredBadge() : ''}<h1 id="khTitle">${esc(v.title)}</h1>`
       + `<div class="kh-meta">${placeMeta(v.service_region)}${modeMeta(v.service_mode)}${v.created_at ? `<span class="k-meta-item">Yayın: ${esc(date(v.created_at))}</span>` : ''}</div>`;
     body.innerHTML = `<h2 class="kh-label">Hizmet hakkında</h2><div class="kh-desc">${linkify(v.description)}</div>`
@@ -5463,7 +5195,6 @@ function createServiceView() {
    ========================================================================= */
 const PROFILE_BASE = 'id,full_name,avatar_url,profession,title,certificate_class,city,current_company,about,social_links,linkedin_url,instagram_url,website_url,is_discoverable,show_phone_publicly';
 const CITIES = ['Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Amasya', 'Ankara', 'Antalya', 'Ardahan', 'Artvin', 'Aydın', 'Balıkesir', 'Bartın', 'Batman', 'Bayburt', 'Bilecik', 'Bingöl', 'Bitlis', 'Bolu', 'Burdur', 'Bursa', 'Çanakkale', 'Çankırı', 'Çorum', 'Denizli', 'Diyarbakır', 'Düzce', 'Edirne', 'Elazığ', 'Erzincan', 'Erzurum', 'Eskişehir', 'Gaziantep', 'Giresun', 'Gümüşhane', 'Hakkari', 'Hatay', 'Iğdır', 'Isparta', 'İstanbul', 'İzmir', 'Kahramanmaraş', 'Karabük', 'Karaman', 'Kars', 'Kastamonu', 'Kayseri', 'Kilis', 'Kırıkkale', 'Kırklareli', 'Kırşehir', 'Kocaeli', 'Konya', 'Kütahya', 'Malatya', 'Manisa', 'Mardin', 'Mersin', 'Muğla', 'Muş', 'Nevşehir', 'Niğde', 'Ordu', 'Osmaniye', 'Rize', 'Sakarya', 'Samsun', 'Şanlıurfa', 'Siirt', 'Sinop', 'Şırnak', 'Sivas', 'Tekirdağ', 'Tokat', 'Trabzon', 'Tunceli', 'Uşak', 'Van', 'Yalova', 'Yozgat', 'Zonguldak'];
-// Supabase'de izin verilen değerlerle birebir aynı (kayıt değeri = etiket).
 const EXPERIENCE_OPTIONS = ['1 yıldan az', '1-3 yıl', '3-5 yıl', '5-10 yıl', '10-15 yıl', '15+ yıl'];
 const SOCIAL_PLATFORMS = { linkedin: 'LinkedIn', instagram: 'Instagram', facebook: 'Facebook', youtube: 'YouTube', tiktok: 'TikTok', x: 'X', website: 'Web Sitesi' };
 const SOCIAL_ICONS = {
@@ -5484,11 +5215,9 @@ const PICONS = {
   download: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>',
   edit: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16Z"/><path d="m13.5 6.5 4 4"/></svg>',
   plus: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
-  // Profil V2: "Hizmet veriyor" (çanta) ve Hesap & Gizlilik (kalkan) işaretleri.
   serving: '<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5M3.5 12.5h17"/></svg>',
   shield: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3.5 5 6v5.5c0 4.2 2.9 7.7 7 9 4.1-1.3 7-4.8 7-9V6z"/><path d="m9.2 12 2 2 3.6-3.8"/></svg>'
 };
-// Sosyal bağlantı normalizasyonu: Profil V1 ile aynı kural (şemasız adres https ile tamamlanır).
 function linkUrl(v) {
   try {
     const s = clean(v); if (!s) return '';
@@ -5564,7 +5293,6 @@ const profilePdf = (() => {
     })).catch(e => { fonts = null; throw e; });
     return fonts;
   }
-  // Görseli (avatar/logo) CORS ile alır, kare kırpar; circle=true ise dairesel PNG üretir.
   async function imageData(src, size, circle) {
     if (!src) return null;
     try {
@@ -5601,7 +5329,6 @@ const profilePdf = (() => {
       doc.addFileToVFS('Inter-Bold.ttf', fontsB64[1]); doc.addFont('Inter-Bold.ttf', 'Inter', 'bold');
       F = 'Inter';
     }
-    // Yazı tipi yüklenemezse PDF yine üretilir; Türkçe karakterler Latin karşılıklarına indirgenir.
     const T = v => (fontsB64 ? String(v ?? '') : String(v ?? '').replace(/[çÇğĞıİöÖşŞüÜ’·…–→]/g, c => ASCII[c]));
     const RED = [227, 10, 23], INK = [20, 26, 36], TEXT = [38, 45, 56], MUTED = [93, 104, 120], FAINT = [135, 145, 160], LINE = [226, 229, 234], SOFT = [246, 247, 249];
     const W = 210, H = 297, M = 16, CW = W - M * 2;
@@ -5614,7 +5341,6 @@ const profilePdf = (() => {
     const lh = size => size * 0.3528 * 1.42;
     const p = data.profile, url = data.url;
 
-    // Üst şerit: marka + belge türü
     doc.setFillColor(...RED); doc.rect(0, 0, W, 2.2, 'F');
     if (logoImg) doc.addImage(logoImg, 'JPEG', M, 10, 10, 10, undefined, 'FAST');
     else { doc.setFillColor(...RED); doc.roundedRect(M, 10, 10, 10, 2, 2, 'F'); }
@@ -5623,7 +5349,6 @@ const profilePdf = (() => {
     font('bold', 7.5, FAINT); doc.text(T('KİŞİ KARTI'), W - M, 14.4, { align: 'right', charSpace: 0.6 });
     font('normal', 7.5, FAINT); doc.text(T(new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())), W - M, 18.6, { align: 'right' });
 
-    // Kimlik
     let y = 32;
     const AV = 34;
     doc.setFillColor(...SOFT); doc.circle(M + AV / 2, y + AV / 2, AV / 2, 'F');
@@ -5644,7 +5369,6 @@ const profilePdf = (() => {
     }
     y = Math.max(y + AV, iy) + 7;
 
-    // Bilgi kutuları
     const facts = [['Şehir', p.city], ['Mesleki Deneyim', experienceText(p.experience_range)], ['Çalıştığı Firma', p.current_company]].filter(f => clean(f[1]));
     if (facts.length) {
       const gap = 4, bw = (CW - gap * (facts.length - 1)) / facts.length;
@@ -5659,7 +5383,6 @@ const profilePdf = (() => {
       y += bh + 7;
     }
 
-    // İletişim ve bağlantılar
     const contacts = [];
     if (data.phone) contacts.push(['Telefon', phoneDisplay(data.phone), 'tel:+' + phoneDigits(data.phone)]);
     data.socials.forEach(s => contacts.push([SOCIAL_PLATFORMS[s.platform] || 'Bağlantı', s.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''), s.url]));
@@ -5675,8 +5398,6 @@ const profilePdf = (() => {
       y += Math.ceil(Math.min(contacts.length, 6) / 2) * 6.2 + 4;
     }
 
-    // Profil PDF V2: Postlar YOK. Hakkında + Verdiği Hizmetler (tam açıklama) akar; sığmazsa yeni sayfa açılır.
-    // Her sayfanın altında künye; QR bloğu son sayfada.
     const BOTTOM = H - 18, QRH = 32;
     const footer = () => {
       font('normal', 7, FAINT); doc.text(T('Kırmızı İSG Professional · isgcalisanplatformu.com'), M, H - 9);
@@ -5695,7 +5416,6 @@ const profilePdf = (() => {
       if (count != null) { font('normal', 8, FAINT); doc.text(T(`${count} hizmet`), W - M, y, { align: 'right' }); }
       y += 5.5;
     };
-    // Uzun metni satır satır basar, gerektiğinde sayfa değiştirir.
     const flow = (lines, size, x, color) => {
       for (const line of lines) { ensure(lh(size)); font('normal', size, color); doc.text(line, x, y); y += lh(size); }
     };
@@ -5720,7 +5440,6 @@ const profilePdf = (() => {
       });
     }
 
-    // QR + canlı profil (son sayfa)
     if (y + QRH + 6 > BOTTOM) newPage();
     const fy = Math.max(y + 4, BOTTOM - QRH - 2);
     doc.setFillColor(...SOFT); doc.roundedRect(M, fy, CW, QRH, 3, 3, 'F');
@@ -5755,8 +5474,6 @@ const profilePdf = (() => {
     d.body.append(a); a.click(); a.remove();
     setTimeout(() => { try { w.URL.revokeObjectURL(url); } catch {} }, 60000);
   }
-  // Mobilde kütüphane/yazı tipi yüklemesi sürerken dokunma etkileşimi zaman aşımına uğrayabilir;
-  // bu durumda indirme/paylaşım tarayıcıca engellenir → PDF hazır tutulur, ikinci dokunuşta teslim edilir.
   const needsTap = () => window.matchMedia('(pointer: coarse)').matches && navigator.userActivation && !navigator.userActivation.isActive;
   return { create, deliver, needsTap };
 })();
@@ -5859,7 +5576,6 @@ function createProfileView() {
   }
   function showServices() {
     setTab('hizmetler', true);
-    // Mobilde sekmeler kartın altında kalır: sekme çubuğu görünür alana getirilir (masaüstünde yan yana).
     const bar = $('.kp-tabs', el);
     if (bar && matchMedia('(max-width: 640px)').matches) bar.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
   }
@@ -5978,13 +5694,11 @@ function createProfileView() {
       if (rev !== s.rev) return;
       if (!a.error && Number.isInteger(a.count)) s.counts.posts = a.count;
       if (!b.error && Number.isInteger(b.count) && s.servicesState !== 'ready') s.counts.services = b.count;
-      // Profil V2: ziyaretçi, Postu olmayan ama aktif hizmeti olan profili açınca (adres sekme belirtmiyorsa) doğrudan hizmetleri görür.
       if (s.autoTab && !own() && s.tab === 'calismalar' && s.counts.posts === 0 && s.counts.services > 0) { s.autoTab = false; setTab('hizmetler'); return; }
       renderTabs();
     } catch {}
   }
 
-  // Hizmet düzenlendi/kaldırıldı/yayınlandı: açık profildeki "Verdiği Hizmetler" tazelenir.
   serviceBus.add(() => {
     if (!s.profile || s.servicesState === 'idle') return;
     s.servicesState = 'idle';
@@ -5995,7 +5709,6 @@ function createProfileView() {
   async function fetchProfile(id) {
     const run = () => db.from('profiles').select(PROFILE_BASE + (s.withExperience ? ',experience_range' : '')).eq('id', id).maybeSingle();
     let res = await run();
-    // experience_range kolonu yoksa profil yine açılır (alan gizlenir); başka bir sorgu kesintiye uğramaz.
     if (res.error && s.withExperience && /42703|PGRST204|experience_range/i.test(`${res.error.code} ${res.error.message}`)) { s.withExperience = false; res = await run(); }
     if (res.error) throw res.error;
     return res.data;
@@ -6085,7 +5798,6 @@ function createProfileView() {
     try {
       const user = await session.verified();
       if (!user || user.id !== ownerId) throw new Error('Profilini düzenlemek için tekrar giriş yap.');
-      // Gizli telefon yalnız sahibin düzenleme eylemiyle okunur (Profil V1 kuralı).
       const data = await readMyPhone(ownerId);
       if (!data) throw new Error('Telefon bilgisi alınamadı. Lütfen tekrar dene.');
       if (!own() || rev !== s.rev) return;
@@ -6126,7 +5838,6 @@ function createProfileView() {
       if (!v.phone) payload.phone = null;
       else { const d = phoneDigits(v.phone); if (!d) { formError('Telefon numarasını ülke koduyla birlikte geçerli biçimde gir. Örnek: +90 5xx xxx xx xx'); return; } payload.phone = '+' + d; }
     }
-    // is_discoverable / show_phone_publicly burada gönderilmez: Hesap & Gizlilik'te yönetilir, mevcut değerleri korunur.
     const entries = v.socials.filter(x => x.raw).map(x => ({ platform: x.platform, url: linkUrl(x.raw), original: x.original }));
     if (entries.some(x => !x.url)) { formError('Sosyal bağlantıları https:// ile başlayan geçerli adresler olarak gir.'); return; }
     const normalized = socialLinks({ social_links: entries });
@@ -6135,7 +5846,6 @@ function createProfileView() {
       for (const [platform, key] of [['linkedin', 'linkedin_url'], ['instagram', 'instagram_url'], ['website', 'website_url']]) payload[key] = payload.social_links.find(x => x.platform === platform)?.url || null;
     }
     if (!Object.keys(payload).length) { dialogs.close(ed.root); return; }
-    // title, specialties ve job_role bilinçli olarak gönderilmez; mevcut değerleri korunur.
     saving = true; session.writes++; dialogs.lock(ed.root, true); setBusy(ed.save, true, 'Kaydediliyor...'); formError('');
     let saved = null;
     try {
@@ -6156,7 +5866,6 @@ function createProfileView() {
     s.phone = await publicPhone(s.profile);
     dialogs.close(ed.root);
     renderCard(); setDocTitle();
-    // Ad/unvan değiştiyse profildeki Çalışma kartları da güncel kimlikle çizilir.
     F.posts.forEach(p => { if (p.user_id === s.id) p.author = { ...(p.author || {}), id: s.id, full_name: saved.full_name, profession: saved.profession, title: saved.title, certificate_class: saved.certificate_class, current_company: saved.current_company }; });
     renderPosts();
     if ('full_name' in payload) session.refreshMe();
@@ -6168,7 +5877,6 @@ function createProfileView() {
     const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
     if (t.closest('[data-pe-add-social]')) { const row = socialRow(); row.querySelector('input').focus(); host.place(ed.root); return; }
     const rm = t.closest('[data-pe-remove]'); if (rm) { rm.closest('.kpe-social')?.remove(); host.place(ed.root); return; }
-    // "Hesap & Gizlilik" bağlantısı: editör kapanır, sayfa geçişini kabuk yapar (kaydedilmemiş değişiklik gönderilmez).
     if (t.closest('a[data-view-link]') && !saving) dialogs.close(ed.root);
   });
 
@@ -6236,7 +5944,6 @@ function createProfileView() {
     name: 'profile', el, route,
     mount() { s.mounted = true; return Promise.resolve(); },
     onSession, snapshot: () => null, isMounted: () => s.mounted,
-    // Hesap & Gizlilik ayarı değişti: bu profil bir sonraki açılışta sunucudan yeniden okunur.
     invalidate(uid) { if (uid && s.id === uid) s.id = ''; },
     get id() { return s.id; }, get tab() { return s.tab; }
   };
@@ -6298,11 +6005,9 @@ function createWorkView() {
   }
   async function route(params = {}) {
     const id = clean(params.id);
-    // Aynı Çalışmaya geri dönüş: kart yeniden kurulmaz, yorumlar tazelenir (başka görünümde yazılan yorumlar da gelir).
     if (id && id === s.id && (F.posts.length || s.rev)) { setDocTitle(); if (F.posts.length) feed.threads.expand(id, true); return; }
     await load(id);
   }
-  // Düzenleyiciden gelen kayıt: açık detay yerinde güncellenir.
   postBus.add((kind, x) => {
     if (kind !== 'saved' || !x.previous || x.id !== s.id || !F.posts.length) return;
     if (x.failed) { load(s.id); return; }
@@ -6448,10 +6153,8 @@ const router = (() => {
     return Object.keys(CONFIG.routes).find(k => CONFIG.routes[k] === p) || CONFIG.legacyRoutes[p] || null;
   };
   const isLegacy = pathname => !!CONFIG.legacyRoutes[cleanPath(pathname)];
-  // Profil: /profil?id={user_id}#calismalar|#hizmetler. Scroll konumu profil kimliği başına tutulur.
   const tabOf = hash => (/^#?hizmetler$/i.test(hash || '') ? 'hizmetler' : /^#?calismalar$/i.test(hash || '') ? 'calismalar' : '');
   const paramsOf = url => ({ id: url.searchParams.get('id') || '', tab: tabOf(url.hash) });
-  // Kimlik parametreli görünümler: Profil (/profil?id=) ve Çalışma Detay (/calisma-detay?id=).
   const PARAM_VIEWS = ['profile', 'work', 'service'];
   const keyOf = (name, p = {}) => (PARAM_VIEWS.includes(name) ? `${name}:${p.id || ''}` : name);
   const pathOf = (name, p = {}) => (PARAM_VIEWS.includes(name) ? `${CONFIG.routes[name]}${p.id ? `?id=${encodeURIComponent(p.id)}` : ''}${name === 'profile' && p.tab ? '#' + p.tab : ''}` : CONFIG.routes[name]);
@@ -6512,35 +6215,27 @@ const router = (() => {
     current = name; params = nextParams;
     show(name);
     if (mode === 'push' && enabled) {
-      // Görüntüleyicinin geçmiş kaydı üstündeyken (ör. "Çalışmayı Gör") o kayıt yeni route ile değiştirilir.
       try { const h = host.win.history; if (h.state?.kisgModal) { modalBack = null; h.replaceState(stateOf(), '', pathOf(name, params)); } else h.pushState(stateOf(), '', pathOf(name, params)); }
       catch { navigateTop(CONFIG.siteUrl + pathOf(name, params)); return; }
     }
     if (enabled) { try { host.doc.title = titleFor(name); } catch {} }
     host.sync();
-    // Daha önce ziyaret edildiyse kaldığı yer; değilse sekme çubuğu görünür kalacak şekilde.
     const key = keyOf(name, params);
     const from = prevKey && scroll[prevKey] != null ? scroll[prevKey] : host.scrollY();
     const target = scroll[key] != null ? scroll[key] : Math.min(from, host.shellTop());
     host.scrollTo(target);
   }
-  // Profil sekmesi değişimi yeni geçmiş kaydı açmaz; mevcut kaydın hash'i ve durumu güncellenir.
   function replaceHash(tab) {
     if (current !== 'profile') return;
     params = { ...params, tab: tabOf(tab) };
     if (!enabled) return;
     try { const w = host.win, u = new URL(w.location.href); u.hash = params.tab; w.history.replaceState({ ...(w.history.state || {}), ...stateOf() }, '', u.href); } catch {}
   }
-  // Capture fazında: yalnızca bu dokümana ait shell kayıtlarını işler, diğer dinleyicilere sızdırmaz
-  // (Hostinger'ın kendi router'ı varsa aynı sayfa içindeki sekme geçişine karışmasın).
-  // Tam ekran görüntüleyici için geçmiş kaydı: cihazın geri tuşu sayfadan çıkmak yerine görüntüleyiciyi kapatır.
   let modalBack = null;
   function pushModal(close) {
     if (!enabled || modalBack) return;
     try { host.win.history.pushState({ ...stateOf(), kisgModal: true }, '', host.win.location.href); modalBack = close; } catch {}
   }
-  // Görüntüleyici başka bir dialog (ör. giriş) açıldığı için kapanırsa, kendi geçmiş kaydını geri alırken
-  // oluşan popstate yalnızca yutulur; aksi halde router aynı görünümü "yeniden etkinleştirip" yeni dialogu kapatıyordu.
   let selfPop = false;
   function popModal() {
     if (!modalBack) return;
@@ -6561,7 +6256,6 @@ const router = (() => {
     const initial = fromPath || (VIEWS[root.dataset.initialView] ? root.dataset.initialView : CONFIG.defaultView);
     if (PARAM_VIEWS.includes(initial)) params = paramsFor(initial, paramsOf(url));
     enabled = Boolean(CONFIG.historyRouting && host.canRoute && fromPath && CONFIG.siteOrigins.includes(url.origin) && !shellVersion.stale);
-    // Eski /calisma: yönlendirme açıksa adres yerinde '/' olur (sorgu/hash korunur); değilse üst sayfa '/' ile değiştirilir.
     const legacy = fromPath && isLegacy(url.pathname);
     if (legacy && !enabled && CONFIG.siteOrigins.includes(url.origin)) { try { (host.win || window.top).location.replace(CONFIG.siteUrl + '/' + url.search + url.hash); } catch {} }
     if (enabled) {
@@ -6592,7 +6286,6 @@ const router = (() => {
       host.scrollTo(target);
     }
   }
-  // Uygulama içi bağlantı: /profil?id=… veya /calisma-detay?id=… (aynı origin, geçerli kimlik) → {view, params}
   function linkTarget(href) {
     try {
       const u = new URL(href, CONFIG.siteUrl), view = viewFromPath(u.pathname);
@@ -6619,7 +6312,6 @@ const snapshots = {
   save() {
     if (!router.current) return;
     const data = { v: 2, t: Date.now(), scroll: router.scrollMap(), views: {} };
-    // Henüz açılmamış (bekleyen) görünüm durumları da taşınır: /calisma → profil → detay → geri → geri zincirinde Akış kaybolmaz.
     Object.entries(VIEWS).forEach(([k, v]) => { const s = v.isMounted() ? v.snapshot() : router.pendingSnapshot(k); if (s) data.views[k] = s; });
     writeJSON(sessionStore, this.KEY, data);
   },
@@ -6657,7 +6349,6 @@ onShellClick(e => {
     if (link.dataset.then === 'publish' && link.dataset.viewLink === 'services') VIEWS.services.publish();
     return;
   }
-  // Profil ve Çalışma Detay bağlantıları (kart, yorum, hesap menüsü, görüntüleyici) shell içinde açılır (reload yok).
   const anchor = t.closest('a[href]');
   const target = anchor && router.enabled && !e.defaultPrevented && e.button === 0 && !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) ? router.linkTarget(anchor.href) : null;
   if (target) {
@@ -6666,7 +6357,6 @@ onShellClick(e => {
     router.activate(target.view, { mode: 'push', params: target.params });
     return;
   }
-  // Uygulamadan çıkan linkler (detay, profil, ekosistem): dönüşte liste ve konum geri gelsin.
   const out = t.closest('a[target="_top"][href]');
   if (out) snapshots.save();
 });
@@ -6677,7 +6367,6 @@ function onEscape(e) {
   if (open) { closePopovers(); open.previousElementSibling?.focus(); }
 }
 root.addEventListener('keydown', onEscape);
-// Kırık avatar: baş harflere dön. Kırık içerik görseli: gizle.
 function onImgError(e) {
   const img = e.target; if (img?.tagName !== 'IMG') return;
   const av = img.closest('.k-avatar');
@@ -6717,7 +6406,6 @@ const appChrome = (() => {
     if (compact === on) return;
     compact = on;
     navEl.classList.toggle('is-compact', on);
-    // Yalnız nav menüleri kapanır; kart/yorum menüleri kaydırırken açık kalır (mobilde "···" → Düzenle).
     if (on) navEl.querySelectorAll('.k-popover:not([hidden])').forEach(p => { p.hidden = true; p.previousElementSibling?.setAttribute('aria-expanded', 'false'); });
   }
   function headerBottom() {
@@ -6825,7 +6513,6 @@ const appChrome = (() => {
       header = pd.querySelector('header');
       buildSides(pd);
       if ('ResizeObserver' in host.win) new host.win.ResizeObserver(() => layoutSides()).observe(pd.body);
-      // iframe Hostinger tarafından DOM'dan çıkarılırsa (SPA geçişi) nav'ı üst dokümanın kendi realm'i temizler.
       try {
         watchdog = host.win.setInterval(new host.win.Function(
           "var n=document.getElementById('kisg-pro-nav');if(!n)return;" +
@@ -6875,7 +6562,6 @@ const appChrome = (() => {
   return { init, schedule, measure, layoutSides };
 })();
 root.addEventListener('load', () => host.schedule(), true);
-// Hostinger blokları geç render edilebilir: genişlik işaretlemesi yüklemeden sonra bir kez daha (idempotent).
 try { (host.win || window).addEventListener('load', () => { host.installHostWidth(); host.schedule(); }); } catch {}
 setTimeout(() => { host.installHostWidth(); host.schedule(); }, 1200);
 window.addEventListener('pagehide', () => snapshots.save());
