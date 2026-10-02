@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.25.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.25.1
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app.html yapıştırılır (npm run build ile
@@ -8,6 +8,8 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.25.1: Yayın dosyası (dist/, npm run build) daha çok küçültüldü: yorumlar ve satır başı girintileri de çıkarılır
+ (~436 bin karakter; v4.25.0 yayın dosyası ~480 bin). Uygulama davranışı v4.25.0 ile aynı.
 v4.25.0: Profil V2: Profili Düzenle'den görünürlük/telefon anahtarları kaldırıldı (değerler korunur, gönderilmez; yönetim
  /hesaplar-ve-gizlilik'te); sahibin kartında Hesap & Gizlilik bağlantısı. Aktif hizmeti olan profilde nötr "Hizmet veriyor ·
  N aktif hizmet" işareti (Verdiği Hizmetler'i açar), sekme sayacı belirginleşir; Postu olmayan profili ziyaretçi hizmetlerde açar.
@@ -1766,7 +1768,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.25.0',
+  version: '4.25.1',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
