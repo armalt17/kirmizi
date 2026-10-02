@@ -38,7 +38,8 @@ const SUITES = [
   { name: 'legal-v1-web', file: 'legal-v1-web.test.mjs', note: '/yasal + App Shell' },
   { name: 'service-region-v11', file: 'service-region-v11.test.mjs' },
   { name: 'links-v1', file: 'links-v1.test.mjs' },
-  { name: 'small-fixes-pack', file: 'small-fixes-pack.test.mjs', note: 'ad normalizasyonu, placeholder, yasal bağlantılar' }
+  { name: 'small-fixes-pack', file: 'small-fixes-pack.test.mjs', note: 'ad normalizasyonu, placeholder, yasal bağlantılar' },
+  { name: 'v425-pack', file: 'v425-pack.test.mjs', note: 'Profil V2, Hizmet Bul V3, Uzmanlar V2, Akış vitrin' }
 ];
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx > -1 ? process.argv[onlyIdx + 1] : null;

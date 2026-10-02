@@ -248,24 +248,30 @@ for (const vp of VPS.slice(0, +(process.env.NVP || 2))) {
     await navClick(page, 'experts'); await settle(page, 1000);
     check(await hasExpert(f, 'Açık Kayıt'), `${N} görünür (açık): Uzmanlar listesinde (açık liste tazelendi)`);
     check(!(await f.isVisible('[data-view="experts"] [data-discovery]').catch(() => false)), `${N} görünür (açık): "Profilin burada görünmüyor" uyarısı yok`);
-    // E. Profil düzenleyicideki anahtar aynı alanı okur/yazar
+    // E. v4.25.0: görünürlük Profili Düzenle'de değil, Hesap & Gizlilik'te yönetilir (aynı profiles.is_discoverable alanı)
     const uid = db.profiles.find(p => p.full_name === 'Açık Kayıt').id;
+    const ACCOUNT = 'https://isgcalisanplatformu.com/hesaplar-ve-gizlilik';
+    const accountReady = g => g.waitForSelector('[data-view="account"] [data-account-main]:not([hidden])', { timeout: 8000 });
+    const toggleDisc = async g => { await g.click('.kg-switch:has(#kgDiscoverable)'); await g.waitForSelector('[data-account-note="is_discoverable"][data-tone="ok"]'); };
     await page.goto(`https://isgcalisanplatformu.com/profil?id=${uid}`); await settle(page, 1200);
     let g = frameOf(page); await g.waitForSelector('#kpName');
     await g.evaluate(() => document.querySelector('.kp-card [data-profile-action="edit"]').click()); await g.waitForSelector('#kaProfileDialog[open]');
-    check(await g.isChecked('#kaPeDiscoverable'), `${N} profil anahtarı: kayıttaki tercih (açık) okunuyor`);
+    check(await g.locator('#kaPeDiscoverable, #kaPePhonePublic').count() === 0 && await g.isVisible('#kaProfileDialog .kpe-privacy a[data-view-link="account"]'), `${N} profil düzenle: görünürlük anahtarı yok, Hesap & Gizlilik bağlantısı var`);
     writes.length = 0;
-    await g.evaluate(() => { document.getElementById('kaPeDiscoverable').click(); document.getElementById('kaProfileForm').requestSubmit(); }); await settle(page, 1000);
-    check(discPatches().length === 1 && discPatches()[0].body.is_discoverable === false && db.profiles.find(p => p.id === uid).is_discoverable === false, `${N} profil anahtarı: kapatınca is_discoverable=false yazıldı`);
+    await g.fill('#kaPe_profession', 'İSG Uzmanı'); await g.evaluate(() => document.getElementById('kaProfileForm').requestSubmit()); await settle(page, 1000);
+    check(discPatches().length === 0 && writes.some(w => w.table === 'profiles' && w.body?.profession === 'İSG Uzmanı') && db.profiles.find(p => p.id === uid).is_discoverable === true, `${N} profil düzenle: kayıt is_discoverable göndermez, mevcut değer korunur`);
+    await page.goto(ACCOUNT); await settle(page, 1000); g = frameOf(page); await accountReady(g);
+    check(await g.isChecked('#kgDiscoverable'), `${N} Hesap & Gizlilik: kayıttaki tercih (açık) okunuyor`);
+    writes.length = 0;
+    await toggleDisc(g);
+    check(discPatches().length === 1 && discPatches()[0].body.is_discoverable === false && db.profiles.find(p => p.id === uid).is_discoverable === false, `${N} Hesap & Gizlilik: kapatınca is_discoverable=false yazıldı`);
     await navClick(page, 'experts'); await settle(page, 1200);
-    check(!(await hasExpert(g, 'Açık Kayıt')), `${N} profil anahtarı: kapalıyken Uzmanlar listesinde yok`);
-    await page.goto(`https://isgcalisanplatformu.com/profil?id=${uid}`); await settle(page, 1200);
-    g = frameOf(page); await g.waitForSelector('#kpName');
-    await g.evaluate(() => document.querySelector('.kp-card [data-profile-action="edit"]').click()); await g.waitForSelector('#kaProfileDialog[open]');
-    check(!(await g.isChecked('#kaPeDiscoverable')), `${N} profil anahtarı: kapalı değer okunuyor`);
-    await g.evaluate(() => { document.getElementById('kaPeDiscoverable').click(); document.getElementById('kaProfileForm').requestSubmit(); }); await settle(page, 1000);
+    check(!(await hasExpert(g, 'Açık Kayıt')), `${N} Hesap & Gizlilik: kapalıyken Uzmanlar listesinde yok`);
+    await page.goto(ACCOUNT); await settle(page, 1000); g = frameOf(page); await accountReady(g);
+    check(!(await g.isChecked('#kgDiscoverable')), `${N} Hesap & Gizlilik: kapalı değer okunuyor`);
+    await toggleDisc(g);
     await navClick(page, 'experts'); await settle(page, 1200);
-    check(db.profiles.find(p => p.id === uid).is_discoverable === true && await hasExpert(g, 'Açık Kayıt'), `${N} profil anahtarı: yeniden açınca Uzmanlar listesinde`);
+    check(db.profiles.find(p => p.id === uid).is_discoverable === true && await hasExpert(g, 'Açık Kayıt'), `${N} Hesap & Gizlilik: yeniden açınca Uzmanlar listesinde`);
     await ctx.close();
   }
   // B. Kapalı kayıt, trigger varsayılanı true → false yazılır, Uzmanlar'da görünmez

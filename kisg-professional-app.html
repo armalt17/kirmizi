@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.24.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.25.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,14 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.25.0: Profil V2: Profili Düzenle'den görünürlük/telefon anahtarları kaldırıldı (değerler korunur, gönderilmez; yönetim
+ /hesaplar-ve-gizlilik'te); sahibin kartında Hesap & Gizlilik bağlantısı. Aktif hizmeti olan profilde nötr "Hizmet veriyor ·
+ N aktif hizmet" işareti (Verdiği Hizmetler'i açar), sekme sayacı belirginleşir; Postu olmayan profili ziyaretçi hizmetlerde açar.
+ Hizmet Bul V3 (yalnız görünüm): arama daha belirgin, hizmet şekli/şehir filtreleri aynı bileşen dilinde; mobilde kahraman
+ alanı yeniden kurgulandı (baret zemin üzerinde), arama/çipler kompakt, sonuç sayısı ikincil. Uzmanlar V2: sıralama
+ Son Aktif (last_post_at) / Yeni Katılanlar (created_at) / A–Z (full_name), her biri imleçli; datalist üçgeni gizlendi;
+ arama tek çerçeve; aktif hizmeti olan kartta "Hizmet veriyor". Akış: vitrin kartı dönüşümlü üç mesajlı sakin marka alanı;
+ "Son Post · …" satırı kaldırıldı. DB değişikliği yok.
 v4.24.0: Küçük düzeltmeler: Akış composer placeholder'ları saha/denetim/eğitim/iyileştirme odaklı yeni 6 metin (dönüşüm aynı);
  Post penceresi alt notu yenilendi. Hesap & Gizlilik'e sade "Yasal & Politikalar" (/yasal bölümleri). İçeriğin altına küçük
  yasal satır (© · /yasal bağlantıları · Destek → mevcut Destek & Geri Bildirim formu). Ad Soyad: tamamı BÜYÜK/küçük yazılmış
@@ -191,7 +199,7 @@ Acil kapatma: CONFIG.historyRouting=false.
   <div class="k-page kw-layout">
     <aside class="kw-left" aria-labelledby="kwExpertsTitle">
       <div class="kw-side">
-        <div class="kw-brandcard" aria-hidden="true"><img src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/erferf.png" alt="" loading="lazy" decoding="async"><p class="kw-brandcard-kicker">Kırmızı İSG Professional</p><p class="kw-brandcard-title">Sahada yapılanın görünür olduğu ağ.</p></div>
+        <div class="kw-brandcard" aria-hidden="true" data-brandcard><span class="kw-brandcard-glow"></span><p class="kw-brandcard-kicker">Kırmızı İSG Professional</p><p class="kw-brandcard-msgs"><span class="is-on">Sahadaki deneyimini paylaş.</span><span>İSG profesyonellerini keşfet.</span><span>Hizmetini doğru kişilere ulaştır.</span></p><span class="kw-brandcard-ticks"><i class="is-on"></i><i></i><i></i></span></div>
         <div class="kw-side-head"><h2 id="kwExpertsTitle">Uzmanlar</h2><a class="kw-side-all" href="https://isgcalisanplatformu.com/uzmanlar" target="_top" data-view-link="experts">Tümünü gör <span aria-hidden="true">→</span></a></div>
         <div class="kw-people" data-side-experts aria-live="polite">
           <div class="k-sk-person" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>
@@ -212,7 +220,6 @@ Acil kapatma: CONFIG.historyRouting=false.
           <button type="button" class="k-btn k-btn-primary kw-composer-cta" data-composer aria-label="Yeni Post"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Paylaş</span></button>
         </div>
         <button type="button" class="kw-newposts" data-new-posts data-place="pill" hidden aria-live="polite"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 19V5m0 0-6 6m6-6 6 6"/></svg><span data-new-posts-label>Yeni Post</span></button>
-        <p class="kw-live" data-live hidden><span class="kw-live-dot" aria-hidden="true"></span><span data-live-text></span></p>
         <div class="kw-notice" data-notice role="alert" hidden></div>
         <div class="kw-list" data-list aria-live="polite">
           <div class="kw-post kw-sk" aria-hidden="true"><div class="kw-sk-head"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i><i class="k-sk k-sk-media"></i></div>
@@ -245,7 +252,7 @@ Acil kapatma: CONFIG.historyRouting=false.
       <button type="button" class="kc-filter-btn" data-open-filters aria-haspopup="dialog"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/></svg><span data-filter-label>Filtrele</span></button>
       <div class="kc-filters kc-filters-inline" data-desktop-filters></div>
     </div>
-    <div class="kc-results-head"><p data-status role="status" aria-live="polite">Uzmanlar yükleniyor…</p><button type="button" class="k-text-button" data-reset hidden>Filtreleri temizle</button></div>
+    <div class="kc-results-head"><p data-status role="status" aria-live="polite">Uzmanlar yükleniyor…</p><div class="ke-head-tools"><button type="button" class="k-text-button" data-reset hidden>Filtreleri temizle</button><label class="ke-sort"><span>Sırala</span><select data-sort aria-label="Uzmanları sırala"><option value="active">Son Aktif</option><option value="new">Yeni Katılanlar</option><option value="az">A–Z</option></select></label></div></div>
     <div class="kc-results ke-grid" data-results aria-busy="true"></div>
     <aside class="ke-discovery" data-discovery hidden aria-labelledby="keDiscoveryTitle">
       <p><strong id="keDiscoveryTitle">Profilin burada görünmüyor.</strong> Meslektaşların seni Uzmanlar'da bulabilsin.</p>
@@ -670,11 +677,7 @@ Acil kapatma: CONFIG.historyRouting=false.
         <div class="kpe-wide"><label class="k-label" for="kaPe_about">Hakkında</label><textarea class="k-input k-textarea" id="kaPe_about" maxlength="5000" rows="5" placeholder="Uzmanlık alanların, çalıştığın sektörler, yaklaşımın…"></textarea></div>
       </div>
       <fieldset class="kpe-set"><legend>Sosyal bağlantılar</legend><div class="kpe-socials" data-pe-socials></div><button type="button" class="k-btn" data-pe-add-social>+ Bağlantı ekle</button></fieldset>
-      <fieldset class="kpe-set"><legend>Görünürlük</legend>
-        <label class="kpe-check"><input type="checkbox" id="kaPeDiscoverable">Uzmanlar'da görünür ol</label>
-        <label class="kpe-check"><input type="checkbox" id="kaPePhonePublic">Telefonumu profilimde göster</label>
-        <p class="k-hint">Telefon ve WhatsApp bağlantısı yalnız bu seçenek açıkken herkese gösterilir.</p>
-      </fieldset>
+      <p class="k-hint kpe-privacy">Uzmanlar'da görünürlük ve telefonunun profilinde gösterilmesi <a href="https://isgcalisanplatformu.com/hesaplar-ve-gizlilik" target="_top" data-view-link="account">Hesap &amp; Gizlilik</a> sayfasından yönetilir.</p>
       <p id="kaPeError" class="k-form-error" role="alert" hidden></p>
     </div>
     <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button type="submit" id="kaPeSave" class="k-btn k-btn-primary">Değişiklikleri Kaydet</button></footer>
@@ -805,15 +808,12 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kw-tool{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 14px;border:0;border-radius:var(--r-pill);background:transparent;color:var(--red-text);font-size:14px;font-weight:650;transition:background var(--t-fast),color var(--t-fast)}
 #kisgApp .kw-tool svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 #kisgApp .kw-composer-cta{height:44px;padding:0 20px}
-#kisgApp .kw-live{display:flex;align-items:center;gap:8px;padding:10px var(--pad);border-bottom:1px solid var(--line-soft);color:var(--muted);font-size:12.5px;font-weight:550}
 /* Yeni Çalışmalar göstergesi: görünen alanın üstünde, akış sütununa hizalı küçük koyu hap */
 #kisgApp .kw-newposts{position:fixed;top:76px;left:50%;z-index:60;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px 0 12px;border:0;border-radius:var(--r-pill);background:var(--ink);color:#fff;font-size:13.5px;font-weight:700;letter-spacing:-.005em;white-space:nowrap;box-shadow:0 10px 24px -10px rgba(20,26,36,.45),0 0 0 1px rgba(255,255,255,.06) inset;transform:translateX(-50%);animation:k-newposts .28s var(--ease)}
 #kisgApp .kw-newposts::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--red);box-shadow:0 0 0 3px rgba(227,10,23,.22)}
 #kisgApp .kw-newposts svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 #kisgApp .kw-newposts:active{transform:translateX(-50%) scale(.97)}
 @keyframes k-newposts{from{opacity:0;transform:translate(-50%,-8px)}}
-#kisgApp .kw-live-dot{position:relative;flex:none;width:7px;height:7px;border-radius:50%;background:var(--red)}
-#kisgApp .kw-live-dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid var(--red);opacity:0;animation:k-ring 1.2s ease-out .4s 2}
 #kisgApp .kw-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px var(--pad);border-bottom:1px solid var(--line-soft);font-size:14px}
 #kisgApp .kw-list{display:block;min-width:0}
 
@@ -1339,6 +1339,26 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kp-act-main{grid-column:1/-1}
 #kisgApp .kp-hint{padding:10px 12px;border-radius:12px;background:var(--surface-2);color:var(--muted);font-size:13px;line-height:1.5}
 #kisgApp .kp-hint .k-text-button{padding:0;font-size:13px}
+/* Profil V2: "Hizmet veriyor" — nötr, organik işaret (ücretli/öne çıkarma rozeti gibi değil) */
+#kisgApp .kp-serving{margin-top:10px}
+#kisgApp .kp-serving-btn{display:inline-flex;align-items:center;gap:7px;min-height:30px;padding:4px 12px 4px 9px;border:1px solid var(--line);border-radius:var(--r-pill);background:#fff;color:var(--ink);font:inherit;font-size:13px;font-weight:650;cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast)}
+#kisgApp .kp-serving-btn svg{flex:none;width:16px;height:16px;fill:none;stroke:var(--red);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .kp-serving-btn small{color:var(--muted);font-size:12.5px;font-weight:550}
+#kisgApp .kp-serving-btn small::before{content:"·";margin-right:6px;color:var(--faint)}
+#kisgApp .kp-serving-btn:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+/* Sahibin Hesap & Gizlilik erişimi: kart içinde sakin bir satır */
+#kisgApp .kp-account{display:flex;align-items:center;gap:12px;margin-top:-4px;padding:10px 12px;border-radius:12px;background:var(--surface-2);color:var(--text);text-decoration:none;transition:background var(--t-fast)}
+#kisgApp .kp-account>svg{flex:none;width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .kp-account>span:not(.kp-account-go){display:flex;flex-direction:column;flex:1;min-width:0}
+#kisgApp .kp-account b{color:var(--ink);font-size:13.5px;font-weight:650}
+#kisgApp .kp-account small{color:var(--muted);font-size:12.5px;line-height:1.4}
+#kisgApp .kp-account-go{color:var(--faint);font-size:15px}
+#kisgApp .kp-account:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+#kisgApp .kpe-privacy{margin-top:14px}
+#kisgApp .kpe-privacy a{color:var(--red-text);font-weight:600}
+/* Aktif hizmet varken "Verdiği Hizmetler" sekmesi daha görünür: sayaç dolu çip olur */
+#kisgApp .kp.has-services [data-profile-tab="hizmetler"] .kp-count{min-width:22px;padding:1px 7px;border-radius:var(--r-pill);background:var(--ink);color:#fff;font-size:12px;text-align:center}
+#kisgApp .kp.has-services [data-profile-tab="hizmetler"][aria-selected="false"]{color:var(--ink)}
 #kisgApp .kp-card-sk{gap:14px}
 #kisgApp .kp-card-sk::before{display:none}
 #kisgApp .kp-sk-av{width:104px;height:104px;border-radius:50%}
@@ -1435,6 +1455,8 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .kd-profile:hover{background:var(--surface-2)}
   #kisgApp .kp-av-edit:hover{background:#000}
   #kisgApp .kp-tabs [role="tab"]:hover{color:var(--ink)}
+  #kisgApp .kp-serving-btn:hover{border-color:var(--line-strong);background:var(--surface-2)}
+  #kisgApp .kp-account:hover{background:var(--line-soft)}
   #kisgApp .kp-phone:hover{box-shadow:inset 0 0 0 1px var(--line-strong)}
   #kisgApp .k-btn:hover{border-color:var(--ink)}
   #kisgApp .k-btn-primary:hover{background:var(--red-hover);border-color:var(--red-hover)}
@@ -1516,7 +1538,6 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .kw-tool{width:44px;padding:0;justify-content:center}
   #kisgApp .kw-composer-cta{width:44px;height:44px;padding:0;border-radius:50%}
   #kisgApp .kw-composer-cta svg{width:22px;height:22px}
-  #kisgApp .kw-live{padding:8px var(--pad)}
   #kisgApp .kw-post{grid-template-columns:42px minmax(0,1fr);column-gap:10px;padding:14px var(--pad) 4px}
   #kisgApp .kw-post-avatar .k-avatar{width:42px;height:42px}
   #kisgApp .kw-post-body{grid-column:1/-1}
@@ -1645,6 +1666,74 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .kpe-social{grid-template-columns:minmax(0,1fr) 40px}
   #kisgApp .kpe-social select{grid-column:1/-1}
 }
+/* ===== Hizmet Bul Visual V3 (v4.25.0): yalnız görünüm; filtre/veri davranışı ve hizmet kartı aynı ===== */
+/* Arama: daha fark edilir ama sakin — tek ince çerçeve + yumuşak gölge, ikon mürekkep rengi */
+#kisgApp .ks .kc-search{height:56px;padding-left:20px;box-shadow:inset 0 0 0 1px var(--line-strong),0 1px 2px rgba(20,26,36,.04),0 8px 24px -12px rgba(20,26,36,.18)}
+#kisgApp .ks .kc-search svg{stroke:var(--ink)}
+#kisgApp .ks .kc-search input{height:54px;font-size:16px}
+#kisgApp .ks .kc-search:focus-within{box-shadow:inset 0 0 0 1.5px var(--ink),0 0 0 4px rgba(20,26,36,.06),0 8px 24px -12px rgba(20,26,36,.18)}
+/* "Tüm hizmet şekilleri" ve "Tüm Şehirler": aynı yükseklik, çerçeve ve tipografi */
+#kisgApp .ks .kc-filters-inline{align-items:center;gap:10px}
+#kisgApp .ks .kc-filters-inline select,#kisgApp .ks .kc-filters-inline .kc-city-btn{height:56px;padding:0 40px 0 20px;border-radius:var(--r-pill);box-shadow:inset 0 0 0 1px var(--line-strong);background-color:#fff;color:var(--ink);font-size:14px;font-weight:650}
+#kisgApp .ks .kc-filters-inline select{width:200px;background-position:right 16px center}
+#kisgApp .ks .kc-filters-inline .kc-city-btn{position:relative;width:200px;padding-right:16px}
+#kisgApp .ks .kc-filters-inline .kc-city-btn svg{width:16px;height:16px;stroke:#5d6878}
+#kisgApp .ks .kc-filters-inline :is(.is-set select,.kc-field-city.is-set .kc-city-btn){box-shadow:inset 0 0 0 1.5px var(--ink)}
+/* Kahraman alanı: baret, yumuşak bir zemin üzerinde "sahnede" durur (kesik/yapıştırılmış görünmez) */
+#kisgApp .ks-hero-art{position:relative;display:grid;place-items:center;aspect-ratio:1}
+#kisgApp .ks-hero-art::before{content:"";position:absolute;inset:4%;border-radius:50%;background:radial-gradient(circle at 50% 42%,#fff 0 58%,rgba(255,255,255,0) 72%)}
+#kisgApp .ks-hero-art img{position:relative;width:82%;transform:rotate(-6deg)}
+#kisgApp .kc-results-head p{font-weight:600}
+@media(max-width:640px){
+  /* Mobil kahraman: başlık + baret yan yana, açıklama ve aksiyon tam genişlik */
+  #kisgApp .ks-hero{display:grid;grid-template-columns:minmax(0,1fr) 64px;grid-template-areas:"kicker kicker" "title art" "lead lead" "actions actions";gap:0 12px;align-items:center;margin:10px var(--gutter) 10px;padding:16px 16px 14px;border-radius:18px;background:linear-gradient(135deg,#f6f7f9 0%,#f1f2f5 100%);overflow:hidden}
+  #kisgApp .ks-hero-copy{display:contents}
+  #kisgApp .ks-kicker{grid-area:kicker;padding-right:0;font-size:10px;letter-spacing:.09em}
+  #kisgApp .ks-hero h1{grid-area:title;align-self:start;margin-top:4px;padding-right:0;font-size:22px;line-height:1.15}
+  #kisgApp .ks-hero-art{grid-area:art;position:relative;right:auto;top:auto;width:64px;margin:0;opacity:1}
+  #kisgApp .ks-hero-art img{width:84%}
+  #kisgApp .ks-lead{grid-area:lead;margin-top:6px;font-size:13.5px;line-height:1.5}
+  #kisgApp .ks-hero-actions{grid-area:actions;margin-top:12px}
+  #kisgApp .ks-hero-cta{min-height:40px;padding:0 15px;font-size:13.5px}
+  /* Arama + Filtrele: daha kompakt */
+  #kisgApp .ks .kc-controls{gap:8px}
+  #kisgApp .ks .kc-search{height:44px;padding-left:14px;box-shadow:inset 0 0 0 1px var(--line-strong),0 4px 14px -10px rgba(20,26,36,.25)}
+  #kisgApp .ks .kc-search svg{width:18px;height:18px}
+  #kisgApp .ks .kc-search input{height:42px;font-size:15px}
+  #kisgApp .ks .kc-search button{width:30px;height:30px;font-size:18px}
+  #kisgApp .ks .kc-filter-btn{height:44px;padding:0 14px;box-shadow:inset 0 0 0 1px var(--line-strong)}
+  /* Kategori çipleri: daha küçük ve rafine */
+  #kisgApp .ks-chips{gap:6px;margin-top:10px}
+  #kisgApp .ks-chip{min-height:32px;padding:0 12px;font-size:12.5px;font-weight:600}
+  /* "X hizmet listeleniyor": ikincil bilgi */
+  #kisgApp .ks .kc-results-head{min-height:30px;margin-top:2px;color:var(--faint);font-size:12px}
+  #kisgApp .ks .kc-results-head p{font-weight:500}
+}
+/* ===== Uzmanlar V2 (v4.25.0) ===== */
+/* Meslek / Uzmanlık (datalist) alanlarında Chrome'un siyah üçgen göstergesi gizlenir; öneriler yazarken yine açılır */
+#kisgApp .kc-field input[list]::-webkit-calendar-picker-indicator{display:none!important;opacity:0}
+#kisgApp .kc-field input[list]::-webkit-list-button{display:none!important}
+/* Arama: tek ince çerçeve + yumuşak gölge (çift/ağır çerçeve yok) */
+#kisgApp [data-view="experts"] .kc-search{height:54px;padding-left:20px;box-shadow:0 0 0 1px var(--line-strong),0 1px 2px rgba(20,26,36,.04),0 8px 24px -12px rgba(20,26,36,.18)}
+#kisgApp [data-view="experts"] .kc-search svg{stroke:var(--ink)}
+#kisgApp [data-view="experts"] .kc-search input{height:52px}
+#kisgApp [data-view="experts"] .kc-search:focus-within{box-shadow:0 0 0 1.5px var(--ink),0 0 0 5px rgba(20,26,36,.06)}
+/* Sıralama: sonuç satırında sakin bir seçici */
+#kisgApp .ke-head-tools{display:flex;align-items:center;gap:14px;margin-left:auto}
+#kisgApp .ke-sort{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;font-weight:600}
+#kisgApp .ke-sort select{height:34px;padding:0 30px 0 12px;border:0;border-radius:var(--r-pill);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d6878' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 10px center/14px;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);font:inherit;font-size:13px;font-weight:650;-webkit-appearance:none;appearance:none;cursor:pointer}
+#kisgApp .ke-sort select:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+/* Kartta "Hizmet veriyor": nötr, ücretli öne çıkarma rozetinden ayrışan sade işaret */
+#kisgApp .ke-serving{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:3px 10px 3px 8px;border:1px solid var(--line);border-radius:var(--r-pill);color:var(--text);font-size:12px;font-weight:600}
+#kisgApp .ke-serving svg{flex:none;width:14px;height:14px;fill:none;stroke:var(--red);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:640px){
+  #kisgApp [data-view="experts"] .kc-search{height:44px;padding-left:14px;box-shadow:0 0 0 1px var(--line-strong),0 4px 14px -10px rgba(20,26,36,.25)}
+  #kisgApp [data-view="experts"] .kc-search input{height:42px;font-size:15px}
+  #kisgApp [data-view="experts"] .kc-filter-btn{height:44px}
+  #kisgApp .ke-sort span{display:none}
+  #kisgApp .ke-sort select{height:30px;font-size:12.5px}
+  #kisgApp .ke-serving{margin-top:8px;font-size:11.5px}
+}
 @media(max-width:359px){
   #kisgApp :is(.kw-act,.kw-likes-static){font-size:12.5px;padding-inline:8px}
   #kisgApp .kw-act-open .kw-act-label{display:none}
@@ -1676,7 +1765,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.24.0',
+  version: '4.25.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
@@ -2106,10 +2195,19 @@ const SIDE_CSS = `
 .kw-side .k-sk-person{display:flex;align-items:center;gap:12px;padding:10px 0}
 .kw-side .k-sk-person>span{display:grid;flex:1;gap:8px}
 .kw-side .k-sk-offer{display:grid;gap:8px;padding:12px 0}
-.kw-brandcard{position:relative;overflow:hidden;min-height:128px;margin-bottom:22px;padding:18px 44% 18px 18px;border-radius:16px;background:#f3f4f6}
-.kw-brandcard img{position:absolute;right:-26px;bottom:-30px;width:150px;height:auto;mix-blend-mode:multiply;transform:rotate(-8deg);pointer-events:none}
-.kw-brandcard-kicker{color:var(--red-text);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-.kw-brandcard-title{margin-top:6px!important;color:var(--ink);font-size:16px;font-weight:800;line-height:1.28;letter-spacing:-.015em}
+/* Professional vitrin (v4.25.0): sakin marka alanı — dönüşümlü üç mesaj, yavaş süzülen yumuşak ışık; reklam/slider değil */
+.kw-brandcard{position:relative;overflow:hidden;margin-bottom:22px;padding:18px 18px 16px 20px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(160deg,#fff 0%,#f7f8fa 100%)}
+.kw-brandcard::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:3px;border-radius:0 3px 3px 0;background:var(--red)}
+.kw-brandcard-glow{position:absolute;right:-60px;top:-70px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(227,10,23,.10) 0%,rgba(227,10,23,0) 68%);animation:kw-brand-drift 14s ease-in-out infinite alternate;pointer-events:none}
+@keyframes kw-brand-drift{from{transform:translate(0,0)}to{transform:translate(-26px,22px)}}
+.kw-brandcard-kicker{position:relative;color:var(--red-text);font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+.kw-brandcard-msgs{position:relative;display:grid;min-height:42px;margin-top:8px!important}
+.kw-brandcard-msgs span{grid-area:1/1;align-self:start;color:var(--ink);font-size:16px;font-weight:750;line-height:1.3;letter-spacing:-.015em;opacity:0;transform:translateY(6px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .6s cubic-bezier(.2,.7,.2,1)}
+.kw-brandcard-msgs span.is-on{opacity:1;transform:none}
+.kw-brandcard-ticks{position:relative;display:flex;gap:5px;margin-top:12px}
+.kw-brandcard-ticks i{width:14px;height:3px;border-radius:2px;background:var(--line);transition:background .6s,width .6s}
+.kw-brandcard-ticks i.is-on{width:22px;background:var(--red)}
+@media(prefers-reduced-motion:reduce){.kw-brandcard-glow{animation:none}}
 @media(prefers-reduced-motion:reduce){.kw-side *{transition:none!important}}
 `;
 (() => { try { const st = document.createElement('style'); st.dataset.kisgSide = ''; st.textContent = SIDE_CSS; document.head.append(st); } catch {} })();
@@ -4300,13 +4398,13 @@ function createWorksView() {
   const s = { mounted: false, cursor: null, hasMore: true, loading: false, queuedReset: false, experts: [], services: [], expertsFailed: false, servicesFailed: false };
   const feed = createPostFeed({
     scope: el,
-    onRemoved: () => { if (!feed.f.posts.length) renderAll(); else { placeRails(); renderLive(); } host.schedule(); }
+    onRemoved: () => { if (!feed.f.posts.length) renderAll(); else { placeRails(); } host.schedule(); }
   });
   const F = feed.f;
   const emptyMarkup = '<div class="kw-post kw-empty-card"><div class="kw-empty"><img class="kw-empty-art" src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/erferf.png" alt="" aria-hidden="true"><strong>Henüz Post yok</strong><p>Sahada yaptığın bir uygulamayı, gözlemini veya öğrendiğin bir şeyi paylaşarak ilk Postu sen başlat.</p><button type="button" class="k-btn k-btn-primary" data-composer>İlk Postu paylaş</button></div></div>';
   function renderAll(eager = false) {
     list.innerHTML = F.posts.length ? F.posts.map(p => feed.card(p, eager)).join('') : emptyMarkup;
-    placeRails(); renderLive();
+    placeRails();
     feed.threads.rerenderAll();
     more.hidden = !s.hasMore || !F.posts.length;
   }
@@ -4346,12 +4444,6 @@ function createWorksView() {
     return `<a class="kw-rail-expert" href="${esc(urls.profile(p.id))}" target="_top">${avatar(p, 'xl')}<strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${role ? `<span>${esc(role)}</span>` : ''}${meta ? `<span>${esc(meta)}</span>` : ''}</a>`;
   }).join('')}</div></section>`;
   const railServices = () => `<section class="kw-rail kw-rail-services" aria-label="Sunulan hizmetler"><div class="kw-rail-head"><h2>Sunulan hizmetler</h2><a href="${esc(urls.view('services'))}" target="_top" data-view-link="services">Tümü →</a></div><div class="kw-rail-track">${s.services.map(v => `<a class="kw-rail-service" href="${esc(urls.service(v.id))}" target="_top"><span class="kw-rail-cat">${esc(v.category?.name || 'Hizmet')}</span><strong>${esc(v.title)}</strong>${v.provider ? `<span class="kw-rail-by">${avatar(v.provider, 'xs')}<span>${esc(v.provider.full_name || '')}</span></span>` : ''}<span class="kw-offer-meta">${modeMeta(v.service_mode)}${placeMeta(v.service_region)}</span></a>`).join('')}</div></section>`;
-  function renderLive() {
-    const live = $('[data-live]', el), first = F.posts[0];
-    if (!first) { live.hidden = true; return; }
-    $('[data-live-text]', live).textContent = `Son Post · ${relativeTime(first.created_at)}`;
-    live.hidden = false;
-  }
   function placeRails() {
     $$('.kw-rail', list).forEach(n => n.remove());
     const cards = $$('[data-post-id]', list); if (!cards.length) return;
@@ -4437,7 +4529,7 @@ function createWorksView() {
       $('.kw-empty-card', list)?.remove();
       $$('.kw-sk', list).forEach(n => n.remove());
       if (F.posts.length) list.insertAdjacentHTML('beforeend', fresh.map(p => feed.card(p)).join('')); else list.innerHTML = emptyMarkup;
-      placeRails(); renderLive();
+      placeRails();
       more.hidden = !s.hasMore || !F.posts.length;
       notice.hidden = true;
       feed.syncLikes(fresh.map(p => p.id));
@@ -4469,7 +4561,7 @@ function createWorksView() {
       F.posts.unshift({ ...fresh });
       $('.kw-empty-card', list)?.remove();
       list.insertAdjacentHTML('afterbegin', feed.card(F.posts[0]));
-      placeRails(); renderLive();
+      placeRails();
       more.hidden = !s.hasMore;
       loadRails({ experts: true, services: false });
     }
@@ -4575,7 +4667,7 @@ function createWorksView() {
           F.posts.unshift(...rows);
           $('.kw-empty-card', list)?.remove();
           list.insertAdjacentHTML('afterbegin', rows.map(p => feed.card(p)).join(''));
-          placeRails(); renderLive();
+          placeRails();
           more.hidden = !s.hasMore || !F.posts.length;
           feed.syncLikes(rows.map(p => p.id));
           feed.threads.preview(rows);
@@ -4613,6 +4705,17 @@ function createWorksView() {
       promptEl.classList.add('is-out');
       setTimeout(() => { promptIdx = (promptIdx + 1) % PROMPTS.length; promptEl.textContent = PROMPTS[promptIdx]; promptEl.classList.remove('is-out'); }, 260);
     }, 6500);
+  }
+  // Professional vitrin: üç mesaj sakin geçişle döner; panel ana sayfaya taşınsa da düğüm referansı korunur.
+  const brand = $('[data-brandcard]', el);
+  if (brand && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const msgs = $$('.kw-brandcard-msgs span', brand), ticks = $$('.kw-brandcard-ticks i', brand);
+    let bi = 0;
+    setInterval(() => {
+      if (document.hidden || el.hidden || !brand.isConnected) return;
+      bi = (bi + 1) % msgs.length;
+      msgs.forEach((m, i) => m.classList.toggle('is-on', i === bi)); ticks.forEach((t, i) => t.classList.toggle('is-on', i === bi));
+    }, 5200);
   }
   function renderComposerAvatar() { composerAvatar.dataset.initials = initials(session.me?.full_name); composerAvatar.innerHTML = meAvatarMarkup(); }
   renderComposerAvatar();
@@ -4811,7 +4914,31 @@ function createCatalog(opt) {
 function createExpertsView() {
   const el = $('[data-view="experts"]');
   const discovery = $('[data-discovery]', el), discoverBtn = $('[data-discover]', el);
-  const BASE = 'id,full_name,profession,title,avatar_url,city,certificate_class,current_company,specialties,last_post_at';
+  const BASE = 'id,full_name,profession,title,avatar_url,city,certificate_class,current_company,specialties,last_post_at,created_at';
+  /* Uzmanlar V2 sıralama: yalnız güvenilir mevcut alanlar. "Önerilen" için veride sağlam bir sinyal yok (uydurulmaz).
+     Son Aktif   : profiles.last_post_at (DB tetikleyicisi, en son aktif Post) ↓, boşlar sonda — önceki varsayılan sıra.
+     Yeni Katılanlar: profiles.created_at (kayıt anı, not null) ↓.   A–Z: profiles.full_name ↑ (DB harmanlaması), boşlar sonda.
+     Her sıra kendi anahtarıyla imleçli sayfalanır (id eşitlik bozucu). */
+  const SORTS = {
+    active: {
+      order: q => q.order('last_post_at', { ascending: false, nullsFirst: false }).order('id', { ascending: false }),
+      page: r => ({ id: r.id, last_post_at: r.last_post_at }),
+      after: ({ id, last_post_at: t }) => (t ? `or(last_post_at.lt.${quote(t)},and(last_post_at.eq.${quote(t)},id.lt.${quote(id)}),last_post_at.is.null)` : `and(last_post_at.is.null,id.lt.${quote(id)})`)
+    },
+    new: {
+      order: q => q.order('created_at', { ascending: false }).order('id', { ascending: false }),
+      page: r => ({ id: r.id, created_at: r.created_at }),
+      after: ({ id, created_at: t }) => `or(created_at.lt.${quote(t)},and(created_at.eq.${quote(t)},id.lt.${quote(id)}))`
+    },
+    az: {
+      order: q => q.order('full_name', { ascending: true, nullsFirst: false }).order('id', { ascending: true }),
+      page: r => ({ id: r.id, full_name: r.full_name ?? null }),
+      after: ({ id, full_name: n }) => (n != null ? `or(full_name.gt.${quote(n)},and(full_name.eq.${quote(n)},id.gt.${quote(id)}),full_name.is.null)` : `and(full_name.is.null,id.gt.${quote(id)})`)
+    }
+  };
+  const sortSel = $('[data-sort]', el);
+  let sort = 'active';
+  const sortOf = v => (SORTS[v] ? v : 'active');
   const COUNTS = ',posts:professional_posts!professional_posts_user_id_fkey(count),services:professional_services!professional_services_user_id_fkey(count)';
   let withCounts = true;
   const fields = [['title', 'Meslek', 'keListTitles', 'Meslek'], ['certificate_class', 'Mesleki Belge / Statü'], ['city', 'Şehir', 'keListCities', 'Şehir'], ['specialties', 'Uzmanlık', 'keListSpecialties', 'Uzmanlık']];
@@ -4837,15 +4964,11 @@ function createExpertsView() {
       }
     }
     if (f.specialties) c.push('or(' + specialty(f.specialties).join(',') + ')');
-    if (cursor) {
-      const { id, last_post_at: t } = cursor;
-      c.push(t ? `or(last_post_at.lt.${quote(t)},and(last_post_at.eq.${quote(t)},id.lt.${quote(id)}),last_post_at.is.null)` : `and(last_post_at.is.null,id.lt.${quote(id)})`);
-    }
+    if (cursor) c.push(SORTS[sort].after(cursor));
     return c.length ? 'and(' + c.join(',') + ')' : '';
   }
   function build(signal, search, filters, cursor) {
-    let qy = db.from('profiles').select(BASE + (withCounts ? COUNTS : '')).eq('is_discoverable', true)
-      .order('last_post_at', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(CONFIG.catalogPageSize + 1);
+    let qy = SORTS[sort].order(db.from('profiles').select(BASE + (withCounts ? COUNTS : '')).eq('is_discoverable', true)).limit(CONFIG.catalogPageSize + 1);
     if (withCounts) qy = qy.eq('posts.status', 'active').eq('services.status', 'active');
     const cond = conditions(search, filters, cursor); if (cond) qy = qy.or(cond);
     return qy.abortSignal(signal);
@@ -4855,6 +4978,8 @@ function createExpertsView() {
     const sp = Array.isArray(p.specialties) ? p.specialties.filter(x => typeof x === 'string' && x.trim()) : [];
     const counts = [countLabel(p.posts, 'Post'), countLabel(p.services, 'Hizmet')].filter(Boolean).join(' · ');
     const role = p.profession || p.title, cert = identity.certTag(p);
+    const nServices = Array.isArray(p.services) ? p.services[0]?.count : undefined;
+    const serving = Number.isInteger(nServices) && nServices > 0;
     return `<a class="kc-card ke-card" href="${esc(urls.profile(p.id))}" target="_top">`
       + `<span class="ke-av">${avatar(p, 'xl')}</span>`
       + `<h2>${esc(p.full_name || 'Kırmızı İSG üyesi')}</h2>`
@@ -4862,6 +4987,7 @@ function createExpertsView() {
       + (cert || clean(p.city) ? `<p class="ke-meta">${cert ? `<span class="k-tag k-tag-cert">${esc(cert)}</span>` : ''}${placeMeta(p.city)}</p>` : '')
       + (p.current_company ? `<p class="ke-company">${esc(p.current_company)}</p>` : '')
       + (sp.length ? `<p class="ke-spec">${esc(sp.slice(0, 2).join(' · '))}${sp.length > 2 ? ` +${sp.length - 2}` : ''}</p>` : '')
+      + (serving ? `<p class="ke-serving" title="Kırmızı İSG'de yayında aktif hizmeti var">${PICONS.serving}<span>Hizmet veriyor</span></p>` : '')
       + `<span class="ke-bottom">${counts ? `<span class="ke-activity">${esc(counts)}</span>` : ''}<span class="ke-cta">Profili Gör<span class="k-sr"> ${esc(p.full_name || '')}</span></span></span></a>`;
   }
   function suggestions(rows) {
@@ -4876,14 +5002,14 @@ function createExpertsView() {
     text: { loading: 'Uzmanlar yükleniyor…', loadingMore: 'Diğer uzmanlar yükleniyor…', count: n => `${n} uzman`, empty: 'Henüz görünür uzman yok.', emptyFiltered: 'Bu filtrelere uygun uzman bulunamadı.' },
     card, afterRender: suggestions, skeletonCount: 6,
     skeleton: () => '<div class="kc-sk ke-sk" aria-hidden="true"><i class="k-sk k-sk-circle"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i><i class="k-sk k-sk-short"></i></div>',
-    pageOf: r => ({ id: r.id, last_post_at: r.last_post_at }),
+    pageOf: r => SORTS[sort].page(r),
     async fetchPage({ search, filters, page, signal }) {
       let res = await build(signal, search, filters, page);
       // Sayaçlar opsiyoneldir; FK/count sorunu dizini gizlememeli.
       if (res.error && withCounts && ['PGRST200', 'PGRST201', 'PGRST123', '42703'].includes(res.error.code)) { withCounts = false; res = await build(signal, search, filters, page); }
       if (res.error) throw res.error;
       const data = res.data || [], rows = data.slice(0, CONFIG.catalogPageSize), last = rows[rows.length - 1];
-      return { rows, more: data.length > CONFIG.catalogPageSize, page: last ? { id: last.id, last_post_at: last.last_post_at } : page };
+      return { rows, more: data.length > CONFIG.catalogPageSize, page: last ? SORTS[sort].page(last) : page };
     }
   });
 
@@ -4907,10 +5033,11 @@ function createExpertsView() {
   }
   discoverBtn.addEventListener('click', becomeVisible);
   let lastDisc;
+  sortSel.addEventListener('change', () => { sort = sortOf(sortSel.value); catalog.load(); });
 
   return {
     name: 'experts', el,
-    mount: snap => { renderDiscovery(); return catalog.mount(snap); },
+    mount: snap => { sort = sortOf(snap?.sort); sortSel.value = sort; renderDiscovery(); return catalog.mount(snap); },
     onSession(kind) {
       if (kind === 'user') catalog.notice('');
       // Kendi görünürlüğü değiştiyse (onboarding / Profili Düzenle) açık liste tazelenir.
@@ -4919,7 +5046,7 @@ function createExpertsView() {
       lastDisc = d;
       renderDiscovery();
     },
-    snapshot: catalog.snapshot, isMounted: catalog.isMounted
+    snapshot: () => { const x = catalog.snapshot(); return x && { ...x, sort }; }, isMounted: catalog.isMounted
   };
 }
 
@@ -5355,7 +5482,10 @@ const PICONS = {
   phone: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5.5 3.5h3l1.5 4-2 1.3a11 11 0 0 0 5.2 5.2l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3.5 5.7a2 2 0 0 1 2-2.2Z"/></svg>',
   download: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>',
   edit: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16Z"/><path d="m13.5 6.5 4 4"/></svg>',
-  plus: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
+  plus: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  // Profil V2: "Hizmet veriyor" (çanta) ve Hesap & Gizlilik (kalkan) işaretleri.
+  serving: '<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5M3.5 12.5h17"/></svg>',
+  shield: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3.5 5 6v5.5c0 4.2 2.9 7.7 7 9 4.1-1.3 7-4.8 7-9V6z"/><path d="m9.2 12 2 2 3.6-3.8"/></svg>'
 };
 // Sosyal bağlantı normalizasyonu: Profil V1 ile aynı kural (şemasız adres https ile tamamlanır).
 function linkUrl(v) {
@@ -5667,7 +5797,8 @@ function createProfileView() {
       + `<p class="kp-kicker"><span class="k-badge">KIRMIZI İSG KİŞİ KARTI</span></p>`
       + `<div class="kp-head"><div class="kp-av">${avatar(p, 'profile')}${own() ? `<button type="button" class="kp-av-edit" data-profile-action="avatar" aria-label="Profil fotoğrafını değiştir">${PICONS.camera}</button>` : ''}</div>`
       + `<div class="kp-idn"><h1 id="kpName">${esc(p.full_name || 'Kırmızı İSG üyesi')}</h1>${role ? `<p class="kp-role">${esc(role)}</p>` : ''}`
-      + (showStatus ? `<p class="kp-cert"><span class="k-tag k-tag-cert"><i aria-hidden="true"></i>${esc(status)}</span></p>` : '') + `</div></div>`
+      + (showStatus ? `<p class="kp-cert"><span class="k-tag k-tag-cert"><i aria-hidden="true"></i>${esc(status)}</span></p>` : '')
+      + `<p class="kp-serving" data-kp-serving hidden></p></div></div>`
       + (facts ? `<ul class="kp-facts">${facts}</ul>` : '')
       + (phone || links.length ? `<div class="kp-contact">${phone ? `<a class="kp-phone" href="tel:+${esc(phoneDigits(phone))}">${PICONS.phone}<span>${esc(phoneDisplay(phone))}</span></a>` : ''}<div class="kp-socials">${wa ? socialAnchor('whatsapp', wa) : ''}${links.map(l => socialAnchor(l.platform, l.url)).join('')}</div></div>` : '')
       + (clean(p.about) ? `<section class="kp-about" aria-labelledby="kpAboutTitle"><h2 id="kpAboutTitle">Hakkında</h2><p class="kp-about-text is-clamped" data-about>${esc(p.about)}</p><button type="button" class="k-text-button kp-about-more" data-profile-action="about" hidden>Devamını gör</button></section>` : '')
@@ -5675,6 +5806,7 @@ function createProfileView() {
       + (own() ? `<button type="button" class="k-btn k-btn-primary kp-act-main kp-act-keep" data-profile-action="edit">${PICONS.edit}<span>Profili Düzenle</span></button>` : '')
       + `<button type="button" class="k-btn${own() ? '' : ' k-btn-primary kp-act-keep'}" data-profile-action="share">${ICONS.share}<span>Profili Paylaş</span></button>`
       + (own() ? `<button type="button" class="k-btn" data-profile-action="pdf">${PICONS.download}<span data-pdf-label>${s.pdfReady?.id === p.id ? 'PDF hazır · Kaydet' : 'PDF Olarak İndir'}</span></button>` : '') + `</div>`
+      + (own() ? `<a class="kp-account" href="${esc(urls.view('account'))}" target="_top" data-view-link="account">${PICONS.shield}<span><b>Hesap &amp; Gizlilik</b><small>Uzmanlar'da görünürlük, telefon ve hesap ayarları</small></span><span class="kp-account-go" aria-hidden="true">→</span></a>` : '')
       + (missing.length ? `<p class="kp-hint">Kişi kartını tamamla: ${esc(missing.join(', '))} ekle. <button type="button" class="k-text-button" data-profile-action="edit">Şimdi ekle</button></p>` : '')
       + `</article>`;
   }
@@ -5683,6 +5815,7 @@ function createProfileView() {
     cardSlot.innerHTML = cardHTML(s.profile);
     const about = $('[data-about]', cardSlot);
     if (about) requestAnimationFrame(() => { const more = $('[data-profile-action="about"]', cardSlot); if (more) more.hidden = about.scrollHeight <= about.clientHeight + 2; });
+    renderServing();
     renderCompose();
     host.schedule();
   }
@@ -5712,6 +5845,22 @@ function createProfileView() {
       c.textContent = Number.isInteger(v) && v > 0 ? String(v) : '';
     });
     $$('[data-profile-panel]', el).forEach(p => { p.hidden = p.dataset.profilePanel !== s.tab; });
+    el.classList.toggle('has-services', Number.isInteger(n.hizmetler) && n.hizmetler > 0);
+    renderServing();
+  }
+  /* Profil V2 — "Hizmet veriyor": yalnız aktif hizmet sayısı (professional_services status=active) > 0 iken.
+     Ücretli/öne çıkarma işareti değildir; tıklanınca Verdiği Hizmetler sekmesini açar. */
+  function renderServing() {
+    const slot = $('[data-kp-serving]', cardSlot); if (!slot) return;
+    const n = s.counts.services, on = Number.isInteger(n) && n > 0;
+    slot.hidden = !on;
+    slot.innerHTML = on ? `<button type="button" class="kp-serving-btn" data-profile-action="services">${PICONS.serving}<span>Hizmet veriyor</span><small>${n} aktif hizmet</small></button>` : '';
+  }
+  function showServices() {
+    setTab('hizmetler', true);
+    // Mobilde sekmeler kartın altında kalır: sekme çubuğu görünür alana getirilir (masaüstünde yan yana).
+    const bar = $('.kp-tabs', el);
+    if (bar && matchMedia('(max-width: 640px)').matches) bar.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
   }
   function setTab(tab, write = false) {
     s.tab = tab === 'hizmetler' ? 'hizmetler' : 'calismalar';
@@ -5828,6 +5977,8 @@ function createProfileView() {
       if (rev !== s.rev) return;
       if (!a.error && Number.isInteger(a.count)) s.counts.posts = a.count;
       if (!b.error && Number.isInteger(b.count) && s.servicesState !== 'ready') s.counts.services = b.count;
+      // Profil V2: ziyaretçi, Postu olmayan ama aktif hizmeti olan profili açınca (adres sekme belirtmiyorsa) doğrudan hizmetleri görür.
+      if (s.autoTab && !own() && s.tab === 'calismalar' && s.counts.posts === 0 && s.counts.services > 0) { s.autoTab = false; setTab('hizmetler'); return; }
       renderTabs();
     } catch {}
   }
@@ -5886,13 +6037,14 @@ function createProfileView() {
     const tab = params.tab === 'hizmetler' ? 'hizmetler' : 'calismalar';
     if (!id) { await session.ready; id = session.user?.id || ''; }
     if (id && id === s.id && (s.profile || s.rev)) { setTab(tab); setDocTitle(); return; }
+    s.autoTab = !params.tab;
     await load(id, tab);
   }
 
   /* ---- Profili Düzenle (Profil V1 kayıt kuralları) ---- */
   const ed = {
     root: $('#kaProfileDialog'), form: $('#kaProfileForm'), error: $('#kaPeError'), save: $('#kaPeSave'),
-    socials: $('[data-pe-socials]'), expWrap: $('[data-pe-exp]'), discoverable: $('#kaPeDiscoverable'), phonePublic: $('#kaPePhonePublic')
+    socials: $('[data-pe-socials]'), expWrap: $('[data-pe-exp]')
   };
   const field = k => $('#kaPe_' + k);
   const TEXT_FIELDS = ['full_name', 'profession', 'current_company', 'about', 'phone'];
@@ -5921,8 +6073,6 @@ function createProfileView() {
     v.certificate_class = field('certificate_class').value;
     v.city = field('city').value;
     v.experience_range = s.withExperience ? field('experience_range').value : undefined;
-    v.is_discoverable = ed.discoverable.checked;
-    v.show_phone_publicly = ed.phonePublic.checked;
     v.socials = [...ed.socials.children].map(row => ({ platform: row.querySelector('select').value, raw: clean(row.querySelector('input').value), original: row._original }));
     return v;
   }
@@ -5948,14 +6098,12 @@ function createProfileView() {
       const city = selectOptions(field('city'), CITIES, p.city, 'Şehir seçin');
       ed.expWrap.hidden = !s.withExperience;
       const exp = s.withExperience ? selectOptions(field('experience_range'), EXPERIENCE_OPTIONS, p.experience_range, 'Belirtme') : undefined;
-      ed.discoverable.checked = !!p.is_discoverable;
-      ed.phonePublic.checked = !!p.show_phone_publicly;
       ed.socials.replaceChildren();
       const links = socialLinks(p); links.forEach(socialRow);
       edit = {
         ownerId, phone: data.phone ?? null, cert, city, exp,
         text: Object.fromEntries(TEXT_FIELDS.filter(k => k !== 'phone').map(k => [k, clean(p[k])])),
-        is_discoverable: !!p.is_discoverable, show_phone_publicly: !!p.show_phone_publicly, socialKey: socialKey(links)
+        socialKey: socialKey(links)
       };
       formError('');
       dialogs.open(ed.root, 'sheet');
@@ -5977,8 +6125,7 @@ function createProfileView() {
       if (!v.phone) payload.phone = null;
       else { const d = phoneDigits(v.phone); if (!d) { formError('Telefon numarasını ülke koduyla birlikte geçerli biçimde gir. Örnek: +90 5xx xxx xx xx'); return; } payload.phone = '+' + d; }
     }
-    if (v.is_discoverable !== edit.is_discoverable) payload.is_discoverable = v.is_discoverable;
-    if (v.show_phone_publicly !== edit.show_phone_publicly) payload.show_phone_publicly = v.show_phone_publicly;
+    // is_discoverable / show_phone_publicly burada gönderilmez: Hesap & Gizlilik'te yönetilir, mevcut değerleri korunur.
     const entries = v.socials.filter(x => x.raw).map(x => ({ platform: x.platform, url: linkUrl(x.raw), original: x.original }));
     if (entries.some(x => !x.url)) { formError('Sosyal bağlantıları https:// ile başlayan geçerli adresler olarak gir.'); return; }
     const normalized = socialLinks({ social_links: entries });
@@ -6011,7 +6158,7 @@ function createProfileView() {
     // Ad/unvan değiştiyse profildeki Çalışma kartları da güncel kimlikle çizilir.
     F.posts.forEach(p => { if (p.user_id === s.id) p.author = { ...(p.author || {}), id: s.id, full_name: saved.full_name, profession: saved.profession, title: saved.title, certificate_class: saved.certificate_class, current_company: saved.current_company }; });
     renderPosts();
-    if ('full_name' in payload || 'is_discoverable' in payload) session.refreshMe();
+    if ('full_name' in payload) session.refreshMe();
     toast('Profilin güncellendi.');
   }
   ed.form.addEventListener('submit', saveProfile);
@@ -6019,7 +6166,9 @@ function createProfileView() {
   ed.root.addEventListener('click', e => {
     const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
     if (t.closest('[data-pe-add-social]')) { const row = socialRow(); row.querySelector('input').focus(); host.place(ed.root); return; }
-    const rm = t.closest('[data-pe-remove]'); if (rm) { rm.closest('.kpe-social')?.remove(); host.place(ed.root); }
+    const rm = t.closest('[data-pe-remove]'); if (rm) { rm.closest('.kpe-social')?.remove(); host.place(ed.root); return; }
+    // "Hesap & Gizlilik" bağlantısı: editör kapanır, sayfa geçişini kabuk yapar (kaydedilmemiş değişiklik gönderilmez).
+    if (t.closest('a[data-view-link]') && !saving) dialogs.close(ed.root);
   });
 
   /* ---- Paylaş / PDF ---- */
@@ -6063,6 +6212,7 @@ function createProfileView() {
       case 'retry': load(s.id, s.tab); break;
       case 'retry-posts': loadPosts(!F.posts.length); break;
       case 'retry-services': s.servicesState = 'idle'; loadServices(); break;
+      case 'services': showServices(); break;
     }
   });
   postsMore.addEventListener('click', () => loadPosts());
