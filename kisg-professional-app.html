@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.23.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.24.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Bu dosyanın TAMAMI, aşağıdaki Hostinger sayfalarındaki Custom HTML/Embed içeriği olarak
@@ -7,6 +7,10 @@ BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.24.0: Küçük düzeltmeler: Akış composer placeholder'ları saha/denetim/eğitim/iyileştirme odaklı yeni 6 metin (dönüşüm aynı);
+ Post penceresi alt notu yenilendi. Hesap & Gizlilik'e sade "Yasal & Politikalar" (/yasal bölümleri). İçeriğin altına küçük
+ yasal satır (© · /yasal bağlantıları · Destek → mevcut Destek & Geri Bildirim formu). Ad Soyad: tamamı BÜYÜK/küçük yazılmış
+ ad kayıt ve Profil Düzenle'de kaydedilmeden önce tr-TR kurallarıyla düzeltilir (personName; karışık yazım korunur). DB değişikliği yok.
 v4.23.0: Hizmet kartı kimliği: her kartta kategoriye özgü çizgisel işaret (tek kırmızı detay) ve sağ üstte çok soluk teknik
  motif (risk matrisi, Ex/altıgen, teknik çizim, ölçüm dalgası, EKG, belge…); kategori etiketi sade hap. Hiyerarşi, veri,
  filtreler ve davranış aynı; Hizmet Bul ve Profil > Verdiği Hizmetler aynı kart.
@@ -202,7 +206,7 @@ Acil kapatma: CONFIG.historyRouting=false.
         <div class="kw-composer">
           <button class="kw-composer-main" type="button" data-composer aria-label="Yeni Post paylaş">
             <span class="k-avatar k-avatar-md" data-composer-avatar aria-hidden="true"></span>
-            <span class="kw-composer-field"><span class="kw-composer-desktop">Sahada ne yaptın? Bir Post paylaş…</span><span class="kw-composer-mobile">Post paylaş…</span></span>
+            <span class="kw-composer-field"><span class="kw-composer-desktop">Sahada bugün neyi düzelttin?</span><span class="kw-composer-mobile">Post paylaş…</span></span>
           </button>
           <button type="button" class="kw-tool" data-composer data-composer-intent="photo" aria-label="Fotoğraflı Post paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span>Fotoğraf</span></button>
           <button type="button" class="k-btn k-btn-primary kw-composer-cta" data-composer aria-label="Yeni Post"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Paylaş</span></button>
@@ -392,11 +396,30 @@ Acil kapatma: CONFIG.historyRouting=false.
           <button type="button" class="k-btn kg-danger" data-account-delete>Hesabı Sil</button>
         </div>
       </section>
+      <nav class="kg-legal" aria-labelledby="kgLegal">
+        <h2 id="kgLegal">Yasal &amp; Politikalar</h2>
+        <ul>
+          <li><a href="https://isgcalisanplatformu.com/yasal#kvkk" target="_top" data-legal-link="kvkk">KVKK Aydınlatma Metni</a></li>
+          <li><a href="https://isgcalisanplatformu.com/yasal#gizlilik" target="_top" data-legal-link="privacy">Gizlilik Politikası</a></li>
+          <li><a href="https://isgcalisanplatformu.com/yasal#kullanim-kosullari" target="_top" data-legal-link="terms">Kullanım Koşulları</a></li>
+          <li><a href="https://isgcalisanplatformu.com/yasal#topluluk-kurallari" target="_top" data-legal-link="community">Topluluk Kuralları</a></li>
+        </ul>
+      </nav>
     </div>
   </div>
 </section>
 
 </main>
+
+<!-- Alt yasal satır: tüm görünümlerde içeriğin en altında; hukuki metinler /yasal'da, Destek mevcut Destek & Geri Bildirim formunu açar. -->
+<nav class="ka-legalbar" aria-label="Yasal bağlantılar">
+  <span>© Kırmızı İSG</span><span>Tüm hakları saklıdır</span>
+  <a href="https://isgcalisanplatformu.com/yasal#gizlilik" target="_top" data-legal-link="privacy">Gizlilik Politikası</a>
+  <a href="https://isgcalisanplatformu.com/yasal#kvkk" target="_top" data-legal-link="kvkk">KVKK Aydınlatma Metni</a>
+  <a href="https://isgcalisanplatformu.com/yasal#kullanim-kosullari" target="_top" data-legal-link="terms">Kullanım Koşulları</a>
+  <a href="https://isgcalisanplatformu.com/yasal#topluluk-kurallari" target="_top" data-legal-link="community">Topluluk Kuralları</a>
+  <button type="button" data-action="support">Destek</button>
+</nav>
 
 <!-- ORTAK DİALOGLAR -->
 <dialog id="kaLoginDialog" class="k-dialog k-dialog-sm k-login" aria-labelledby="kaLoginTitle" data-pane="login">
@@ -519,7 +542,7 @@ Acil kapatma: CONFIG.historyRouting=false.
         <label class="k-sr" for="kaPostCategory">Post Kategorisi</label>
         <select id="kaPostCategory" class="k-input k-select-inline"><option value="">Kategori seçme</option></select>
       </div>
-      <p class="k-hint">Metin veya tek bir görsel yeterli. Kategori isteğe bağlı.</p>
+      <p class="k-hint">Sahadan bir uygulama, bulgu ya da ders; kısa bir not da yeterli.</p>
       <p class="k-legal-note">Paylaşımlar Kırmızı İSG <a href="https://isgcalisanplatformu.com/yasal#topluluk-kurallari" target="_blank" rel="noopener" data-legal-link="community">Topluluk Kuralları</a>'na tabidir.</p>
       <div id="kaPostError" class="k-form-error" role="alert" hidden></div>
     </div>
@@ -1376,6 +1399,17 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kg-danger{border-color:var(--red-line);color:var(--red-text)}
 #kisgApp .kg-state{border:1px solid var(--line);border-radius:var(--r-lg)}
 #kisgApp .kg-delete p+p{margin-top:12px}
+#kisgApp .kg-legal{margin-top:24px;padding:0 4px}
+#kisgApp .kg-legal h2{color:var(--faint);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+#kisgApp .kg-legal ul{display:flex;flex-wrap:wrap;gap:2px 18px;margin:6px 0 0;padding:0;list-style:none}
+#kisgApp .kg-legal a{display:inline-block;padding:6px 0;color:var(--muted);font-size:13.5px;text-decoration:none}
+#kisgApp .kg-legal a:hover{color:var(--red-text);text-decoration:underline}
+#kisgApp .ka-legalbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0 4px;width:min(var(--page-max),calc(100% - var(--gutter) * 2));margin:0 auto;padding:14px 0 18px;border-top:1px solid var(--line-soft);color:var(--faint);font-size:12.5px;line-height:1.4;text-align:center}
+#kisgApp .ka-legalbar>*{display:inline-flex;align-items:center;min-height:32px;padding:0 2px}
+#kisgApp .ka-legalbar>*+*::before{content:"·";margin-right:6px;color:var(--line-strong)}
+#kisgApp .ka-legalbar :is(a,button){border:0;background:none;color:var(--muted);font:inherit;text-decoration:none;cursor:pointer}
+#kisgApp .ka-legalbar :is(a,button):hover{color:var(--red-text)}
+#kisgApp .ka-legalbar :is(a,button):focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:4px}
 #kisgApp .kg-delete-info{padding:12px 14px;border-radius:var(--r-md);background:var(--surface-2);color:var(--text);font-size:14px}
 @media(max-width:640px){
   #kisgApp .kg-page{padding:18px 0 40px}
@@ -1383,6 +1417,9 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .kg-group{padding:2px 16px}
   #kisgApp .kg-row{gap:14px}
   #kisgApp .kg-row .k-btn{padding-inline:14px}
+  /* Dar ekranda satır kaydığında ayraç satır başında kalmasın: ayraç yerine boşluk. */
+  #kisgApp .ka-legalbar{gap:0 14px;padding:12px 0 16px}
+  #kisgApp .ka-legalbar>*+*::before{content:none}
 }
 @media(hover:hover) and (pointer:fine){
   #kisgApp .kp-social:hover{background:var(--surface-2);color:var(--ink)}
@@ -1639,7 +1676,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.23.0',
+  version: '4.24.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
@@ -1755,6 +1792,13 @@ const extWarn = (() => {
   root.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target?.matches?.('span.k-ext-link')) act(e); }, true);
 })();
 const clean = v => (typeof v === 'string' ? v.trim() : '');
+// Ad Soyad: tamamı BÜYÜK ya da tamamı küçük yazılmışsa Türkçe kurallarıyla (tr-TR: I↔ı, İ↔i) kelime başı büyük yazılır;
+// karışık yazım (ör. "McAllister", "ahmet Yılmaz") kullanıcının tercihi sayılır ve yalnız boşlukları düzeltilir.
+const personName = v => {
+  const s = clean(v).replace(/\s+/g, ' '), up = s.toLocaleUpperCase('tr-TR'), low = s.toLocaleLowerCase('tr-TR');
+  if (up === low || (s !== up && s !== low)) return s;
+  return low.replace(/(^|[\s-])(\p{L})/gu, (m, sep, ch) => sep + ch.toLocaleUpperCase('tr-TR'));
+};
 const compact = (values, sep = ' · ') => values.filter(Boolean).join(sep);
 // PostgREST mantıksal ifadeleri için ayrı tırnaklama (URL kodlamasından bağımsız).
 const quote = v => '"' + String(v).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
@@ -2799,7 +2843,7 @@ const authUI = (() => {
     e.preventDefault();
     if (busy) return;
     exists.hidden = true;
-    const name = clean(su.name.value).replace(/\s+/g, ' '), mail = normEmail(su.email.value), pw = su.pw.value;
+    const name = personName(su.name.value), mail = normEmail(su.email.value), pw = su.pw.value;
     const problem = name.length < 3 || name.split(' ').length < 2 ? 'Adını ve soyadını yaz.'
       : !EMAIL_RE.test(mail) ? 'Geçerli bir e-posta adresi gir.'
         : pw.length < MIN_PASSWORD ? `Şifre en az ${MIN_PASSWORD} karakter olmalı.`
@@ -4559,7 +4603,7 @@ function createWorksView() {
   postBus.add(kind => { if (kind === 'saved' || kind === 'removed') newPosts.render(); });
 
   // Composer daveti: İSG sahasına özgü sorular, sakin geçişle döner (reduced-motion'da sabit).
-  const PROMPTS = ['Sahada ne yaptın? Bir Post paylaş…', 'Bugün hangi riski azalttın?', 'Son denetiminde ne dikkatini çekti?', 'Verdiğin eğitimden bir kare paylaş…', 'Hangi iyi uygulamayı hayata geçirdin?', 'Bir ramak kaladan ne öğrendin?'];
+  const PROMPTS = ['Sahada bugün neyi düzelttin?', 'Son denetiminde ne dikkatini çekti?', 'Eğitimde ekip en çok neyi sordu?', 'Hangi riski, nasıl azalttın?', 'Bir ramak kala olayından ne öğrendin?', 'Bir iyileştirmenin öncesi ve sonrası…'];
   const promptEl = $('.kw-composer-desktop', el);
   let promptIdx = Math.floor(Math.random() * PROMPTS.length);
   promptEl.textContent = PROMPTS[promptIdx];
@@ -5924,6 +5968,7 @@ function createProfileView() {
     if (saving || !edit || !own()) return;
     const v = readForm(), payload = {};
     if (!v.full_name) { formError('Ad Soyad boş bırakılamaz.'); return; }
+    v.full_name = personName(v.full_name); field('full_name').value = v.full_name;
     ['full_name', 'profession', 'current_company', 'about'].forEach(k => { if (v[k] !== edit.text[k]) payload[k] = v[k] || null; });
     if (v.certificate_class !== edit.cert) payload.certificate_class = v.certificate_class || null;
     if (v.city !== edit.city) payload.city = v.city || null;
