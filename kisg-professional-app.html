@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.25.1
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.25.2
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app.html yapıştırılır (npm run build ile
@@ -8,6 +8,11 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.25.2: Test raporu düzeltmeleri. Profil fotoğrafı sürümlü yeni dosyaya yazılır; kayıt hatası / sıfır satırda yeni dosya
+ silinir, eski fotoğraf korunur; başarıda eski dosya temizlenir; hızlı ardışık seçimde son seçim geçerli. Yorum düzenleme
+ hatasında yazılan metin kalır; taslak geri gelince gönder düğmesi etkin. Hizmet yenileme sorgusu hata verirse katalog kartı
+ kaldırılmaz. PDF süren hizmet sorgusunu bekler, hizmetler alınamazsa PDF üretmez. Inline menüde giriş düğmesi yazısı görünür.
+ Ölü/üzerine yazılmış CSS kuralları temizlendi (yayın dosyası büyümedi).
 v4.25.1: Yayın dosyası (dist/, npm run build) daha çok küçültüldü: yorumlar ve satır başı girintileri de çıkarılır
  (~436 bin karakter; v4.25.0 yayın dosyası ~480 bin). Uygulama davranışı v4.25.0 ile aynı.
 v4.25.0: Profil V2: Profili Düzenle'den görünürlük/telefon anahtarları kaldırıldı (değerler korunur, gönderilmez; yönetim
@@ -726,6 +731,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp :is(button,input,select,textarea){font:inherit;color:inherit;letter-spacing:inherit}
 #kisgApp :is(button,a){-webkit-tap-highlight-color:transparent}
 #kisgApp button{cursor:pointer}
+#kisgApp .kpn .ka-login{color:#fff}   /* inline menü: yukarıdaki color:inherit giriş düğmesi yazısını gizliyordu */
 #kisgApp button:disabled{cursor:progress;opacity:.55}
 #kisgApp :is(a,button,input,select,textarea,[tabindex]):focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:var(--r-sm)}
 #kisgApp :is(h1,h2,h3,p){margin:0}
@@ -749,7 +755,6 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .k-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 #kisgApp .k-btn:active:not(:disabled){transform:scale(.97)}
 #kisgApp .k-btn-primary{border-color:var(--red);background:var(--red);color:#fff}
-#kisgApp .k-btn-outline{border-color:var(--red-line);background:#fff;color:var(--red-text)}
 #kisgApp .k-btn-danger{border-color:var(--ink);background:var(--ink);color:#fff}
 #kisgApp .k-btn-block{display:flex;width:100%}
 #kisgApp .k-btn-lg{min-height:48px;font-size:15px}
@@ -898,9 +903,9 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .cp-side{display:flex;align-items:center;margin:-7px -8px 0 0}
 #kisgApp .cp-acts{display:flex;align-items:center;margin:1px 0 0 -6px;color:var(--faint);font-size:12px}
 #kisgApp .cp-acts .cm-like{min-height:24px}
-#kisgApp .cp-side :is(.cm-like,.cm-likes){min-height:32px;padding:0 8px;color:var(--faint)}
+#kisgApp .cp-side :is(.cm-like){min-height:32px;padding:0 8px;color:var(--faint)}
 #kisgApp .cp-side .cm-like.is-liked{color:var(--red-text)}
-#kisgApp .cp-side :is(.cm-like,.cm-likes) svg{width:14px;height:14px}
+#kisgApp .cp-side :is(.cm-like) svg{width:14px;height:14px}
 #kisgApp .cp-side .cm-more-btn{width:32px;height:32px;color:var(--faint)}
 #kisgApp .cp .cm-edit{margin-top:4px}
 #kisgApp .cp-all{display:inline-flex;align-items:center;gap:5px;min-height:30px;margin:2px 0 0 38px;color:var(--muted);font-size:13px;font-weight:650;transition:color var(--t-fast)}
@@ -925,12 +930,12 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .cm-sep{padding:0 1px;color:var(--faint)}
 #kisgApp .cm-lcount{padding:0 4px;color:var(--faint);font-size:12px;white-space:nowrap}
 #kisgApp .cm-foot .cm-more{margin-left:auto}
-#kisgApp :is(.cm-like,.cm-likes){display:inline-flex;align-items:center;gap:4px;min-height:34px;padding:0 10px;border:0;border-radius:var(--r-pill);background:none;color:var(--muted);font-size:12px;font-weight:750}
-#kisgApp :is(.cm-like,.cm-likes) svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}
+#kisgApp :is(.cm-like){display:inline-flex;align-items:center;gap:4px;min-height:34px;padding:0 10px;border:0;border-radius:var(--r-pill);background:none;color:var(--muted);font-size:12px;font-weight:750}
+#kisgApp :is(.cm-like) svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}
 #kisgApp .cm-like{padding:0 6px;border-radius:6px;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:color var(--t-fast)}
 #kisgApp .cm-like.is-liked{color:var(--red-text)}
 #kisgApp .cm-like:disabled{cursor:default}
-#kisgApp .cm-likes svg,#kisgApp .cm-like.is-liked svg{fill:var(--red);stroke:var(--red)}
+#kisgApp .cm-like.is-liked svg{fill:var(--red);stroke:var(--red)}
 #kisgApp .cm-like.is-liked{color:var(--red-text)}
 #kisgApp .cm-more{position:relative;margin-left:auto}
 #kisgApp .cm-more-btn{display:grid;width:34px;height:34px;place-items:center;border:0;border-radius:50%;background:none;color:var(--muted);font-size:16px;letter-spacing:.05em}
@@ -1073,11 +1078,9 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .ks-hero-count{color:var(--muted);font-size:14px;font-weight:650}
 #kisgApp .ks-hero-count:not(:empty)::before{content:"";display:inline-block;width:6px;height:6px;margin:0 8px 2px 0;border-radius:50%;background:var(--red)}
 #kisgApp .ks-hero-art{justify-self:end;width:170px;margin:-8px 0}
-#kisgApp .ks-hero-art img{display:block;width:100%;height:auto;mix-blend-mode:multiply;transform:rotate(-7deg)}
+#kisgApp .ks-hero-art img{position:relative;display:block;width:82%;height:auto;mix-blend-mode:multiply;transform:rotate(-6deg)}
 #kisgApp .ks .kc-filters-inline .kc-field-cat{display:none}
 #kisgApp .ks .kc-filters-inline{flex:0 0 auto;flex-wrap:nowrap}
-#kisgApp .ks .kc-filters-inline :is(input,select){height:52px;padding-inline:18px}
-#kisgApp .ks .kc-filters-inline select{padding-right:38px}
 #kisgApp .ks-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 #kisgApp .ks-chip{min-height:38px;padding:0 16px;border:0;border-radius:var(--r-pill);background:#fff;box-shadow:inset 0 0 0 1px var(--line);color:var(--text);font-size:13.5px;font-weight:650;white-space:nowrap;transition:background var(--t-fast),color var(--t-fast),box-shadow var(--t-fast)}
 #kisgApp .ks-chip[aria-pressed="true"]{background:var(--ink);box-shadow:none;color:#fff}
@@ -1463,7 +1466,6 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .kp-phone:hover{box-shadow:inset 0 0 0 1px var(--line-strong)}
   #kisgApp .k-btn:hover{border-color:var(--ink)}
   #kisgApp .k-btn-primary:hover{background:var(--red-hover);border-color:var(--red-hover)}
-  #kisgApp .k-btn-outline:hover{background:var(--red-tint)}
   #kisgApp .kc-publish:hover{background:var(--surface-2)}
   #kisgApp .k-btn-danger:hover{background:#000}
   #kisgApp :is(.k-icon-btn,.kw-more-btn,.kw-dots):hover{background:var(--surface-2);color:var(--ink)}
@@ -1550,8 +1552,8 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .kw-post-text{margin-top:10px}
   #kisgApp .kw-post-content{font-size:15px;line-height:1.58}
   #kisgApp .kw-media{border-radius:12px}
-  #kisgApp :is(.cm-like,.cm-likes,.cm-more-btn){min-height:40px;min-width:40px}
-  #kisgApp .cp-side :is(.cm-like,.cm-likes,.cm-more-btn){min-height:40px;min-width:36px}
+  #kisgApp :is(.cm-like,.cm-more-btn){min-height:40px;min-width:40px}
+  #kisgApp .cp-side :is(.cm-like,.cm-more-btn){min-height:40px;min-width:36px}
   #kisgApp .cp-acts .cm-like{min-height:30px;min-width:0}
   #kisgApp .cp-side{margin-top:-10px}
   #kisgApp .cp-all{min-height:36px}
@@ -1579,17 +1581,11 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .ke-cta{margin:0 auto}
   #kisgApp .ks-grid{grid-template-columns:minmax(0,1fr)}
   #kisgApp .ks-page{padding-top:0}
-  #kisgApp .ks-hero{display:block;margin:0 0 12px;padding:18px var(--pad) 18px;border-radius:0;background:#f4f5f7}
-  #kisgApp .ks-hero-art{position:absolute;right:-14px;top:10px;width:78px;margin:0;opacity:.9}
-  #kisgApp .ks-kicker{font-size:10.5px;padding-right:60px}
-  #kisgApp .ks-hero h1{margin-top:6px;padding-right:44px;font-size:23px;line-height:1.15}
-  #kisgApp .ks-lead{margin-top:6px;font-size:14px;line-height:1.5}
   #kisgApp .ks-hero-actions{flex-wrap:nowrap;gap:12px;margin-top:12px}
-  #kisgApp .ks-hero-cta{min-height:42px;padding:0 16px;font-size:14px}
   #kisgApp .ks-hero-count{font-size:12.5px;white-space:nowrap}
   #kisgApp .ks-chips{flex-wrap:nowrap;overflow-x:auto;margin:12px 0 0;padding:2px var(--gutter) 4px;scrollbar-width:none;overscroll-behavior-x:contain}
   #kisgApp .ks-chips::-webkit-scrollbar{display:none}
-  #kisgApp .ks-chip{flex:none;min-height:40px}
+  #kisgApp .ks-chip{flex:none}
   #kisgApp .ks-card{padding:20px 18px 0;border-radius:18px}
   #kisgApp .ks-card h2{font-size:18.5px}
   #kisgApp .ks-head{gap:12px}
@@ -1685,7 +1681,6 @@ Acil kapatma: CONFIG.historyRouting=false.
 /* Kahraman alanı: baret, yumuşak bir zemin üzerinde "sahnede" durur (kesik/yapıştırılmış görünmez) */
 #kisgApp .ks-hero-art{position:relative;display:grid;place-items:center;aspect-ratio:1}
 #kisgApp .ks-hero-art::before{content:"";position:absolute;inset:4%;border-radius:50%;background:radial-gradient(circle at 50% 42%,#fff 0 58%,rgba(255,255,255,0) 72%)}
-#kisgApp .ks-hero-art img{position:relative;width:82%;transform:rotate(-6deg)}
 #kisgApp .kc-results-head p{font-weight:600}
 @media(max-width:640px){
   /* Mobil kahraman: başlık + baret yan yana, açıklama ve aksiyon tam genişlik */
@@ -1739,7 +1734,6 @@ Acil kapatma: CONFIG.historyRouting=false.
 }
 @media(max-width:359px){
   #kisgApp :is(.kw-act,.kw-likes-static){font-size:12.5px;padding-inline:8px}
-  #kisgApp .kw-act-open .kw-act-label{display:none}
   #kisgApp .ke-grid{grid-template-columns:minmax(0,1fr)}
 }
 @media(prefers-reduced-motion:reduce){#kisgApp *,#kisgApp *::before,#kisgApp *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
@@ -1768,7 +1762,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.25.1',
+  version: '4.25.2',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
@@ -3389,8 +3383,8 @@ const notifications = (() => {
 
 /* =========================================================================
    7b. Profil fotoğrafı: seç → kırp (sürükle/yakınlaştır) → 512×512 → WebP (≤150 KB hedef) →
-   tek kanonik dosya {user_id}/avatar.webp (upsert, eski sürüm birikmez) → profiles.avatar_url.
-   Cache-busting yalnız URL sorgu parametresiyle (?v=) yapılır; yeni fiziksel dosya üretilmez.
+   sürümlü yeni dosya {user_id}/avatar-{zaman}.webp → profiles.avatar_url (satır güncellendiği doğrulanır).
+   Kayıt başarısızsa yeni dosya silinir, eski fotoğraf/URL olduğu gibi kalır; başarılıysa eski dosya temizlenir.
    ========================================================================= */
 const avatarManager = (() => {
   const dlg = $('#kaAvatarDialog'), stage = $('[data-av-stage]', dlg), current = $('[data-av-current]', dlg);
@@ -3398,7 +3392,7 @@ const avatarManager = (() => {
   const fileInput = $('[data-av-file]', dlg), pickLabel = $('[data-av-pick-label]', dlg), save = $('[data-av-save]', dlg), removeBtn = $('[data-av-remove]', dlg), err = $('[data-av-error]', dlg);
   const ctx = canvas.getContext('2d');
   const S = canvas.width;
-  let src = null, sw = 0, sh = 0, base = 1, z = 1, ox = 0, oy = 0, busy = false, drag = null;
+  let src = null, sw = 0, sh = 0, base = 1, z = 1, ox = 0, oy = 0, busy = false, drag = null, pickSeq = 0;
   const fail = m => Object.assign(new Error(m), { userMessage: m });
   const showError = m => { err.textContent = m || ''; err.hidden = !m; };
 
@@ -3441,7 +3435,7 @@ const avatarManager = (() => {
     const me = session.me || {}, url = httpUrl(me.avatar_url), text = initials(me.full_name);
     current.innerHTML = `<span class="k-avatar av-big">${text ? esc(text) : ICONS.user}${url ? `<img src="${esc(url)}" alt="" decoding="async">` : ''}</span>`;
   }
-  function reset() { try { src?.close?.(); } catch {} src = null; fileInput.value = ''; showError(''); mode(false); renderCurrent(); }
+  function reset() { pickSeq++; try { src?.close?.(); } catch {} src = null; fileInput.value = ''; showError(''); mode(false); renderCurrent(); }
   async function open() {
     const user = await requireUser(() => open()); if (!user) return;
     reset(); dialogs.open(dlg);
@@ -3451,8 +3445,9 @@ const avatarManager = (() => {
     const heic = /hei[cf]/i.test(file.type || '') || /\.(heic|heif)$/i.test(file.name || '');
     if (!/^image\//.test(file.type || '') && !heic) return showError('Lütfen bir fotoğraf seç (JPEG, PNG veya WebP).');
     if (file.size > 40 * 1024 * 1024) return showError('Bu dosya çok büyük (40 MB üzeri).');
-    try { src = await decode(file); }
-    catch { return showError(heic ? 'Bu tarayıcı HEIC/HEIF fotoğrafını açamıyor. Fotoğrafı JPEG olarak kaydedip tekrar dene.' : 'Bu görsel açılamadı. Başka bir fotoğraf dene.'); }
+    const seq = ++pickSeq;   // geç çözülen eski seçim yok sayılır
+    try { const img = await decode(file); if (seq !== pickSeq) return; src = img; }
+    catch { return seq === pickSeq && showError(heic ? 'Bu tarayıcı HEIC/HEIF fotoğrafını açamıyor. Fotoğrafı JPEG olarak kaydedip tekrar dene.' : 'Bu görsel açılamadı. Başka bir fotoğraf dene.'); }
     sw = src.width || src.naturalWidth; sh = src.height || src.naturalHeight;
     base = S / Math.min(sw, sh); z = 1; zoom.value = '1';
     ox = (S - sw * base) / 2; oy = (S - sh * base) / 2;
@@ -3477,23 +3472,23 @@ const avatarManager = (() => {
     throw fail('Fotoğraf dönüştürülemedi. Başka bir fotoğraf dene.');
   }
   function lock(on) { busy = on; dialogs.lock(dlg, on); [save, removeBtn, fileInput].forEach(n => { n.disabled = on; }); }
-  function versioned(uid) {
-    const base = db.storage.from(CONFIG.avatarBucket).getPublicUrl(`${uid}/avatar.webp`).data.publicUrl;
-    return `${base}?v=${Date.now().toString(36)}`;
-  }
+  const bucket = () => db.storage.from(CONFIG.avatarBucket);
+  // avatar_url kullanıcının kendi klasöründeyse depolama yolu (eski dosya temizliği)
+  const ownPath = (url, uid) => { const p = String(url || '').split(`/${CONFIG.avatarBucket}/`)[1]?.split('?')[0] || ''; return p.startsWith(uid + '/') ? p : null; };
+  const drop = path => path && bucket().remove([path]).catch(() => {});
   async function commit() {
     if (busy || !src) return;
     const user = await session.verified(); if (!user) { showError('Oturum süren dolmuş; tekrar giriş yap.'); return; }
     lock(true); setBusy(save, true, 'Kaydediliyor…'); showError('');
     try {
-      const blob = await encode();
-      // Tek kanonik dosya; upsert eskisinin üzerine yazar. Yükleme başarısızsa mevcut dosya/URL korunur.
-      const up = await db.storage.from(CONFIG.avatarBucket).upload(`${user.id}/avatar.webp`, blob, { upsert: true, contentType: blob.type, cacheControl: '31536000' });
+      // Yeni sürümlü dosya; profil kaydı başarısızsa silinir, eski fotoğraf aynen kalır.
+      const blob = await encode(), prev = ownPath(session.me?.avatar_url, user.id), path = `${user.id}/avatar-${Date.now().toString(36)}.webp`;
+      const up = await bucket().upload(path, blob, { contentType: blob.type, cacheControl: '31536000' });
       if (up.error) throw up.error;
-      const url = versioned(user.id);
-      const { error } = await db.from('profiles').update({ avatar_url: url }).eq('id', user.id);
-      if (error) throw error;
-      apply(user.id, url);
+      const url = bucket().getPublicUrl(path).data.publicUrl;
+      const { data, error } = await db.from('profiles').update({ avatar_url: url }).eq('id', user.id).select('id').maybeSingle();
+      if (error || !data?.id) { await drop(path); throw error || 0; }
+      apply(user.id, url); drop(prev);
       dialogs.lock(dlg, false); dialogs.close(dlg);
       toast('Profil fotoğrafın güncellendi.');
     } catch (e) { showError(e?.userMessage || 'Fotoğraf kaydedilemedi. Mevcut fotoğrafın korunuyor; tekrar dene.'); }
@@ -3504,10 +3499,10 @@ const avatarManager = (() => {
     const user = await session.verified(); if (!user) return;
     lock(true); setBusy(removeBtn, true, 'Kaldırılıyor…');
     try {
-      const { error } = await db.from('profiles').update({ avatar_url: null }).eq('id', user.id);
-      if (error) throw error;
-      apply(user.id, null);
-      try { await db.storage.from(CONFIG.avatarBucket).remove([`${user.id}/avatar.webp`]); } catch {}
+      const prev = ownPath(session.me?.avatar_url, user.id);
+      const { data, error } = await db.from('profiles').update({ avatar_url: null }).eq('id', user.id).select('id').maybeSingle();
+      if (error || !data?.id) throw 0;
+      apply(user.id, null); drop(prev);
       dialogs.lock(dlg, false); dialogs.close(dlg);
       toast('Profil fotoğrafın kaldırıldı.');
     } catch { showError('Fotoğraf kaldırılamadı. Tekrar dene.'); }
@@ -3827,7 +3822,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       const all = c && total >= 2 ? `<a class="cp-all" href="${esc(urls.work(id))}" target="_top" data-comment-all>${total} yorumun tümünü gör <span aria-hidden="true">→</span></a>` : '';
       const composerRow = t.open
         ? (session.user
-          ? `<form class="cm-compose" data-comment-form><span class="cm-me">${avatar(session.me || {}, 'sm')}</span><textarea class="cm-input" maxlength="2000" rows="1" placeholder="Yorum yaz…" aria-label="Yorum yaz">${esc(t.draft)}</textarea><button type="submit" class="cm-send" aria-label="Yorumu gönder" disabled>${ICONS.send}</button></form>`
+          ? `<form class="cm-compose" data-comment-form><span class="cm-me">${avatar(session.me || {}, 'sm')}</span><textarea class="cm-input" maxlength="2000" rows="1" placeholder="Yorum yaz…" aria-label="Yorum yaz">${esc(t.draft)}</textarea><button type="submit" class="cm-send" aria-label="Yorumu gönder"${t.draft.trim() ? '' : ' disabled'}>${ICONS.send}</button></form>`
           : `<button type="button" class="cm-login" data-comment-login>Yorum yazmak için giriş yap</button>`)
         : '';
       box.classList.add('is-preview');
@@ -3852,7 +3847,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
         ? `<button type="button" class="cm-show" data-comment-more>${t.loading ? 'Yükleniyor…' : (t.items.length <= PREVIEW && !t.open ? `Tüm ${total} yorumu gör` : rest > 0 ? `Önceki ${rest} yorumu gör` : 'Önceki yorumları gör')}</button>` : '';
       const composerRow = t.open
         ? (session.user
-          ? `<form class="cm-compose" data-comment-form><span class="cm-me">${avatar(session.me || {}, 'sm')}</span><textarea class="cm-input" maxlength="2000" rows="1" placeholder="Yorum yaz…" aria-label="Yorum yaz">${esc(t.draft)}</textarea><button type="submit" class="cm-send" aria-label="Yorumu gönder" disabled>${ICONS.send}</button></form>`
+          ? `<form class="cm-compose" data-comment-form><span class="cm-me">${avatar(session.me || {}, 'sm')}</span><textarea class="cm-input" maxlength="2000" rows="1" placeholder="Yorum yaz…" aria-label="Yorum yaz">${esc(t.draft)}</textarea><button type="submit" class="cm-send" aria-label="Yorumu gönder"${t.draft.trim() ? '' : ' disabled'}>${ICONS.send}</button></form>`
           : `<button type="button" class="cm-login" data-comment-login>Yorum yazmak için giriş yap</button>`)
         : '';
       const failed = t.error && !t.loading ? '<button type="button" class="cm-show" data-comment-retry>Yorumlar yüklenemedi · Yeniden dene</button>' : '';
@@ -3966,13 +3961,14 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
     async function saveEdit(id, cid, form) {
       const t = get(id), c = t.items.find(x => String(x.id) === String(cid)), content = form.querySelector('textarea').value.trim();
       if (!c || !content || !session.user) return;
-      form.querySelectorAll('button,textarea').forEach(n => { n.disabled = true; });
+      const lock = on => form.querySelectorAll('button,textarea').forEach(n => { n.disabled = on; });
+      lock(true);
       try {
         const { data, error } = await db.from('professional_post_comments').update({ content }).eq('id', cid).eq('user_id', session.user.id).eq('status', 'active').select(C_SELECT).single();
         if (error) throw error;
         Object.assign(c, { content: data?.content ?? content, updated_at: data?.updated_at ?? new Date().toISOString() });
         t.editing = null; render(id);
-      } catch (e) { toast(errorText(e, 'Yorum güncellenemedi.')); render(id); }
+      } catch (e) { toast(errorText(e, 'Yorum güncellenemedi.')); lock(false); }   // yazılan metin alanda kalır
     }
     async function remove(id, cid) {
       const t = get(id);
@@ -5325,7 +5321,8 @@ function createServicesView() {
     if (x.created) { loadHeroCount(); catalog.load(); return; }
     if (i < 0) return;
     try {
-      const { data } = await db.from('professional_services').select(SELECT).eq('id', x.id).eq('status', 'active').maybeSingle();
+      const { data, error } = await db.from('professional_services').select(SELECT).eq('id', x.id).eq('status', 'active').maybeSingle();
+      if (error) return;   // okunamadı: mevcut kart kalır; yalnız gerçekten kayıt yoksa kaldırılır
       if (!data) { rows.splice(i, 1); node?.remove(); catalog.renderMeta(); return; }
       rows[i] = data; if (node) node.outerHTML = serviceCard(data);
       host.schedule();
@@ -5960,8 +5957,10 @@ function createProfileView() {
     else servicesBox.innerHTML = `${publish ? `<div class="kp-services-head">${publish}</div>` : ''}<div class="kc-results ks-grid kp-services">${s.services.map(v => serviceCard(v, { provider: false })).join('')}</div>`;
     host.schedule();
   }
-  async function loadServices() {
-    if (s.servicesState === 'loading' || !s.id) return;
+  // Süren sorgunun sözü paylaşılır (PDF onu bekleyebilir).
+  function loadServices() {
+    if (s.servicesState === 'loading' || !s.id) return s.servicesP;
+    return (s.servicesP = (async () => {
     const rev = s.rev;
     s.servicesState = 'loading'; renderServices();
     try {
@@ -5972,6 +5971,7 @@ function createProfileView() {
       s.counts.services = s.services.length; renderTabs();
     } catch { if (rev === s.rev) s.servicesState = 'failed'; }
     if (rev === s.rev) renderServices();
+    })());
   }
   async function loadCounts(rev) {
     const head = t => db.from(t).select('id', { count: 'exact', head: true }).eq('user_id', s.id).eq('status', 'active');
@@ -6188,6 +6188,7 @@ function createProfileView() {
     let text = idle;
     try {
       if (s.servicesState !== 'ready') await loadServices();
+      if (s.servicesState !== 'ready') throw new Error('services');   // eksik PDF üretilmez
       const p = s.profile;
       const file = await profilePdf.create({
         profile: p, url: urls.profile(p.id), role: identity.role(p), status: identity.statusLong(p),
