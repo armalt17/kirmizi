@@ -132,6 +132,20 @@ check(!ok(r) && /permission denied/.test(r.err), 'skor yenileme istemciye kapal�
 r = as('anon', null, `select count(*) from public.professional_tags`);
 check(ok(r) && +r.out.trim() >= 4, 'etiketler herkese okunur');
 
+// ---- V2: gündem paneli sayıları (20261007) ----
+const v1Trend = trending();
+r = runFile(MIG('20261007_tags_trending_v2.sql')); check(ok(r), `20261007 uygulandı ${r.err}`);
+r = runFile(MIG('20261007_tags_trending_v2.sql')); check(ok(r), `20261007 tekrar çalıştırılabilir ${r.err}`);
+check(trending() === v1Trend, `V2 aynı sıralamayı döndürür (${trending()})`);
+r = as('anon', null, `select bool_and(posts = (select count(*) from public.professional_posts p where p.tag_id = x.id and p.status = 'active') and posts_24h <= posts) and sum(posts) > 0 and sum(posts_24h) > 0 from public.kisg_tags_trending() x`);
+check(ok(r) && r.out.trim() === 't', `V2: posts ve posts_24h doğru ${r.out.trim()} ${r.err}`);
+r = runFile(MIG('20261007_tags_trending_v2.verify.sql'));
+const v2rows = r.out.split('\n').filter(Boolean);
+check(ok(r) && v2rows.length === 4 && v2rows.every(l => l.endsWith('|t')), `20261007 verify: ${v2rows.length} satır ok`);
+r = runFile(MIG('20261007_tags_trending_v2.rollback.sql'));
+check(ok(r) && trending() === v1Trend && !/posts_24h/.test(psql(`select pg_get_function_result('public.kisg_tags_trending(integer)'::regprocedure)`).out), `20261007 geri alma: V1 tanımı ${r.err}`);
+r = runFile(MIG('20261007_tags_trending_v2.sql')); check(ok(r), 'V2 yeniden uygulanabilir');
+
 // ---- geri alma ----
 r = runFile(MIG('20261005_tags_v1.rollback.sql'));
 check(ok(r) && psql(`select to_regclass('public.professional_tags') is null and not exists (select 1 from information_schema.columns where table_name = 'professional_posts' and column_name = 'tag_id')`).out === 't'

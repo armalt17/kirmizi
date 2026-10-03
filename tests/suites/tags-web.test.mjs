@@ -11,7 +11,7 @@ const TAGS = [
   { id: T(1), name: 'Bakanlığa Şikayet', pinned: true }, { id: T(2), name: 'Yüksekte Çalışma' }, { id: T(3), name: 'İş Kazaları' },
   { id: T(4), name: 'ATEX' }, { id: T(5), name: 'Koruma Ekipmanları' }
 ];
-const TREND = [{ ...TAGS[0], slot: 'pinned', score: null }, { ...TAGS[1], slot: 'trending', score: 12.9 }, { ...TAGS[2], slot: 'trending', score: 4.1 }, { ...TAGS[3], slot: 'trending', score: 3 }, { ...TAGS[4], slot: 'new', score: null }];
+const TREND = [{ ...TAGS[0], slot: 'pinned', score: null }, { ...TAGS[1], slot: 'trending', score: 12.9, posts: 1280, posts_24h: 42 }, { ...TAGS[2], slot: 'trending', score: 4.1 }, { ...TAGS[3], slot: 'trending', score: 3 }, { ...TAGS[4], slot: 'new', score: null }];
 const norm = s => s.toLocaleLowerCase('tr-TR').replace(/[çğıöşü]/g, c => ({ ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u' })[c]).replace(/[^a-z0-9]/g, '');
 const J = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(body) });
 
@@ -82,10 +82,18 @@ try {
     // ---- panel (Tümü) ----
     await f.click('[data-tag-strip] [data-tag-all]'); await f.waitForSelector('#kaTagDialog[open]'); await settle(page, 500);
     const pl = await f.evaluate(() => { const d = document.getElementById('kaTagDialog'), r = d.getBoundingClientRect(); return { place: d.dataset.place, right: Math.round(window.innerWidth - r.right), w: Math.round(r.width), bottom: Math.round(window.innerHeight - r.bottom), title: d.querySelector('h2').textContent, secs: [...d.querySelectorAll('.kt-sec')].map(x => x.textContent), rows: d.querySelectorAll('.kt-row').length }; });
-    check(pl.place === (mobile ? 'sheet' : 'side') && pl.title === 'Etiketler' && JSON.stringify(pl.secs) === '["Sabit","Gündemde"]' && pl.rows === 5, `${N} panel: ${mobile ? 'alt sayfa' : 'sağ panel'}, Sabit + Gündemde (${JSON.stringify(pl)})`);
-    if (!mobile) check(pl.right <= 1 && pl.w <= 380, `${N} masaüstü panel sağa yaslı (${pl.right}px, ${pl.w}px)`);
+    check(pl.place === (mobile ? 'sheet' : 'center') && pl.title === 'Gündemdeki Konular' && JSON.stringify(pl.secs) === '["Sabit","Gündemde"]' && pl.rows === 5, `${N} panel: ${mobile ? 'alt sayfa' : 'ortada'}, Sabit + Gündemde (${JSON.stringify(pl)})`);
+    if (!mobile) check(pl.right > 100 && pl.w <= 500, `${N} masaüstü panel yandan değil ortada açılır (${pl.right}px, ${pl.w}px)`);
+    const top = await f.$eval('#kaTagDialog [data-tag-name="Yüksekte Çalışma"]', b => ({ rank: b.querySelector('.kt-rank')?.textContent, hot: b.classList.contains('kt-hot'), meta: b.querySelector('.kt-meta')?.textContent, heat: b.querySelector('.kt-heat')?.style.getPropertyValue('--w') }));
+    check(top.rank === '1' && top.hot && top.meta === '1.280 gönderi · Son 24 saatte 42 yeni' && top.heat === '100%', `${N} gündem satırı: sıra, vurgulu ikon, sayılar, ısı çubuğu ${JSON.stringify(top)}`);
+    check(!(await f.$('#kaTagDialog [data-tag-name="ATEX"] .kt-meta')) && (await f.$eval('#kaTagDialog [data-tag-name="ATEX"] .kt-heat', i => i.style.getPropertyValue('--w'))) === '23%', `${N} sayısı gelmeyen etiket (eski DB) sayı göstermez, ısı oranlı`);
+    const kb = await f.evaluate(() => ({ fs: parseFloat(getComputedStyle(document.getElementById('kaTagQ')).fontSize), focused: document.activeElement?.id === 'kaTagQ', h: document.getElementById('kaTagDialog').getBoundingClientRect().height }));
+    check(kb.fs >= 16, `${N} arama kutusu 16px (iOS odakta yakınlaştırmaz) ${kb.fs}`);
+    check(kb.focused === !mobile, `${N} ${mobile ? 'dokunmatikte klavye kendiliğinden açılmaz' : 'masaüstünde arama odaklı açılır'}`);
     await page.screenshot({ path: path.join(OUT, `tags-panel-${N}.png`) });
     await f.fill('#kaTagQ', 'kaz'); await settle(page, 600);
+    const h2 = await f.$eval('#kaTagDialog', d => d.getBoundingClientRect().height);
+    check(Math.abs(h2 - kb.h) < 2, `${N} arama sonuçları panel yüksekliğini zıplatmaz (${Math.round(kb.h)} → ${Math.round(h2)})`);
     const res = await f.$$eval('#kaTagDialog .kt-row', b => b.map(x => x.textContent));
     check(JSON.stringify(res) === '["İş Kazaları"]' && rpc.some(x => x.fn === 'kisg_tags_search' && x.body.p_q === 'kaz'), `${N} panel: yazınca tüm etiketlerde canlı arama ${JSON.stringify(res)}`);
     check(!(await f.$('#kaTagDialog [data-tag-new]')), `${N} filtre panelinde "yeni etiket" satırı yok`);

@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.27.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.28.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -8,6 +8,9 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.28.0: Gündemdeki Konular paneli yenilendi: masaüstünde ortada (yandan değil), sıra, renkli ikon, "N gönderi · Son 24
+ saatte M yeni" (DB 20261007 ile; yoksa sayısız), ısı çubuğu, canlı gösterge. Mobil: arama 16px (iOS yakınlaştırmaz),
+ klavye kendiliğinden açılmaz, panel yüksekliği sabit (sonuçlar zıplatmaz; klavye açılınca görünen alana sığar).
 v4.27.0: Konular V1 (etiket sistemi). Composer'da kategori listesi yerine "+ Etiket Ekle" (post başına en fazla 1, zorunlu
  değil, 20 karakter; paylaşıldıktan sonra değişmez; yeni yazılan ad paylaşırken etiket olur, farklı yazımı var olana yönlenir).
  Akış'ın üstünde etiket şeridi: sabitler + gündem (saatlik skor, ilk 8) + son 24 saatin en yeni etiketi + "Tümü"; dokunmak
@@ -702,9 +705,9 @@ Acil kapatma: CONFIG.historyRouting=false.
   </form>
 </dialog>
 
-<dialog id="kaTagDialog" class="k-dialog k-dialog-sm kt-panel" aria-labelledby="kaTagTitle" data-stack>
-  <header class="k-dialog-head"><span class="k-grip" aria-hidden="true"></span><h2 id="kaTagTitle">Etiketler</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
-  <div class="k-dialog-body"><label class="kt-search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="kaTagQ" type="search" maxlength="20" placeholder="Etiket ara…" autocomplete="off" aria-label="Etiket ara"></label><div class="kt-list" data-tag-list aria-live="polite"></div></div>
+<dialog id="kaTagDialog" class="k-dialog kt-panel" aria-labelledby="kaTagTitle" data-stack data-fixed>
+  <header class="kt-hero"><div><h2 id="kaTagTitle">Gündemdeki Konular</h2><p class="kt-live" data-tag-sub>Canlı · son 7 günün nabzı</p></div><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button><label class="kt-search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="kaTagQ" type="search" maxlength="20" placeholder="Etiket ara…" autocomplete="off" aria-label="Etiket ara"></label></header>
+  <div class="kt-list" data-tag-list aria-live="polite"></div>
 </dialog>
 
 <dialog id="kaNotifDialog" class="k-dialog k-dialog-sm kn-sheet" aria-labelledby="kaNotifTitle" tabindex="-1">
@@ -1121,14 +1124,14 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .ks-card{isolation:isolate;overflow:hidden}
 #kisgApp .ks-card::before{content:"";position:absolute;top:0;right:0;z-index:-1;width:168px;height:112px;background:no-repeat right top/168px 112px;-webkit-mask-image:linear-gradient(215deg,#000 18%,transparent 78%);mask-image:linear-gradient(215deg,#000 18%,transparent 78%);opacity:.95;transition:opacity var(--t)}
 #kisgApp .ks-card[data-kind="risk"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpath d='M24 0V112'/%3E%3Cpath d='M48 0V112'/%3E%3Cpath d='M72 0V112'/%3E%3Cpath d='M96 0V112'/%3E%3Cpath d='M120 0V112'/%3E%3Cpath d='M144 0V112'/%3E%3Cpath d='M0 16H168'/%3E%3Cpath d='M0 40H168'/%3E%3Cpath d='M0 64H168'/%3E%3Cpath d='M0 88H168'/%3E%3Crect x='144' y='-8' width='24' height='24' fill='%23e30a17' fill-opacity='.10' stroke='none'/%3E%3Crect x='120' y='-8' width='24' height='24' fill='%23e30a17' fill-opacity='.05' stroke='none'/%3E%3Crect x='144' y='16' width='24' height='24' fill='%23e30a17' fill-opacity='.05' stroke='none'/%3E%3C/svg%3E")}
-#kisgApp .ks-card[data-kind="atex"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpolygon points='0.0,-30.0 0.0,-15.0 -13.0,-7.5 -26.0,-15.0 -26.0,-30.0 -13.0,-37.5'/%3E%3Cpolygon points='26.0,-30.0 26.0,-15.0 13.0,-7.5 -0.0,-15.0 -0.0,-30.0 13.0,-37.5'/%3E%3Cpolygon points='52.0,-30.0 52.0,-15.0 39.0,-7.5 26.0,-15.0 26.0,-30.0 39.0,-37.5'/%3E%3Cpolygon points='77.9,-30.0 77.9,-15.0 65.0,-7.5 52.0,-15.0 52.0,-30.0 65.0,-37.5'/%3E%3Cpolygon points='103.9,-30.0 103.9,-15.0 90.9,-7.5 77.9,-15.0 77.9,-30.0 90.9,-37.5'/%3E%3Cpolygon points='129.9,-30.0 129.9,-15.0 116.9,-7.5 103.9,-15.0 103.9,-30.0 116.9,-37.5'/%3E%3Cpolygon points='155.9,-30.0 155.9,-15.0 142.9,-7.5 129.9,-15.0 129.9,-30.0 142.9,-37.5'/%3E%3Cpolygon points='181.9,-30.0 181.9,-15.0 168.9,-7.5 155.9,-15.0 155.9,-30.0 168.9,-37.5'/%3E%3Cpolygon points='207.8,-30.0 207.8,-15.0 194.8,-7.5 181.9,-15.0 181.9,-30.0 194.8,-37.5'/%3E%3Cpolygon points='-13.0,-7.5 -13.0,7.5 -26.0,15.0 -39.0,7.5 -39.0,-7.5 -26.0,-15.0'/%3E%3Cpolygon points='13.0,-7.5 13.0,7.5 0.0,15.0 -13.0,7.5 -13.0,-7.5 -0.0,-15.0'/%3E%3Cpolygon points='39.0,-7.5 39.0,7.5 26.0,15.0 13.0,7.5 13.0,-7.5 26.0,-15.0'/%3E%3Cpolygon points='65.0,-7.5 65.0,7.5 52.0,15.0 39.0,7.5 39.0,-7.5 52.0,-15.0'/%3E%3Cpolygon points='90.9,-7.5 90.9,7.5 77.9,15.0 64.9,7.5 64.9,-7.5 77.9,-15.0'/%3E%3Cpolygon points='116.9,-7.5 116.9,7.5 103.9,15.0 90.9,7.5 90.9,-7.5 103.9,-15.0'/%3E%3Cpolygon points='142.9,-7.5 142.9,7.5 129.9,15.0 116.9,7.5 116.9,-7.5 129.9,-15.0'/%3E%3Cpolygon points='168.9,-7.5 168.9,7.5 155.9,15.0 142.9,7.5 142.9,-7.5 155.9,-15.0'/%3E%3Cpolygon points='194.9,-7.5 194.9,7.5 181.9,15.0 168.9,7.5 168.9,-7.5 181.9,-15.0'/%3E%3Cpolygon points='0.0,15.0 0.0,30.0 -13.0,37.5 -26.0,30.0 -26.0,15.0 -13.0,7.5'/%3E%3Cpolygon points='26.0,15.0 26.0,30.0 13.0,37.5 -0.0,30.0 -0.0,15.0 13.0,7.5'/%3E%3Cpolygon points='52.0,15.0 52.0,30.0 39.0,37.5 26.0,30.0 26.0,15.0 39.0,7.5'/%3E%3Cpolygon points='77.9,15.0 77.9,30.0 65.0,37.5 52.0,30.0 52.0,15.0 65.0,7.5'/%3E%3Cpolygon points='103.9,15.0 103.9,30.0 90.9,37.5 77.9,30.0 77.9,15.0 90.9,7.5'/%3E%3Cpolygon points='129.9,15.0 129.9,30.0 116.9,37.5 103.9,30.0 103.9,15.0 116.9,7.5'/%3E%3Cpolygon points='155.9,15.0 155.9,30.0 142.9,37.5 129.9,30.0 129.9,15.0 142.9,7.5'/%3E%3Cpolygon points='181.9,15.0 181.9,30.0 168.9,37.5 155.9,30.0 155.9,15.0 168.9,7.5'/%3E%3Cpolygon points='207.8,15.0 207.8,30.0 194.8,37.5 181.9,30.0 181.9,15.0 194.8,7.5'/%3E%3Cpolygon points='-13.0,37.5 -13.0,52.5 -26.0,60.0 -39.0,52.5 -39.0,37.5 -26.0,30.0'/%3E%3Cpolygon points='13.0,37.5 13.0,52.5 0.0,60.0 -13.0,52.5 -13.0,37.5 -0.0,30.0'/%3E%3Cpolygon points='39.0,37.5 39.0,52.5 26.0,60.0 13.0,52.5 13.0,37.5 26.0,30.0'/%3E%3Cpolygon points='65.0,37.5 65.0,52.5 52.0,60.0 39.0,52.5 39.0,37.5 52.0,30.0'/%3E%3Cpolygon points='90.9,37.5 90.9,52.5 77.9,60.0 64.9,52.5 64.9,37.5 77.9,30.0'/%3E%3Cpolygon points='116.9,37.5 116.9,52.5 103.9,60.0 90.9,52.5 90.9,37.5 103.9,30.0'/%3E%3Cpolygon points='142.9,37.5 142.9,52.5 129.9,60.0 116.9,52.5 116.9,37.5 129.9,30.0'/%3E%3Cpolygon points='168.9,37.5 168.9,52.5 155.9,60.0 142.9,52.5 142.9,37.5 155.9,30.0'/%3E%3Cpolygon points='194.9,37.5 194.9,52.5 181.9,60.0 168.9,52.5 168.9,37.5 181.9,30.0'/%3E%3Cpolygon points='0.0,60.0 0.0,75.0 -13.0,82.5 -26.0,75.0 -26.0,60.0 -13.0,52.5'/%3E%3Cpolygon points='26.0,60.0 26.0,75.0 13.0,82.5 -0.0,75.0 -0.0,60.0 13.0,52.5'/%3E%3Cpolygon points='52.0,60.0 52.0,75.0 39.0,82.5 26.0,75.0 26.0,60.0 39.0,52.5'/%3E%3Cpolygon points='77.9,60.0 77.9,75.0 65.0,82.5 52.0,75.0 52.0,60.0 65.0,52.5'/%3E%3Cpolygon points='103.9,60.0 103.9,75.0 90.9,82.5 77.9,75.0 77.9,60.0 90.9,52.5'/%3E%3Cpolygon points='129.9,60.0 129.9,75.0 116.9,82.5 103.9,75.0 103.9,60.0 116.9,52.5'/%3E%3Cpolygon points='155.9,60.0 155.9,75.0 142.9,82.5 129.9,75.0 129.9,60.0 142.9,52.5'/%3E%3Cpolygon points='181.9,60.0 181.9,75.0 168.9,82.5 155.9,75.0 155.9,60.0 168.9,52.5'/%3E%3Cpolygon points='207.8,60.0 207.8,75.0 194.8,82.5 181.9,75.0 181.9,60.0 194.8,52.5'/%3E%3Cpolygon points='-13.0,82.5 -13.0,97.5 -26.0,105.0 -39.0,97.5 -39.0,82.5 -26.0,75.0'/%3E%3Cpolygon points='13.0,82.5 13.0,97.5 0.0,105.0 -13.0,97.5 -13.0,82.5 -0.0,75.0'/%3E%3Cpolygon points='39.0,82.5 39.0,97.5 26.0,105.0 13.0,97.5 13.0,82.5 26.0,75.0'/%3E%3Cpolygon points='65.0,82.5 65.0,97.5 52.0,105.0 39.0,97.5 39.0,82.5 52.0,75.0'/%3E%3Cpolygon points='90.9,82.5 90.9,97.5 77.9,105.0 64.9,97.5 64.9,82.5 77.9,75.0'/%3E%3Cpolygon points='116.9,82.5 116.9,97.5 103.9,105.0 90.9,97.5 90.9,82.5 103.9,75.0'/%3E%3Cpolygon points='142.9,82.5 142.9,97.5 129.9,105.0 116.9,97.5 116.9,82.5 129.9,75.0'/%3E%3Cpolygon points='168.9,82.5 168.9,97.5 155.9,105.0 142.9,97.5 142.9,82.5 155.9,75.0'/%3E%3Cpolygon points='194.9,82.5 194.9,97.5 181.9,105.0 168.9,97.5 168.9,82.5 181.9,75.0'/%3E%3Cpolygon points='0.0,105.0 0.0,120.0 -13.0,127.5 -26.0,120.0 -26.0,105.0 -13.0,97.5'/%3E%3Cpolygon points='26.0,105.0 26.0,120.0 13.0,127.5 -0.0,120.0 -0.0,105.0 13.0,97.5'/%3E%3Cpolygon points='52.0,105.0 52.0,120.0 39.0,127.5 26.0,120.0 26.0,105.0 39.0,97.5'/%3E%3Cpolygon points='77.9,105.0 77.9,120.0 65.0,127.5 52.0,120.0 52.0,105.0 65.0,97.5'/%3E%3Cpolygon points='103.9,105.0 103.9,120.0 90.9,127.5 77.9,120.0 77.9,105.0 90.9,97.5'/%3E%3Cpolygon points='129.9,105.0 129.9,120.0 116.9,127.5 103.9,120.0 103.9,105.0 116.9,97.5'/%3E%3Cpolygon points='155.9,105.0 155.9,120.0 142.9,127.5 129.9,120.0 129.9,105.0 142.9,97.5'/%3E%3Cpolygon points='181.9,105.0 181.9,120.0 168.9,127.5 155.9,120.0 155.9,105.0 168.9,97.5'/%3E%3Cpolygon points='207.8,105.0 207.8,120.0 194.8,127.5 181.9,120.0 181.9,105.0 194.8,97.5'/%3E%3C/svg%3E")}
+#kisgApp .ks-card[data-kind="atex"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpattern id='p' width='25.98' height='45' x='-13' y='-22.5' patternUnits='userSpaceOnUse'%3E%3Cpath stroke-opacity='.21' d='M13 -7.5v15l-13 7.5-13-7.5v-15l13-7.5zM38.98 -7.5v15l-13 7.5-13-7.5v-15l13-7.5zM13 37.5v15l-13 7.5-13-7.5v-15l13-7.5zM38.98 37.5v15l-13 7.5-13-7.5v-15l13-7.5zM25.99 15v15l-13 7.5-13-7.5v-15l13-7.5z'/%3E%3C/pattern%3E%3Crect width='168' height='112' fill='url(%23p)' stroke='none'/%3E%3C/svg%3E")}
 #kisgApp .ks-card[data-kind="eng"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpath d='M44 18H158M44 13v10M158 13v10M44 18l6-3M44 18l6 3M158 18l-6-3M158 18l-6 3'/%3E%3Cpath d='M150 30V104M145 30h10M145 104h10'/%3E%3Ccircle cx='98' cy='66' r='24'/%3E%3Ccircle cx='98' cy='66' r='3'/%3E%3Cpath d='M62 66H134M98 34V98' stroke-dasharray='6 3 1.5 3'/%3E%3Cpath d='M48 0v9'/%3E%3Cpath d='M56 0v5'/%3E%3Cpath d='M64 0v5'/%3E%3Cpath d='M72 0v9'/%3E%3Cpath d='M80 0v5'/%3E%3Cpath d='M88 0v5'/%3E%3Cpath d='M96 0v9'/%3E%3Cpath d='M104 0v5'/%3E%3Cpath d='M112 0v5'/%3E%3Cpath d='M120 0v9'/%3E%3Cpath d='M128 0v5'/%3E%3Cpath d='M136 0v5'/%3E%3Cpath d='M144 0v9'/%3E%3Cpath d='M152 0v5'/%3E%3Cpath d='M160 0v5'/%3E%3C/svg%3E")}
 #kisgApp .ks-card[data-kind="measure"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpath d='M0 56 L4 47.0 L8 40.4 L12 38.0 L16 40.4 L20 47.0 L24 56.0 L28 65.0 L32 71.6 L36 74.0 L40 71.6 L44 65.0 L48 56.0 L52 47.0 L56 40.4 L60 38.0 L64 40.4 L68 47.0 L72 56.0 L76 65.0 L80 71.6 L84 74.0 L88 71.6 L92 65.0 L96 56.0 L100 47.0 L104 40.4 L108 38.0 L112 40.4 L116 47.0 L120 56.0 L124 65.0 L128 71.6 L132 74.0 L136 71.6 L140 65.0 L144 56.0 L148 47.0 L152 40.4 L156 38.0 L160 40.4 L164 47.0 L168 56.0'/%3E%3Cpath d='M0 100H168'/%3E%3Cpath d='M0 100v-8'/%3E%3Cpath d='M12 100v-4'/%3E%3Cpath d='M24 100v-4'/%3E%3Cpath d='M36 100v-4'/%3E%3Cpath d='M48 100v-8'/%3E%3Cpath d='M60 100v-4'/%3E%3Cpath d='M72 100v-4'/%3E%3Cpath d='M84 100v-4'/%3E%3Cpath d='M96 100v-8'/%3E%3Cpath d='M108 100v-4'/%3E%3Cpath d='M120 100v-4'/%3E%3Cpath d='M132 100v-4'/%3E%3Cpath d='M144 100v-8'/%3E%3Cpath d='M156 100v-4'/%3E%3Cpath d='M168 100v-4'/%3E%3C/svg%3E")}
 #kisgApp .ks-card[data-kind="training"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpath d='M62 22H168'/%3E%3Ccircle cx='50' cy='22' r='2.2'/%3E%3Cpath d='M62 39H168'/%3E%3Ccircle cx='50' cy='39' r='2.2'/%3E%3Cpath d='M62 56H168'/%3E%3Ccircle cx='50' cy='56' r='2.2'/%3E%3Cpath d='M62 73H168'/%3E%3Ccircle cx='50' cy='73' r='2.2'/%3E%3Cpath d='M62 90H168'/%3E%3Ccircle cx='50' cy='90' r='2.2'/%3E%3Cpath d='M62 107H168'/%3E%3Ccircle cx='50' cy='107' r='2.2'/%3E%3C/svg%3E")}
 #kisgApp .ks-card[data-kind="health"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpath d='M0 58H40L48 58 54 40 62 82 68 30 74 58H108L114 58 118 48 124 68 128 58H168'/%3E%3Cpath d='M24 15v6M21 18h6'/%3E%3Cpath d='M24 95v6M21 98h6'/%3E%3Cpath d='M60 15v6M57 18h6'/%3E%3Cpath d='M60 95v6M57 98h6'/%3E%3Cpath d='M96 15v6M93 18h6'/%3E%3Cpath d='M96 95v6M93 98h6'/%3E%3Cpath d='M132 15v6M129 18h6'/%3E%3Cpath d='M132 95v6M129 98h6'/%3E%3C/svg%3E")}
 #kisgApp .ks-card[data-kind="fire"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Ccircle cx='168' cy='0' r='24'/%3E%3Ccircle cx='168' cy='0' r='42'/%3E%3Ccircle cx='168' cy='0' r='60'/%3E%3Ccircle cx='168' cy='0' r='78'/%3E%3Ccircle cx='168' cy='0' r='96'/%3E%3Ccircle cx='168' cy='0' r='114'/%3E%3Ccircle cx='168' cy='0' r='132'/%3E%3Ccircle cx='168' cy='0' r='150'/%3E%3Ccircle cx='168' cy='0' r='168'/%3E%3C/svg%3E")}
 #kisgApp .ks-card[data-kind="consult"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Crect x='70' y='10' width='78' height='96' rx='6'/%3E%3Crect x='92' y='-4' width='78' height='96' rx='6'/%3E%3Crect x='100' y='14' width='8' height='8' rx='1.5'/%3E%3Cpath d='M114 18H160'/%3E%3Crect x='100' y='31' width='8' height='8' rx='1.5'/%3E%3Cpath d='M114 35H160'/%3E%3Crect x='100' y='48' width='8' height='8' rx='1.5'/%3E%3Cpath d='M114 52H160'/%3E%3Crect x='100' y='65' width='8' height='8' rx='1.5'/%3E%3Cpath d='M114 69H160'/%3E%3C/svg%3E")}
-#kisgApp .ks-card[data-kind="general"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Ccircle cx='8' cy='8' r='1'/%3E%3Ccircle cx='8' cy='22' r='1'/%3E%3Ccircle cx='8' cy='36' r='1'/%3E%3Ccircle cx='8' cy='50' r='1'/%3E%3Ccircle cx='8' cy='64' r='1'/%3E%3Ccircle cx='8' cy='78' r='1'/%3E%3Ccircle cx='8' cy='92' r='1'/%3E%3Ccircle cx='8' cy='106' r='1'/%3E%3Ccircle cx='22' cy='8' r='1'/%3E%3Ccircle cx='22' cy='22' r='1'/%3E%3Ccircle cx='22' cy='36' r='1'/%3E%3Ccircle cx='22' cy='50' r='1'/%3E%3Ccircle cx='22' cy='64' r='1'/%3E%3Ccircle cx='22' cy='78' r='1'/%3E%3Ccircle cx='22' cy='92' r='1'/%3E%3Ccircle cx='22' cy='106' r='1'/%3E%3Ccircle cx='36' cy='8' r='1'/%3E%3Ccircle cx='36' cy='22' r='1'/%3E%3Ccircle cx='36' cy='36' r='1'/%3E%3Ccircle cx='36' cy='50' r='1'/%3E%3Ccircle cx='36' cy='64' r='1'/%3E%3Ccircle cx='36' cy='78' r='1'/%3E%3Ccircle cx='36' cy='92' r='1'/%3E%3Ccircle cx='36' cy='106' r='1'/%3E%3Ccircle cx='50' cy='8' r='1'/%3E%3Ccircle cx='50' cy='22' r='1'/%3E%3Ccircle cx='50' cy='36' r='1'/%3E%3Ccircle cx='50' cy='50' r='1'/%3E%3Ccircle cx='50' cy='64' r='1'/%3E%3Ccircle cx='50' cy='78' r='1'/%3E%3Ccircle cx='50' cy='92' r='1'/%3E%3Ccircle cx='50' cy='106' r='1'/%3E%3Ccircle cx='64' cy='8' r='1'/%3E%3Ccircle cx='64' cy='22' r='1'/%3E%3Ccircle cx='64' cy='36' r='1'/%3E%3Ccircle cx='64' cy='50' r='1'/%3E%3Ccircle cx='64' cy='64' r='1'/%3E%3Ccircle cx='64' cy='78' r='1'/%3E%3Ccircle cx='64' cy='92' r='1'/%3E%3Ccircle cx='64' cy='106' r='1'/%3E%3Ccircle cx='78' cy='8' r='1'/%3E%3Ccircle cx='78' cy='22' r='1'/%3E%3Ccircle cx='78' cy='36' r='1'/%3E%3Ccircle cx='78' cy='50' r='1'/%3E%3Ccircle cx='78' cy='64' r='1'/%3E%3Ccircle cx='78' cy='78' r='1'/%3E%3Ccircle cx='78' cy='92' r='1'/%3E%3Ccircle cx='78' cy='106' r='1'/%3E%3Ccircle cx='92' cy='8' r='1'/%3E%3Ccircle cx='92' cy='22' r='1'/%3E%3Ccircle cx='92' cy='36' r='1'/%3E%3Ccircle cx='92' cy='50' r='1'/%3E%3Ccircle cx='92' cy='64' r='1'/%3E%3Ccircle cx='92' cy='78' r='1'/%3E%3Ccircle cx='92' cy='92' r='1'/%3E%3Ccircle cx='92' cy='106' r='1'/%3E%3Ccircle cx='106' cy='8' r='1'/%3E%3Ccircle cx='106' cy='22' r='1'/%3E%3Ccircle cx='106' cy='36' r='1'/%3E%3Ccircle cx='106' cy='50' r='1'/%3E%3Ccircle cx='106' cy='64' r='1'/%3E%3Ccircle cx='106' cy='78' r='1'/%3E%3Ccircle cx='106' cy='92' r='1'/%3E%3Ccircle cx='106' cy='106' r='1'/%3E%3Ccircle cx='120' cy='8' r='1'/%3E%3Ccircle cx='120' cy='22' r='1'/%3E%3Ccircle cx='120' cy='36' r='1'/%3E%3Ccircle cx='120' cy='50' r='1'/%3E%3Ccircle cx='120' cy='64' r='1'/%3E%3Ccircle cx='120' cy='78' r='1'/%3E%3Ccircle cx='120' cy='92' r='1'/%3E%3Ccircle cx='120' cy='106' r='1'/%3E%3Ccircle cx='134' cy='8' r='1'/%3E%3Ccircle cx='134' cy='22' r='1'/%3E%3Ccircle cx='134' cy='36' r='1'/%3E%3Ccircle cx='134' cy='50' r='1'/%3E%3Ccircle cx='134' cy='64' r='1'/%3E%3Ccircle cx='134' cy='78' r='1'/%3E%3Ccircle cx='134' cy='92' r='1'/%3E%3Ccircle cx='134' cy='106' r='1'/%3E%3Ccircle cx='148' cy='8' r='1'/%3E%3Ccircle cx='148' cy='22' r='1'/%3E%3Ccircle cx='148' cy='36' r='1'/%3E%3Ccircle cx='148' cy='50' r='1'/%3E%3Ccircle cx='148' cy='64' r='1'/%3E%3Ccircle cx='148' cy='78' r='1'/%3E%3Ccircle cx='148' cy='92' r='1'/%3E%3Ccircle cx='148' cy='106' r='1'/%3E%3Ccircle cx='162' cy='8' r='1'/%3E%3Ccircle cx='162' cy='22' r='1'/%3E%3Ccircle cx='162' cy='36' r='1'/%3E%3Ccircle cx='162' cy='50' r='1'/%3E%3Ccircle cx='162' cy='64' r='1'/%3E%3Ccircle cx='162' cy='78' r='1'/%3E%3Ccircle cx='162' cy='92' r='1'/%3E%3Ccircle cx='162' cy='106' r='1'/%3E%3C/svg%3E")}
+#kisgApp .ks-card[data-kind="general"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpattern id='p' width='14' height='14' x='1' y='1' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3C/pattern%3E%3Crect width='168' height='112' fill='url(%23p)' stroke='none'/%3E%3C/svg%3E")}
 #kisgApp .ks-head{display:flex;align-items:flex-start;gap:14px;min-width:0}
 #kisgApp .ks-head h2{min-width:0;flex:1}
 #kisgApp .ks-mark{display:grid;place-items:center;flex:none;width:42px;height:42px;margin-top:-1px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--line),0 1px 2px rgba(20,26,36,.04)}
@@ -1756,19 +1759,39 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kt-new{padding:1px 7px;border-radius:var(--r-pill);background:#fef3c7;color:#92400e;font-size:10.5px;font-style:normal;font-weight:700}
 #kisgApp .kt-add{display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 15px;border:1px dashed var(--line-strong);border-radius:var(--r-pill);background:#fff;color:var(--muted);font-size:14px;font-weight:600}
 #kisgApp .kt-add svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
-#kisgApp .kt-search{display:flex;align-items:center;gap:10px;height:46px;padding:0 14px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--line-strong)}
+#kisgApp .kt-panel{width:min(500px,calc(100% - 24px));height:min(560px,calc(100dvh - 24px));overflow:hidden}
+#kisgApp .kt-panel[open]{display:flex;flex-direction:column}
+#kisgApp .kt-hero{display:grid;grid-template-columns:1fr auto;align-items:start;padding:20px 14px 14px 22px;background:radial-gradient(130% 150% at 0 0,#ffe1df,#fff5f1 40%,#fff 75%);border-bottom:1px solid var(--line-soft)}
+#kisgApp .kt-hero h2{font-size:20px;font-weight:800;letter-spacing:-.015em}
+#kisgApp .kt-live{display:flex;align-items:center;gap:7px;margin-top:4px;color:var(--muted);font-size:12.5px;font-weight:600}
+#kisgApp .kt-live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--red);animation:kt-pulse 1.8s infinite}
+@keyframes kt-pulse{0%{box-shadow:0 0 0 0 rgba(227,10,23,.45)}70%,to{box-shadow:0 0 0 8px rgba(227,10,23,0)}}
+#kisgApp .kt-search{grid-column:1/-1;display:flex;align-items:center;gap:10px;height:46px;margin:14px 8px 0 0;padding:0 14px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px var(--line-strong),0 4px 14px rgba(20,26,36,.05)}
 #kisgApp .kt-search svg{width:18px;height:18px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round}
-#kisgApp .kt-search input{flex:1;min-width:0;height:44px;border:0;background:none;font-size:15px;outline:none!important}
+#kisgApp .kt-search input{flex:1;min-width:0;height:44px;border:0;background:none;font-size:16px;outline:none!important}
 #kisgApp .kt-search:focus-within{box-shadow:inset 0 0 0 1.5px var(--ink)}
-#kisgApp .kt-list{margin-top:10px}
-#kisgApp .kt-sec{display:flex;align-items:center;gap:5px;margin:14px 0 2px;color:var(--faint);font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
-#kisgApp .kt-row{display:flex;align-items:center;gap:9px;width:100%;min-height:48px;padding:0 4px;border:0;border-bottom:1px solid var(--line-soft);background:none;color:var(--ink);font-size:14.5px;text-align:left;cursor:pointer}
-#kisgApp .kt-create{color:var(--muted);font-weight:600}
-#kisgApp .kt-empty{padding:18px 4px;color:var(--muted);font-size:14px}
-#kisgApp .k-dialog[data-place="side"]{inset:0 0 auto auto;width:min(380px,100%);margin:0;border-radius:0;box-shadow:-16px 0 48px rgba(20,26,36,.16)}
-#kisgApp .k-dialog[data-place="side"][open]{animation:kt-side .24s var(--ease)}
-@keyframes kt-side{from{opacity:0;transform:translateX(24px)}}
-@media(hover:hover) and (pointer:fine){#kisgApp .kt-row:hover{background:var(--surface-2)}#kisgApp .kt-chip:not(.is-on):hover{box-shadow:inset 0 0 0 1px var(--ink)}}
+#kisgApp .kt-list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:4px 12px 20px}
+#kisgApp .kt-sec{display:flex;align-items:center;gap:5px;margin:16px 10px 4px;color:var(--faint);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+#kisgApp .kt-row{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:8px 10px;border:0;border-radius:14px;background:none;color:var(--ink);font-size:15px;font-weight:650;text-align:left;cursor:pointer;animation:kt-in .4s var(--ease) both;animation-delay:calc(var(--i,0) * 45ms);transition:background var(--t-fast),transform var(--t-fast)}
+#kisgApp .kt-row:active{transform:scale(.98)}
+@keyframes kt-in{from{opacity:0;transform:translateY(10px)}}
+#kisgApp .kt-rank{flex:none;width:18px;color:var(--faint);font-size:15px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
+#kisgApp .kt-tile{display:grid;flex:none;width:42px;height:42px;place-items:center;border-radius:13px;background:var(--tb,var(--surface-2));color:var(--tf,var(--muted))}
+#kisgApp .kt-tile svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .kt-tile .kt-f{fill:currentColor;stroke:none}
+#kisgApp .kt-hot .kt-tile{background:linear-gradient(140deg,#ff8a3d,var(--red));color:#fff;box-shadow:0 6px 16px rgba(227,10,23,.28)}
+#kisgApp .kt-hot .kt-rank{color:var(--red)}
+#kisgApp .kt-txt{display:flex;flex:1;flex-direction:column;gap:2px;min-width:0}
+#kisgApp .kt-txt>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .kt-meta{color:var(--muted);font-size:12.5px;font-weight:500}
+#kisgApp .kt-meta em{color:#0b8a5c;font-style:normal;font-weight:650}
+#kisgApp .kt-heat{height:4px;margin-top:5px;border-radius:4px;background:var(--surface-2);overflow:hidden}
+#kisgApp .kt-heat::after{content:"";display:block;width:var(--w);height:100%;border-radius:inherit;background:linear-gradient(90deg,#ffb03d,var(--red));animation:kt-grow 1s var(--ease) both;animation-delay:calc(var(--i,0) * 45ms + .15s)}
+@keyframes kt-grow{from{width:0}}
+#kisgApp .kt-go{flex:none;width:16px;height:16px;fill:none;stroke:var(--faint);stroke-width:2.2;stroke-linecap:round;transition:transform var(--t-fast),stroke var(--t-fast)}
+#kisgApp .kt-create{color:#0b8a5c;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+#kisgApp .kt-empty{padding:24px 10px;color:var(--muted);font-size:14px;text-align:center}
+@media(hover:hover) and (pointer:fine){#kisgApp .kt-row:hover{background:var(--surface-2)}#kisgApp .kt-row:hover .kt-go{stroke:var(--red);transform:translateX(3px)}#kisgApp .kt-chip:not(.is-on):hover{box-shadow:inset 0 0 0 1px var(--ink)}}
 @media(max-width:640px){#kisgApp .kt-strip{padding:12px 28px 12px var(--pad);background:#fff;border-bottom:1px solid var(--line-soft)}#kisgApp .kt-chip{min-height:34px;padding:0 12px;font-size:13px}}
 @media(max-width:359px){
   #kisgApp :is(.kw-act,.kw-likes-static){font-size:12.5px;padding-inline:8px}
@@ -1800,7 +1823,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.27.0',
+  version: '4.28.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
@@ -2428,10 +2451,11 @@ const host = (() => {
     el.style.bottom = 'auto'; el.style.marginTop = '0';
     // Tam ekran görüntüleyici (mobil) görünen alanın tamamını kaplar.
     if (el.dataset.place === 'full' && window.matchMedia('(max-width:640px)').matches) { el.style.maxHeight = el.style.height = box.height + 'px'; el.style.top = box.top + 'px'; return; }
-    if (el.dataset.place === 'side') { el.style.top = box.top + 'px'; el.style.maxHeight = el.style.height = box.height + 'px'; return; }   // masaüstü sağ panel
-    el.style.maxHeight = Math.max(220, box.height - 24) + 'px';
-    const h = el.getBoundingClientRect().height;
     const sheet = el.dataset.place === 'sheet' && window.matchMedia('(max-width:640px)').matches;
+    el.style.maxHeight = Math.max(220, box.height - 24) + 'px';
+    // data-fixed: yükseklik içerikle değişmez (arama sonuçları zıplatmaz); klavye açılınca görünen alana sığar.
+    if ('fixed' in el.dataset) el.style.height = Math.min(Math.max(220, box.height - 24), sheet ? 1e4 : 560) + 'px';
+    const h = el.getBoundingClientRect().height;
     el.style.top = (box.top + (sheet ? Math.max(12, box.height - h) : Math.max(12, (box.height - h) / 2))) + 'px';
   }
   function available() {
@@ -4161,25 +4185,37 @@ const TAG_ERRORS = { tag_blocked: 'Bu etiket kullanılamıyor; başka bir etiket
 const tags = (() => {
   const d = $('#kaTagDialog'), q = $('#kaTagQ'), list = $('[data-tag-list]', d);
   const st = { trend: null, p: null, pick: null, seq: 0, timer: 0 };
-  const FLAME = '<svg class="kt-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3c-1.5 3-5 5-5 9a5 5 0 0 0 10 0c0-4-3.5-6-5-9z"/></svg>';
-  const PIN = '<svg class="kt-ico kt-pin" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 4h6l-1 6 3 3H7l3-3zM12 13v7"/></svg>';
+  const FP = 'M12 2c.4 3.2 4.8 5.4 4.8 10.6a4.8 4.8 0 0 1-9.6 0c0-2.1 1-3.6 2.1-4.6-.1 1.9.7 3.3 2 3.6C10.6 8.6 11 5 12 2z', PP = 'M9 4h6l-1 6 3 3H7l3-3zM12 13v7';
+  const FLAME = `<svg class="kt-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="${FP}"/></svg>`;
+  const PIN = `<svg class="kt-ico kt-pin" aria-hidden="true" viewBox="0 0 24 24"><path d="${PP}"/></svg>`;
+  const svg = (d, c = '') => `<svg aria-hidden="true" viewBox="0 0 24 24"${c}><path d="${d}"/></svg>`;
+  const HASH = 'M5 9h14M5 15h14M10 4 8 20M16 4l-2 16', SPARK = 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6';
+  const TONES = ['#fff0e5,#e8590c', '#fff6dc,#b7791f', '#f0ecff,#6a4ee0', '#e7f0ff,#2563eb', '#e1f6f0,#0f8f7f', '#ffedf4,#d02670', '#e9f7e7,#3d8f35'];
+  const nf = n => Number(n).toLocaleString('tr-TR');
   const icon = t => (t.slot === 'pinned' || t.pinned ? PIN : t.slot ? FLAME : '');
   const badge = t => (t.slot === 'new' ? '<i class="kt-new">yeni</i>' : '');
   function trending() {
     st.p ||= (async () => { await dbReady; const { data, error } = await db.rpc('kisg_tags_trending', { p_limit: CONFIG.tagSlots }); if (error) throw error; return (st.trend = data || []); })();
     return st.p.catch(e => { st.p = null; throw e; });
   }
-  const row = (t, attr = '') => `<button type="button" class="kt-row" data-tag-id="${esc(t.id || '')}" data-tag-name="${esc(t.name)}"${attr}>${icon(t)}<span>${esc(t.name)}</span>${badge(t)}</button>`;
-  const section = (title, rows) => (rows.length ? `<p class="kt-sec">${title}</p>${rows.map(t => row(t)).join('')}` : '');
+  const row = (t, attr = '', o = {}) => `<button type="button" class="kt-row${o.hot ? ' kt-hot' : ''}" data-tag-id="${esc(t.id || '')}" data-tag-name="${esc(t.name)}"${attr} style="--i:${o.i || 0}${o.tone ? `;--tb:${o.tone.split(',')[0]};--tf:${o.tone.split(',')[1]}` : ''}">`
+    + (o.rank ? `<b class="kt-rank">${o.rank}</b>` : '') + `<span class="kt-tile">${o.ico || svg(HASH)}</span><span class="kt-txt"><span>${esc(t.name)}</span>`
+    + (t.posts != null ? `<small class="kt-meta">${nf(t.posts)} gönderi${t.posts_24h > 0 ? ` · <em>Son 24 saatte ${nf(t.posts_24h)} yeni</em>` : ''}</small>` : '')
+    + (o.w ? `<i class="kt-heat" style="--w:${o.w}%"></i>` : '') + `</span>${badge(t)}${svg('m9 6 6 6-6 6', ' class="kt-go"')}</button>`;
   function render(rows, text) {
     if (!text) {
-      const pinned = rows.filter(t => t.slot === 'pinned');
-      list.innerHTML = (section('Sabit', pinned) + section(`${FLAME}Gündemde`, rows.filter(t => t.slot !== 'pinned'))) || '<p class="kt-empty">Henüz etiket yok. İlk etiketi bir Post paylaşırken sen ekle.</p>';
+      const pinned = rows.filter(t => t.slot === 'pinned'), hot = rows.filter(t => t.slot !== 'pinned');
+      const max = Math.max(...hot.map(t => +t.score || 0), 0);
+      let i = 0;
+      list.innerHTML = (pinned.length ? `<p class="kt-sec">Sabit</p>${pinned.map(t => row(t, '', { i: i++, ico: svg(PP), tone: '#fff4f4,#e30a17' })).join('')}` : '')
+        + (hot.length ? `<p class="kt-sec">${FLAME}Gündemde</p>${hot.map((t, n) => row(t, '', t.slot === 'new' ? { i: i++, rank: n + 1, ico: svg(SPARK), tone: '#e5f8ee,#0b8a5c' }
+          : { i: i++, rank: n + 1, hot: n < 3, ico: n < 3 ? svg(FP, ' class="kt-f"') : svg(HASH), tone: TONES[n % 7], w: max ? Math.max(6, Math.round(100 * t.score / max)) : 0 })).join('')}` : '')
+        || '<p class="kt-empty">Henüz etiket yok. İlk etiketi bir Post paylaşırken sen ekle.</p>';
       return;
     }
     const name = clean(text).replace(/\s+/g, ' ').slice(0, 20), exact = rows.some(t => t.exact);
     list.innerHTML = rows.map(t => row(t)).join('')
-      + (st.pick && !exact && /[\p{L}\p{N}]/u.test(name) ? row({ name }, ' data-tag-new').replace('<span>', '<span class="kt-create">Yeni etiket:</span><span>') : '')
+      + (st.pick && !exact && /[\p{L}\p{N}]/u.test(name) ? row({ name }, ' data-tag-new', { ico: svg('M12 5v14M5 12h14'), tone: '#e5f8ee,#0b8a5c' }).replace('<span class="kt-txt">', '<span class="kt-txt"><span class="kt-create">Yeni etiket:</span>') : '')
       || '<p class="kt-empty">Bu adla bir etiket bulunamadı.</p>';
   }
   async function search() {
@@ -4190,10 +4226,13 @@ const tags = (() => {
   }
   async function open(onPick = null) {
     st.pick = onPick; q.value = '';
-    $('#kaTagTitle').textContent = onPick ? 'Etiket Ekle' : 'Etiketler';
+    $('#kaTagTitle').textContent = onPick ? 'Etiket Ekle' : 'Gündemdeki Konular';
+    $('[data-tag-sub]', d).textContent = onPick ? 'Ara, seç ya da yenisini oluştur' : 'Canlı · son 7 günün nabzı';
     list.innerHTML = '<p class="kt-empty">Yükleniyor…</p>';
-    dialogs.open(d, window.matchMedia('(max-width:640px)').matches ? 'sheet' : 'side');
-    setTimeout(() => q.focus({ preventScroll: true }), 30);
+    const mob = window.matchMedia('(max-width:640px)').matches;
+    dialogs.open(d, mob ? 'sheet' : 'center');
+    // Dokunmatikte klavye kendiliğinden açılmaz (ekran daralmasın); kullanıcı aramaya dokununca açılır.
+    if (!window.matchMedia('(pointer:coarse)').matches) setTimeout(() => q.focus({ preventScroll: true }), 30);
     try { render(await trending(), ''); } catch { list.innerHTML = '<p class="kt-empty">Etiketler şu anda yüklenemedi.</p>'; }
     host.place(d);
   }

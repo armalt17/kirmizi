@@ -1,5 +1,4 @@
 # Sonraki işler için notlar
 
-- **Web — etiket paneli (Gündemdeki Konular):** masaüstünde yandan açılması beğenilmedi; açılış biçimi değişmeli.
-  Panel daha canlı olmalı — referans: sıra numarası + renkli ikon kutusu + "N gönderi · Son 24 saatte M yeni" alt satırı
-  (kullanıcının paylaştığı "Gündemdeki Konular" ekran görüntüsü). (2026-10-03)
+- ~~**Web — etiket paneli (Gündemdeki Konular):** masaüstünde yandan açılması beğenilmedi; panel daha canlı olmalı.~~
+  v4.28.0'da yapıldı (ortada açılan panel, sıra + renkli ikon + sayılar + ısı çubuğu; mobil klavye düzeltmeleri).
