@@ -42,7 +42,9 @@ const SUITES = [
   { name: 'small-fixes-pack', file: 'small-fixes-pack.test.mjs', note: 'ad normalizasyonu, placeholder, yasal bağlantılar' },
   { name: 'v425-pack', file: 'v425-pack.test.mjs', note: 'Profil V2, Hizmet Bul V3, Uzmanlar V2, Akış vitrin' },
   { name: 'report-fixes', file: 'report-fixes.test.mjs', note: 'dış test raporu F01–F08' },
-  { name: 'skeleton', file: 'skeleton.test.mjs', note: 'yükleme iskeletleri' }
+  { name: 'skeleton', file: 'skeleton.test.mjs', note: 'yükleme iskeletleri' },
+  { name: 'tags-db', file: 'tags-db.test.mjs', note: 'Konular V1 — yerel geçici PostgreSQL' },
+  { name: 'tags-web', file: 'tags-web.test.mjs', note: 'Konular V1 — şerit, panel, composer' }
 ];
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx > -1 ? process.argv[onlyIdx + 1] : null;
