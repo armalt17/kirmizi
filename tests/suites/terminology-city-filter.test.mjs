@@ -53,7 +53,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   const f = frameOf(page); await f.waitForSelector('[data-view="works"] [data-post-id]');
   let txt = await uiText(page);
   check(!/Çalışma/.test(txt), `${N} Akış: kullanıcıya görünen metinde "Çalışma" yok ${(txt.match(/.{0,30}Çalışma.{0,30}/) || [''])[0]}`);
-  check(/Son Post ·/.test(txt) && /Yeni Post|Post paylaş/.test(txt), `${N} Akış: "Son Post", "Post paylaş…" görünüyor`);
+  check(!/Son Post ·/.test(txt) && /Yeni Post|Post paylaş/.test(txt), `${N} Akış: "Post paylaş…" görünüyor; "Son Post ·" satırı yok (v4.25.0'da kaldırıldı)`);
   await f.evaluate(() => document.querySelector('[data-view="works"] [data-media]').click()); await settle(page, 500);
   check((await f.textContent('#kaMediaDialog .k-media-open')).includes('Postu Gör'), `${N} görüntüleyici: "Postu Gör →"`);
   await page.keyboard.press('Escape'); await settle(page, 300);

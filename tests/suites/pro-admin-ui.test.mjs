@@ -28,6 +28,12 @@ function server(ctx) {
   const reports = [
     { id: 'rrrrrrrr-0000-4000-8000-000000000001'.replace(/r/g, 'a'), reporter_id: A, reporter_name: 'Ayşe Yılmaz', target_type: 'post', target_id: posts[0].id, reason: 'spam', details: 'reklam yapıyor', status: 'pending', created_at: iso(10), reviewed_by: null, reviewed_at: null, resolution_note: null, action_taken: null, target_owner_id: M, target_owner_name: 'Mehmet Öztürk', target_preview: 'Spam içerikli post', target_status: 'active', same_target_pending: 2 },
     { id: 'aaaaaaaa-0000-4000-8000-000000000002', reporter_id: A, reporter_name: 'Ayşe Yılmaz', target_type: 'profile', target_id: M, reason: 'fake_profile', details: null, status: 'pending', created_at: iso(5), reviewed_by: null, reviewed_at: null, resolution_note: null, action_taken: null, target_owner_id: M, target_owner_name: 'Mehmet Öztürk', target_preview: 'Mehmet Öztürk - İSG Uzmanı', target_status: null, same_target_pending: 1 }];
+  const T1 = 'tttttttt-0000-4000-8000-000000000001'.replace(/t/g, 'f'), T2 = 'eeeeeeee-0000-4000-8000-000000000002', T3 = 'eeeeeeee-0000-4000-8000-000000000003';
+  st.tags = [
+    { id: T1, name: 'Yüksekte Çalışma', pinned: false, blocked: false, created_at: iso(9000), last_post_at: iso(30), post_count: 12 },
+    { id: T2, name: 'Yuksekte calisma2', pinned: false, blocked: false, created_at: iso(500), last_post_at: iso(60), post_count: 2 },
+    { id: T3, name: 'Bakanlığa Şikayet', pinned: true, blocked: false, created_at: iso(20000), last_post_at: null, post_count: 0 }];
+  st.T = { T1, T2, T3 };
   const withTotal = rows => rows.map(r => ({ ...r, total_count: rows.length }));
   const ADMIN_RPC = {
     admin_overview: () => ({ users_total: 1296, users_new_7d: 12, posts: { active: 14, hidden: 1, deleted: 3 }, comments: { active: 9, deleted: 3 }, services: { active: 3, archived: 1 }, reports: { pending: 2 }, active_suspensions: 1, active_bans: 0, warnings_30d: 2, admin_actions_7d: 4 }),
@@ -36,6 +42,10 @@ function server(ctx) {
     admin_get_user: a => { const u = users.find(x => x.id === a.p_user_id); return { profile: { id: u.id, full_name: u.full_name, email: u.email, phone: '+905324445566', show_phone_publicly: false, title: u.title, city: u.id === A ? 'istanbul' : u.city, profession: 'İş Güvenliği Uzmanı', current_company: null, experience_range: '5-10 yıl', about: 'Hakkında metni', is_discoverable: u.is_discoverable, is_premium: u.is_premium, created_at: u.created_at, avatar_url: null, linkedin_url: null, instagram_url: null, website_url: null, certificate_class: u.id === A ? 'A Sınıfı' : 'Uzman Hekim' }, is_admin: false, counts: { posts: { active: 1, hidden: 1 }, comments: {}, services: { active: 1 }, reports_made: 0 }, reports_against: reports.filter(r => r.target_owner_id === u.id).map(r => ({ id: r.id, target_type: r.target_type, target_id: r.target_id, reason: r.reason, status: r.status, created_at: r.created_at })), sanctions: u.id === A ? [{ id: 'ssssssss-0000-4000-8000-000000000001'.replace(/s/g, 'e'), user_id: A, type: 'suspension', reason: 'spam', starts_at: iso(100), ends_at: iso(-3000), revoked_at: null, created_at: iso(100) }] : [], recent_admin_actions: [] }; },
     admin_list_content: a => withTotal(a.p_kind === 'post' ? posts.filter(p => !a.p_status || p.status === a.p_status) : []),
     admin_list_reports: a => withTotal(reports.filter(r => !a.p_status || r.status === a.p_status).filter(r => !a.p_target_type || r.target_type === a.p_target_type)),
+    admin_list_tags: a => withTotal(st.tags.filter(t => (!a.p_q || t.name.toLowerCase().includes(String(a.p_q).toLowerCase())) && (!a.p_filter || t[a.p_filter]))
+      .sort((x, y) => a.p_sort === 'az' ? x.name.localeCompare(y.name, 'tr') : a.p_sort === 'new' ? y.created_at.localeCompare(x.created_at) : y.post_count - x.post_count)),
+    admin_update_tag: a => { if (a.p_patch.name === 'Yüksekte Çalışma') throw { code: '23505', message: 'KISG_TAG_EXISTS: bu adda etiket var, birlestirmeyi kullan' }; const t = st.tags.find(x => x.id === a.p_id); Object.assign(t, a.p_patch); return { name: t.name, pinned: t.pinned, blocked: t.blocked }; },
+    admin_merge_tags: a => { const s = st.tags.find(x => x.id === a.p_source), t = st.tags.find(x => x.id === a.p_target); t.post_count += s.post_count; st.tags = st.tags.filter(x => x !== s); return { target_id: t.id, moved_posts: s.post_count }; },
     admin_update_profile: a => ({ changed: Object.keys(a.p_patch) }),
     admin_moderate_content: a => { if (a.p_id === 'fail') throw 0; const p = posts.find(x => x.id === a.p_id); if (a.p_action === 'hide') p.status = 'hidden'; if (a.p_action === 'restore') p.status = 'active'; if (a.p_action === 'delete') p.status = 'deleted'; return { status: p.status }; },
     admin_sanction_user: () => 'ffffffff-0000-4000-8000-000000000001',
@@ -88,7 +98,7 @@ function server(ctx) {
       if (!ADMIN_RPC[name]) return J({ code: 'PGRST202', message: `Could not find the function public.${name}` }, 404);
       if (uid !== X) return J({ code: '42501', message: 'KISG_ADMIN_ONLY', details: null, hint: null }, 403);
       if (st.fail[name]) return J(st.fail[name], 400);
-      try { return J(ADMIN_RPC[name](args)); } catch { return J({ code: '22023', message: 'KISG_ADMIN_STATE: yalniz aktif icerik gizlenir' }, 400); }
+      try { return J(ADMIN_RPC[name](args)); } catch (e) { if (e?.code) return J(e, 400); return J({ code: '22023', message: 'KISG_ADMIN_STATE: yalniz aktif icerik gizlenir' }, 400); }
     })
   ]);
   return st;
@@ -108,7 +118,7 @@ async function open(browser, { uid = null, width = 1280, height = 900, qs = '' }
 const until = async (fn, ms = 5000) => { const t = Date.now(); while (Date.now() - t < ms) { if (await fn()) return true; await new Promise(r => setTimeout(r, 50)); } return false; };
 const visible = (f, sel) => f.locator(sel).first().isVisible().catch(() => false);
 const lastRpc = (st, name) => [...st.rpc].reverse().find(x => x.name === name);
-const ALLOWED = new Set(['kisg_is_admin', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report']);
+const ALLOWED = new Set(['kisg_is_admin', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags']);
 
 // ---------------- statik ----------------
 check(!/service_role|service-role|serviceRole/i.test(ADMIN_HTML.replace(/service_role YOKTUR|service_role YOK/g, '')), 'admin HTML\'de service role anahtarı/kullanımı yok');
@@ -304,6 +314,61 @@ try {
     const ov = await f.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     check(ov <= 1 && !errs.length, `${vp.n}: yatay taşma ve sayfa hatası yok ${errs.join(' ')}`);
     await page.screenshot({ path: path.join(OUT, `pro-admin-support-${vp.width}.png`), fullPage: true });
+    await ctx.close();
+  }
+  // ---------------- 4c) Etiketler (v1.3.0) ----------------
+  for (const vp of [{ n: 'masaüstü', width: 1280, height: 900 }, { n: 'mobil', width: 390, height: 844 }]) {
+    const { ctx, page, f, st, errs } = await open(browser, { uid: X, width: vp.width, height: vp.height });
+    const { T1, T2, T3 } = st.T;
+    await until(() => visible(f, '.pa-stats'));
+    await f.click('.pa-nav [data-sec="tags"]');
+    check(await until(() => f.locator('[data-tag]').count().then(n => n === 3)), `${vp.n}: Etiketler listesi`);
+    const l0 = lastRpc(st, 'admin_list_tags').args;
+    check(l0.p_sort === 'posts' && l0.p_filter === null && l0.p_offset === 0, `${vp.n}: varsayılan sıralama en çok post ${JSON.stringify(l0)}`);
+    const row1 = await f.textContent(`[data-tag="${T1}"]`), row3 = await f.textContent(`[data-tag="${T3}"]`);
+    check(row1.includes('#Yüksekte Çalışma') && row1.includes('12') && /\d{4}/.test(row1) && row3.includes('Sabit'), `${vp.n}: ad, post sayısı, tarih, Sabit rozeti`);
+    await f.click('.pa-chip:text-is("A–Z")');
+    check(await until(() => lastRpc(st, 'admin_list_tags').args.p_sort === 'az') && await until(async () => (await f.locator('[data-tag]').first().getAttribute('data-tag')) === T3), `${vp.n}: alfabetik sıralama`);
+    await f.click('.pa-chip:text-is("En yeni")');
+    check(await until(() => lastRpc(st, 'admin_list_tags').args.p_sort === 'new'), `${vp.n}: en yeni sıralama`);
+    await f.fill('.pa-search', 'yuk');
+    check(await until(() => lastRpc(st, 'admin_list_tags').args.p_q === 'yuk'), `${vp.n}: arama admin_list_tags(p_q)`);
+    await f.fill('.pa-search', '');
+    await until(() => f.locator('[data-tag]').count().then(n => n === 3));
+    // yeniden adlandır: çakışma → birleştir önerisi
+    await f.click(`[data-tag="${T2}"] button:text-is("Yeniden adlandır")`);
+    await f.fill('.pa-dialog input[name="name"]', 'Yüksekte Çalışma');
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(async () => (await f.textContent('.pa-dialog .pa-error').catch(() => '')).includes('Birleştir')), `${vp.n}: aynı ad varsa birleştirme önerilir`);
+    await f.fill('.pa-dialog input[name="name"]', 'Çatı İşleri');
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_update_tag')?.args.p_patch.name === 'Çatı İşleri') && await until(async () => (await f.textContent(`[data-tag="${T2}"]`)).includes('#Çatı İşleri')), `${vp.n}: yeniden adlandırıldı (gerekçe isteğe bağlı)`);
+    // sabitle
+    await f.click(`[data-tag="${T1}"] button:text-is("Sabitle")`);
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => JSON.stringify(lastRpc(st, 'admin_update_tag')?.args.p_patch) === '{"pinned":true}') && await until(async () => (await f.textContent(`[data-tag="${T1}"]`)).includes('Sabit')), `${vp.n}: sabitlendi`);
+    // engelle: gerekçe zorunlu
+    await f.click(`[data-tag="${T1}"] button:text-is("Engelle")`);
+    check((await f.textContent('.pa-dialog')).includes('mevcut postlar görünmeye devam eder'), `${vp.n}: engelleme açıklaması`);
+    const nUp = st.rpc.filter(x => x.name === 'admin_update_tag').length;
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(async () => (await f.textContent('.pa-dialog .pa-error')).includes('Gerekçe')) && st.rpc.filter(x => x.name === 'admin_update_tag').length === nUp, `${vp.n}: gerekçesiz engellenmez`);
+    await f.fill('.pa-dialog textarea[name="reason"]', 'spam');
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(async () => (await f.textContent(`[data-tag="${T1}"]`)).includes('Engelli')) && lastRpc(st, 'admin_update_tag').args.p_reason === 'spam', `${vp.n}: engellendi`);
+    // birleştir
+    await f.click(`[data-tag="${T2}"] button:text-is("Birleştir")`);
+    check(await until(() => f.locator('.pa-dialog select[name="target"] option').count().then(n => n === 2)), `${vp.n}: hedef listesinde kaynak etiket yok`);
+    await f.selectOption('.pa-dialog select[name="target"]', T1);
+    await f.fill('.pa-dialog textarea[name="reason"]', 'yinelenen');
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_merge_tags')), `${vp.n}: admin_merge_tags çağrıldı`);
+    const mg = lastRpc(st, 'admin_merge_tags').args;
+    check(mg.p_source === T2 && mg.p_target === T1 && mg.p_reason === 'yinelenen', `${vp.n}: birleştirme argümanları ${JSON.stringify(mg)}`);
+    check(await until(async () => (await f.textContent('[data-toast]')).includes('2 post taşındı')) && await until(() => f.locator('[data-tag]').count().then(n => n === 2)), `${vp.n}: birleştirme sonucu ve liste yenilendi`);
+    const ov = await f.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    check(ov <= 1 && !errs.length && !st.table.length, `${vp.n}: yatay taşma, sayfa hatası ve tablo isteği yok ${errs.join(' ')}`);
+    await page.screenshot({ path: path.join(OUT, `pro-admin-tags-${vp.width}.png`), fullPage: true });
     await ctx.close();
   }
   // ---------------- 5) mobil ----------------
