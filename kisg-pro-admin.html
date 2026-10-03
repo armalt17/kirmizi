@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL ADMIN v1.2.0
+KIRMIZI İSG — PROFESSIONAL ADMIN v1.3.0
 
 KURULUM: Bu dosyanın TAMAMI Hostinger'da /pro-admin sayfasının Custom HTML/Embed içeriği olarak kullanılır.
 Ana uygulama (kisg-professional-app.html) ile aynı Supabase projesi ve aynı oturum (tarayıcı depolaması) kullanılır;
@@ -12,8 +12,10 @@ GÜVENLİK
  - Arayüzdeki "yönetici" kontrolü (kisg_is_admin) yalnız ekranı göstermek içindir; yetki sunucudadır.
  - v1.2.0 Destek sekmesi: public.support_requests için RPC yoktur; liste ve durum (open/resolved) değişikliği
    doğrudan tablodan, Supabase'de hazır olan RLS ile yapılır (bu dosya DB değiştirmez).
+ - v1.3.0 Etiketler sekmesi: db/migrations/20261006_tags_admin_v2.sql gerekir (admin_list_tags, admin_update_tag,
+   admin_merge_tags). Uygulanmamışsa sekme bunu söyler; diğer bölümler etkilenmez.
 
-BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler · Şikâyetler · Destek
+BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler · Etiketler · Şikâyetler · Destek
 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -60,6 +62,7 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
       <button type="button" data-sec="posts">Postlar</button>
       <button type="button" data-sec="comments">Yorumlar</button>
       <button type="button" data-sec="services">Hizmetler</button>
+      <button type="button" data-sec="tags">Etiketler</button>
       <button type="button" data-sec="reports">Şikâyetler <span class="pa-count" data-pending hidden></span></button>
       <button type="button" data-sec="support">Destek</button>
     </nav>
@@ -239,7 +242,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.2.0',
+  version: '1.3.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -331,13 +334,14 @@ const LABEL = {
   sanction: { warning: 'Uyarı', suspension: 'Askı', ban: 'Ban' },
   support: { open: 'Açık', resolved: 'Çözüldü' },
   supportCategory: { technical: 'Teknik sorun', account: 'Hesap / profil sorunu', suggestion: 'Öneri / geri bildirim', other: 'Diğer' },
-  target: { post: 'Post', comment: 'Yorum', profile: 'Profil', service: 'Hizmet' },
+  target: { post: 'Post', comment: 'Yorum', profile: 'Profil', service: 'Hizmet', tag: 'Etiket' },
   reason: { spam: 'Spam', inappropriate: 'Uygunsuz içerik', misleading: 'Yanıltıcı', harassment: 'Taciz / hakaret', fake_profile: 'Sahte profil', other: 'Diğer' },
   action_taken: { none: 'İşlem yok', content_hidden: 'İçerik gizlendi', content_deleted: 'İçerik silindi', user_warned: 'Uyarıldı', user_suspended: 'Askıya alındı', user_banned: 'Banlandı', other: 'Diğer' },
   audit: { 'profile.update': 'Profil düzenlendi', 'post.hide': 'Post gizlendi', 'post.restore': 'Post geri açıldı', 'post.delete': 'Post silindi',
     'comment.hide': 'Yorum gizlendi', 'comment.restore': 'Yorum geri açıldı', 'comment.delete': 'Yorum silindi',
     'service.hide': 'Hizmet gizlendi', 'service.restore': 'Hizmet geri açıldı', 'sanction.create': 'Yaptırım uygulandı',
-    'sanction.revoke': 'Yaptırım kaldırıldı', 'report.resolve': 'Şikâyet sonuçlandırıldı' }
+    'sanction.revoke': 'Yaptırım kaldırıldı', 'report.resolve': 'Şikâyet sonuçlandırıldı',
+    'tag.update': 'Etiket düzenlendi', 'tag.merge': 'Etiketler birleştirildi' }
 };
 const badge = (kind, value) => h('span', { class: `pa-badge is-${value}` , text: LABEL[kind]?.[value] || value || '—' });
 const who = (name, sub) => h('span', { class: 'pa-who' }, h('b', { text: clean(name) || 'İsimsiz kullanıcı' }), sub ? h('span', { class: 'pa-small', text: sub }) : null);
@@ -379,6 +383,8 @@ function explain(err) {
   if (/PGRST301|JWT|401/.test(raw) && !/KISG/.test(raw)) return new AdminError('Oturumunuz sona erdi. Lütfen tekrar giriş yapın.', 'session', true);
   if (/KISG_ADMIN_FIELD/.test(raw)) return new AdminError(`Bu alan buradan düzenlenemez: ${tail}`, 'field');
   if (/KISG_ADMIN_TARGET/.test(raw)) return new AdminError('Yönetici hesabına yaptırım uygulanamaz.', 'target');
+  if (/KISG_TAG_EXISTS/.test(raw)) return new AdminError('Bu adda bir etiket zaten var. İkisini birleştirmek için "Birleştir"i kullanın.', 'exists');
+  if (/PGRST202/.test(raw)) return new AdminError('Bu bölüm için veritabanı güncellemesi henüz uygulanmamış.', 'missing');
   if (/KISG_ADMIN_NOT_FOUND/.test(raw)) return new AdminError('Kayıt bulunamadı. Liste yenilendi.', 'not_found');
   if (/KISG_ADMIN_STATE/.test(raw)) return new AdminError(`İşlem yapılamadı: ${tail || 'kayıt durumu uygun değil'}`, 'state');
   if (/KISG_ADMIN_INPUT/.test(raw)) {
@@ -531,10 +537,11 @@ const SECTIONS = {
   posts: { title: 'Postlar', render: () => renderContent('post') },
   comments: { title: 'Yorumlar', render: () => renderContent('comment') },
   services: { title: 'Hizmetler', render: () => renderContent('service') },
+  tags: { title: 'Etiketler', render: renderTags },
   reports: { title: 'Şikâyetler', render: renderReports },
   support: { title: 'Destek', render: renderSupport }
 };
-const view = { users: { q: '', filter: 'all', offset: 0 }, post: { status: 'active', q: '', offset: 0 }, comment: { status: 'active', q: '', offset: 0 }, service: { status: 'active', q: '', offset: 0 }, reports: { status: 'pending', type: null, offset: 0 }, support: { status: 'open', category: null, offset: 0 } };
+const view = { users: { q: '', filter: 'all', offset: 0 }, post: { status: 'active', q: '', offset: 0 }, comment: { status: 'active', q: '', offset: 0 }, service: { status: 'active', q: '', offset: 0 }, reports: { status: 'pending', type: null, offset: 0 }, support: { status: 'open', category: null, offset: 0 }, tags: { q: '', sort: 'posts', filter: null, offset: 0 } };
 
 function show(section, opts = {}) {
   state.section = section;
@@ -917,6 +924,86 @@ async function setSupportStatus(r, status, btn) {
     toast(status === 'resolved' ? 'Talep çözüldü olarak işaretlendi.' : 'Talep yeniden açıldı.');
     renderSupport();
   } catch (e) { toast(e.message || 'İşlem tamamlanamadı.', true); if (btn) btn.disabled = false; }
+}
+
+/* ----- Etiketler ----- */
+async function renderTags() {
+  const seq = ++renderSeq, v = view.tags;
+  const bodyBox = h('div', null, loading());
+  main.replaceChildren(head('Etiketler', 'Konular: yeniden adlandırma, sabitleme, engelleme ve birleştirme'),
+    h('div', { class: 'pa-tools' }, searchBox(v.q, 'Etiket ara', q => { v.q = q; v.offset = 0; renderTags(); }),
+      chips([['posts', 'En çok post'], ['new', 'En yeni'], ['az', 'A–Z']], v.sort, x => { v.sort = x; v.offset = 0; renderTags(); }),
+      chips([[null, 'Tümü'], ['pinned', 'Sabit'], ['blocked', 'Engelli']], v.filter, x => { v.filter = x; v.offset = 0; renderTags(); })),
+    bodyBox);
+  let rows;
+  try { rows = await rpc('admin_list_tags', { p_q: v.q || null, p_sort: v.sort, p_filter: v.filter, p_limit: CONFIG.pageSize, p_offset: v.offset }); }
+  catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, renderTags)); return; }
+  if (seq !== renderSeq) return;
+  rows ||= [];
+  const total = Number(rows[0]?.total_count || 0);
+  if (!rows.length) { bodyBox.replaceChildren(h('div', { class: 'pa-card pa-empty', text: 'Etiket yok.' })); host.sync(); return; }
+  const btn = (text, onclick, cls = '') => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick });
+  bodyBox.replaceChildren(h('div', { class: 'pa-card' },
+    h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Etiket', 'Post', 'Oluşturma', 'Son aktivite', ''].map(t => h('th', { text: t })))),
+      h('tbody', null, rows.map(r => h('tr', { 'data-tag': r.id },
+        h('td', null, h('b', { style: 'color:var(--ink)', text: `#${r.name}` }),
+          r.pinned ? h('span', { class: 'pa-badge is-pending', style: 'margin-left:6px', text: 'Sabit' }) : null,
+          r.blocked ? h('span', { class: 'pa-badge is-deleted', style: 'margin-left:6px', text: 'Engelli' }) : null),
+        h('td', { 'data-label': 'Post', class: 'pa-num', text: num(r.post_count) }),
+        h('td', { 'data-label': 'Oluşturma', class: 'pa-num', text: fmtDate(r.created_at) }),
+        h('td', { 'data-label': 'Son aktivite', class: 'pa-num', text: fmtDate(r.last_post_at) }),
+        h('td', null, h('div', { class: 'pa-actions' },
+          btn('Yeniden adlandır', () => renameTag(r)),
+          btn(r.pinned ? 'Sabitten kaldır' : 'Sabitle', () => toggleTag(r, 'pinned')),
+          btn(r.blocked ? 'Engeli kaldır' : 'Engelle', () => toggleTag(r, 'blocked'), r.blocked ? '' : ' pa-btn-danger'),
+          btn('Birleştir', () => mergeTag(r)))))))),
+    pager(total, v.offset, off => { v.offset = off; renderTags(); })));
+  host.sync();
+}
+function renameTag(r) {
+  confirmDialog({
+    title: `#${r.name} yeniden adlandır`, text: 'Postlar etikete kimlikle bağlıdır; yeni ad tüm postlarda görünür.', confirm: 'Kaydet', reasonRequired: false,
+    fields: h('label', { class: 'pa-field' }, h('span', { text: 'Yeni ad (en fazla 20 karakter)' }), h('input', { name: 'name', maxlength: 20, required: true, value: r.name })),
+    submit: async ({ reason, form }) => {
+      const name = clean(form.elements.name.value);
+      if (!name) throw new AdminError('Ad boş olamaz.', 'input');
+      await rpc('admin_update_tag', { p_id: r.id, p_patch: { name }, p_reason: reason || null });
+      toast('Etiket yeniden adlandırıldı.'); renderTags();
+    }
+  });
+}
+function toggleTag(r, key) {
+  const on = !r[key];
+  const t = key === 'pinned'
+    ? [on ? 'Sabitlensin mi?' : 'Sabitten kaldırılsın mı?', on ? 'Etiket panelde "Sabit" bölümünde ve gündem şeridinin başında, skordan bağımsız görünür.' : 'Etiket yalnız gündem skoruna göre görünür.', on ? 'Sabitle' : 'Kaldır']
+    : [on ? 'Engellensin mi?' : 'Engel kaldırılsın mı?', on ? 'Bu etiketle yeni post paylaşılamaz; mevcut postlar görünmeye devam eder.' : 'Etiket yeniden kullanılabilir.', on ? 'Engelle' : 'Engeli kaldır'];
+  confirmDialog({
+    title: `#${r.name}: ${t[0]}`, text: t[1], confirm: t[2], danger: key === 'blocked' && on, reasonRequired: key === 'blocked' && on,
+    submit: async ({ reason }) => {
+      await rpc('admin_update_tag', { p_id: r.id, p_patch: { [key]: on }, p_reason: reason || null });
+      toast('Etiket güncellendi.'); renderTags();
+    }
+  });
+}
+function mergeTag(r) {
+  const sel = h('select', { name: 'target', required: true }, h('option', { value: '', text: 'Önce arayın…' }));
+  const find = async q => {
+    try {
+      const list = (await rpc('admin_list_tags', { p_q: q || null, p_limit: 20 }) || []).filter(x => x.id !== r.id);
+      sel.replaceChildren(...(list.length ? list.map(x => h('option', { value: x.id, text: `#${x.name} (${num(x.post_count)} post)` })) : [h('option', { value: '', text: 'Sonuç yok' })]));
+    } catch (e) { toast(e.message, true); }
+  };
+  find('');
+  confirmDialog({
+    title: `#${r.name} birleştir`, text: `#${r.name} etiketinin ${num(r.post_count)} postu hedef etikete taşınır ve #${r.name} silinir. Geri alınamaz.`, confirm: 'Birleştir', danger: true,
+    fields: h('div', { style: 'display:flex;flex-direction:column;gap:8px' }, searchBox('', 'Hedef etiket ara', find), h('label', { class: 'pa-field' }, h('span', { text: 'Hedef etiket' }), sel)),
+    submit: async ({ reason }) => {
+      if (!sel.value) throw new AdminError('Hedef etiket seçin.', 'input');
+      const res = await rpc('admin_merge_tags', { p_source: r.id, p_target: sel.value, p_reason: reason });
+      toast(`Birleştirildi: ${num(res?.moved_posts)} post taşındı.`); renderTags();
+    }
+  });
 }
 
 /* ---------------------------------------------------------------------------

@@ -44,6 +44,7 @@ const SUITES = [
   { name: 'report-fixes', file: 'report-fixes.test.mjs', note: 'dış test raporu F01–F08' },
   { name: 'skeleton', file: 'skeleton.test.mjs', note: 'yükleme iskeletleri' },
   { name: 'tags-db', file: 'tags-db.test.mjs', note: 'Konular V1 — yerel geçici PostgreSQL' },
+  { name: 'tags-admin-db', file: 'tags-admin-db.test.mjs', note: 'Konular V2 admin — yerel geçici PostgreSQL' },
   { name: 'tags-web', file: 'tags-web.test.mjs', note: 'Konular V1 — şerit, panel, composer' }
 ];
 const onlyIdx = process.argv.indexOf('--only');
