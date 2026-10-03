@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.25.2 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.26.0 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
 üretilir; yorumları çıkarılmış, ~500 bin karakterin altında). Yayın dosyasının TAMAMI, aşağıdaki Hostinger sayfalarındaki
@@ -622,21 +622,16 @@ font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helveti
 #kisgApp .k-popover{position:absolute;z-index:30;right:0;top:calc(100% + 6px);min-width:210px;padding:6px;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow-pop);transform-origin:top right;animation:k-pop .18s var(--ease)}
 #kisgApp .k-popover :is(a,button){display:flex;align-items:center;width:100%;min-height:44px;padding:10px 12px;border:0;border-radius:var(--r-sm);background:transparent;color:var(--ink);text-align:left;font-size:14px;font-weight:550}
 @keyframes k-pop{from{opacity:0;transform:translateY(-4px) scale(.98)}}
-#kisgApp .k-sk{display:block;height:12px;border-radius:6px;background:linear-gradient(90deg,#eceef2 0,#f4f5f8 40%,#eceef2 80%) 0 0/300% 100%;animation:k-shine 1.3s linear infinite}
-#kisgApp .k-sk-short{width:55%}
 #kisgApp .k-sk-circle{width:44px;height:44px;border-radius:50%}
 #kisgApp .k-sk-media{height:220px;border-radius:14px}
-#kisgApp .k-sk-person{display:flex;align-items:center;gap:12px;padding:10px 0}
-#kisgApp .k-sk-person>span,#kisgApp .kw-sk-head>span{display:grid;flex:1;gap:8px}
-#kisgApp .k-sk-offer{display:grid;gap:8px;padding:12px 0}
-@keyframes k-shine{to{background-position:-300% 0}}
+#kisgApp .kw-sk-head>span{display:grid;flex:1;gap:8px}
+@keyframes k-skin{from{opacity:0}}
 #kisgApp .k-empty{display:flex;flex-direction:column;align-items:center;gap:6px;padding:56px 20px;text-align:center;animation:ka-enter .24s var(--ease)}
 #kisgApp .k-empty strong{color:var(--ink);font-size:16.5px;font-weight:750}
 #kisgApp .k-empty p{max-width:420px;color:var(--muted);font-size:14px}
 #kisgApp .k-empty .k-btn,#kisgApp .k-empty-actions{margin-top:12px}
 #kisgApp .k-empty-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
 #kisgApp .k-empty-actions .k-btn{margin-top:0}
-#kisgApp .k-muted-note{padding:12px 0;color:var(--faint);font-size:13px}
 #kisgApp .kw-layout{display:grid;grid-template-columns:var(--col-left) minmax(0,1fr) var(--col-right);column-gap:var(--col-gap);align-items:start;padding:24px 0 72px}
 #kisgApp .kw-feed{min-width:0}
 #kisgApp :is(.kw-left,.kw-right){min-width:0}
@@ -788,7 +783,7 @@ font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helveti
 #kisgApp .k-login-art{position:absolute;right:52px;bottom:-34px;width:150px;height:auto;mix-blend-mode:multiply;transform:rotate(-10deg);pointer-events:none}
 #kisgApp .k-login-top .k-icon-btn{position:relative;z-index:1}
 #kisgApp .k-login-mark{position:relative;z-index:1}
-#kisgApp .kw-sk{display:grid;gap:12px;padding:20px var(--pad);border-bottom:1px solid var(--line-soft);animation:none}
+#kisgApp .kw-post.kw-sk{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:20px var(--pad);border-bottom:1px solid var(--line-soft);animation:k-skin .35s .2s both}
 #kisgApp .kw-sk-head{display:flex;align-items:center;gap:12px;margin-bottom:4px}
 #kisgApp .kw-empty{display:grid;justify-items:center;gap:6px;padding:56px 24px;text-align:center}
 #kisgApp .kw-empty-card{display:block;padding:0;border:0}
@@ -869,13 +864,14 @@ font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helveti
 #kisgApp .kc-results{display:grid;gap:14px}
 #kisgApp .kc-card{position:relative;display:flex;flex-direction:column;min-width:0;border-radius:var(--r-lg);background:#fff;box-shadow:inset 0 0 0 1px var(--line);overflow-wrap:anywhere;transition:box-shadow var(--t),transform var(--t) var(--ease);animation:ka-enter .26s var(--ease)}
 #kisgApp .kc-more{display:flex;margin:24px auto 0;min-width:220px;min-height:48px}
-#kisgApp .kc-sk{display:grid;gap:12px;align-content:start;padding:20px;border-radius:var(--r-lg);background:#fff;box-shadow:inset 0 0 0 1px var(--line)}
+#kisgApp .kc-sk{display:grid;gap:12px;align-content:start;padding:20px;border-radius:var(--r-lg);background:#fff;box-shadow:inset 0 0 0 1px var(--line);animation:k-skin .35s .2s both}
 #kisgApp .kc-sk-top{display:flex;align-items:center;gap:12px;margin-bottom:4px}
 #kisgApp .kc-sk-top span{display:grid;flex:1;gap:8px}
 #kisgApp .ke-grid{grid-template-columns:repeat(auto-fill,minmax(212px,1fr))}
 #kisgApp .ke-sk{justify-items:center;min-height:250px;padding-top:26px}
 #kisgApp .ke-sk .k-sk-circle{width:72px;height:72px;margin-bottom:6px}
-#kisgApp .ke-sk .k-sk{width:70%}
+#kisgApp .ke-sk .k-sk:not(.k-sk-circle){width:70%}
+#kisgApp .ke-sk .k-sk.k-sk-short{width:46%}
 #kisgApp .ke-card{align-items:center;padding:24px 16px 0;text-align:center}
 #kisgApp .ke-av{position:relative;margin-bottom:12px}
 #kisgApp .ke-card h2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--ink);font-size:16px;font-weight:750;line-height:1.3;letter-spacing:-.01em}
@@ -1165,7 +1161,7 @@ font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helveti
 #kisgApp .kpe-privacy a{color:var(--red-text);font-weight:600}
 #kisgApp .kp.has-services [data-profile-tab="hizmetler"] .kp-count{min-width:22px;padding:1px 7px;border-radius:var(--r-pill);background:var(--ink);color:#fff;font-size:12px;text-align:center}
 #kisgApp .kp.has-services [data-profile-tab="hizmetler"][aria-selected="false"]{color:var(--ink)}
-#kisgApp .kp-card-sk{gap:14px}
+#kisgApp .kp-card-sk{gap:14px;animation:k-skin .35s .2s both}
 #kisgApp .kp-card-sk::before{display:none}
 #kisgApp .kp-sk-av{width:104px;height:104px;border-radius:50%}
 #kisgApp .kp-sk-lines{display:grid;gap:10px;width:70%}
@@ -1529,7 +1525,7 @@ version: '2026-09-30'   // legal_acceptances.document_version
 },
 siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
 historyRouting: true,
-version: '4.25.2',
+version: '4.26.0',
 hostWidthDesktopMax: 1480,
 routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
 legacyRoutes: { '/calisma': 'works' },
@@ -1922,13 +1918,13 @@ const SIDE_CSS = `
 .kw-side .k-meta-item{display:inline-flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}
 .kw-side .k-ico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .kw-side .k-muted-note{padding:12px 0;color:var(--faint);font-size:13px}
-.kw-side .k-sk{display:block;height:12px;border-radius:6px;background:#eceef2}
-.kw-side .k-sk-short{width:55%}
+.k-sk{display:block;height:12px;border-radius:6px;background:linear-gradient(100deg,#eef0f3 40%,#f9fafb,#eef0f3 60%) 0 0/1200px 100%;animation:k-shine 1.6s ease-in-out infinite}
+@keyframes k-shine{from{background-position:600px 0}to{background-position:-600px 0}}
+.k-sk-short{width:55%}
 .kw-side .k-sk-circle{width:42px;height:42px;border-radius:50%}
 .kw-side .k-sk-person{display:flex;align-items:center;gap:12px;padding:10px 0}
 .kw-side .k-sk-person>span{display:grid;flex:1;gap:8px}
 .kw-side .k-sk-offer{display:grid;gap:8px;padding:12px 0}
-/* Professional vitrin (v4.25.0): sakin marka alanı — dönüşümlü üç mesaj, yavaş süzülen yumuşak ışık; reklam/slider değil */
 .kw-brandcard{position:relative;overflow:hidden;margin-bottom:22px;padding:18px 18px 16px 20px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(160deg,#fff 0%,#f7f8fa 100%)}
 .kw-brandcard::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:3px;border-radius:0 3px 3px 0;background:var(--red)}
 .kw-brandcard-glow{position:absolute;right:-60px;top:-70px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(227,10,23,.10) 0%,rgba(227,10,23,0) 68%);animation:kw-brand-drift 14s ease-in-out infinite alternate;pointer-events:none}
@@ -1941,7 +1937,7 @@ const SIDE_CSS = `
 .kw-brandcard-ticks i{width:14px;height:3px;border-radius:2px;background:var(--line);transition:background .6s,width .6s}
 .kw-brandcard-ticks i.is-on{width:22px;background:var(--red)}
 @media(prefers-reduced-motion:reduce){.kw-brandcard-glow{animation:none}}
-@media(prefers-reduced-motion:reduce){.kw-side *{transition:none!important}}
+@media(prefers-reduced-motion:reduce){.kw-side *{transition:none!important;animation:none!important}}
 `;
 (() => { try { const st = document.createElement('style'); st.dataset.kisgSide = ''; st.textContent = SIDE_CSS; document.head.append(st); } catch {} })();
 const modeMeta = mode => (SERVICE_MODES[mode] ? `<span class="k-meta-item">${mode === 'remote' ? ICONS.remote : ICONS.onsite}${esc(SERVICE_MODES[mode])}</span>` : '');
