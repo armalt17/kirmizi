@@ -1,15 +1,15 @@
-// Yayın dosyası koruması: dist/kisg-professional-app.html kaynakla güncel ve Hostinger için güvenli boyutta mı?
+// Yayın dosyası koruması: dist/kisg-professional-app-v{sürüm}.html kaynakla güncel ve Hostinger için güvenli boyutta mı?
 // (v4.25.0: ~511 bin karakterlik dosya canlıda her adreste Akış açtı; v4.24.0 ~497 bin karakterle doğruydu.)
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, check } from '../helpers/harness.mjs';
-import { buildEmbed, LIMIT } from '../../tools/build-embed.mjs';
+import { buildEmbed, LIMIT, DIST, distName } from '../../tools/build-embed.mjs';
 
 const src = fs.readFileSync(path.join(ROOT, 'kisg-professional-app.html'), 'utf8');
-const distPath = path.join(ROOT, 'dist', 'kisg-professional-app.html');
-const dist = fs.existsSync(distPath) ? fs.readFileSync(distPath, 'utf8') : '';
 const { html, version } = buildEmbed(src);   // derleme kendi içinde her çıkarmayı V8 ile denetler
-check(dist === html, `dist/kisg-professional-app.html kaynakla güncel (npm run build) — v${version}`);
+const distPath = path.join(DIST, distName(version)), others = fs.readdirSync(DIST).filter(f => f !== distName(version));
+const dist = fs.existsSync(distPath) ? fs.readFileSync(distPath, 'utf8') : '';
+check(dist === html && others.length === 0, `dist/${distName(version)} kaynakla güncel ve dist/ içindeki tek dosya (npm run build) ${others.join(',')}`);
 check(dist.length <= LIMIT && dist.length < 496692, `yayın dosyası ${dist.length} karakter ≤ ${LIMIT} (bilinen çalışan v4.24.0: 496 692)`);
 const code = s => s.slice(s.indexOf('<script>') + 8, s.indexOf('</script>'));
 let ok = true; try { new Function(code(dist)); } catch (e) { ok = false; console.log(e.message); }

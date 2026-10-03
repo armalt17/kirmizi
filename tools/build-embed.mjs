@@ -1,5 +1,6 @@
 // Hostinger yayın dosyası üretici (bağımlılıksız): node tools/build-embed.mjs  (npm run build)
-// Kaynak (kisg-professional-app.html) yorumlarıyla repoda kalır; Hostinger'a dist/kisg-professional-app.html yapıştırılır.
+// Kaynak (kisg-professional-app.html) yorumlarıyla repoda kalır; Hostinger'a dist/kisg-professional-app-v{sürüm}.html yapıştırılır
+// (dosya adı her zaman sürümü taşır; dist/ içinde yalnız güncel sürüm kalır).
 // Neden: v4.25.0'da dosya ~511 bin karaktere çıkınca canlıda her adres Akış açtı (v4.24.0, ~497 bin karakter, doğruydu).
 // Gömme kodu büyüyünce Hostinger'ın onu farklı servis ettiği, uygulamanın üst sayfa adresini okuyamadığı düşünülüyor.
 // Davranış değişmez; yalnız şunlar çıkarılır:
@@ -16,7 +17,8 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(ROOT, 'kisg-professional-app.html');
-const OUT = path.join(ROOT, 'dist', 'kisg-professional-app.html');
+export const DIST = path.join(ROOT, 'dist');
+export const distName = version => `kisg-professional-app-v${version}.html`;
 export const LIMIT = 490000;   // karakter; bilinen çalışan en büyük dosya 496 692 karakterdi (v4.24.0) — altında kalınır
 
 const parses = code => { try { new Function(code); return true; } catch { return false; } };
@@ -69,9 +71,10 @@ export function buildEmbed(src) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const src = fs.readFileSync(SRC, 'utf8');
   const { html, version } = buildEmbed(src);
-  fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, html);
+  fs.mkdirSync(DIST, { recursive: true });
+  for (const f of fs.readdirSync(DIST)) if (/^kisg-professional-app.*\.html$/.test(f) && f !== distName(version)) fs.rmSync(path.join(DIST, f));
+  fs.writeFileSync(path.join(DIST, distName(version)), html);
   const chars = html.length, bytes = Buffer.byteLength(html);
-  console.log(`v${version}: kaynak ${src.length} → yayın ${chars} karakter (${bytes} bayt), sınır ${LIMIT}`);
+  console.log(`dist/${distName(version)}: kaynak ${src.length} → yayın ${chars} karakter (${bytes} bayt), sınır ${LIMIT}`);
   if (chars > LIMIT) { console.error(`HATA: yayın dosyası ${chars} karakter > ${LIMIT}`); process.exit(1); }
 }
