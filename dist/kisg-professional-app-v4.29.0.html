@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.28.0 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.29.0 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
 üretilir; yorumları çıkarılmış, ~500 bin karakterin altında). Yayın dosyasının TAMAMI, aşağıdaki Hostinger sayfalarındaki
@@ -74,7 +74,7 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
 </aside>
 
 <div class="kw-feed">
-<div class="kt-strip" data-tag-strip role="toolbar" aria-label="Konular" hidden></div>
+<div class="kt-strip" data-tag-strip role="toolbar" aria-label="Konular" hidden></div><p class="kt-note" data-tag-note hidden></p>
 <div class="kw-sheet">
 <div class="kw-composer">
 <button class="kw-composer-main" type="button" data-composer aria-label="Yeni Post paylaş">
@@ -1509,17 +1509,18 @@ font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helveti
 #kisgApp .kt-strip::-webkit-scrollbar{display:none}
 #kisgApp .kt-chip{display:inline-flex;flex:none;align-items:center;gap:6px;min-height:36px;padding:0 14px;border:0;border-radius:var(--r-pill);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);font-size:13.5px;font-weight:600;white-space:nowrap;cursor:pointer}
 #kisgApp .kt-chip.is-on{background:var(--red-tint);box-shadow:inset 0 0 0 1px var(--red-line);color:var(--red-text)}
-#kisgApp .kt-all{background:#fff;box-shadow:none;outline:1px dashed var(--line-strong);outline-offset:-1px;color:var(--muted)}
+#kisgApp .kt-all{background:#fff;color:var(--muted)}
+#kisgApp :is(.kt-chip[data-tag-id],.kt-chip-sm,[data-tag-chip-name])::before{content:"#";margin-right:1px;opacity:.45}
 #kisgApp .kt-chip-sm{min-height:28px;padding:0 11px;background:var(--red-tint);box-shadow:none;color:var(--red-text);font-size:12.5px}
 #kisgApp .kt-chip button{margin-right:-6px;padding:0 4px;border:0;background:none;color:inherit;font-size:18px;line-height:1}
-#kisgApp .kt-ico{flex:none;width:13px;height:13px;fill:var(--red)}
-#kisgApp .kt-pin,#kisgApp .kt-all .kt-ico{fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#kisgApp .kt-new{padding:1px 7px;border-radius:var(--r-pill);background:#fef3c7;color:#92400e;font-size:10.5px;font-style:normal;font-weight:700}
+#kisgApp .kt-note{margin:-4px 0 12px;padding:9px 12px;border-radius:12px;background:var(--red-tint);color:var(--red-text);font-size:13px;font-weight:600}
+#kisgApp .kt-ico{flex:none;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+#kisgApp .kt-new{padding:1px 7px;border-radius:var(--r-pill);background:var(--surface-2);color:var(--muted);font-size:10.5px;font-style:normal;font-weight:700}
 #kisgApp .kt-add{display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 15px;border:1px dashed var(--line-strong);border-radius:var(--r-pill);background:#fff;color:var(--muted);font-size:14px;font-weight:600}
 #kisgApp .kt-add svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 #kisgApp .kt-panel{width:min(500px,calc(100% - 24px));height:min(560px,calc(100dvh - 24px));overflow:hidden}
 #kisgApp .kt-panel[open]{display:flex;flex-direction:column}
-#kisgApp .kt-hero{display:grid;grid-template-columns:1fr auto;align-items:start;padding:20px 14px 14px 22px;background:radial-gradient(130% 150% at 0 0,#ffe1df,#fff5f1 40%,#fff 75%);border-bottom:1px solid var(--line-soft)}
+#kisgApp .kt-hero{display:grid;grid-template-columns:1fr auto;align-items:start;padding:20px 14px 14px 22px;background:#fff;border-bottom:1px solid var(--line-soft)}
 #kisgApp .kt-hero h2{font-size:20px;font-weight:800;letter-spacing:-.015em}
 #kisgApp .kt-live{display:flex;align-items:center;gap:7px;margin-top:4px;color:var(--muted);font-size:12.5px;font-weight:600}
 #kisgApp .kt-live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--red);animation:kt-pulse 1.8s infinite}
@@ -1536,21 +1537,20 @@ font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helveti
 #kisgApp .kt-rank{flex:none;width:18px;color:var(--faint);font-size:15px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
 #kisgApp .kt-tile{display:grid;flex:none;width:42px;height:42px;place-items:center;border-radius:13px;background:var(--tb,var(--surface-2));color:var(--tf,var(--muted))}
 #kisgApp .kt-tile svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-#kisgApp .kt-tile .kt-f{fill:currentColor;stroke:none}
-#kisgApp .kt-hot .kt-tile{background:linear-gradient(140deg,#ff8a3d,var(--red));color:#fff;box-shadow:0 6px 16px rgba(227,10,23,.28)}
+#kisgApp :is(.kt-hot,.kt-pinned) .kt-tile{background:var(--red-tint);color:var(--red)}
 #kisgApp .kt-hot .kt-rank{color:var(--red)}
 #kisgApp .kt-txt{display:flex;flex:1;flex-direction:column;gap:2px;min-width:0}
 #kisgApp .kt-txt>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #kisgApp .kt-meta{color:var(--muted);font-size:12.5px;font-weight:500}
-#kisgApp .kt-meta em{color:#0b8a5c;font-style:normal;font-weight:650}
+#kisgApp .kt-meta em{color:var(--ink);font-style:normal;font-weight:650}
 #kisgApp .kt-heat{height:4px;margin-top:5px;border-radius:4px;background:var(--surface-2);overflow:hidden}
-#kisgApp .kt-heat::after{content:"";display:block;width:var(--w);height:100%;border-radius:inherit;background:linear-gradient(90deg,#ffb03d,var(--red));animation:kt-grow 1s var(--ease) both;animation-delay:calc(var(--i,0) * 45ms + .15s)}
+#kisgApp .kt-heat::after{content:"";display:block;width:var(--w);height:100%;border-radius:inherit;background:var(--red);opacity:.75;animation:kt-grow 1s var(--ease) both;animation-delay:calc(var(--i,0) * 45ms + .15s)}
 @keyframes kt-grow{from{width:0}}
 #kisgApp .kt-go{flex:none;width:16px;height:16px;fill:none;stroke:var(--faint);stroke-width:2.2;stroke-linecap:round;transition:transform var(--t-fast),stroke var(--t-fast)}
-#kisgApp .kt-create{color:#0b8a5c;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+#kisgApp .kt-create{color:var(--red-text);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
 #kisgApp .kt-empty{padding:24px 10px;color:var(--muted);font-size:14px;text-align:center}
 @media(hover:hover) and (pointer:fine){#kisgApp .kt-row:hover{background:var(--surface-2)}#kisgApp .kt-row:hover .kt-go{stroke:var(--red);transform:translateX(3px)}#kisgApp .kt-chip:not(.is-on):hover{box-shadow:inset 0 0 0 1px var(--ink)}}
-@media(max-width:640px){#kisgApp .kt-strip{padding:12px 28px 12px var(--pad);background:#fff;border-bottom:1px solid var(--line-soft)}#kisgApp .kt-chip{min-height:34px;padding:0 12px;font-size:13px}}
+@media(max-width:640px){#kisgApp .kt-strip{padding:12px 28px 12px var(--pad);background:#fff;border-bottom:1px solid var(--line-soft)}#kisgApp .kt-note{margin:10px var(--pad) 0}#kisgApp .kt-chip{min-height:34px;padding:0 12px;font-size:13px}}
 @media(max-width:359px){
 #kisgApp :is(.kw-act,.kw-likes-static){font-size:12.5px;padding-inline:8px}
 #kisgApp .ke-grid{grid-template-columns:minmax(0,1fr)}
@@ -1576,7 +1576,7 @@ version: '2026-09-30'   // legal_acceptances.document_version
 },
 siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
 historyRouting: true,
-version: '4.28.0',
+version: '4.29.0',
 hostWidthDesktopMax: 1480,
 routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
 legacyRoutes: { '/calisma': 'works' },
@@ -3745,37 +3745,33 @@ const TAG_ERRORS = { tag_blocked: 'Bu etiket kullanılamıyor; başka bir etiket
 const tags = (() => {
 const d = $('#kaTagDialog'), q = $('#kaTagQ'), list = $('[data-tag-list]', d);
 const st = { trend: null, p: null, pick: null, seq: 0, timer: 0 };
-const FP = 'M12 2c.4 3.2 4.8 5.4 4.8 10.6a4.8 4.8 0 0 1-9.6 0c0-2.1 1-3.6 2.1-4.6-.1 1.9.7 3.3 2 3.6C10.6 8.6 11 5 12 2z', PP = 'M9 4h6l-1 6 3 3H7l3-3zM12 13v7';
-const FLAME = `<svg class="kt-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="${FP}"/></svg>`;
-const PIN = `<svg class="kt-ico kt-pin" aria-hidden="true" viewBox="0 0 24 24"><path d="${PP}"/></svg>`;
 const svg = (d, c = '') => `<svg aria-hidden="true" viewBox="0 0 24 24"${c}><path d="${d}"/></svg>`;
-const HASH = 'M5 9h14M5 15h14M10 4 8 20M16 4l-2 16', SPARK = 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6';
-const TONES = ['#fff0e5,#e8590c', '#fff6dc,#b7791f', '#f0ecff,#6a4ee0', '#e7f0ff,#2563eb', '#e1f6f0,#0f8f7f', '#ffedf4,#d02670', '#e9f7e7,#3d8f35'];
+const HASH = 'M5 9h14M5 15h14M10 4 8 20M16 4l-2 16', PP = 'M9 4h6l-1 6 3 3H7l3-3zM12 13v7';
+const PINNED = 'Kırmızı İSG’nin sabitlediği önemli konu';
 const nf = n => Number(n).toLocaleString('tr-TR');
-const icon = t => (t.slot === 'pinned' || t.pinned ? PIN : t.slot ? FLAME : '');
 const badge = t => (t.slot === 'new' ? '<i class="kt-new">yeni</i>' : '');
 function trending() {
 st.p ||= (async () => { await dbReady; const { data, error } = await db.rpc('kisg_tags_trending', { p_limit: CONFIG.tagSlots }); if (error) throw error; return (st.trend = data || []); })();
 return st.p.catch(e => { st.p = null; throw e; });
 }
-const row = (t, attr = '', o = {}) => `<button type="button" class="kt-row${o.hot ? ' kt-hot' : ''}" data-tag-id="${esc(t.id || '')}" data-tag-name="${esc(t.name)}"${attr} style="--i:${o.i || 0}${o.tone ? `;--tb:${o.tone.split(',')[0]};--tf:${o.tone.split(',')[1]}` : ''}">`
+const row = (t, attr = '', o = {}) => `<button type="button" class="kt-row${o.cls || ''}" data-tag-id="${esc(t.id || '')}" data-tag-name="${esc(t.name)}"${attr} style="--i:${o.i || 0}">`
 + (o.rank ? `<b class="kt-rank">${o.rank}</b>` : '') + `<span class="kt-tile">${o.ico || svg(HASH)}</span><span class="kt-txt"><span>${esc(t.name)}</span>`
-+ (t.posts != null ? `<small class="kt-meta">${nf(t.posts)} gönderi${t.posts_24h > 0 ? ` · <em>Son 24 saatte ${nf(t.posts_24h)} yeni</em>` : ''}</small>` : '')
++ (o.pin ? `<small class="kt-meta">${PINNED}${t.posts > 0 ? ` · ${nf(t.posts)} gönderi` : ''}</small>`
+: t.posts != null ? `<small class="kt-meta">${nf(t.posts)} gönderi${t.posts_24h > 0 ? ` · <em>Son 24 saatte ${nf(t.posts_24h)} yeni</em>` : ''}</small>` : '')
 + (o.w ? `<i class="kt-heat" style="--w:${o.w}%"></i>` : '') + `</span>${badge(t)}${svg('m9 6 6 6-6 6', ' class="kt-go"')}</button>`;
 function render(rows, text) {
 if (!text) {
 const pinned = rows.filter(t => t.slot === 'pinned'), hot = rows.filter(t => t.slot !== 'pinned');
 const max = Math.max(...hot.map(t => +t.score || 0), 0);
 let i = 0;
-list.innerHTML = (pinned.length ? `<p class="kt-sec">Sabit</p>${pinned.map(t => row(t, '', { i: i++, ico: svg(PP), tone: '#fff4f4,#e30a17' })).join('')}` : '')
-+ (hot.length ? `<p class="kt-sec">${FLAME}Gündemde</p>${hot.map((t, n) => row(t, '', t.slot === 'new' ? { i: i++, rank: n + 1, ico: svg(SPARK), tone: '#e5f8ee,#0b8a5c' }
-: { i: i++, rank: n + 1, hot: n < 3, ico: n < 3 ? svg(FP, ' class="kt-f"') : svg(HASH), tone: TONES[n % 7], w: max ? Math.max(6, Math.round(100 * t.score / max)) : 0 })).join('')}` : '')
+list.innerHTML = (pinned.length ? `<p class="kt-sec">Sabit</p>${pinned.map(t => row(t, '', { i: i++, ico: svg(PP), cls: ' kt-pinned', pin: 1 })).join('')}` : '')
++ (hot.length ? `<p class="kt-sec">Gündemde</p>${hot.map((t, n) => row(t, '', { i: i++, rank: n + 1, cls: n < 3 ? ' kt-hot' : '', w: max && t.score ? Math.max(6, Math.round(100 * t.score / max)) : 0 })).join('')}` : '')
 || '<p class="kt-empty">Henüz etiket yok. İlk etiketi bir Post paylaşırken sen ekle.</p>';
 return;
 }
 const name = clean(text).replace(/\s+/g, ' ').slice(0, 20), exact = rows.some(t => t.exact);
 list.innerHTML = rows.map(t => row(t)).join('')
-+ (st.pick && !exact && /[\p{L}\p{N}]/u.test(name) ? row({ name }, ' data-tag-new', { ico: svg('M12 5v14M5 12h14'), tone: '#e5f8ee,#0b8a5c' }).replace('<span class="kt-txt">', '<span class="kt-txt"><span class="kt-create">Yeni etiket:</span>') : '')
++ (st.pick && !exact && /[\p{L}\p{N}]/u.test(name) ? row({ name }, ' data-tag-new', { ico: svg('M12 5v14M5 12h14'), cls: ' kt-hot' }).replace('<span class="kt-txt">', '<span class="kt-txt"><span class="kt-create">Yeni etiket:</span>') : '')
 || '<p class="kt-empty">Bu adla bir etiket bulunamadı.</p>';
 }
 async function search() {
@@ -3802,7 +3798,7 @@ const t = { id: b.dataset.tagId || null, name: b.dataset.tagName }, cb = st.pick
 dialogs.close(d);
 if (cb) cb(t); else VIEWS.works.setTag(t);
 });
-return { open, trending, icon, badge };
+return { open, trending, PINNED };
 })();
 
 const composer = (() => {
@@ -3836,7 +3832,7 @@ s.edit = post; s.file = null; clearPreview();
 d.title.textContent = post ? 'Postu Düzenle' : 'Yeni Post';
 d.submit.textContent = post ? 'Değişiklikleri Kaydet' : 'Post Yayınla';
 d.content.value = post?.content || '';
-s.tag = null; renderTag();
+s.tag = !post && router.current === 'works' ? VIEWS.works.tag() : null; renderTag();
 formError('');
 if (post?.image_path) showPreview(storageUrl(post.image_path));
 dialogs.open(d.root, 'sheet');
@@ -4069,8 +4065,10 @@ const emptyHtml = () => (s.tag ? `<div class="kw-post kw-empty-card"><div class=
 function renderStrip() {
 if (!s.trend) return;
 const rows = s.tag && !s.trend.some(t => t.id === s.tag.id) ? [s.tag, ...s.trend] : s.trend;
-strip.innerHTML = rows.map(t => `<button type="button" class="kt-chip${t.id === s.tag?.id ? ' is-on' : ''}" data-tag-id="${esc(t.id)}" data-tag-name="${esc(t.name)}" aria-pressed="${t.id === s.tag?.id}">${tags.icon(t)}${esc(t.name)}${tags.badge(t)}</button>`).join('')
-+ '<button type="button" class="kt-chip kt-all" data-tag-all><svg class="kt-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>Tümü</button>';
+strip.innerHTML = '<button type="button" class="kt-chip kt-all" data-tag-all><svg class="kt-ico" aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>Konu Ara</button>'
++ rows.map(t => `<button type="button" class="kt-chip${t.id === s.tag?.id ? ' is-on' : ''}" data-tag-id="${esc(t.id)}" data-tag-name="${esc(t.name)}" aria-pressed="${t.id === s.tag?.id}"${t.slot === 'pinned' ? ` title="${tags.PINNED}"` : ''}>${esc(t.name)}</button>`).join('');
+const note = $('[data-tag-note]', el), pin = s.tag && s.trend.some(t => t.id === s.tag.id && t.slot === 'pinned');
+note.hidden = !pin; note.textContent = pin ? `📌 ${tags.PINNED}. Bu konudaki paylaşımlar herkesin gündeminde kalır.` : '';
 strip.hidden = false; host.schedule();
 }
 function setTag(t) {
@@ -4418,7 +4416,7 @@ feed.avatarChanged(uid, url);
 s.experts.forEach(p => { if (p.id === uid) p.avatar_url = url; });
 s.services.forEach(v => { if (v.user_id === uid && v.provider) v.provider.avatar_url = url; });
 })(shellHooks.avatarChanged);
-return { name: 'works', el, mount, onSession, snapshot, setTag, isMounted: () => s.mounted, onView: name => newPosts.onView(name) };
+return { name: 'works', el, mount, onSession, snapshot, setTag, tag: () => s.tag, isMounted: () => s.mounted, onView: name => newPosts.onView(name) };
 }
 
 function createCatalog(opt) {
