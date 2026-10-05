@@ -45,7 +45,8 @@ const SUITES = [
   { name: 'skeleton', file: 'skeleton.test.mjs', note: 'yükleme iskeletleri' },
   { name: 'tags-db', file: 'tags-db.test.mjs', note: 'Konular V1 — yerel geçici PostgreSQL' },
   { name: 'tags-admin-db', file: 'tags-admin-db.test.mjs', note: 'Konular V2 admin — yerel geçici PostgreSQL' },
-  { name: 'tags-web', file: 'tags-web.test.mjs', note: 'Konular V1 — şerit, panel, composer' }
+  { name: 'tags-web', file: 'tags-web.test.mjs', note: 'Konular V1 — şerit, panel, composer' },
+  { name: 'code-health-pack', file: 'code-health-pack.test.mjs', note: 'Kod sağlığı raporu düzeltmeleri' },
 ];
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx > -1 ? process.argv[onlyIdx + 1] : null;

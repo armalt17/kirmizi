@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.32.1
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.33.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -8,6 +8,12 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.33.0: Kod sağlığı raporu düzeltmeleri: kayıt onayı ve "Uzmanlarda Görün" tercihi hesap bilgisine de yazılır (başka
+ cihazda doğrulamada onay sunucuya kaydedilir, onboarding açılır); hesap silme Destek'e talep olarak yönlenir; istekler için
+ merkezi süre sınırı (30 sn, yükleme 90 sn); yorum çift gönderim kilidi ve görünümler arası yorum sayısı eşitleme; eski
+ fotoğraf seçimi yeni pencereye taşınmaz; bozuk görsel yeni kaynakla yeniden görünür; beğeni sorgusu hatası sayıları
+ sıfırlamaz; başarısız "okundu" geri alınır; telefon gizliliği hizmet detayına yansır; oturum değişiminde avatar ve eski
+ profil yanıtı korunur; PDF yeniden deneme ve eski PDF; avatar uzantısı biçimle uyumlu; şehir seçici ekran okuyucu desteği.
 v4.32.1: Akış sağ sütunu (Hizmet Bul aracı) da hizmeti verenin fotoğrafı + köşede kategori ikonu.
 v4.32.0: Hizmet Bul ve Uzmanlar sade kartlar: kompakt sayfa başlığı (ikon kutusu + başlık + tek satır); hizmet kartı
  solda hizmeti verenin fotoğrafı + köşede kategori ikonu, kategori bir kez, "kişi · şekil · bölge", "Hizmeti İncele" yok;
@@ -426,8 +432,8 @@ Acil kapatma: CONFIG.historyRouting=false.
           <button type="button" class="k-btn" data-action="signout">Çıkış Yap</button>
         </div>
         <div class="kg-row">
-          <div class="kg-text"><span class="kg-label">Hesabı sil</span><p>Hesabını ve profil bilgilerini kalıcı olarak siler.</p></div>
-          <button type="button" class="k-btn kg-danger" data-account-delete>Hesabı Sil</button>
+          <div class="kg-text"><span class="kg-label">Hesabı sil</span><p>Hesabının ve profil bilgilerinin silinmesini talep et.</p></div>
+          <button type="button" class="k-btn kg-danger" data-account-delete>Silme Talebi</button>
         </div>
       </section>
       <nav class="kg-legal" aria-labelledby="kgLegal">
@@ -618,9 +624,9 @@ Acil kapatma: CONFIG.historyRouting=false.
   <header class="k-dialog-head"><h2 id="kaDeleteTitle">Hesabı sil</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
   <div class="k-dialog-body kg-delete">
     <p>Hesap silme kalıcıdır; profilin, paylaşımların ve hizmetlerin geri getirilemez.</p>
-    <p class="kg-delete-info" role="note">Hesap silme şu anda web üzerinden yapılamıyor. Bu işlem güvenli sunucu altyapısı hazır olduğunda bu adımdan onayla yapılabilecek. Bu sırada profilini “Uzmanlarda profilimi göster” ayarını kapatarak gizleyebilirsin.</p>
+    <p class="kg-delete-info" role="note">Hesap silme talebini Destek üzerinden alıyoruz: talebin ekibimize iletilir ve silme işlemi ekibimiz tarafından yapılır. Beklerken profilini “Uzmanlarda profilimi göster” ayarını kapatarak gizleyebilirsin.</p>
   </div>
-  <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Kapat</button></footer>
+  <footer class="k-dialog-foot"><button type="button" class="k-btn" data-close>Vazgeç</button><button type="button" class="k-btn k-btn-primary" data-action="support" data-support-cat="account" data-support-msg="Hesabımın ve profil bilgilerimin silinmesini talep ediyorum.">Silme Talebi Gönder</button></footer>
 </dialog>
 
 <dialog id="kaExtDialog" data-ico="out" class="k-dialog k-dialog-sm" aria-labelledby="kaExtTitle" aria-describedby="kaExtText">
@@ -1784,7 +1790,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.32.1',
+  version: '4.33.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
@@ -1985,7 +1991,7 @@ const cityPicker = (() => {
     return `<div class="kc-field kc-field-city" data-city-picker><span class="kc-flabel" id="${id}-label">Şehir</span>`
       + `<select id="${id}" data-filter="${key}" class="kc-city-native" tabindex="-1" aria-hidden="true"><option value="">Tüm Şehirler</option>${CITIES.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}</select>`
       + `<button type="button" class="kc-city-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="${id}-label ${id}-value"><span id="${id}-value" data-city-value>Tüm Şehirler</span>${chevron}</button>`
-      + `<div class="kc-city-pop" hidden><input type="search" class="kc-city-q" placeholder="Şehir ara…" aria-label="Şehir ara" autocomplete="off" enterkeyhint="search" data-city-q><ul class="kc-city-list" role="listbox" aria-label="Şehirler" data-city-list></ul></div></div>`;
+      + `<div class="kc-city-pop" hidden><input type="search" class="kc-city-q" placeholder="Şehir ara…" aria-label="Şehir ara" autocomplete="off" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-expanded="true" aria-controls="${id}-list" data-city-q><ul class="kc-city-list" id="${id}-list" role="listbox" aria-label="Şehirler" data-city-list></ul></div></div>`;
   }
   const parts = sel => { const w = sel.closest('[data-city-picker]'); return w && { w, sel, btn: $('.kc-city-btn', w), pop: $('.kc-city-pop', w), q: $('[data-city-q]', w), list: $('[data-city-list]', w) }; };
   function sync(sel) { const x = parts(sel); if (!x) return; $('[data-city-value]', x.w).textContent = sel.value || 'Tüm Şehirler'; x.w.classList.toggle('is-set', !!sel.value); }
@@ -1993,8 +1999,9 @@ const cityPicker = (() => {
     const q = trFold(x.q.value.trim()), cur = x.sel.value;
     const items = [['', 'Tüm Şehirler'], ...CITIES.map(c => [c, c])].filter(([v, l]) => !q || (v && trFold(l).includes(q)));
     x.list.innerHTML = items.length
-      ? items.map(([v, l], i) => `<li role="option" data-city="${esc(v)}" aria-selected="${v === cur}" class="${i === 0 ? 'is-active' : ''}">${esc(l)}</li>`).join('')
+      ? items.map(([v, l], i) => `<li role="option" id="${x.list.id}-${i}" data-city="${esc(v)}" aria-selected="${v === cur}" class="${i === 0 ? 'is-active' : ''}">${esc(l)}</li>`).join('')
       : '<li class="kc-city-none" aria-disabled="true">Şehir bulunamadı</li>';
+    x.q.setAttribute('aria-activedescendant', items.length ? `${x.list.id}-0` : '');
   }
   function close(x, focus) { if (!x || x.pop.hidden) return; x.pop.hidden = true; x.btn.setAttribute('aria-expanded', 'false'); if (focus) x.btn.focus({ preventScroll: true }); host.schedule(); }
   function closeAll(except) { $$('[data-city-picker] .kc-city-pop:not([hidden])').forEach(p => { const x = parts($('.kc-city-native', p.closest('[data-city-picker]'))); if (x && x.w !== except) close(x); }); }
@@ -2028,7 +2035,7 @@ const cityPicker = (() => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault(); if (!opts.length) return;
       const n = e.key === 'ArrowDown' ? Math.min(opts.length - 1, i + 1) : Math.max(0, i - 1);
-      opts.forEach((o, k) => o.classList.toggle('is-active', k === n)); opts[n].scrollIntoView({ block: 'nearest' });
+      opts.forEach((o, k) => o.classList.toggle('is-active', k === n)); opts[n].scrollIntoView({ block: 'nearest' }); x.q.setAttribute('aria-activedescendant', opts[n].id);
     } else if (e.key === 'Enter') { e.preventDefault(); const o = opts[Math.max(0, i)]; if (o) choose(x, o.dataset.city); }
     else if (e.key === 'Tab') close(x);
   }, true);
@@ -2492,7 +2499,9 @@ const dbReady = (async () => {
       });
       try { await window.kisgProfessionalSdkReady; } catch (e) { window.kisgProfessionalSdkReady = null; throw e; }
     }
-    client = window.kisgProfessionalSupabaseClient ||= window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+    client = window.kisgProfessionalSupabaseClient ||= window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      // Takılan bağlantıda pencereler sonsuza dek "Kaydediliyor…"da kalmasın: çağıran sinyal vermediyse süre sınırı (yükleme 90 sn, diğer 30 sn).
+      global: { fetch: (u, o = {}) => fetch(u, o.signal || !AbortSignal.timeout ? o : { ...o, signal: AbortSignal.timeout(/\/storage\/v1\/object\//.test(String(u?.url || u)) ? 9e4 : 3e4) }) } });
   }
   db = client;
   return client;
@@ -2544,9 +2553,10 @@ const session = (() => {
     if (next) refreshMe(next, api.revision);
   }
   async function refreshMe(id, rev) {
+    const seq = meSeq;
     try {
       const { data, error } = await db.from('profiles').select('id,full_name,avatar_url,is_discoverable').eq('id', id).maybeSingle();
-      if (error || rev !== api.revision) return;
+      if (error || rev !== api.revision || seq !== meSeq) return;
       api.me = { id, full_name: data?.full_name || '', avatar_url: data?.avatar_url || '', is_discoverable: data ? data.is_discoverable : null };
       writeJSON(local, ME_KEY, api.me);
       emit('me');
@@ -2588,7 +2598,8 @@ const session = (() => {
     }
     return api.user;
   }
-  function patchMe(fields) { if (!api.user) return; api.me = { ...(api.me || { id: api.user.id }), ...fields }; writeJSON(local, ME_KEY, api.me); emit('me'); }
+  let meSeq = 0;
+  function patchMe(fields, uid) { if (!api.user || (uid && uid !== api.user.id)) return; meSeq++; api.me = { ...(api.me || { id: api.user.id }), ...fields }; writeJSON(local, ME_KEY, api.me); emit('me'); }
   // Kayıt / kod doğrulama gibi akışlarda Supabase'in döndürdüğü kullanıcı hemen uygulanır (olay beklenmez).
   const adopt = user => { if (user?.id) apply(user); };
   Object.assign(api, { on: fn => listeners.add(fn), start, fail, signIn, signOut, verified, patchMe, adopt, refreshMe: () => api.user && refreshMe(api.user.id, api.revision) });
@@ -2608,7 +2619,8 @@ const legal = (() => {
     writeJSON(local, KEY, { email: mailOf(email), uid: uid || null, version: CONFIG.legal.version, t: Date.now() });
   }
   async function flush(user) {
-    const p = readJSON(local, KEY);
+    const md = user?.user_metadata || {}, DONE = `kisg:legal-done:${user?.id}`;
+    const p = readJSON(local, KEY) || (md.kisg_legal && readJSON(local, DONE) !== md.kisg_legal ? { uid: user.id, version: md.kisg_legal, t: Date.now(), md: 1 } : null);
     if (!p || !user?.id || inflight) return;
     if (!p.t || Date.now() - p.t > TTL) { removeKey(local, KEY); return; }
     if (p.uid ? p.uid !== user.id : p.email !== mailOf(user.email)) return;
@@ -2616,7 +2628,7 @@ const legal = (() => {
     try {
       const rows = ['terms_of_use', 'kvkk_notice_informed'].map(t => ({ document_type: t, document_version: p.version, source: 'web_signup' }));
       const { error } = await db.from('legal_acceptances').insert(rows);
-      if (!error || error.code === '23505') removeKey(local, KEY);
+      if (!error || error.code === '23505') { removeKey(local, KEY); writeJSON(local, DONE, p.version); }
     } catch {} finally { inflight = false; }
   }
   session.on(kind => { if (kind === 'user' && session.user) flush(session.user); });
@@ -2791,10 +2803,11 @@ const support = (() => {
   const msg = $('#kaSupportMessage'), err = $('#kaSupportError'), submit = $('#kaSupportSubmit');
   let uid = null, busy = false;
   const setErr = m => { err.textContent = m || ''; err.hidden = !m; };
-  async function open() {
-    const user = await requireUser(() => open()); if (!user) return;
+  async function open(preset) {
+    const user = await requireUser(() => open(preset)); if (!user) return;
     uid = user.id;
     if (!d.open) { form.reset(); setErr(''); }
+    if (preset?.cat) { const r = $(`input[name="category"][value="${preset.cat}"]`, cats); if (r) r.checked = true; msg.value = preset.msg || ''; }
     dialogs.open(d);
   }
   form.addEventListener('submit', async e => {
@@ -2821,7 +2834,7 @@ const support = (() => {
     if (error?.code === 'no_session') { setErr('Oturumun doğrulanamadı. Çıkış yapıp tekrar giriş yap.'); return; }
     setErr(`Mesajın şu anda gönderilemedi. Lütfen tekrar dene.${error?.code ? ` (Kod: ${error.code})` : ''}`);
   });
-  onShellClick(e => { const t = e.target?.nodeType === 1 ? e.target : null; if (t?.closest('[data-action="support"]')) { closePopovers(); open(); } });
+  onShellClick(e => { const t = e.target?.nodeType === 1 ? e.target : null; const b = t?.closest('[data-action="support"]'); if (b) { closePopovers(); open({ cat: b.dataset.supportCat, msg: b.dataset.supportMsg }); } });
   return { open, onSession() { if (d.open && !busy && session.user?.id !== uid) dialogs.close(d); } };
 })();
 
@@ -3009,7 +3022,7 @@ const authUI = (() => {
     if (problem) { paneError('signup', problem); return; }
     // Profil satırını mevcut on_auth_user_created → handle_new_user() trigger'ı oluşturur; web profiles'a insert/upsert yapmaz.
     const data = await run('signup', 'Hesap oluşturuluyor...', async () => {
-      const { data, error } = await db.auth.signUp({ email: mail, password: pw, options: { data: { full_name: name } } });
+      const { data, error } = await db.auth.signUp({ email: mail, password: pw, options: { data: { full_name: name, kisg_legal: CONFIG.legal.version, kisg_disc: su.discoverable.checked } } });
       if (error) throw error;
       // E-posta doğrulaması açıkken kayıtlı adres için Supabase kimliksiz sahte kullanıcı döndürür.
       if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) throw Object.assign(new Error('exists'), { code: 'user_already_exists' });
@@ -3017,7 +3030,8 @@ const authUI = (() => {
     }, { user_already_exists: () => { exists.hidden = false; return 'Bu e-posta ile zaten bir hesap var. Giriş yapabilir veya şifreni sıfırlayabilirsin.'; }, email_exists: () => { exists.hidden = false; return 'Bu e-posta ile zaten bir hesap var. Giriş yapabilir veya şifreni sıfırlayabilirsin.'; } });
     if (!data) return;
     flowEmail = mail;
-    // "Uzmanlarda Görün" tercihi onboarding sırasında mevcut profile UPDATE ile yazılır (signUp'a eklenmez).
+    // "Uzmanlarda Görün" tercihi onboarding sırasında profile UPDATE ile yazılır. Tercih ve sözleşme sürümü
+    // signUp metadata'sına da konur: e-posta başka cihazda doğrulanırsa onboarding ve onay kaydı oradan sürer.
     writeJSON(local, ONBOARD_KEY, { uid: data.user?.id || null, email: mail, name, discoverable: su.discoverable.checked, t: Date.now() });
     legal.remember(mail, data.user?.id || null);
     su.pw.value = su.pw2.value = '';
@@ -3105,6 +3119,9 @@ const authUI = (() => {
     const v = readJSON(local, ONBOARD_KEY);
     if (v && Date.now() - (v.t || 0) < ONBOARD_TTL) return v;
     if (v) removeKey(local, ONBOARD_KEY);
+    const u = session.user, md = u?.user_metadata || {};
+    if (typeof md.kisg_disc === 'boolean' && !md.kisg_onb && !readJSON(local, `${ONBOARD_KEY}:done:${u.id}`) && Date.now() - Date.parse(u.created_at || 0) < ONBOARD_TTL)
+      return { uid: u.id, email: normEmail(u.email), name: md.full_name, discoverable: md.kisg_disc, t: Date.now() };
     return null;
   }
   function maybeOnboard() {
@@ -3206,7 +3223,13 @@ const authUI = (() => {
     handoff = false;
     if (onboarding && session.user?.id === onboarding.uid) { renderPhoto(); show('photo'); if (!dlg.open) dialogs.open(dlg, 'sheet'); }
   });
-  function endOnboarding() { removeKey(local, ONBOARD_KEY); onboarding = null; }
+  function endOnboarding() {
+    removeKey(local, ONBOARD_KEY); onboarding = null;
+    const u = session.user, md = u?.user_metadata;
+    if (md && typeof md.kisg_disc === 'boolean' && !md.kisg_onb) {   // bu ve diğer cihazlarda tekrar açılmasın
+      writeJSON(local, `${ONBOARD_KEY}:done:${u.id}`, 1); db.auth.updateUser({ data: { kisg_onb: 1 } }).catch(() => {});
+    }
+  }
   $('[data-auth-finish]', dlg).addEventListener('click', () => {
     if (busy) return;
     endOnboarding(); dialogs.close(dlg);
@@ -3377,7 +3400,7 @@ const notifications = (() => {
     try {
       const { error } = await db.from(TABLE).update({ read_at: x.read_at }).eq('id', x.id).eq('recipient_id', uid).is('read_at', null);
       if (error) throw error;
-    } catch { refreshCount(); }
+    } catch { if (st.uid === uid) { x.read_at = null; renderList(); } refreshCount(); }
   }
   async function markAll() {
     const uid = st.uid; if (!uid || !(st.unread > 0)) return;
@@ -3544,7 +3567,7 @@ const avatarManager = (() => {
     lock(true); setBusy(save, true, 'Kaydediliyor…'); showError('');
     try {
       // Yeni sürümlü dosya; profil kaydı başarısızsa silinir, eski fotoğraf aynen kalır.
-      const blob = await encode(), prev = ownPath(session.me?.avatar_url, user.id), path = `${user.id}/avatar-${Date.now().toString(36)}.webp`;
+      const blob = await encode(), prev = ownPath(session.me?.avatar_url, user.id), path = `${user.id}/avatar-${Date.now().toString(36)}.${blob.type === 'image/jpeg' ? 'jpg' : 'webp'}`;
       const up = await bucket().upload(path, blob, { contentType: blob.type, cacheControl: '31536000' });
       if (up.error) throw up.error;
       const url = bucket().getPublicUrl(path).data.publicUrl;
@@ -3572,7 +3595,7 @@ const avatarManager = (() => {
   }
   // Professional içindeki tüm avatarlar (feed, yorumlar, paneller, nav) anında güncellenir.
   function apply(uid, url) {
-    session.patchMe({ avatar_url: url || '' });
+    session.patchMe({ avatar_url: url || '' }, uid);
     shellHooks.avatarChanged(uid, url || '');
     const safe = httpUrl(url);
     avatarScopes.forEach(scope => scope.querySelectorAll?.(`.k-avatar[data-uid="${CSS.escape(uid)}"]`).forEach(av => {
@@ -3800,6 +3823,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
   postBus.add((kind, x) => {
     const p = x && find(x.id);
     if (kind === 'commentLiked') { threads.syncCommentLike(x); return; }
+    if (kind === 'comments') { threads.syncComments(x); return; }
     if (kind === 'liked' && p && !f.liking.has(x.id)) { p.liked = x.liked; p.like_count = x.like_count; patchLike(p); }
     else if (kind === 'removed' && p) { f.posts = f.posts.filter(r => r.id !== x.id); cardOf(x.id)?.remove(); onRemoved?.(x.id); }
     else if (kind === 'featured') {
@@ -3831,6 +3855,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
         db.from('professional_comment_likes').select('comment_id,user_id').in('comment_id', ids)
       ]);
       (pr.data || []).forEach(p => profiles.set(p.id, p));
+      if (lk.error) { rows.forEach(r => { r.like_count ??= 0; r.liked ??= false; }); return rows; }   // hata ≠ "beğeni yok": eldeki değerler korunur
       const uid = session.user?.id, counts = new Map(), mine = new Set();
       // Kimlikler tipten bağımsız eşlenir (uuid/bigint; JSON'da sayı ya da metin gelebilir).
       (lk.data || []).forEach(l => { const k = String(l.comment_id); counts.set(k, (counts.get(k) || 0) + 1); if (uid && l.user_id === uid) mine.add(k); });
@@ -3887,7 +3912,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       const all = c && total >= 2 ? `<a class="cp-all" href="${esc(urls.work(id))}" target="_top" data-comment-all>${total} yorumun tümünü gör <span aria-hidden="true">→</span></a>` : '';
       const composerRow = t.open
         ? (session.user
-          ? `<form class="cm-compose" data-comment-form><span class="cm-me">${avatar(session.me || {}, 'sm')}</span><textarea class="cm-input" maxlength="2000" rows="1" placeholder="Yorum yaz…" aria-label="Yorum yaz">${esc(t.draft)}</textarea><button type="submit" class="cm-send" aria-label="Yorumu gönder"${t.draft.trim() ? '' : ' disabled'}>${ICONS.send}</button></form>`
+          ? `<form class="cm-compose" data-comment-form><span class="cm-me">${avatar(session.me || {}, 'sm')}</span><textarea class="cm-input" maxlength="2000" rows="1" placeholder="Yorum yaz…" aria-label="Yorum yaz">${esc(t.draft)}</textarea><button type="submit" class="cm-send" aria-label="Yorumu gönder"${t.draft.trim() && !t.sending ? '' : ' disabled'}>${ICONS.send}</button></form>`
           : `<button type="button" class="cm-login" data-comment-login>Yorum yazmak için giriş yap</button>`)
         : '';
       box.classList.add('is-preview');
@@ -3912,7 +3937,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
         ? `<button type="button" class="cm-show" data-comment-more>${t.loading ? 'Yükleniyor…' : (t.items.length <= PREVIEW && !t.open ? `Tüm ${total} yorumu gör` : rest > 0 ? `Önceki ${rest} yorumu gör` : 'Önceki yorumları gör')}</button>` : '';
       const composerRow = t.open
         ? (session.user
-          ? `<form class="cm-compose" data-comment-form><span class="cm-me">${avatar(session.me || {}, 'sm')}</span><textarea class="cm-input" maxlength="2000" rows="1" placeholder="Yorum yaz…" aria-label="Yorum yaz">${esc(t.draft)}</textarea><button type="submit" class="cm-send" aria-label="Yorumu gönder"${t.draft.trim() ? '' : ' disabled'}>${ICONS.send}</button></form>`
+          ? `<form class="cm-compose" data-comment-form><span class="cm-me">${avatar(session.me || {}, 'sm')}</span><textarea class="cm-input" maxlength="2000" rows="1" placeholder="Yorum yaz…" aria-label="Yorum yaz">${esc(t.draft)}</textarea><button type="submit" class="cm-send" aria-label="Yorumu gönder"${t.draft.trim() && !t.sending ? '' : ' disabled'}>${ICONS.send}</button></form>`
           : `<button type="button" class="cm-login" data-comment-login>Yorum yazmak için giriş yap</button>`)
         : '';
       const failed = t.error && !t.loading ? '<button type="button" class="cm-show" data-comment-retry>Yorumlar yüklenemedi · Yeniden dene</button>' : '';
@@ -4009,8 +4034,8 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
     async function submit(id, form) {
       const t = get(id), ta = form.querySelector('textarea'), btn = form.querySelector('.cm-send');
       const content = ta.value.trim(); if (!content) return;
-      const user = await requireUser(() => { t.open = true; render(id); }); if (!user) return;
-      ta.disabled = true; btn.disabled = true;
+      const user = await requireUser(() => { t.open = true; render(id); }); if (!user || t.sending) return;
+      t.sending = true; ta.disabled = true; btn.disabled = true;
       try {
         const res = await db.from('professional_post_comments').insert({ post_id: id, user_id: user.id, content, status: 'active' }).select(C_SELECT).single();
         if (res.error) throw res.error;
@@ -4020,8 +4045,8 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
         if (!profiles.get(user.id)?.profession && !profiles.get(user.id)?.title) { profiles.delete(user.id); await hydrate([data]); } else { data.like_count = 0; data.liked = false; }
         t.items.push(data); t.total = Math.max(t.total, t.items.length - 1) + 1; t.draft = '';
         setCount(id, (post(id)?.comment_count || 0) + 1);
-        render(id);
-      } catch (e) { toast(errorText(e, 'Yorum gönderilemedi. Tekrar dene.')); ta.disabled = false; btn.disabled = false; }
+        render(id); syncOut(id, 1);
+      } catch (e) { toast(errorText(e, 'Yorum gönderilemedi. Tekrar dene.')); ta.disabled = false; btn.disabled = false; } finally { t.sending = false; }
     }
     async function saveEdit(id, cid, form) {
       const t = get(id), c = t.items.find(x => String(x.id) === String(cid)), content = form.querySelector('textarea').value.trim();
@@ -4032,7 +4057,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
         const { data, error } = await db.from('professional_post_comments').update({ content }).eq('id', cid).eq('user_id', session.user.id).eq('status', 'active').select(C_SELECT).single();
         if (error) throw error;
         Object.assign(c, { content: data?.content ?? content, updated_at: data?.updated_at ?? new Date().toISOString() });
-        t.editing = null; render(id);
+        t.editing = null; render(id); syncOut(id);
       } catch (e) { toast(errorText(e, 'Yorum güncellenemedi.')); lock(false); }   // yazılan metin alanda kalır
     }
     async function remove(id, cid) {
@@ -4044,6 +4069,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
         t.items = t.items.filter(c => String(c.id) !== String(cid)); t.total = Math.max(0, t.total - 1);
         setCount(id, (post(id)?.comment_count || 1) - 1);
         if (compact && !t.items.length && (post(id)?.comment_count || 0) > 0) latest(id); else render(id);
+        syncOut(id, -1);
         toast('Yorum silindi.');
       } catch (e) { toast(errorText(e, 'Yorum silinemedi.')); }
     }
@@ -4075,6 +4101,14 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
     }
     // Aynı yorum başka bir akışta (Akış ↔ Post Detay) beğenilince burada da güncellenir.
     const threadsId = newId();
+    // Yorum ekleme/düzenleme/silme diğer görünümlere (Akış, Profil, Post Detay) yayılır: sayı ve önizleme eşitlenir.
+    const syncOut = (id, delta = 0) => emitPost('comments', { id, delta, source: threadsId });   // her görünüm kendi sayısını değişimle günceller
+    function syncComments(x) {
+      if (!x || x.source === threadsId || !post(x.id)) return;
+      if (x.delta) setCount(x.id, (post(x.id).comment_count || 0) + x.delta);
+      const t = map.get(x.id); if (!t) return;
+      if (compact) latest(x.id); else { t.items = []; t.total = 0; t.full = false; render(x.id); if (t.open) loadMore(x.id); }
+    }
     function syncCommentLike(x) {
       if (!x || x.source === threadsId || liking.has(x.cid)) return;
       map.forEach((t, pid) => { const c = t.items.find(i => String(i.id) === x.cid); if (c) { c.liked = x.liked; c.like_count = x.like_count; render(pid); } });
@@ -4089,7 +4123,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
     function rerenderAll() { map.forEach((_, id) => render(id)); }
     function reset() { map.clear(); }
     const avatarChanged = (uid, url) => { const p = profiles.get(uid); if (p) p.avatar_url = url; };
-    return { preview, open, expand, loadMore, submit, saveEdit, remove, like, get, render, onUser, rerenderAll, reset, autosize, avatarChanged, syncCommentLike, isOpen: id => map.get(id)?.open };
+    return { preview, open, expand, loadMore, submit, saveEdit, remove, like, get, render, onUser, rerenderAll, reset, autosize, avatarChanged, syncCommentLike, syncComments, isOpen: id => map.get(id)?.open };
   })();
 
   /* ---- Olaylar (kapsam: bu akışın kök elemanı) ---- */
@@ -4478,7 +4512,7 @@ const composer = (() => {
     emitPost('saved', { id: savedId, fresh, previous: current, failed });
   }
   d.form.addEventListener('submit', savePost);
-  d.root.addEventListener('close', () => { s.edit = null; s.file = null; s.tag = null; clearPreview(); formError(''); });
+  d.root.addEventListener('close', () => { s.edit = null; s.file = null; s.tag = null; s.pick++; s.preparing = false; clearPreview(); formError(''); });
   d.file.addEventListener('change', async e => {
     const file = e.target.files?.[0]; if (!file) return;
     const token = ++s.pick;
@@ -5596,6 +5630,7 @@ function createServiceView() {
   shellHooks.avatarChanged = ((prev) => (uid, url) => { prev(uid, url); if (s.service?.provider && s.service.user_id === uid) s.service.provider.avatar_url = url; })(shellHooks.avatarChanged);
   return {
     name: 'service', el, route,
+    invalidate(uid) { if (uid && s.service?.user_id === uid) s.id = ''; },   // telefon görünürlüğü değişince yeniden okunur
     mount() { s.mounted = true; return Promise.resolve(); },
     onSession() { if (s.service) render(); },
     snapshot: () => null, isMounted: () => s.mounted
@@ -5696,7 +5731,7 @@ const profilePdf = (() => {
     if (ready()) return Promise.resolve();
     scripts[src] ||= new Promise((resolve, reject) => {
       const s = document.createElement('script'); s.src = src; s.async = true;
-      s.onload = () => (ready() ? resolve() : reject(new Error('lib')));
+      s.onload = () => (ready() ? resolve() : (delete scripts[src], reject(new Error('lib'))));
       s.onerror = () => { delete scripts[src]; reject(new Error('lib')); };
       document.head.append(s);
     });
@@ -6137,6 +6172,7 @@ function createProfileView() {
 
   // Hizmet düzenlendi/kaldırıldı/yayınlandı: açık profildeki "Verdiği Hizmetler" tazelenir.
   serviceBus.add(() => {
+    s.pdfReady = null;
     if (!s.profile || s.servicesState === 'idle') return;
     s.servicesState = 'idle';
     if (s.tab === 'hizmetler') loadServices(); else loadCounts(s.rev);
@@ -6303,7 +6339,7 @@ function createProfileView() {
             : 'Profil kaydedilemedi. Lütfen tekrar dene.'));
     } finally { saving = false; session.writes--; dialogs.lock(ed.root, false); setBusy(ed.save, false); }
     if (!saved) return;
-    s.profile = { ...s.profile, ...saved };
+    s.profile = { ...s.profile, ...saved }; s.pdfReady = null;
     s.phone = await publicPhone(s.profile);
     dialogs.close(ed.root);
     renderCard(); setDocTitle();
@@ -6380,7 +6416,7 @@ function createProfileView() {
   }
   shellHooks.avatarChanged = ((prev) => (uid, url) => {
     prev(uid, url);
-    feed.avatarChanged(uid, url);
+    feed.avatarChanged(uid, url); s.pdfReady = null;
     if (s.profile?.id === uid) s.profile.avatar_url = url;
   })(shellHooks.avatarChanged);
 
@@ -6536,7 +6572,7 @@ function createAccountView() {
       s.row = { ...s.row, ...data };
       setNote(f, 'Kaydedildi.', 'ok');
       if (f === 'is_discoverable') session.patchMe({ is_discoverable: value });
-      VIEWS.profile.invalidate?.(uid);
+      VIEWS.profile.invalidate?.(uid); VIEWS.service.invalidate(uid);
     } catch {
       if (rev !== s.rev) return;
       input.checked = s.row?.[f] === true;
@@ -6838,10 +6874,11 @@ function onImgError(e) {
   const av = img.closest('.k-avatar');
   if (av) { img.remove(); if (!av.textContent.trim()) av.innerHTML = av.dataset.initials ? esc(av.dataset.initials) : ICONS.user; }
   else if (img.closest('.kw-media')) img.closest('.kw-media').classList.add('is-broken');
-  else img.hidden = true;
+  else { img.hidden = true; img.dataset.broken = ''; }
   host.schedule();
 }
 root.addEventListener('error', onImgError, true);
+root.addEventListener('load', e => { const i = e.target; if (i?.tagName === 'IMG' && 'broken' in i.dataset) { i.hidden = false; delete i.dataset.broken; } }, true);
 
 /* =========================================================================
    15b. Professional app chrome

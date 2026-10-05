@@ -82,7 +82,7 @@ try {
     check(Array.isArray(body) && JSON.stringify(body) === JSON.stringify([{ document_type: 'terms_of_use', document_version: '2026-09-30', source: 'web_signup' }, { document_type: 'kvkk_notice_informed', document_version: '2026-09-30', source: 'web_signup' }]), `iki satır: Kullanım Koşulları kabulü + KVKK bilgilendirmesi (user_id ve zaman istemciden gönderilmez) ${JSON.stringify(body)}`);
     check(await page.evaluate(k => localStorage.getItem(k), PENDING) === null, 'bekleyen kayıt temizlendi');
     const su = auth.calls.find(c => c.path === '/signup');
-    check(su && JSON.stringify(Object.keys(su.body.data || {})) === '["full_name"]', 'signUp isteği değişmedi (yalnız full_name)');
+    check(su && JSON.stringify(Object.keys(su.body.data || {})) === '["full_name","kisg_legal","kisg_disc"]' && /^\d{4}-\d\d-\d\d$/.test(su.body.data.kisg_legal) && typeof su.body.data.kisg_disc === 'boolean', `signUp: ad + sözleşme sürümü + "Uzmanlarda Görün" tercihi (başka cihazda doğrulama için) ${JSON.stringify(su?.body.data)}`);
     await ctx.close();
   }
   // ---------------- 3) Kabul kaydı yazılamazsa: kayıt yine başarılı, sonraki oturumda tekrar ----------------

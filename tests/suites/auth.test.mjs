@@ -258,8 +258,10 @@ for (const vp of VPS.slice(0, +(process.env.NVP || 2))) {
     await g.evaluate(() => document.querySelector('.kp-card [data-profile-action="edit"]').click()); await g.waitForSelector('#kaProfileDialog[open]');
     check(await g.locator('#kaPeDiscoverable, #kaPePhonePublic').count() === 0 && await g.isVisible('#kaProfileDialog .kpe-privacy a[data-view-link="account"]'), `${N} profil düzenle: görünürlük anahtarı yok, Hesap & Gizlilik bağlantısı var`);
     writes.length = 0;
-    await g.fill('#kaPe_profession', 'İSG Uzmanı'); await g.evaluate(() => document.getElementById('kaProfileForm').requestSubmit()); await settle(page, 1000);
-    check(discPatches().length === 0 && writes.some(w => w.table === 'profiles' && w.body?.profession === 'İSG Uzmanı') && db.profiles.find(p => p.id === uid).is_discoverable === true, `${N} profil düzenle: kayıt is_discoverable göndermez, mevcut değer korunur`);
+    await g.fill('#kaPe_profession', 'İSG Uzmanı'); await g.evaluate(() => document.getElementById('kaProfileForm').requestSubmit());
+    for (let i = 0; i < 50 && !writes.some(w => w.table === 'profiles' && w.body?.profession === 'İSG Uzmanı'); i++) await settle(page, 100);   // sabit bekleme yerine kayıt gelene kadar
+    await settle(page, 300);
+    check(discPatches().length === 0 && writes.some(w => w.table === 'profiles' && w.body?.profession === 'İSG Uzmanı') && db.profiles.find(p => p.id === uid).is_discoverable === true, `${N} profil düzenle: kayıt is_discoverable göndermez, mevcut değer korunur ${JSON.stringify(discPatches().map(p => p.body))} ${db.profiles.find(p => p.id === uid).is_discoverable}`);
     await page.goto(ACCOUNT); await settle(page, 1000); g = frameOf(page); await accountReady(g);
     check(await g.isChecked('#kgDiscoverable'), `${N} Hesap & Gizlilik: kayıttaki tercih (açık) okunuyor`);
     writes.length = 0;
