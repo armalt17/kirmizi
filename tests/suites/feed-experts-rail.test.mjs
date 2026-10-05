@@ -97,7 +97,8 @@ const browser = await chromium.launch(LAUNCH);
   await page.goto('https://isgcalisanplatformu.com/'); await settle(page, 1800);
   const f = frameOf(page); await f.waitForSelector('[data-view="works"] [data-post-id]');
   const r = await f.evaluate(() => [...document.querySelectorAll('[data-view="works"] .kw-rail-experts a')].filter(a => !a.matches('[data-view-link]')).map(a => a.textContent));
-  check(r.length === 3 && /Ayşe Yılmaz/.test(r[0]) && /Bora Aktif/.test(r[1]) && /Deniz Üç/.test(r[2]), `mobil şerit: ${r.map(x => x.slice(0, 20)).join(' | ')}`);
+  // v4.36.0: takip olmadığı için akış içi "İSG profesyonellerini keşfet" şeridi kaldırıldı (uzman arama Uzmanlar sayfasında)
+  check(r.length === 0 && await f.locator('.kw-rail-experts').count() === 0, `mobil akışta uzman şeridi yok (${r.length})`);
   await ctx.close();
 }
 await browser.close();

@@ -151,7 +151,7 @@ try {
         const inputs = [...document.querySelectorAll('[data-view="experts"] [data-desktop-filters] input[list]')].map(i => i.dataset.filter);
         return { rule: !!rule && /display: none/.test(rule), inputs };
       });
-      check(tri.rule && JSON.stringify(tri.inputs) === '["title","specialties"]', `${N} Meslek/Uzmanlık datalist üçgeni gizli ${JSON.stringify(tri)}`);
+      check(tri.rule && JSON.stringify(tri.inputs) === '["title"]', `${N} Meslek datalist üçgeni gizli (Uzmanlık v4.36.0’da Hizmet Alanı oldu) ${JSON.stringify(tri)}`);
     }
     const sb = await f.evaluate(() => { const s = document.querySelector('[data-view="experts"] .kc-search'), i = s.querySelector('input'), c = getComputedStyle(s); return { border: c.borderTopWidth, inputBorder: getComputedStyle(i).borderTopWidth, shadow: c.boxShadow }; });
     check(sb.border === '0px' && sb.inputBorder === '0px' && (sb.shadow.match(/0px 0px 0px 1px/g) || []).length === 1, `${N} Uzmanlar arama: tek ince çerçeve ${JSON.stringify(sb)}`);
