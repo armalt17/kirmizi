@@ -18,16 +18,15 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await f.waitForSelector('[data-view="services"] .ks-card');
   // Kart hiyerarşisi: başlık → açıklama → kategori/bölge/şekil → profesyonel (avatar+ad+meslek) → "Hizmeti İncele"
   const cards = await f.evaluate(() => [...document.querySelectorAll('[data-view="services"] .ks-card')].map(c => ({
-    order: [...c.children].map(x => x.className.split(' ')[0] || x.tagName),
-    title: c.querySelector('h2')?.textContent.trim(), cat: c.querySelector('.ks-facts .ks-cat')?.textContent.trim(),
-    pro: !!c.querySelector('.ks-foot .ks-pro .k-avatar') && !!c.querySelector('.ks-pro-copy strong')?.textContent.trim(),
-    line: c.querySelector('.ks-pro-copy span')?.textContent.trim() || '', cta: c.querySelector('.ks-foot .ks-cta')?.textContent.trim(),
+    order: [...c.children].map(x => (x.getAttribute('class') || x.tagName).split(' ')[0]),
+    title: c.querySelector('h2')?.textContent.trim(), cat: c.querySelector('.ks-copy .ks-cat')?.textContent.trim(),
+    pro: !!c.querySelector('.ks-lead .k-avatar'), line: c.querySelector('.ks-meta')?.textContent.trim() || '', cta: c.querySelector('.ks-cta'),
     featured: c.querySelectorAll('.k-featured').length, price: /₺|TL\b|fiyat|teklif|puan/i.test(c.textContent)
   })));
   check(cards.length === 6, `${vp.name}: 6 hizmet kartı`);
-  check(cards.every(c => JSON.stringify(c.order.filter(x => x !== 'ks-card-top')) === JSON.stringify(['ks-head', 'ks-description', 'ks-facts', 'ks-foot'])), `${vp.name}: kart sırası başlık → açıklama → bilgiler → alt satır (${cards[0].order.join(',')})`);
-  check(cards.every(c => c.title && c.cat && c.pro && /^Hizmeti İncele/.test(c.cta)), `${vp.name}: her kartta kategori, profesyonel avatar+ad, "Hizmeti İncele"`);
-  check(cards.find(c => c.title === 'Gürültü ve Toz Ölçümü')?.line === 'İşyeri Hekimi' && /İş Güvenliği Uzmanı/.test(cards.find(c => c.title === 'Uzaktan İSG Danışmanlığı')?.line), `${vp.name}: meslek/statü satırı`);
+  check(cards.every(c => JSON.stringify(c.order) === JSON.stringify(['ks-lead', 'ks-copy', 'ks-go'])), `${vp.name}: v4.32 kart: kişi fotoğrafı → metin → ok (${cards[0].order.join(',')})`);
+  check(cards.every(c => c.title && c.cat && c.pro && !c.cta), `${vp.name}: her kartta kategori, profesyonelin fotoğrafı; ayrı "Hizmeti İncele" yok`);
+  check(/^Mehmet Şahin Öztürk · /.test(cards.find(c => c.title === 'Gürültü ve Toz Ölçümü')?.line) && /^Ayşe Yılmaz · /.test(cards.find(c => c.title === 'Uzaktan İSG Danışmanlığı')?.line), `${vp.name}: "kişi · şekil · bölge" satırı`);
   check(cards.every(c => c.featured === 0), `${vp.name}: DB'de öne çıkarma alanı yok → taç rozeti yok`);
   check(cards.every(c => !c.price), `${vp.name}: fiyat/teklif/puan yok (pazar yeri değil)`);
   const overflow = await f.evaluate(() => [...document.querySelectorAll('[data-view="services"] .ks-card')].some(c => c.scrollWidth > c.clientWidth + 1));

@@ -427,7 +427,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   const mark = await page.evaluate(() => window.__bootMark);
   check(await f.locator('[data-view="services"] .ks-chip').count() === 5, `${vp.name} hizmetler: kategori şeridi (Tümü + 4)`);
   check(/aktif hizmet/.test(await f.textContent('[data-hero-count]')), `${vp.name} hizmetler: vitrin sayacı (${await f.textContent('[data-hero-count]')})`);
-  check(await f.locator('[data-view="services"] .ks-card .ks-pro').count() === await f.locator('[data-view="services"] .ks-card').count(), `${vp.name} hizmetler: her kartta sağlayıcı`);
+  check(await f.locator('[data-view="services"] .ks-card .ks-lead .k-avatar').count() === await f.locator('[data-view="services"] .ks-card').count(), `${vp.name} hizmetler: her kartta sağlayıcı`);
   await page.screenshot({ path: `${OUT}/${vp.name}-services-list.png`, fullPage: true });
   // kategori seç (Risk Değerlendirmesi = 3)
   reqs.length = 0;
@@ -538,9 +538,9 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await page.evaluate(() => scrollTo(0, 900)); await page.waitForTimeout(200);
   const yWorks = await page.evaluate(() => scrollY);
   await navClick(page, 'services'); await f.waitForSelector('[data-view="services"] .ks-card');
-  check(await visibleView(f) === 'services' && await f.locator('[data-view="services"] .k-hero').count() === 1 && await f.locator('[data-view="services"] .ks-card .ks-pro').count() > 0, `${vp.name} QA akış: Çalışmalar → Hizmetler V2 (tek görünüm)`);
+  check(await visibleView(f) === 'services' && await f.locator('[data-view="services"] .k-hero').count() === 1 && await f.locator('[data-view="services"] .ks-card .ks-lead .k-avatar').count() > 0, `${vp.name} QA akış: Çalışmalar → Hizmetler V2 (tek görünüm)`);
   const heroH = await f.evaluate(() => document.querySelector('[data-view="services"] .k-hero').getBoundingClientRect().height);
-  check(vp.name === 'desktop' ? heroH >= 180 && heroH <= 252 : heroH <= 240, `${vp.name} QA: hero yüksekliği ${Math.round(heroH)}px`);
+  check(vp.name === 'desktop' ? heroH >= 60 && heroH <= 120 : heroH <= 90, `${vp.name} QA: hero yüksekliği ${Math.round(heroH)}px`);
   await f.fill('#ksSearch', 'Ölçüm'); await page.waitForTimeout(900);
   const nSearch = await f.locator('[data-view="services"] .ks-card').count();
   await f.evaluate(() => document.querySelector('[data-view="services"] [data-service-id]').scrollIntoView({ block: 'center' })); await page.waitForTimeout(150);
@@ -702,7 +702,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await page.goto('https://isgcalisanplatformu.com/hizmetler'); await page.waitForTimeout(900);
   const f = frameOf(page);
   await f.waitForSelector('[data-view="services"] .ks-card');
-  await page.evaluate(() => scrollTo(0, 600)); await page.waitForTimeout(200);
+  const y0 = await page.evaluate(() => { scrollTo(0, 600); return scrollY; }); await page.waitForTimeout(200);   // v4.32 kartlar kısa: sayfa 600'e inemeyebilir
   const setVV = (h, top) => page.evaluate(([h, top]) => { const vv = window.visualViewport; Object.defineProperty(vv, 'height', { get: () => h, configurable: true }); Object.defineProperty(vv, 'offsetTop', { get: () => top, configurable: true }); vv.dispatchEvent(new Event('resize')); vv.dispatchEvent(new Event('scroll')); }, [h, top]);
   await setVV(700, 0);   // alt araç çubuğu 144px
   await page.evaluate(() => document.getElementById('kisg-pro-nav').shadowRoot.querySelector('[data-action="login"]').click());
@@ -719,7 +719,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   g = await geo();
   check(g.bottom <= 701, 'mobil giriş: klavye kapanınca yeniden yerleşir');
   await f.click('#kaLoginDialog [data-close]'); await page.waitForTimeout(400);
-  check(await page.evaluate(() => getComputedStyle(document.body).position) !== 'fixed' && Math.abs(await page.evaluate(() => scrollY) - 600) < 3, 'mobil giriş: kapanınca sayfa kilidi kalkar, konum aynı');
+  check(await page.evaluate(() => getComputedStyle(document.body).position) !== 'fixed' && y0 > 0 && Math.abs(await page.evaluate(() => scrollY) - y0) < 3, 'mobil giriş: kapanınca sayfa kilidi kalkar, konum aynı');
   await ctx.close();
 }
 

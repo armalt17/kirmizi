@@ -35,14 +35,14 @@ try {
     const f = frameOf(page);
     await f.waitForSelector('[data-view="services"] .ks-card[data-kind]');
     const cards = await f.evaluate(() => [...document.querySelectorAll('[data-view="services"] .ks-card')].map(c => {
-      const bg = getComputedStyle(c, '::before').backgroundImage, mark = c.querySelector('.ks-head > .ks-mark svg');
-      const cat = c.querySelector('.ks-facts .ks-cat'), cs = cat && getComputedStyle(cat);
+      const bg = getComputedStyle(c, '::before').backgroundImage, mark = c.querySelector('.ks-lead > .ks-mark svg');
+      const cat = c.querySelector('.ks-copy > .ks-cat'), cs = cat && getComputedStyle(cat);
       return {
-        title: c.querySelector('h2')?.textContent, kind: c.dataset.kind, order: [...c.children].map(x => x.className.split(' ')[0] || x.tagName),
-        motif: bg.startsWith('url("data:image/svg+xml'), bgKey: bg.slice(0, 400), markOk: !!mark && mark.getBoundingClientRect().width >= 20,
+        title: c.querySelector('h2')?.textContent, kind: c.dataset.kind, order: [...c.children].map(x => (x.getAttribute('class') || x.tagName).split(' ')[0]),
+        motif: bg.startsWith('url("data:image/svg+xml'), bgKey: bg.slice(0, 400), markOk: !!mark && mark.getBoundingClientRect().width >= 12,
         red: mark ? [...mark.querySelectorAll('.a,.f')].length : 0, hidden: c.querySelector('.ks-mark')?.getAttribute('aria-hidden'),
         cat: cat?.textContent, catUpper: cs?.textTransform, catColor: cs?.color, h: c.getBoundingClientRect().height,
-        cta: c.querySelector('.ks-cta')?.textContent.trim(), pro: !!c.querySelector('.ks-pro strong'), facts: c.querySelector('.ks-facts')?.textContent
+        cta: c.querySelector('.ks-cta'), pro: !!c.querySelector('.ks-lead > .k-avatar') && /Yılmaz|Öztürk|Sağlayıcı/.test(c.querySelector('.ks-meta')?.textContent || ''), facts: c.querySelector('.ks-meta')?.textContent
       };
     }));
     const byTitle = Object.fromEntries(cards.map(c => [c.title, c]));
@@ -50,11 +50,11 @@ try {
     check(CATS.every(([, , , kind], i) => byTitle[TITLES[i]]?.kind === kind), `${N}: kategori → işaret ailesi (${cards.map(c => c.kind).join(', ')})`);
     check(cards.every(c => !c.motif && c.markOk && c.red === 1 && c.hidden === 'true'), `${N}: her kartta dekoratif (aria-hidden) kategori ikonu + tek kırmızı detay; arka plan deseni yok (v4.31 sade dil)`);
     check(new Set(cards.map(c => c.kind)).size === 9, `${N}: 9 farklı kategori → 9 farklı ikon ailesi`);
-    check(cards.every(c => JSON.stringify(c.order.filter(x => x !== 'ks-card-top')) === JSON.stringify(['ks-head', 'ks-description', 'ks-facts', 'ks-foot'])), `${N}: hiyerarşi aynı: başlık → açıklama → bilgiler → uzman + Hizmeti İncele`);
-    check(cards.every(c => c.cat && c.catUpper === 'none' && c.catColor === 'rgb(20, 26, 36)'), `${N}: kategori etiketi büyük harf/kırmızı çizgi değil, sade hap`);
-    check(cards.every(c => /Yerinde|Uzaktan/.test(c.facts) && c.pro && /^Hizmeti İncele/.test(c.cta)), `${N}: yerinde/uzaktan, uzman ve "Hizmeti İncele" korunuyor`);
+    check(cards.every(c => JSON.stringify(c.order) === JSON.stringify(['ks-lead', 'ks-copy', 'ks-go'])), `${N}: v4.32 sade kart: kişi fotoğrafı + kategori rozeti → metin → ok`);
+    check(cards.every(c => c.cat && c.catUpper === 'none' && c.catColor === 'rgb(135, 145, 160)'), `${N}: kategori bir kez, küçük gri ad (etiket/hap yok)`);
+    check(cards.every(c => /Yerinde|Uzaktan/.test(c.facts) && c.pro && !c.cta), `${N}: kişi fotoğrafı + "kişi · şekil · bölge"; "Hizmeti İncele" yok (kartın tamamı bağlantı)`);
     const maxH = Math.max(...cards.map(c => c.h));
-    check(N === 'mobile' ? maxH <= 300 : maxH <= 330, `${N}: kart yüksekliği kompakt (en fazla ${Math.round(maxH)}px)`);
+    check(N === 'mobile' ? maxH <= 130 : maxH <= 200, `${N}: kart yüksekliği kompakt (en fazla ${Math.round(maxH)}px)`);
     const over = await f.evaluate(() => [...document.querySelectorAll('.ks-card')].some(c => c.scrollWidth > c.clientWidth + 1) || document.documentElement.scrollWidth > document.documentElement.clientWidth);
     check(!over, `${N}: taşma yok`);
     // Kart hâlâ detaya gider, kategori filtresi çalışır

@@ -28,7 +28,7 @@ try {
       const where = `${N} ${p.split('?')[0]}`;
       check(r.anim === 'k-shine', `${where}: iskelet parıltısı çalışıyor (${r.anim})`);
       check(r.opacity === '1', `${where}: iskelet gecikmeden sonra tam görünür (${r.opacity})`);
-      if (p === '/uzmanlar') check(r.ke && r.ke[0] === r.ke[1] && r.ke[0] >= 60 && r.shorts[0] > r.shorts[1], `${where}: avatar yuvarlak ${r.ke?.join('×')}, satırlar kademeli ${r.shorts}`);
+      if (p === '/uzmanlar') check(r.ke && r.ke[0] === r.ke[1] && r.ke[0] >= 44 && r.shorts[0] > r.shorts[1], `${where}: avatar yuvarlak ${r.ke?.join('×')}, satırlar kademeli ${r.shorts}`);
       else check(r.cols === 1 && (r.media == null || r.media >= 95), `${where}: gönderi iskeleti tek sütun, görsel alanı tam genişlik (${r.cols} sütun, görsel %${r.media})`);
       await page.screenshot({ path: path.join(OUT, `skeleton-${N}-${p.replace(/\W+/g, '_')}.png`) });
       await ctx.close();

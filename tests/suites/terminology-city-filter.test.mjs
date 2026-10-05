@@ -75,7 +75,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await page.goto('https://isgcalisanplatformu.com/uzmanlar'); await settle(page, 1500);
   g = frameOf(page); await g.waitForSelector('[data-view="experts"] .ke-card');
   txt = await uiText(page);
-  const counters = await g.evaluate(() => [...document.querySelectorAll('[data-view="experts"] .ke-activity')].map(x => x.textContent));
+  const counters = await g.evaluate(() => [...document.querySelectorAll('[data-view="experts"] .ke-card')].map(x => (x.title.match(/(\d+ Post( · \d+ Hizmet)?|\d+ Hizmet)$/) || [])[0]).filter(Boolean));
   check(!/Çalışma/.test(txt), `${N} Uzmanlar: "Çalışma" yok`);
   check(await g.locator('[data-view="experts"] input[data-filter="city"]').count() === 0, `${N} Uzmanlar: serbest metin şehir girişi kaldırıldı`);
   const all0 = await names(g, 'experts');
@@ -100,7 +100,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   };
   const expCity = c => db.profiles.filter(p => p.is_discoverable && p.city && ['İstanbul', 'istanbul', 'ISTANBUL', 'Istanbul'].includes(c === 'İstanbul' ? p.city : '') ).map(p => p.full_name).sort().join();
   let r = await run('İstanbul', 'ist');
-  const cnt = await g.evaluate(() => [...document.querySelectorAll('[data-view="experts"] .ke-activity')].map(x => x.textContent));
+  const cnt = await g.evaluate(() => [...document.querySelectorAll('[data-view="experts"] .ke-card')].map(x => (x.title.match(/(\d+ Post( · \d+ Hizmet)?|\d+ Hizmet)$/) || [])[0]).filter(Boolean));
   check(cnt.length > 0 && cnt.every(c => /^\d+ Post( · \d+ Hizmet)?$|^\d+ Hizmet$/.test(c)) && cnt.some(c => /Post/.test(c)), `${N} Uzmanlar kart sayacı "${cnt[0]}"`);
   check(r.sort().join() === expCity('İstanbul') && r.includes('Ayşe Yılmaz') && r.length === 4, `${N} Uzmanlar İstanbul → yalnız İstanbul/istanbul/ISTANBUL (${r.join(', ')})`);
   check(reqLog.some(x => x.table === 'profiles' && /city\.ilike\."%İstanbul%"/.test(x.url) && /city\.ilike\."%istanbul%"/.test(x.url) && /city\.ilike\."%Istanbul%"/.test(x.url)), `${N} Uzmanlar sorgusu profiles.city üzerinde Türkçe yazım varyantlarıyla`);

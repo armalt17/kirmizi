@@ -101,16 +101,16 @@ try {
     await f.waitForSelector('[data-view="services"] .ks-card');
     const sm = await f.evaluate(() => {
       const v = document.querySelector('[data-view="services"]'), r = s => { const e = v.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return b.width ? { h: Math.round(b.height), top: Math.round(b.top), w: Math.round(b.width), left: Math.round(b.left), right: Math.round(b.right), bottom: Math.round(b.bottom) } : null; };
-      const head = v.querySelector('.kc-results-head p'), hero = v.querySelector('.k-hero'), art = v.querySelector('.k-hero-ghost');
+      const head = v.querySelector('.kc-results-head p'), hero = v.querySelector('.k-hero'), art = v.querySelector('.k-hero-ico');
       return { search: r('.kc-search'), mode: r('[data-desktop-filters] [data-filter="mode"]'), city: r('[data-desktop-filters] .kc-city-btn'), filterBtn: r('[data-open-filters]'), chip: r('.ks-chip'),
-        count: { fs: parseFloat(getComputedStyle(head).fontSize), color: getComputedStyle(head).color }, hero: r('.k-hero'), clip: getComputedStyle(hero).overflow, heroBox: hero.getBoundingClientRect().toJSON(), artBox: art.getBoundingClientRect().toJSON(), cards: v.querySelectorAll('.ks-card').length };
+        count: { fs: parseFloat(getComputedStyle(head).fontSize), color: getComputedStyle(head).color }, hero: r('.k-hero'), heroBox: hero.getBoundingClientRect().toJSON(), artBox: art.getBoundingClientRect().toJSON(), cards: v.querySelectorAll('.ks-card').length };
     });
     if (!mobile) {
       check(sm.search.h === 56 && sm.mode.h === sm.city.h && sm.mode.h === sm.search.h && sm.mode.top === sm.city.top && sm.mode.w === sm.city.w, `${N} Hizmet Bul: arama ve iki filtre aynı yükseklik/hizada ${JSON.stringify({ s: sm.search, m: sm.mode, c: sm.city })}`);
     } else {
       check(sm.search.h <= 44 && sm.filterBtn.h <= 44 && sm.chip.h <= 32, `${N} Hizmet Bul: arama/Filtrele ≤44px, çip ≤32px (${sm.search.h}/${sm.filterBtn.h}/${sm.chip.h})`);
       check(sm.count.fs <= 12, `${N} Hizmet Bul: "X hizmet listeleniyor" ikincil (${sm.count.fs}px)`);
-      check(sm.clip === 'hidden' && sm.artBox.width > 0 && sm.artBox.left < sm.heroBox.right && sm.hero.h < 300, `${N} Hizmet Bul: gri bant + silik çanta ikonu bandın içinde kırpılıyor; başlık ${sm.hero.h}px`);
+      check(sm.artBox.width >= 40 && sm.artBox.left >= sm.heroBox.left && sm.artBox.right <= sm.heroBox.right && sm.hero.h <= 80, `${N} Hizmet Bul: kompakt gri başlık (ikon kutusu içinde), ${sm.hero.h}px`);
     }
     check(await overflow(f) <= 0 && errs.length === 0, `${N} Hizmet Bul: taşma/hata yok ${errs.join(' ')}`);
     // filtre davranışı aynı: şehir seçimi sorguya gider
