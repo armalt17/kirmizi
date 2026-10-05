@@ -39,7 +39,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   check([I.one, I.two, I.many].every(x => x.border === '0px' && /rgba\(0, 0, 0, 0\)|transparent/.test(x.bg)), `${N} önizleme: kenarlık/gri zemin yok`);
   check(I.many.lines <= 2, `${N} 15 yorum: uzun yorum en fazla 2 satır (${I.many.lines})`);
   const maxThread = Math.max(I.one.threadH, I.two.threadH, I.many.threadH);
-  check(I.one.threadH <= 82 && maxThread <= 140 && I.many.h - base <= 150, `${N} kart yüksekliği: önizleme kompakt (1:${I.one.threadH}px, 2:${I.two.threadH}px, 15:${I.many.threadH}px; 15 yorumlu kart +${I.many.h - base}px)`);
+  check(I.one.threadH <= 96 && maxThread <= 152 && I.many.h - base <= 165, `${N} kart yüksekliği: önizleme kompakt — v4.34.3 gri baloncuk dahil (1:${I.one.threadH}px, 2:${I.two.threadH}px, 15:${I.many.threadH}px; 15 yorumlu kart +${I.many.h - base}px)`);
   check(Math.abs(I.many.threadH - I.two.threadH) <= 22 + 34, `${N} kart yüksekliği: 15 yorum ile 2 yorum kartı aynı ölçüde (yorum sayısıyla uzamıyor)`);
   const bulk = cmReq.filter(r => r.m === 'GET' && r.url.includes('post_id=in.'));
   check(bulk.length === 1 && !cmReq.some(r => r.m === 'GET' && /limit=1[01]\b/.test(r.url)), `${N} önizleme: sayfa başına tek toplu sorgu, akışta liste yüklenmedi (${bulk.length})`);
