@@ -115,6 +115,26 @@ try {
     await ctx.close();
   }
 
+  // ================= 6) Beğenilmiş Post'a tıklayınca detayda kalp ilk anda kırmızı (v4.34.2) =================
+  {
+    resetDb();
+    const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+    await setup(ctx, true);
+    const page = await ctx.newPage();
+    await page.goto(`${SITE}/`); await settle(page, 1500);
+    const f = frameOf(page);
+    await f.waitForSelector('[data-view="works"] [data-post-id] button.kw-act-like');
+    const PID = await f.evaluate(() => document.querySelector('[data-view="works"] [data-post-id] button.kw-act-like').closest('[data-post-id]').dataset.postId);
+    const card = `[data-view="works"] [data-post-id="${PID}"]`;
+    if (!(await f.$(`${card} .kw-act-like.is-liked`))) { await f.click(`${card} .kw-act-like`); await f.waitForSelector(`${card} .kw-act-like.is-liked`); await settle(page, 600); }
+    // detayın beğeni sorgusu gecikirse bile kalp bilinen durumla gelmeli
+    await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/professional_post_likes*', async r => { if (r.request().method() === 'GET') await new Promise(res => setTimeout(res, 2500)); return r.fallback(); });
+    await f.evaluate(s => document.querySelector(`${s} a.kw-post-detail`).click(), card);
+    await f.waitForSelector(`[data-view="work"] [data-post-id="${PID}"] .kw-act-like`);
+    check(await f.evaluate(id => document.querySelector(`[data-view="work"] [data-post-id="${id}"] .kw-act-like`).classList.contains('is-liked'), PID), 'beğenilmiş Post detayda ilk çizimde kırmızı kalple açıldı (sunucu yanıtı beklenmeden)');
+    await ctx.close();
+  }
+
   // ================= 5) Şehir seçici: ekran okuyucu etkin seçeneği izler =================
   {
     resetDb();

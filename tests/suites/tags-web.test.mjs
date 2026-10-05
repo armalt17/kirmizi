@@ -78,7 +78,7 @@ try {
     check(postReqs.some(u => u.includes(`tag_id=eq.${T(2)}`)) && ids.length === 2 && await f.getAttribute('[data-tag-strip] [data-tag-name="Yüksekte Çalışma"]', 'aria-pressed') === 'true', `${N} etikete dokunmak Akış'ı filtreler (${ids.length} post), yeni sayfa açılmaz`);
     check(page.url() === `${SITE}/?konu=yuksekte-calisma`, `${N} konu kendi adresinde açılır (${page.url()})`);
     const hd = await f.evaluate(() => { const h = document.querySelector('[data-tag-head]'), r = h.getBoundingClientRect(); return { vis: !h.hidden, name: h.querySelector('.kt-head-name')?.textContent, back: h.querySelector('[data-tag-off]')?.textContent, share: !!h.querySelector('[data-tag-share]'), compose: !!h.querySelector('[data-composer]'), nameW: Math.round(h.querySelector('.kt-head-name').getBoundingClientRect().width), h: Math.round(r.height), counts: /gönderi|yeni/.test(h.textContent) }; });
-    check(hd.vis && hd.name === 'Yüksekte Çalışma' && hd.back === '← Tüm Akış' && hd.share && hd.compose && !hd.counts && hd.nameW > 100 && hd.h <= 60, `${N} konu başlığı: tek satır, ← Tüm Akış + ad + paylaş + link; sayı yok ${JSON.stringify(hd)}`);
+    check(hd.vis && hd.name === 'Yüksekte Çalışma' && hd.back === '← Tüm Akış' && hd.share && !hd.compose && !hd.counts && hd.nameW > 100 && hd.h <= 60, `${N} konu başlığı: tek satır, ← Tüm Akış + ad + link (ayrı "Bu konuda paylaş" yok — Paylaş konuyu ekler); sayı yok ${JSON.stringify(hd)}`);
     check((await f.textContent('[data-tag-strip] .kt-chip.is-on')).endsWith('×'), `${N} seçili çipte × var`);
     // geri tuşu ana akışa döner
     await page.goBack(); await settle(page, 900);

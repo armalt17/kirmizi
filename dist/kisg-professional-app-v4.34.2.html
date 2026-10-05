@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.34.1 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.34.2 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
 üretilir; yorumları çıkarılmış, ~500 bin karakterin altında). Yayın dosyasının TAMAMI, aşağıdaki Hostinger sayfalarındaki
@@ -27,6 +27,14 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
 <p class="kpn-apps-title">Kırmızı İSG ekosistemi</p>
 <a class="kpn-app" href="https://isgcalisanplatformu.com/isg-is-ilanlari" target="_top"><span class="kpn-app-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 12.5h18"/></svg></span><span><b>İş İlanları</b><small>Güncel İSG iş ilanları</small></span></a>
 <a class="kpn-app" href="https://isgcalisanplatformu.com/isg-dokumanlari" target="_top"><span class="kpn-app-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg></span><span><b>Dokümanlar</b><small>İSG doküman arşivi</small></span></a>
+</div>
+</div>
+<div class="kpn-apps kpn-get">
+<button class="kpn-apps-btn" type="button" data-popover-trigger aria-haspopup="true" aria-expanded="false" aria-label="Uygulamayı indir"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 7.5v7m-3-3 3 3 3-3M10.5 18.5h3"/></svg><span>Uygulamayı İndir</span></button>
+<div class="k-popover kpn-apps-menu" hidden>
+<p class="kpn-apps-title">Kırmızı İSG App</p>
+<a class="kpn-app" href="https://play.google.com/store/apps/details?id=com.fk.kirmiziisgapp&amp;hl=tr" target="_blank" rel="noopener"><span class="kpn-app-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3.5v17l10-8.5zM5 3.5l12.5 7 3 1.5-3 1.5L5 20.5"/></svg></span><span><b>Google Play</b><small>Android için indir</small></span></a>
+<a class="kpn-app" href="https://apps.apple.com/us/app/k%C4%B1rm%C4%B1z%C4%B1-i-sg-app/id6759110075" target="_blank" rel="noopener"><span class="kpn-app-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 12.5c0-2.2 1.8-3.2 1.9-3.3a4 4 0 0 0-3.2-1.7c-1.4-.1-2.6.8-3.3.8s-1.7-.8-2.8-.8A4.2 4.2 0 0 0 5 9.7c-1.5 2.6-.4 6.5 1.1 8.6.7 1 1.5 2.2 2.6 2.2s1.4-.7 2.7-.7 1.6.7 2.7.7 1.8-1 2.5-2.1a8 8 0 0 0 1.1-2.3 3.4 3.4 0 0 1-1.7-3.6zM14 5.3A3.3 3.3 0 0 0 14.8 3a3.4 3.4 0 0 0-2.2 1.1 3.1 3.1 0 0 0-.8 2.2A2.8 2.8 0 0 0 14 5.3z"/></svg></span><span><b>App Store</b><small>iPhone ve iPad için indir</small></span></a>
 </div>
 </div>
 <div class="ka-notif" data-notif hidden>
@@ -1439,7 +1447,7 @@ font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helveti
 #kisgApp .kt-create{color:var(--red-text);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
 #kisgApp .kt-empty{padding:24px 10px;color:var(--muted);font-size:14px;text-align:center}
 @media(hover:hover) and (pointer:fine){#kisgApp .kt-row:hover{background:var(--surface-2)}#kisgApp .kt-row:hover .kt-go{stroke:var(--red);transform:translateX(3px)}#kisgApp .kt-chip:not(.is-on):hover{box-shadow:inset 0 0 0 1px var(--ink)}}
-@media(max-width:640px){#kisgApp .kt-strip{padding:12px 28px 12px var(--pad);background:#fff;border-bottom:1px solid var(--line-soft)}#kisgApp .kt-head{margin:10px var(--pad) 0}#kisgApp .kt-head-name{font-size:15.5px}#kisgApp .kt-head [data-composer]{display:none}#kisgApp .kt-chip{min-height:34px;padding:0 12px;font-size:13px}}
+@media(max-width:640px){#kisgApp .kt-strip{padding:12px 28px 12px var(--pad);background:#fff;border-bottom:1px solid var(--line-soft)}#kisgApp .kt-head{margin:10px var(--pad) 0}#kisgApp .kt-head-name{font-size:15.5px}#kisgApp .kt-chip{min-height:34px;padding:0 12px;font-size:13px}}
 #kisgApp .k-hero{display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:20px 22px;border-radius:18px;background:var(--band)}
 #kisgApp .k-hero-ico{display:grid;place-items:center;flex:none;width:48px;height:48px;border-radius:14px;background:#fff;color:var(--red);box-shadow:0 1px 2px rgba(20,26,36,.06)}
 #kisgApp .k-hero-ico svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -1526,7 +1534,7 @@ version: '2026-09-30'   // legal_acceptances.document_version
 },
 siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
 historyRouting: true,
-version: '4.34.1',
+version: '4.34.2',
 hostWidthDesktopMax: 1480,
 routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
 legacyRoutes: { '/calisma': 'works' },
@@ -1853,6 +1861,7 @@ const NAV_CSS = `
   .kpn-brand img{width:30px;height:30px;border-radius:8px}
   .kpn-apps-btn span,.kpn .ka-me-name,.kpn .ka-chevron{display:none}
   .kpn-apps-btn{width:44px;height:44px;padding:0;justify-content:center}
+  .kpn-bar{position:relative}.kpn-apps{position:static}.kpn .kpn-apps-menu{top:54px;right:8px;width:min(288px,calc(100% - 16px))}
   .kpn .ka-account-toggle{height:44px;padding:4px;border:0}
   .kpn .ka-login{height:36px;padding:0 14px 0 10px;font-size:13.5px}
   .kpn .ka-account[data-state="loading"] .ka-account-placeholder{width:84px;height:34px}
@@ -3231,13 +3240,14 @@ res = await build(query());
 return res;
 }
 const commentCount = c => { const n = Array.isArray(c) && c.length ? Number(c[0]?.count) : NaN; return Number.isFinite(n) ? Math.max(0, n) : null; };
-const normalize = row => ({ ...row, liked: false, like_count: Math.max(0, Number(row.likes?.[0]?.count) || 0), comment_count: commentCount(row.comments) });
+const likedBy = new Map(), mark = p => { if (p.liked) likedBy.set(p.id, session.user?.id); else likedBy.delete(p.id); };
+const normalize = row => ({ ...row, liked: !!session.user && likedBy.get(row.id) === session.user.id, like_count: Math.max(0, Number(row.likes?.[0]?.count) || 0), comment_count: commentCount(row.comments) });
 async function fetch(id) {
 const { data, error } = await run(q => q.eq('id', id).eq('status', 'active').maybeSingle());
 if (error) throw error;
 return data ? normalize(data) : null;
 }
-return { run, normalize, fetch };
+return { run, normalize, fetch, mark };
 })();
 const postBus = new Set();
 const emitPost = (kind, payload) => postBus.forEach(fn => { try { fn(kind, payload); } catch (e) { console.error(e); } });
@@ -3301,6 +3311,7 @@ return `<article class="kw-post" data-post-id="${esc(p.id)}">`
 + `<div class="kw-post-actions" data-actions>${actions(p)}</div><div class="kw-thread" data-thread hidden></div></div></article>`;
 }
 function patchLike(p) {
+postData.mark(p);
 const c = cardOf(p.id); if (!c) return;
 const b = $('[data-post-action="like"]', c);
 if (b) { b.classList.toggle('is-liked', p.liked); b.setAttribute('aria-pressed', String(p.liked)); b.disabled = f.liking.has(p.id); }
@@ -4084,7 +4095,7 @@ function renderHead() {
 const head = $('[data-tag-head]', el), t = s.tag, note = t && s.trend?.find(x => x.id === t.id && x.slot === 'pinned')?.note;
 head.hidden = !t;
 head.innerHTML = t ? `<button type="button" class="kt-back" data-tag-off>← Tüm Akış</button><span class="kt-head-name">${esc(t.name)}</span>`
-+ `<button type="button" class="k-btn k-btn-primary" data-composer>＋ Bu konuda paylaş</button><button type="button" class="kt-share" data-tag-share aria-label="Konu linkini paylaş" title="Konu linkini paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button>`
++ `<button type="button" class="kt-share" data-tag-share aria-label="Konu linkini paylaş" title="Konu linkini paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button>`
 + (note ? `<p class="kt-head-note"><svg class="kt-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="${tags.PP}"/></svg><span>${esc(note)}</span></p>` : '') : '';
 host.schedule();
 }
