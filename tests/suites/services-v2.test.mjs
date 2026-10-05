@@ -84,11 +84,12 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   const side = await page.evaluate(() => { const r = document.getElementById('kisg-pro-sides').shadowRoot; return {
     head: r.querySelector('#kwServicesTitle')?.textContent.trim(), all: r.querySelector('.kw-side-head-services a')?.textContent.trim(), bottom: r.querySelectorAll('.kw-side-link').length,
     popular: /Popüler|Elite/i.test(r.textContent),
-    items: [...r.querySelectorAll('.kw-offer')].map(a => ({ title: a.querySelector('strong')?.textContent, by: a.querySelector('.kw-offer-by')?.textContent.trim(), cat: a.querySelector('.kw-offer-top .kw-offer-cat')?.textContent, featured: a.querySelectorAll('.k-featured').length }))
+    items: [...r.querySelectorAll('.kw-offer')].map(a => ({ title: a.querySelector('strong')?.textContent, by: a.querySelector('.kw-offer-meta')?.textContent.split(' · ')[0], cat: a.title, ico: !!a.querySelector('.ks-mark svg'), featured: a.querySelectorAll('.k-featured').length })),
+    tool: !!r.querySelector('[data-side-find] input[type=search]') && !!r.querySelector('.kw-offer-cta [data-then="publish"]')
   }; });
-  check(side.head === 'Hizmetler' && /^Tümünü gör/.test(side.all) && side.bottom === 0 && !side.popular, `sağ panel başlık "Hizmetler — Tümünü gör →", alt bağlantı/Popüler yok: ${side.head} | ${side.all}`);
+  check(side.head === 'Hizmet Bul' && /^Tümünü gör/.test(side.all) && side.bottom === 0 && !side.popular && side.tool, `sağ panel "Hizmet Bul" aracı: arama + "Yayınla", Popüler yok: ${side.head} | ${side.all}`);
   check(side.items.length === 3 && JSON.stringify(side.items.map(x => x.title)) === JSON.stringify(['Yeni A1', 'İşyeri Hekimliği Hizmeti', 'Üçüncü Hizmet']), `sağlayıcı başına bir hizmet, en yeniden: ${side.items.map(x => `${x.title} (${x.by})`).join(' | ')}`);
-  check(new Set(side.items.map(x => x.by)).size === 3 && side.items.every(x => x.cat && x.featured === 0), 'üç farklı sağlayıcı, kategori var, taç yok');
+  check(new Set(side.items.map(x => x.by)).size === 3 && side.items.every(x => x.cat && x.ico && x.featured === 0), 'üç farklı sağlayıcı, kategori ikonu + adı (title), taç yok');
   check(svcReqs.some(q => /status=eq\.active/.test(q) && /order=created_at\.desc/.test(q) && /limit=24/.test(q)), 'sorgu: aktif, en yeni, 24 aday');
   await page.screenshot({ path: `${OUT}/services-v2-feed-desktop.png`, clip: { x: 0, y: 64, width: 1366, height: 836 } });
   await ctx.close();

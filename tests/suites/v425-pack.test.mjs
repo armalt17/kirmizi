@@ -101,17 +101,16 @@ try {
     await f.waitForSelector('[data-view="services"] .ks-card');
     const sm = await f.evaluate(() => {
       const v = document.querySelector('[data-view="services"]'), r = s => { const e = v.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return b.width ? { h: Math.round(b.height), top: Math.round(b.top), w: Math.round(b.width), left: Math.round(b.left), right: Math.round(b.right), bottom: Math.round(b.bottom) } : null; };
-      const head = v.querySelector('.kc-results-head p'), hero = v.querySelector('.ks-hero'), art = v.querySelector('.ks-hero-art');
+      const head = v.querySelector('.kc-results-head p'), hero = v.querySelector('.k-hero'), art = v.querySelector('.k-hero-ghost');
       return { search: r('.kc-search'), mode: r('[data-desktop-filters] [data-filter="mode"]'), city: r('[data-desktop-filters] .kc-city-btn'), filterBtn: r('[data-open-filters]'), chip: r('.ks-chip'),
-        count: { fs: parseFloat(getComputedStyle(head).fontSize), color: getComputedStyle(head).color }, hero: r('.ks-hero'), art: r('.ks-hero-art'), heroBox: hero.getBoundingClientRect().toJSON(), artBox: art.getBoundingClientRect().toJSON(), cards: v.querySelectorAll('.ks-card').length };
+        count: { fs: parseFloat(getComputedStyle(head).fontSize), color: getComputedStyle(head).color }, hero: r('.k-hero'), clip: getComputedStyle(hero).overflow, heroBox: hero.getBoundingClientRect().toJSON(), artBox: art.getBoundingClientRect().toJSON(), cards: v.querySelectorAll('.ks-card').length };
     });
     if (!mobile) {
       check(sm.search.h === 56 && sm.mode.h === sm.city.h && sm.mode.h === sm.search.h && sm.mode.top === sm.city.top && sm.mode.w === sm.city.w, `${N} Hizmet Bul: arama ve iki filtre aynı yükseklik/hizada ${JSON.stringify({ s: sm.search, m: sm.mode, c: sm.city })}`);
     } else {
       check(sm.search.h <= 44 && sm.filterBtn.h <= 44 && sm.chip.h <= 32, `${N} Hizmet Bul: arama/Filtrele ≤44px, çip ≤32px (${sm.search.h}/${sm.filterBtn.h}/${sm.chip.h})`);
       check(sm.count.fs <= 12, `${N} Hizmet Bul: "X hizmet listeleniyor" ikincil (${sm.count.fs}px)`);
-      const inside = sm.artBox.left >= sm.heroBox.left && sm.artBox.right <= sm.heroBox.right && sm.artBox.top >= sm.heroBox.top && sm.artBox.bottom <= sm.heroBox.bottom;
-      check(inside && sm.hero.h < 300, `${N} Hizmet Bul: baret kahraman alanının içinde, kesilmiyor; kahraman ${sm.hero.h}px`);
+      check(sm.clip === 'hidden' && sm.artBox.width > 0 && sm.artBox.left < sm.heroBox.right && sm.hero.h < 300, `${N} Hizmet Bul: gri bant + silik çanta ikonu bandın içinde kırpılıyor; başlık ${sm.hero.h}px`);
     }
     check(await overflow(f) <= 0 && errs.length === 0, `${N} Hizmet Bul: taşma/hata yok ${errs.join(' ')}`);
     // filtre davranışı aynı: şehir seçimi sorguya gider
@@ -170,9 +169,9 @@ try {
     const body = await page.evaluate(() => { const fr = document.querySelector('iframe'); return fr.contentDocument.body.innerText + ' ' + [...document.querySelectorAll('*')].filter(e => e.shadowRoot).map(e => e.shadowRoot.textContent).join(' ') + document.body.innerText; });
     check(!/Son Post ·/.test(body) && !(await f.locator('[data-live]').count()), `${N} Akış: "Son Post · …" satırı yok`);
     if (!mobile) {
-      const msgs = () => page.evaluate(() => { const find = r => r.querySelector('[data-brandcard]') || [...r.querySelectorAll('*')].map(e => e.shadowRoot && find(e.shadowRoot)).find(Boolean); const b = find(document) || document.querySelector('iframe').contentDocument.querySelector('[data-brandcard]'); return b ? [...b.querySelectorAll('.kw-brandcard-msgs span')].map(s => [s.textContent, s.classList.contains('is-on')]) : null; });
+      const msgs = () => page.evaluate(() => { const find = r => r.querySelector('[data-brandcard]') || [...r.querySelectorAll('*')].map(e => e.shadowRoot && find(e.shadowRoot)).find(Boolean); const b = find(document) || document.querySelector('iframe').contentDocument.querySelector('[data-brandcard]'); return b ? [...b.querySelectorAll('.kw-brandcard-msgs>span')].map(s => [s.querySelector('b').textContent, s.classList.contains('is-on')]) : null; });
       const m0 = await msgs();
-      check(JSON.stringify(m0?.map(x => x[0])) === JSON.stringify(['Sahadaki deneyimini paylaş.', 'İSG profesyonellerini keşfet.', 'Hizmetini doğru kişilere ulaştır.']) && m0.filter(x => x[1]).length === 1, `${N} vitrin: üç mesaj, biri görünür`);
+      check(JSON.stringify(m0?.map(x => x[0])) === JSON.stringify(['Sahadaki deneyimini paylaş', 'İSG profesyonellerini keşfet', 'Hizmetini doğru kişilere ulaştır']) && m0.filter(x => x[1]).length === 1, `${N} vitrin: üç mesaj, biri görünür`);
       const on0 = m0.findIndex(x => x[1]);
       check(await until(async () => (await msgs()).findIndex(x => x[1]) === (on0 + 1) % 3, 7000), `${N} vitrin: mesaj dönüyor`);
       await page.screenshot({ path: path.join(OUT, `v425-feed-${N}.png`) });

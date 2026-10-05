@@ -538,8 +538,8 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await page.evaluate(() => scrollTo(0, 900)); await page.waitForTimeout(200);
   const yWorks = await page.evaluate(() => scrollY);
   await navClick(page, 'services'); await f.waitForSelector('[data-view="services"] .ks-card');
-  check(await visibleView(f) === 'services' && await f.locator('[data-view="services"] .ks-hero').count() === 1 && await f.locator('[data-view="services"] .ks-card .ks-pro').count() > 0, `${vp.name} QA akış: Çalışmalar → Hizmetler V2 (tek görünüm)`);
-  const heroH = await f.evaluate(() => document.querySelector('[data-view="services"] .ks-hero').getBoundingClientRect().height);
+  check(await visibleView(f) === 'services' && await f.locator('[data-view="services"] .k-hero').count() === 1 && await f.locator('[data-view="services"] .ks-card .ks-pro').count() > 0, `${vp.name} QA akış: Çalışmalar → Hizmetler V2 (tek görünüm)`);
+  const heroH = await f.evaluate(() => document.querySelector('[data-view="services"] .k-hero').getBoundingClientRect().height);
   check(vp.name === 'desktop' ? heroH >= 220 && heroH <= 252 : heroH <= 240, `${vp.name} QA: hero yüksekliği ${Math.round(heroH)}px`);
   await f.fill('#ksSearch', 'Ölçüm'); await page.waitForTimeout(900);
   const nSearch = await f.locator('[data-view="services"] .ks-card').count();
@@ -553,7 +553,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await page.goBack(); await page.waitForTimeout(500);
   check(page.url().endsWith('isgcalisanplatformu.com/') && await visibleView(f) === 'works' && Math.abs(await page.evaluate(() => scrollY) - yWorks) < 4, `${vp.name} QA akış: geri → Çalışmalar scroll korundu`);
   await navClick(page, 'services'); await page.waitForTimeout(500);
-  check(await visibleView(f) === 'services' && await f.locator('[data-view="services"] .ks-hero').count() === 1 && await f.inputValue('#ksSearch') === 'Ölçüm', `${vp.name} QA akış: Çalışmalar → Hizmetler yine V2, state korundu`);
+  check(await visibleView(f) === 'services' && await f.locator('[data-view="services"] .k-hero').count() === 1 && await f.inputValue('#ksSearch') === 'Ölçüm', `${vp.name} QA akış: Çalışmalar → Hizmetler yine V2, state korundu`);
   // ileri/geri
   await page.goBack(); await page.waitForTimeout(400);
   await page.goForward(); await page.waitForTimeout(400);
@@ -733,8 +733,8 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   page.on('pageerror', e => errors.push(`vitrin: ${e.message}`));
   await page.goto('https://isgcalisanplatformu.com/'); await page.waitForTimeout(1200);
   const f = frameOf(page);
-  const side = await page.evaluate(() => { const r = document.getElementById('kisg-pro-sides').shadowRoot; return [...r.querySelectorAll('.kw-offer')].map(a => ({ cat: a.querySelector('.kw-offer-cat')?.textContent, title: a.querySelector('strong')?.textContent, by: a.querySelector('.kw-offer-by')?.textContent, av: !!a.querySelector('.kw-offer-by .k-avatar'), href: a.getAttribute('href') })); });
-  check(side.length >= 2 && side.length <= 3 && side.every(x => x.cat && x.title && x.by && x.av && x.href.includes('/hizmet-detay?id=')), `vitrin: 2–3 hizmet kartı kategori/başlık/profesyonel ile (${side.length})`);
+  const side = await page.evaluate(() => { const r = document.getElementById('kisg-pro-sides').shadowRoot; return [...r.querySelectorAll('.kw-offer')].map(a => ({ cat: a.title, title: a.querySelector('strong')?.textContent, by: a.querySelector('.kw-offer-meta')?.textContent, av: !!a.querySelector('.ks-mark svg'), href: a.getAttribute('href') })); });
+  check(side.length >= 2 && side.length <= 3 && side.every(x => x.cat && x.title && x.by && x.av && x.href.includes('/hizmet-detay?id=')), `vitrin: 2–3 hizmet satırı kategori ikonu/başlık/profesyonel ile (${side.length})`);
   const link = await page.evaluate(() => { const a = document.getElementById('kisg-pro-sides').shadowRoot.querySelector('.kw-vitrin-link'); return a ? a.textContent.trim() : ''; });
   check(/^Tümünü gör/.test(link), 'vitrin: başlıkta "Tümünü gör" bağlantısı');
   const feedW = await f.evaluate(() => document.querySelector('[data-view="works"] .kw-feed').getBoundingClientRect().width);

@@ -48,8 +48,8 @@ try {
     const byTitle = Object.fromEntries(cards.map(c => [c.title, c]));
     check(cards.length === 9, `${N}: 9 hizmet kartı`);
     check(CATS.every(([, , , kind], i) => byTitle[TITLES[i]]?.kind === kind), `${N}: kategori → işaret ailesi (${cards.map(c => c.kind).join(', ')})`);
-    check(cards.every(c => c.motif && c.markOk && c.red === 1 && c.hidden === 'true'), `${N}: her kartta dekoratif (aria-hidden) işaret + tek kırmızı detay + arka plan motifi`);
-    check(new Set(cards.map(c => c.bgKey)).size === 9, `${N}: 9 farklı kategori → 9 farklı motif`);
+    check(cards.every(c => !c.motif && c.markOk && c.red === 1 && c.hidden === 'true'), `${N}: her kartta dekoratif (aria-hidden) kategori ikonu + tek kırmızı detay; arka plan deseni yok (v4.31 sade dil)`);
+    check(new Set(cards.map(c => c.kind)).size === 9, `${N}: 9 farklı kategori → 9 farklı ikon ailesi`);
     check(cards.every(c => JSON.stringify(c.order.filter(x => x !== 'ks-card-top')) === JSON.stringify(['ks-head', 'ks-description', 'ks-facts', 'ks-foot'])), `${N}: hiyerarşi aynı: başlık → açıklama → bilgiler → uzman + Hizmeti İncele`);
     check(cards.every(c => c.cat && c.catUpper === 'none' && c.catColor === 'rgb(20, 26, 36)'), `${N}: kategori etiketi büyük harf/kırmızı çizgi değil, sade hap`);
     check(cards.every(c => /Yerinde|Uzaktan/.test(c.facts) && c.pro && /^Hizmeti İncele/.test(c.cta)), `${N}: yerinde/uzaktan, uzman ve "Hizmeti İncele" korunuyor`);

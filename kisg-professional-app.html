@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.30.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.31.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -8,6 +8,10 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.31.0: Tasarım dili site geneline: pencerelerde gri üst bant + tek çizgi ikon (Hesabı sil kırmızı tonda), sayfa
+ başlıkları (Uzmanlar, Hizmet Bul, Hesap & Gizlilik) aynı bant + silik büyük ikon, profil sekmeleri segment, boş durumlarda
+ gri daire ikon, hizmet kartı desenleri kaldırıldı; Akış: vitrin kartı baretli bant + mesaja özgü buton, sağ sütun
+ "Hizmet Bul" aracı (arama, kategori kısayolları, sade satırlar, "Hizmet veriyor musun? Yayınla").
 v4.30.0: Sabit konu açıklaması admin'den gelir (DB 20261008): panelde, şerit ipucunda ve filtre notunda (iğne ikonu)
  görünür; açıklama yoksa hiçbir şey gösterilmez.
 v4.29.0: Konular sadeleşti: şeritte "Konu Ara" başta, tüm etiketler aynı (# ön ekli) tasarım, renk geçişleri kaldırıldı;
@@ -274,7 +278,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 <!-- UZMANLAR -->
 <section class="ka-view kc" data-view="experts" hidden aria-labelledby="keTitle">
   <div class="k-page kc-page">
-    <h1 id="keTitle" class="k-sr">Uzmanlar</h1>
+    <header class="k-hero"><span class="k-hero-ghost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.2 8a3.2 3.2 0 1 1-6.4 0 3.2 3.2 0 0 1 6.4 0zM3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5M19.4 9a2.4 2.4 0 1 1-4.8 0 2.4 2.4 0 0 1 4.8 0zM15.8 13.3c2.4-.2 4.3 1.4 4.7 4.2"/></svg></span><h1 id="keTitle">Uzmanlar</h1><p>Bölgendeki İSG uzmanlarını, işyeri hekimlerini ve DSP'leri keşfet.</p></header>
     <p class="kc-message" data-notice role="status" hidden></p>
     <div class="kc-controls" role="search">
       <label class="k-sr" for="keSearch">Uzman, şehir veya uzmanlık ara</label>
@@ -298,18 +302,10 @@ Acil kapatma: CONFIG.historyRouting=false.
 <!-- HİZMETLER — profesyonel hizmet vitrini -->
 <section class="ka-view kc ks" data-view="services" hidden aria-labelledby="ksTitle">
   <div class="k-page kc-page ks-page">
-    <header class="ks-hero">
-      <div class="ks-hero-copy">
-        <p class="ks-kicker">Kırmızı İSG Professional · Hizmetler</p>
-        <h1 id="ksTitle">İSG hizmetleri, işin uzmanından<span class="ks-dot">.</span></h1>
-        <p class="ks-lead">Danışmanlık, eğitim, ölçüm ve saha hizmetlerini keşfet; hizmeti sunan profesyoneli meslek ve belgesiyle birlikte tanı.</p>
-        <div class="ks-hero-actions">
+    <header class="k-hero"><span class="k-hero-ghost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 7h13A2.5 2.5 0 0 1 21 9.5v8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-8A2.5 2.5 0 0 1 5.5 7zM8.5 7V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V7M3 12.5h18"/></svg></span><h1 id="ksTitle">Hizmet Bul</h1><p>Danışmanlık, eğitim, ölçüm ve saha hizmetlerini keşfet; hizmeti sunan profesyoneli meslek ve belgesiyle birlikte tanı.</p><div class="ks-hero-actions">
           <button type="button" class="k-btn k-btn-primary ks-hero-cta" data-publish><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Hizmetini Yayınla</span></button>
           <span class="ks-hero-count" data-hero-count></span>
-        </div>
-      </div>
-      <div class="ks-hero-art" aria-hidden="true"><img src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/erferf.png" alt="" decoding="async" fetchpriority="low"></div>
-    </header>
+        </div></header>
     <p class="kc-message" data-notice role="status" hidden></p>
     <div class="kc-controls ks-controls" role="search">
       <label class="k-sr" for="ksSearch">Hizmet, açıklama, bölge veya sağlayıcı ara</label>
@@ -320,7 +316,7 @@ Acil kapatma: CONFIG.historyRouting=false.
     <div class="ks-chips" data-chips role="group" aria-label="Kategoriler" hidden></div>
     <div class="kc-results-head"><p data-status role="status" aria-live="polite">Hizmetler yükleniyor…</p><button type="button" class="k-text-button" data-reset hidden>Filtreleri temizle</button></div>
     <div class="kc-results ks-grid" data-results aria-busy="true"></div>
-    <div class="k-empty" data-empty hidden><img class="kw-empty-art" src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/erferf.png" alt="" aria-hidden="true" loading="lazy"><strong data-empty-text></strong><p>İlk hizmeti sen yayınlayabilir ya da filtreleri değiştirebilirsin.</p><div class="k-empty-actions"><button type="button" class="k-btn" data-empty-reset>Filtreleri temizle</button><button type="button" class="k-btn k-btn-primary" data-empty-publish data-publish>Hizmetini Yayınla</button></div></div>
+    <div class="k-empty" data-empty hidden><strong data-empty-text></strong><p>İlk hizmeti sen yayınlayabilir ya da filtreleri değiştirebilirsin.</p><div class="k-empty-actions"><button type="button" class="k-btn" data-empty-reset>Filtreleri temizle</button><button type="button" class="k-btn k-btn-primary" data-empty-publish data-publish>Hizmetini Yayınla</button></div></div>
     <div class="k-empty" data-error role="alert" hidden><strong>Hizmetler şu anda yüklenemedi.</strong><p>Bağlantını kontrol edip yeniden dene.</p><button type="button" class="k-btn" data-retry>Yeniden dene</button></div>
     <button type="button" class="k-btn kc-more" data-more hidden>Daha fazla hizmet göster</button>
   </div>
@@ -394,10 +390,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 <!-- HESAP & GİZLİLİK (/hesaplar-ve-gizlilik) -->
 <section class="ka-view kg" data-view="account" hidden aria-labelledby="kgTitle">
   <div class="k-page kg-page">
-    <header class="kg-head">
-      <h1 id="kgTitle">Hesap &amp; Gizlilik</h1>
-      <p>Profilinin kimlere görüneceğini ve hesabını buradan yönet.</p>
-    </header>
+    <header class="k-hero"><span class="k-hero-ghost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6zM9 12l2 2 4-4"/></svg></span><h1 id="kgTitle">Hesap &amp; Gizlilik</h1><p>Profilinin kimlere görüneceğini ve hesabını buradan yönet.</p></header>
     <div class="k-empty kg-state" data-account-status role="status" hidden></div>
     <div class="kg-main" data-account-main hidden>
       <section class="kg-group" aria-labelledby="kgPrivacy">
@@ -975,7 +968,6 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .cm-edit-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
 #kisgApp .cm-link{min-height:32px;padding:0 8px;border:0;background:none;color:var(--muted);font-size:13px;font-weight:650}
 #kisgApp .cm-save{min-height:32px;padding:0 14px;border:0;border-radius:var(--r-pill);background:var(--ink);color:#fff;font-size:13px;font-weight:700}
-#kisgApp .kw-empty-art{width:112px;height:auto;margin-bottom:4px;mix-blend-mode:multiply;transform:rotate(-6deg)}
 #kisgApp .k-login-top{position:relative;overflow:hidden;min-height:92px;align-items:flex-start;padding-top:18px;background:#f3f4f6}
 #kisgApp .k-login-art{position:absolute;right:52px;bottom:-34px;width:150px;height:auto;mix-blend-mode:multiply;transform:rotate(-10deg);pointer-events:none}
 #kisgApp .k-login-top .k-icon-btn{position:relative;z-index:1}
@@ -1092,17 +1084,10 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .ke-discovery strong{color:var(--ink);font-weight:650}
 /* Hizmetler: profesyonel hizmet vitrini — premium his renkten değil ölçü, tipografi ve boşluktan */
 #kisgApp .ks-page{padding-top:28px}
-#kisgApp .ks-hero{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 190px;align-items:center;gap:24px;margin-bottom:24px;padding:26px 36px;border-radius:22px;background:#f4f5f7;overflow:hidden}
-#kisgApp .ks-kicker{color:var(--red-text);font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
-#kisgApp .ks-hero h1{margin-top:8px;color:var(--ink);font-size:34px;font-weight:800;line-height:1.12;letter-spacing:-.03em}
-#kisgApp .ks-dot{color:var(--red)}
-#kisgApp .ks-lead{max-width:640px;margin-top:8px;color:var(--muted);font-size:15px;line-height:1.55}
 #kisgApp .ks-hero-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin-top:16px}
 #kisgApp .ks-hero-cta{min-height:44px;padding:0 20px;font-size:14.5px}
 #kisgApp .ks-hero-count{color:var(--muted);font-size:14px;font-weight:650}
 #kisgApp .ks-hero-count:not(:empty)::before{content:"";display:inline-block;width:6px;height:6px;margin:0 8px 2px 0;border-radius:50%;background:var(--red)}
-#kisgApp .ks-hero-art{justify-self:end;width:170px;margin:-8px 0}
-#kisgApp .ks-hero-art img{position:relative;display:block;width:82%;height:auto;mix-blend-mode:multiply;transform:rotate(-6deg)}
 #kisgApp .ks .kc-filters-inline .kc-field-cat{display:none}
 #kisgApp .ks .kc-filters-inline{flex:0 0 auto;flex-wrap:nowrap}
 #kisgApp .ks-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
@@ -1131,16 +1116,6 @@ Acil kapatma: CONFIG.historyRouting=false.
 /* v4.23.0 Hizmet kartı kimliği: sol üstte kategori işareti (tek kırmızı detay), sağ üstte kategoriye özgü çok soluk motif,
    kategori etiketi büyük harf + kırmızı çizgi yerine sade hap. Renk ailesi değişmez (beyaz, koyu tipografi, kırmızı aksan). */
 #kisgApp .ks-card{isolation:isolate;overflow:hidden}
-#kisgApp .ks-card::before{content:"";position:absolute;top:0;right:0;z-index:-1;width:168px;height:112px;background:no-repeat right top/168px 112px;-webkit-mask-image:linear-gradient(215deg,#000 18%,transparent 78%);mask-image:linear-gradient(215deg,#000 18%,transparent 78%);opacity:.95;transition:opacity var(--t)}
-#kisgApp .ks-card[data-kind="risk"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpath d='M24 0V112'/%3E%3Cpath d='M48 0V112'/%3E%3Cpath d='M72 0V112'/%3E%3Cpath d='M96 0V112'/%3E%3Cpath d='M120 0V112'/%3E%3Cpath d='M144 0V112'/%3E%3Cpath d='M0 16H168'/%3E%3Cpath d='M0 40H168'/%3E%3Cpath d='M0 64H168'/%3E%3Cpath d='M0 88H168'/%3E%3Crect x='144' y='-8' width='24' height='24' fill='%23e30a17' fill-opacity='.10' stroke='none'/%3E%3Crect x='120' y='-8' width='24' height='24' fill='%23e30a17' fill-opacity='.05' stroke='none'/%3E%3Crect x='144' y='16' width='24' height='24' fill='%23e30a17' fill-opacity='.05' stroke='none'/%3E%3C/svg%3E")}
-#kisgApp .ks-card[data-kind="atex"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpattern id='p' width='25.98' height='45' x='-13' y='-22.5' patternUnits='userSpaceOnUse'%3E%3Cpath stroke-opacity='.21' d='M13 -7.5v15l-13 7.5-13-7.5v-15l13-7.5zM38.98 -7.5v15l-13 7.5-13-7.5v-15l13-7.5zM13 37.5v15l-13 7.5-13-7.5v-15l13-7.5zM38.98 37.5v15l-13 7.5-13-7.5v-15l13-7.5zM25.99 15v15l-13 7.5-13-7.5v-15l13-7.5z'/%3E%3C/pattern%3E%3Crect width='168' height='112' fill='url(%23p)' stroke='none'/%3E%3C/svg%3E")}
-#kisgApp .ks-card[data-kind="eng"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpath d='M44 18H158M44 13v10M158 13v10M44 18l6-3M44 18l6 3M158 18l-6-3M158 18l-6 3'/%3E%3Cpath d='M150 30V104M145 30h10M145 104h10'/%3E%3Ccircle cx='98' cy='66' r='24'/%3E%3Ccircle cx='98' cy='66' r='3'/%3E%3Cpath d='M62 66H134M98 34V98' stroke-dasharray='6 3 1.5 3'/%3E%3Cpath d='M48 0v9'/%3E%3Cpath d='M56 0v5'/%3E%3Cpath d='M64 0v5'/%3E%3Cpath d='M72 0v9'/%3E%3Cpath d='M80 0v5'/%3E%3Cpath d='M88 0v5'/%3E%3Cpath d='M96 0v9'/%3E%3Cpath d='M104 0v5'/%3E%3Cpath d='M112 0v5'/%3E%3Cpath d='M120 0v9'/%3E%3Cpath d='M128 0v5'/%3E%3Cpath d='M136 0v5'/%3E%3Cpath d='M144 0v9'/%3E%3Cpath d='M152 0v5'/%3E%3Cpath d='M160 0v5'/%3E%3C/svg%3E")}
-#kisgApp .ks-card[data-kind="measure"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpath d='M0 56 L4 47.0 L8 40.4 L12 38.0 L16 40.4 L20 47.0 L24 56.0 L28 65.0 L32 71.6 L36 74.0 L40 71.6 L44 65.0 L48 56.0 L52 47.0 L56 40.4 L60 38.0 L64 40.4 L68 47.0 L72 56.0 L76 65.0 L80 71.6 L84 74.0 L88 71.6 L92 65.0 L96 56.0 L100 47.0 L104 40.4 L108 38.0 L112 40.4 L116 47.0 L120 56.0 L124 65.0 L128 71.6 L132 74.0 L136 71.6 L140 65.0 L144 56.0 L148 47.0 L152 40.4 L156 38.0 L160 40.4 L164 47.0 L168 56.0'/%3E%3Cpath d='M0 100H168'/%3E%3Cpath d='M0 100v-8'/%3E%3Cpath d='M12 100v-4'/%3E%3Cpath d='M24 100v-4'/%3E%3Cpath d='M36 100v-4'/%3E%3Cpath d='M48 100v-8'/%3E%3Cpath d='M60 100v-4'/%3E%3Cpath d='M72 100v-4'/%3E%3Cpath d='M84 100v-4'/%3E%3Cpath d='M96 100v-8'/%3E%3Cpath d='M108 100v-4'/%3E%3Cpath d='M120 100v-4'/%3E%3Cpath d='M132 100v-4'/%3E%3Cpath d='M144 100v-8'/%3E%3Cpath d='M156 100v-4'/%3E%3Cpath d='M168 100v-4'/%3E%3C/svg%3E")}
-#kisgApp .ks-card[data-kind="training"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpath d='M62 22H168'/%3E%3Ccircle cx='50' cy='22' r='2.2'/%3E%3Cpath d='M62 39H168'/%3E%3Ccircle cx='50' cy='39' r='2.2'/%3E%3Cpath d='M62 56H168'/%3E%3Ccircle cx='50' cy='56' r='2.2'/%3E%3Cpath d='M62 73H168'/%3E%3Ccircle cx='50' cy='73' r='2.2'/%3E%3Cpath d='M62 90H168'/%3E%3Ccircle cx='50' cy='90' r='2.2'/%3E%3Cpath d='M62 107H168'/%3E%3Ccircle cx='50' cy='107' r='2.2'/%3E%3C/svg%3E")}
-#kisgApp .ks-card[data-kind="health"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpath d='M0 58H40L48 58 54 40 62 82 68 30 74 58H108L114 58 118 48 124 68 128 58H168'/%3E%3Cpath d='M24 15v6M21 18h6'/%3E%3Cpath d='M24 95v6M21 98h6'/%3E%3Cpath d='M60 15v6M57 18h6'/%3E%3Cpath d='M60 95v6M57 98h6'/%3E%3Cpath d='M96 15v6M93 18h6'/%3E%3Cpath d='M96 95v6M93 98h6'/%3E%3Cpath d='M132 15v6M129 18h6'/%3E%3Cpath d='M132 95v6M129 98h6'/%3E%3C/svg%3E")}
-#kisgApp .ks-card[data-kind="fire"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Ccircle cx='168' cy='0' r='24'/%3E%3Ccircle cx='168' cy='0' r='42'/%3E%3Ccircle cx='168' cy='0' r='60'/%3E%3Ccircle cx='168' cy='0' r='78'/%3E%3Ccircle cx='168' cy='0' r='96'/%3E%3Ccircle cx='168' cy='0' r='114'/%3E%3Ccircle cx='168' cy='0' r='132'/%3E%3Ccircle cx='168' cy='0' r='150'/%3E%3Ccircle cx='168' cy='0' r='168'/%3E%3C/svg%3E")}
-#kisgApp .ks-card[data-kind="consult"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Crect x='70' y='10' width='78' height='96' rx='6'/%3E%3Crect x='92' y='-4' width='78' height='96' rx='6'/%3E%3Crect x='100' y='14' width='8' height='8' rx='1.5'/%3E%3Cpath d='M114 18H160'/%3E%3Crect x='100' y='31' width='8' height='8' rx='1.5'/%3E%3Cpath d='M114 35H160'/%3E%3Crect x='100' y='48' width='8' height='8' rx='1.5'/%3E%3Cpath d='M114 52H160'/%3E%3Crect x='100' y='65' width='8' height='8' rx='1.5'/%3E%3Cpath d='M114 69H160'/%3E%3C/svg%3E")}
-#kisgApp .ks-card[data-kind="general"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 168 112' fill='none' stroke='%23141a24' stroke-opacity='.11' stroke-width='.9'%3E%3Cpattern id='p' width='14' height='14' x='1' y='1' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3C/pattern%3E%3Crect width='168' height='112' fill='url(%23p)' stroke='none'/%3E%3C/svg%3E")}
 #kisgApp .ks-head{display:flex;align-items:flex-start;gap:14px;min-width:0}
 #kisgApp .ks-head h2{min-width:0;flex:1}
 #kisgApp .ks-mark{display:grid;place-items:center;flex:none;width:42px;height:42px;margin-top:-1px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--line),0 1px 2px rgba(20,26,36,.04)}
@@ -1420,9 +1395,6 @@ Acil kapatma: CONFIG.historyRouting=false.
    ===================================================================== */
 /* Hesap & Gizlilik (v4.20.0) — sade tek sütun */
 #kisgApp .kg-page{width:min(720px,calc(100% - var(--gutter) * 2));padding:28px 0 56px}
-#kisgApp .kg-head{margin-bottom:20px}
-#kisgApp .kg-head h1{color:var(--ink);font-size:26px;font-weight:750;letter-spacing:-.01em;line-height:1.25}
-#kisgApp .kg-head p{margin-top:6px;color:var(--muted);font-size:14.5px}
 #kisgApp .kg-group{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:4px 20px}
 #kisgApp .kg-group+.kg-group{margin-top:16px}
 #kisgApp .kg-group h2{padding:16px 0 4px;color:var(--red-text);font-size:12px;font-weight:750;letter-spacing:.06em;text-transform:uppercase}
@@ -1462,7 +1434,6 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kg-delete-info{padding:12px 14px;border-radius:var(--r-md);background:var(--surface-2);color:var(--text);font-size:14px}
 @media(max-width:640px){
   #kisgApp .kg-page{padding:18px 0 40px}
-  #kisgApp .kg-head h1{font-size:22px}
   #kisgApp .kg-group{padding:2px 16px}
   #kisgApp .kg-row{gap:14px}
   #kisgApp .kg-row .k-btn{padding-inline:14px}
@@ -1478,7 +1449,6 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .ks-card:hover{transform:translateY(-3px);box-shadow:inset 0 0 0 1px var(--line-strong),0 14px 34px -18px rgba(20,26,36,.28)}
   #kisgApp .ks-card:hover .ks-cta span{transform:translateX(3px)}
   #kisgApp .ks-card:hover h2{color:#000}
-  #kisgApp .ks-card:hover::before{opacity:1;filter:contrast(1.6)}
   #kisgApp .ks-card:hover .ks-mark{box-shadow:inset 0 0 0 1px var(--line-strong),0 1px 2px rgba(20,26,36,.04)}
   #kisgApp .kh-pro:hover strong{color:var(--red-text)}
   #kisgApp .kd-profile:hover{background:var(--surface-2)}
@@ -1546,9 +1516,6 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .kc-filters-inline{display:none}
   #kisgApp .kc-filter-btn{display:inline-flex}
   #kisgApp .ks-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
-  #kisgApp .ks-hero{grid-template-columns:minmax(0,1fr) 140px;padding:24px 28px}
-  #kisgApp .ks-hero h1{font-size:30px}
-  #kisgApp .ks-hero-art{width:130px}
   #kisgApp .kh-layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "side" "body";grid-template-rows:none;max-width:720px}
   #kisgApp .kh-side{margin-top:24px}
 }
@@ -1614,7 +1581,6 @@ Acil kapatma: CONFIG.historyRouting=false.
   #kisgApp .ks-head{gap:12px}
   #kisgApp .ks-mark{width:38px;height:38px;border-radius:11px}
   #kisgApp .ks-mark svg{width:21px;height:21px}
-  #kisgApp .ks-card::before{width:140px;height:94px;background-size:140px 94px}
   #kisgApp .ks-card-top+h2{margin-top:12px}
   #kisgApp .ks-facts{gap:5px 12px;margin:12px 0 16px;font-size:12.5px}
   #kisgApp .ks-description{font-size:14px;-webkit-line-clamp:2}
@@ -1702,19 +1668,9 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .ks .kc-filters-inline .kc-city-btn svg{width:16px;height:16px;stroke:#5d6878}
 #kisgApp .ks .kc-filters-inline :is(.is-set select,.kc-field-city.is-set .kc-city-btn){box-shadow:inset 0 0 0 1.5px var(--ink)}
 /* Kahraman alanı: baret, yumuşak bir zemin üzerinde "sahnede" durur (kesik/yapıştırılmış görünmez) */
-#kisgApp .ks-hero-art{position:relative;display:grid;place-items:center;aspect-ratio:1}
-#kisgApp .ks-hero-art::before{content:"";position:absolute;inset:4%;border-radius:50%;background:radial-gradient(circle at 50% 42%,#fff 0 58%,rgba(255,255,255,0) 72%)}
 #kisgApp .kc-results-head p{font-weight:600}
 @media(max-width:640px){
   /* Mobil kahraman: başlık + baret yan yana, açıklama ve aksiyon tam genişlik */
-  #kisgApp .ks-hero{display:grid;grid-template-columns:minmax(0,1fr) 64px;grid-template-areas:"kicker kicker" "title art" "lead lead" "actions actions";gap:0 12px;align-items:center;margin:10px var(--gutter) 10px;padding:16px 16px 14px;border-radius:18px;background:linear-gradient(135deg,#f6f7f9 0%,#f1f2f5 100%);overflow:hidden}
-  #kisgApp .ks-hero-copy{display:contents}
-  #kisgApp .ks-kicker{grid-area:kicker;padding-right:0;font-size:10px;letter-spacing:.09em}
-  #kisgApp .ks-hero h1{grid-area:title;align-self:start;margin-top:4px;padding-right:0;font-size:22px;line-height:1.15}
-  #kisgApp .ks-hero-art{grid-area:art;position:relative;right:auto;top:auto;width:64px;margin:0;opacity:1}
-  #kisgApp .ks-hero-art img{width:84%}
-  #kisgApp .ks-lead{grid-area:lead;margin-top:6px;font-size:13.5px;line-height:1.5}
-  #kisgApp .ks-hero-actions{grid-area:actions;margin-top:12px}
   #kisgApp .ks-hero-cta{min-height:40px;padding:0 15px;font-size:13.5px}
   /* Arama + Filtrele: daha kompakt */
   #kisgApp .ks .kc-controls{gap:8px}
@@ -1801,6 +1757,21 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kt-empty{padding:24px 10px;color:var(--muted);font-size:14px;text-align:center}
 @media(hover:hover) and (pointer:fine){#kisgApp .kt-row:hover{background:var(--surface-2)}#kisgApp .kt-row:hover .kt-go{stroke:var(--red);transform:translateX(3px)}#kisgApp .kt-chip:not(.is-on):hover{box-shadow:inset 0 0 0 1px var(--ink)}}
 @media(max-width:640px){#kisgApp .kt-strip{padding:12px 28px 12px var(--pad);background:#fff;border-bottom:1px solid var(--line-soft)}#kisgApp .kt-note{margin:10px var(--pad) 0}#kisgApp .kt-chip{min-height:34px;padding:0 12px;font-size:13px}}
+/* Sayfa başlıkları (v4.31.0): pencerelerle aynı gri bant + bölümün ikonu büyük ve silik */
+#kisgApp .k-hero{position:relative;display:grid;gap:8px;margin-bottom:22px;padding:30px 34px;border-radius:20px;background:var(--band);overflow:hidden}
+#kisgApp .k-hero>*{position:relative}
+#kisgApp .k-hero h1{max-width:70%;color:var(--ink);font-size:32px;font-weight:800;line-height:1.12;letter-spacing:-.03em}
+#kisgApp .k-hero p{max-width:560px;color:var(--muted);font-size:15px}
+#kisgApp .k-hero .k-hero-ghost{position:absolute;right:56px;bottom:-46px;width:190px;height:190px;color:#d9dce2;transform:rotate(-8deg);pointer-events:none}
+#kisgApp .k-hero-ghost svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.1;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .k-hero .ks-hero-actions{margin-top:8px}
+/* Boş durumlar: gri daire içinde tek ikon */
+#kisgApp :is(.k-empty:not([role="status"]),.kw-empty)::before{content:"";width:64px;height:64px;margin-bottom:8px;border-radius:50%;background:var(--band) var(--ei) no-repeat center/28px}
+#kisgApp .k-empty{--ei:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d6878' stroke-width='1.7' stroke-linecap='round'%3E%3Cpath d='M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0zM15.5 15.5 20 20'/%3E%3C/svg%3E")}
+#kisgApp .k-empty[role="alert"]{--ei:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d6878' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4 2.8 19.5h18.4zM12 10v4.5M12 17v.1'/%3E%3C/svg%3E")}
+#kisgApp .kw-empty{--ei:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d6878' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4'/%3E%3C/svg%3E")}
+@media(max-width:640px){#kisgApp .k-hero{margin:10px var(--gutter) 14px;padding:18px 16px;border-radius:16px}#kisgApp .k-hero h1{max-width:78%;font-size:22px}#kisgApp .k-hero p{font-size:13.5px}#kisgApp .k-hero .k-hero-ghost{right:-14px;bottom:-30px;width:110px;height:110px}}
+
 /* ===== Tasarım dili (v4.31.0): pencerelerde giriş penceresindeki gibi gri üst bant + tek çizgi ikon ===== */
 #kisgApp .k-dialog .k-band{position:relative;display:block;padding:100px 64px 4px 24px;border-bottom:0;background:linear-gradient(var(--band) 84px,#fff 0)}
 #kisgApp .k-dialog .k-band h2{font-size:22px;font-weight:800;letter-spacing:-.02em}
@@ -1812,7 +1783,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .k-band>:is(.k-icon-btn,.kn-head-actions){position:absolute;top:18px;right:14px;z-index:1}
 #kisgApp [data-tone="danger"]{--band:var(--red-tint)}
 #kisgApp [data-tone="danger"] .k-band-ghost{color:#f3cfd2}
-@media(max-width:640px){#kisgApp .k-dialog .k-band{padding:88px 56px 4px 16px;background:linear-gradient(var(--band) 72px,#fff 0)}#kisgApp .k-band-tile{left:16px;top:16px;width:40px;height:40px}#kisgApp .k-band-ghost{height:72px}#kisgApp .k-dialog .k-band h2{font-size:20px}}
+@media(max-width:640px){#kisgApp .k-dialog[data-place="sheet"] .k-dialog-foot{position:sticky;bottom:0;z-index:2;background:#fff}#kisgApp .k-dialog .k-band{padding:88px 56px 4px 16px;background:linear-gradient(var(--band) 72px,#fff 0)}#kisgApp .k-band-tile{left:16px;top:16px;width:40px;height:40px}#kisgApp .k-band-ghost{height:72px}#kisgApp .k-dialog .k-band h2{font-size:20px}}
 
 @media(max-width:359px){
   #kisgApp :is(.kw-act,.kw-likes-static){font-size:12.5px;padding-inline:8px}
@@ -1844,7 +1815,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.30.0',
+  version: '4.31.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
@@ -2125,6 +2096,7 @@ ${scope} .kn-item.is-unread .kn-time{color:var(--ink);font-weight:600}
 ${scope} .kn-list .k-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 ${scope} .kn-dot{width:8px;height:8px;margin-top:7px;border-radius:50%;background:var(--red)}
 ${scope} .kn-empty,${scope} .kn-state{margin:0;padding:28px 16px;color:var(--muted);font-size:14px;text-align:center}
+${scope} .kn-empty::before{content:"";display:block;width:56px;height:56px;margin:0 auto 10px;border-radius:50%;background:#f3f4f6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d6878' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2.2 2.2 0 0 0 4 0'/%3E%3C/svg%3E") no-repeat center/24px}
 ${scope} .kn-state button{margin-left:6px;padding:0;border:0;background:none;color:var(--ink);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
 ${scope} .kn-all{padding:6px 2px;border:0;background:none;color:var(--red-text);font:inherit;font-size:13px;font-weight:650;white-space:nowrap;cursor:pointer}
 ${scope} .kn-all:disabled{color:var(--faint);cursor:default}
@@ -4572,7 +4544,7 @@ function createWorksView() {
     onRemoved: () => { if (!feed.f.posts.length) renderAll(); else { placeRails(); } host.schedule(); }
   });
   const F = feed.f;
-  const emptyMarkup = '<div class="kw-post kw-empty-card"><div class="kw-empty"><img class="kw-empty-art" src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/erferf.png" alt="" aria-hidden="true"><strong>Henüz Post yok</strong><p>Sahada yaptığın bir uygulamayı, gözlemini veya öğrendiğin bir şeyi paylaşarak ilk Postu sen başlat.</p><button type="button" class="k-btn k-btn-primary" data-composer>İlk Postu paylaş</button></div></div>';
+  const emptyMarkup = '<div class="kw-post kw-empty-card"><div class="kw-empty"><strong>Henüz Post yok</strong><p>Sahada yaptığın bir uygulamayı, gözlemini veya öğrendiğin bir şeyi paylaşarak ilk Postu sen başlat.</p><button type="button" class="k-btn k-btn-primary" data-composer>İlk Postu paylaş</button></div></div>';
   const emptyHtml = () => (s.tag ? `<div class="kw-post kw-empty-card"><div class="kw-empty"><strong>“${esc(s.tag.name)}” etiketinde henüz Post yok</strong><button type="button" class="k-btn" data-tag-off>Tüm Postlar</button></div></div>` : emptyMarkup);
   /* Konular V1: etiket şeridi (Konu Ara + sabitler + gündem + 1 yeni). Dokunmak Akış'ı filtreler; aynı etikete tekrar dokunmak kaldırır. */
   function renderStrip() {
