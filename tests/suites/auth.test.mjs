@@ -260,6 +260,8 @@ for (const vp of VPS.slice(0, +(process.env.NVP || 2))) {
     writes.length = 0;
     // pencere alanları sunucudan gelen profille doldurulur; yazmadan önce dolmasını bekle (yoksa gelen veri yazılanı ezer)
     await g.waitForFunction(() => document.getElementById('kaPe_profession')?.value === 'İş Güvenliği Uzmanı', null, { timeout: 5000 }).catch(() => {});
+    // pencere açılınca odak 30 ms sonra Ad Soyad'a taşınır; yazma o anla yarışmasın (metin yanlış alana düşer)
+    await g.waitForFunction(() => document.activeElement?.id === 'kaPe_full_name', null, { timeout: 2000 }).catch(() => {});
     await g.fill('#kaPe_profession', 'İSG Uzmanı'); await g.evaluate(() => document.getElementById('kaProfileForm').requestSubmit());
     for (let i = 0; i < 50 && !writes.some(w => w.table === 'profiles' && w.body?.profession === 'İSG Uzmanı'); i++) await settle(page, 100);   // sabit bekleme yerine kayıt gelene kadar
     await settle(page, 300);
