@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.33.1
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.34.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -8,6 +8,9 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.34.0: Konu görünümü: konu kendi adresiyle açılır (/?konu=slug, paylaşılabilir); Akış üstünde tek satır konu başlığı
+ (← Tüm Akış · #ad · Bu konuda paylaş · link), sabit konuda admin açıklaması; seçili çipte ×; geri tuşu ve "Akış" sekmesi
+ ana akışa döner.
 v4.33.1: Konu Ara'da da "Yeni konu" satırı (Etiket Ekle ile aynı özellik): Post penceresi o etiketle açılır; konu Post
  paylaşılınca oluşur (vazgeçilirse oluşmaz), Akış yeni konuya filtrelenir.
 v4.33.0: Kod sağlığı raporu düzeltmeleri: kayıt onayı ve "Uzmanlarda Görün" tercihi hesap bilgisine de yazılır (başka
@@ -251,7 +254,7 @@ Acil kapatma: CONFIG.historyRouting=false.
     </aside>
 
     <div class="kw-feed">
-      <div class="kt-strip" data-tag-strip role="toolbar" aria-label="Konular" hidden></div><p class="kt-note" data-tag-note hidden></p>
+      <div class="kt-strip" data-tag-strip role="toolbar" aria-label="Konular" hidden></div><div class="kt-head" data-tag-head hidden></div>
       <div class="kw-sheet">
         <div class="kw-composer">
           <button class="kw-composer-main" type="button" data-composer aria-label="Yeni Post paylaş">
@@ -1657,7 +1660,16 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp :is(.kt-chip[data-tag-id],.kt-chip-sm,[data-tag-chip-name])::before{content:"#";margin-right:1px;opacity:.45}
 #kisgApp .kt-chip-sm{min-height:28px;padding:0 11px;background:var(--red-tint);box-shadow:none;color:var(--red-text);font-size:12.5px}
 #kisgApp .kt-chip button{margin-right:-6px;padding:0 4px;border:0;background:none;color:inherit;font-size:18px;line-height:1}
-#kisgApp .kt-note{display:flex;align-items:flex-start;gap:8px;margin:-4px 0 12px;padding:10px 12px;border-radius:12px;background:var(--red-tint);color:var(--red-text);font-size:13px;font-weight:600}
+#kisgApp .kt-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:-2px 0 14px;padding:10px 12px;border-radius:14px;background:var(--band)}
+#kisgApp .kt-back,#kisgApp .kt-share{display:inline-flex;align-items:center;justify-content:center;flex:none;min-height:34px;border:0;border-radius:var(--r-pill);background:#fff;color:var(--ink);font-size:13px;font-weight:700;box-shadow:0 1px 2px rgba(20,26,36,.08);cursor:pointer}
+#kisgApp .kt-back{padding:0 12px}
+#kisgApp .kt-share{width:34px}
+#kisgApp .kt-share svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .kt-head-name{flex:1;min-width:0;overflow:hidden;color:var(--ink);font-size:17px;font-weight:800;letter-spacing:-.01em;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .kt-head-name::before{content:"#";margin-right:3px;color:var(--red)}
+#kisgApp .kt-head .k-btn{flex:none;min-height:34px;padding:0 14px;font-size:13px}
+#kisgApp .kt-head-note{display:flex;flex-basis:100%;gap:7px;color:var(--red-text);font-size:13px;font-weight:600}
+#kisgApp .kt-x{margin-left:2px;font-size:15px;line-height:1}
 #kisgApp .kt-ico{flex:none;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 #kisgApp .kt-new{padding:1px 7px;border-radius:var(--r-pill);background:var(--surface-2);color:var(--muted);font-size:10.5px;font-style:normal;font-weight:700}
 #kisgApp .kt-add{display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 15px;border:1px dashed var(--line-strong);border-radius:var(--r-pill);background:#fff;color:var(--muted);font-size:14px;font-weight:600}
@@ -1693,7 +1705,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kt-create{color:var(--red-text);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
 #kisgApp .kt-empty{padding:24px 10px;color:var(--muted);font-size:14px;text-align:center}
 @media(hover:hover) and (pointer:fine){#kisgApp .kt-row:hover{background:var(--surface-2)}#kisgApp .kt-row:hover .kt-go{stroke:var(--red);transform:translateX(3px)}#kisgApp .kt-chip:not(.is-on):hover{box-shadow:inset 0 0 0 1px var(--ink)}}
-@media(max-width:640px){#kisgApp .kt-strip{padding:12px 28px 12px var(--pad);background:#fff;border-bottom:1px solid var(--line-soft)}#kisgApp .kt-note{margin:10px var(--pad) 0}#kisgApp .kt-chip{min-height:34px;padding:0 12px;font-size:13px}}
+@media(max-width:640px){#kisgApp .kt-strip{padding:12px 28px 12px var(--pad);background:#fff;border-bottom:1px solid var(--line-soft)}#kisgApp .kt-head{margin:10px var(--pad) 0}#kisgApp .kt-head-name{font-size:15.5px}#kisgApp .kt-head [data-composer]{display:none}#kisgApp .kt-chip{min-height:34px;padding:0 12px;font-size:13px}}
 /* Sayfa başlıkları (v4.32.0): kompakt gri bant — ikon kutusu + başlık + tek satır, sağda eylem */
 #kisgApp .k-hero{display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:20px 22px;border-radius:18px;background:var(--band)}
 #kisgApp .k-hero-ico{display:grid;place-items:center;flex:none;width:48px;height:48px;border-radius:14px;background:#fff;color:var(--red);box-shadow:0 1px 2px rgba(20,26,36,.06)}
@@ -1792,7 +1804,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.33.1',
+  version: '4.34.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
@@ -4564,15 +4576,40 @@ function createWorksView() {
     if (!s.trend) return;
     const rows = s.tag && !s.trend.some(t => t.id === s.tag.id) ? [s.tag, ...s.trend] : s.trend;
     strip.innerHTML = '<button type="button" class="kt-chip kt-all" data-tag-all><svg class="kt-ico" aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>Konu Ara</button>'
-      + rows.map(t => `<button type="button" class="kt-chip${t.id === s.tag?.id ? ' is-on' : ''}" data-tag-id="${esc(t.id)}" data-tag-name="${esc(t.name)}" aria-pressed="${t.id === s.tag?.id}"${t.slot === 'pinned' && t.note ? ` title="${esc(t.note)}"` : ''}>${esc(t.name)}</button>`).join('');
-    // Sabit konu açıklaması (admin yazar); yoksa hiçbir şey gösterilmez.
-    const note = $('[data-tag-note]', el), txt = s.tag && s.trend.find(t => t.id === s.tag.id && t.slot === 'pinned')?.note;
-    note.hidden = !txt; note.innerHTML = txt ? `<svg class="kt-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="${tags.PP}"/></svg><span>${esc(txt)}</span>` : '';
-    strip.hidden = false; host.schedule();
+      + rows.map(t => `<button type="button" class="kt-chip${t.id === s.tag?.id ? ' is-on' : ''}" data-tag-id="${esc(t.id)}" data-tag-name="${esc(t.name)}" aria-pressed="${t.id === s.tag?.id}"${t.slot === 'pinned' && t.note ? ` title="${esc(t.note)}"` : ''}>${esc(t.name)}${t.id === s.tag?.id ? '<span class="kt-x" aria-hidden="true">×</span>' : ''}</button>`).join('');
+    strip.hidden = false; renderHead();
   }
-  function setTag(t) {
-    s.tag = t?.id && t.id !== s.tag?.id ? { id: t.id, name: t.name } : null;
-    renderStrip();
+  /* Konu görünümü (v4.34.0): konu Akış'ın içinde kendi adresiyle açılır (/?konu=slug). Ana akışa dönüş:
+     "← Tüm Akış", seçili çipteki ×, geri tuşu ve üstteki "Akış" sekmesi. Sabit konuda admin açıklaması altta. */
+  const slugOf = n => trFold(n).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  function renderHead() {
+    const head = $('[data-tag-head]', el), t = s.tag, note = t && s.trend?.find(x => x.id === t.id && x.slot === 'pinned')?.note;
+    head.hidden = !t;
+    head.innerHTML = t ? `<button type="button" class="kt-back" data-tag-off>← Tüm Akış</button><span class="kt-head-name">${esc(t.name)}</span>`
+      + `<button type="button" class="k-btn k-btn-primary" data-composer>＋ Bu konuda paylaş</button><button type="button" class="kt-share" data-tag-share aria-label="Konu linkini paylaş" title="Konu linkini paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button>`
+      + (note ? `<p class="kt-head-note"><svg class="kt-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="${tags.PP}"/></svg><span>${esc(note)}</span></p>` : '') : '';
+    host.schedule();
+  }
+  // Konu seçimi adres üzerinden yürür (geri tuşu çalışsın); adres yönetimi yoksa doğrudan uygulanır.
+  function setTag(t, { toggle = true } = {}) {
+    const next = t?.id && (!toggle || t.id !== s.tag?.id) ? { id: t.id, name: t.name } : null;
+    if (router.enabled) { s.routeTag = next; router.activate('works', { mode: 'push', params: { konu: next ? slugOf(next.name) : '' } }); return; }
+    applyTag(next);
+  }
+  async function route(p) {
+    const want = p?.konu || '', hint = s.routeTag; s.routeTag = null;
+    if (want === (s.tag ? slugOf(s.tag.name) : '')) return;
+    if (!want) { applyTag(null); return; }
+    let hit = [hint, ...(s.trend || await tags.trending().catch(() => []))].find(x => x && slugOf(x.name) === want);
+    if (!hit) {
+      try { await dbReady; const { data } = await db.from('professional_tags').select('id,name').eq('normalized_name', want.replace(/-/g, '')).maybeSingle(); hit = data; } catch {}
+      if (router.current !== 'works') return;
+    }
+    if (hit) applyTag(hit); else toast('Bu konu bulunamadı.');
+  }
+  function applyTag(t) {
+    s.tag = t ? { id: t.id, name: t.name } : null;
+    renderStrip(); renderHead();
     if (!s.mounted) { s.tagFirst = true; return; }
     if (host.scrollY() > host.shellTop() + 4) host.scrollTo(host.shellTop(), true);
     s.hasMore = true; loadPosts({ reset: true }); newPosts.render();
@@ -4748,6 +4785,7 @@ function createWorksView() {
     const chip = t.closest('[data-tag-id]'); if (chip && strip.contains(chip)) { setTag({ id: chip.dataset.tagId, name: chip.dataset.tagName }); return; }
     if (t.closest('[data-tag-all]')) { tags.open(); return; }
     if (t.closest('[data-tag-off]')) { setTag(null); return; }
+    if (t.closest('[data-tag-share]') && s.tag) { shareLink({ url: `${CONFIG.siteUrl}/?konu=${slugOf(s.tag.name)}`, title: `#${s.tag.name} | Kırmızı İSG`, text: `Kırmızı İSG'de #${s.tag.name} konusu`, copied: 'Konu linki kopyalandı.' }); return; }
     if (t.closest('[data-retry]')) loadPosts({ reset: !F.posts.length });
   });
 
@@ -4943,7 +4981,7 @@ function createWorksView() {
     s.experts.forEach(p => { if (p.id === uid) p.avatar_url = url; });
     s.services.forEach(v => { if (v.user_id === uid && v.provider) v.provider.avatar_url = url; });
   })(shellHooks.avatarChanged);
-  return { name: 'works', el, mount, onSession, snapshot, setTag, tag: () => s.tag, isMounted: () => s.mounted, onView: name => newPosts.onView(name) };
+  return { name: 'works', el, mount, onSession, snapshot, setTag, route, tag: () => s.tag, isMounted: () => s.mounted, onView: name => newPosts.onView(name) };
 }
 
 /* =========================================================================
@@ -6643,12 +6681,12 @@ const router = (() => {
   const isLegacy = pathname => !!CONFIG.legacyRoutes[cleanPath(pathname)];
   // Profil: /profil?id={user_id}#calismalar|#hizmetler. Scroll konumu profil kimliği başına tutulur.
   const tabOf = hash => (/^#?hizmetler$/i.test(hash || '') ? 'hizmetler' : /^#?calismalar$/i.test(hash || '') ? 'calismalar' : '');
-  const paramsOf = url => ({ id: url.searchParams.get('id') || '', tab: tabOf(url.hash) });
+  const paramsOf = url => ({ id: url.searchParams.get('id') || '', tab: tabOf(url.hash), konu: url.searchParams.get('konu') || '' });
   // Kimlik parametreli görünümler: Profil (/profil?id=) ve Çalışma Detay (/calisma-detay?id=).
   const PARAM_VIEWS = ['profile', 'work', 'service'];
-  const keyOf = (name, p = {}) => (PARAM_VIEWS.includes(name) ? `${name}:${p.id || ''}` : name);
-  const pathOf = (name, p = {}) => (PARAM_VIEWS.includes(name) ? `${CONFIG.routes[name]}${p.id ? `?id=${encodeURIComponent(p.id)}` : ''}${name === 'profile' && p.tab ? '#' + p.tab : ''}` : CONFIG.routes[name]);
-  const paramsFor = (name, p = {}) => (name === 'profile' ? { id: clean(p.id), tab: tabOf(p.tab) } : name === 'work' || name === 'service' ? { id: clean(p.id) } : {});
+  const keyOf = (name, p = {}) => (PARAM_VIEWS.includes(name) ? `${name}:${p.id || ''}` : name === 'works' && p.konu ? `works:${p.konu}` : name);
+  const pathOf = (name, p = {}) => (PARAM_VIEWS.includes(name) ? `${CONFIG.routes[name]}${p.id ? `?id=${encodeURIComponent(p.id)}` : ''}${name === 'profile' && p.tab ? '#' + p.tab : ''}` : name === 'works' && p.konu ? `${CONFIG.routes.works}?konu=${encodeURIComponent(p.konu)}` : CONFIG.routes[name]);
+  const paramsFor = (name, p = {}) => (name === 'profile' ? { id: clean(p.id), tab: tabOf(p.tab) } : name === 'work' || name === 'service' ? { id: clean(p.id) } : name === 'works' && p.konu ? { konu: clean(p.konu).toLowerCase() } : {});
   const stateOf = () => ({ kisgShell: { view: current, doc: bootId, params: { ...params } } });
   function setTabs(name) {
     if (name === 'work') name = 'works';   // detaylar, kendi sekmesinin parçası
@@ -6686,6 +6724,7 @@ const router = (() => {
     if (name === 'work') VIEWS.work.route({ ...params });
     if (name === 'service') VIEWS.service.route({ ...params });
     if (name === 'account') VIEWS.account.route();
+    if (name === 'works') VIEWS.works.route({ ...params });
     VIEWS.works.onView?.(name);
   }
   function activate(name, { mode = 'push', params: next = {} } = {}) {
@@ -6752,7 +6791,7 @@ const router = (() => {
     const url = host.url();
     const fromPath = viewFromPath(url.pathname);
     const initial = fromPath || (VIEWS[root.dataset.initialView] ? root.dataset.initialView : CONFIG.defaultView);
-    if (PARAM_VIEWS.includes(initial)) params = paramsFor(initial, paramsOf(url));
+    if (PARAM_VIEWS.includes(initial) || initial === 'works') params = paramsFor(initial, paramsOf(url));
     enabled = Boolean(CONFIG.historyRouting && host.canRoute && fromPath && CONFIG.siteOrigins.includes(url.origin) && !shellVersion.stale);
     // Eski /calisma: yönlendirme açıksa adres yerinde '/' olur (sorgu/hash korunur); değilse üst sayfa '/' ile değiştirilir.
     const legacy = fromPath && isLegacy(url.pathname);
@@ -6852,7 +6891,7 @@ onShellClick(e => {
   }
   if (t.closest('[data-brand-act]')) { composer.open(); return; }
   const tagBtn = t.closest('[data-tag-filter]');
-  if (tagBtn) { VIEWS.works.setTag({ id: tagBtn.dataset.tagFilter, name: tagBtn.textContent }); if (router.current !== 'works') router.activate('works', { mode: 'push' }); return; }
+  if (tagBtn) { VIEWS.works.setTag({ id: tagBtn.dataset.tagFilter, name: tagBtn.textContent }, { toggle: router.current === 'works' }); if (router.current !== 'works') router.activate('works', { mode: 'push' }); return; }
   // Profil ve Çalışma Detay bağlantıları (kart, yorum, hesap menüsü, görüntüleyici) shell içinde açılır (reload yok).
   const anchor = t.closest('a[href]');
   const target = anchor && router.enabled && !e.defaultPrevented && e.button === 0 && !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) ? router.linkTarget(anchor.href) : null;

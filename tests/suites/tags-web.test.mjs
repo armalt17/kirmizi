@@ -17,7 +17,7 @@ const J = (route, body, status = 200) => route.fulfill({ status, contentType: 'a
 
 function seed() {
   resetDb();
-  db.professional_tags = TAGS.map(t => ({ ...t }));
+  db.professional_tags = TAGS.map(t => ({ ...t, normalized_name: norm(t.name) }));
   // İki post "Yüksekte Çalışma" etiketli; diğerleri eski (kategori chip'li, etiketsiz)
   const ps = db.professional_posts;
   [ps[0], ps[3]].forEach(p => { p.tag_id = T(2); p.tag = { id: T(2), name: 'Yüksekte Çalışma' }; });
@@ -76,17 +76,33 @@ try {
     await f.click('[data-tag-strip] [data-tag-name="Yüksekte Çalışma"]'); await settle(page, 900);
     let ids = await f.$$eval('[data-view="works"] [data-post-id]', n => n.map(x => x.dataset.postId));
     check(postReqs.some(u => u.includes(`tag_id=eq.${T(2)}`)) && ids.length === 2 && await f.getAttribute('[data-tag-strip] [data-tag-name="Yüksekte Çalışma"]', 'aria-pressed') === 'true', `${N} etikete dokunmak Akış'ı filtreler (${ids.length} post), yeni sayfa açılmaz`);
-    check(page.url() === `${SITE}/`, `${N} adres değişmedi (${page.url()})`);
+    check(page.url() === `${SITE}/?konu=yuksekte-calisma`, `${N} konu kendi adresinde açılır (${page.url()})`);
+    const hd = await f.evaluate(() => { const h = document.querySelector('[data-tag-head]'), r = h.getBoundingClientRect(); return { vis: !h.hidden, name: h.querySelector('.kt-head-name')?.textContent, back: h.querySelector('[data-tag-off]')?.textContent, share: !!h.querySelector('[data-tag-share]'), compose: !!h.querySelector('[data-composer]'), nameW: Math.round(h.querySelector('.kt-head-name').getBoundingClientRect().width), h: Math.round(r.height), counts: /gönderi|yeni/.test(h.textContent) }; });
+    check(hd.vis && hd.name === 'Yüksekte Çalışma' && hd.back === '← Tüm Akış' && hd.share && hd.compose && !hd.counts && hd.nameW > 100 && hd.h <= 60, `${N} konu başlığı: tek satır, ← Tüm Akış + ad + paylaş + link; sayı yok ${JSON.stringify(hd)}`);
+    check((await f.textContent('[data-tag-strip] .kt-chip.is-on')).endsWith('×'), `${N} seçili çipte × var`);
+    // geri tuşu ana akışa döner
+    await page.goBack(); await settle(page, 900);
+    check(page.url() === `${SITE}/` && await f.isHidden('[data-tag-head]') && (await f.$$eval('[data-view="works"] [data-post-id]', n => n.length)) >= 10, `${N} geri tuşu ana akışa döner (${page.url()})`);
+    // "← Tüm Akış" ana akışa döner
     await f.click('[data-tag-strip] [data-tag-name="Yüksekte Çalışma"]'); await settle(page, 900);
-    check((await f.$$eval('[data-view="works"] [data-post-id]', n => n.length)) >= 10, `${N} aynı etikete tekrar dokunmak filtreyi kaldırır`);
+    await f.click('[data-tag-head] [data-tag-off]'); await settle(page, 900);
+    check(page.url() === `${SITE}/` && await f.isHidden('[data-tag-head]'), `${N} "← Tüm Akış" ana akışa döner`);
+    // üstteki "Akış" sekmesi ana akışa döner
+    await f.click('[data-tag-strip] [data-tag-name="Yüksekte Çalışma"]'); await settle(page, 900);
+    await page.evaluate(() => document.getElementById('kisg-pro-nav').shadowRoot.querySelector('[data-view-link="works"]').click()); await settle(page, 900);
+    check(page.url() === `${SITE}/` && await f.isHidden('[data-tag-head]') && !(await f.$('[data-tag-strip] .kt-chip.is-on')), `${N} "Akış" sekmesi ana akışa döner`);
+    // seçili çipe (×) dokunmak da kaldırır
+    await f.click('[data-tag-strip] [data-tag-name="Yüksekte Çalışma"]'); await settle(page, 900);
+    await f.click('[data-tag-strip] [data-tag-name="Yüksekte Çalışma"]'); await settle(page, 900);
+    check((await f.$$eval('[data-view="works"] [data-post-id]', n => n.length)) >= 10 && page.url() === `${SITE}/`, `${N} aynı etikete (×) tekrar dokunmak filtreyi kaldırır`);
     await f.click('[data-tag-strip] [data-tag-name="ATEX"]'); await settle(page, 900);
     check(/“ATEX” etiketinde henüz Post yok/.test(await f.textContent('[data-view="works"] [data-list]')), `${N} boş filtre: etikete özgü boş durum`);
     await f.click('[data-view="works"] [data-tag-off]'); await settle(page, 900);
     // sabit etiket filtrelenince nedeni görünür
     await f.click('[data-tag-strip] [data-tag-name="Bakanlığa Şikayet"]'); await settle(page, 700);
-    check(mobile ? await f.isHidden('[data-tag-note]') : (await f.textContent('[data-tag-note]')) === NOTE && await f.isVisible('[data-tag-note] svg'), `${N} sabit konu filtresinde ${mobile ? 'açıklama yoksa not görünmez' : 'admin açıklaması iğne ikonuyla görünür'}`);
+    check(mobile ? !(await f.$('[data-tag-head] .kt-head-note')) : (await f.textContent('[data-tag-head] .kt-head-note')) === NOTE && await f.isVisible('[data-tag-head] .kt-head-note svg'), `${N} sabit konu filtresinde ${mobile ? 'açıklama yoksa not görünmez' : 'admin açıklaması iğne ikonuyla görünür'}`);
     await f.click('[data-tag-strip] [data-tag-name="Bakanlığa Şikayet"]'); await settle(page, 700);
-    check(await f.isHidden('[data-tag-note]'), `${N} filtre kalkınca not gizlenir`);
+    check(await f.isHidden('[data-tag-head]'), `${N} filtre kalkınca konu başlığı gizlenir`);
     check(!(await f.$('[data-tag-strip] .kt-chip.is-on')) && (await f.$$eval('[data-view="works"] [data-post-id]', n => n.length)) >= 10, `${N} "Tüm Postlar" filtreyi kaldırır`);
 
     // ---- panel (Tümü) ----
@@ -193,7 +209,12 @@ try {
     const tname = await f.$eval('[data-view="profile"] [data-tag-filter]', b => b.textContent);
     postReqs.length = 0;
     await f.click('[data-view="profile"] [data-tag-filter]'); await settle(page, 1500);
-    check(page.url() === `${SITE}/` && await f.evaluate(() => document.getElementById('kisgApp').dataset.activeView) === 'works' && postReqs.some(u => u.includes('tag_id=eq.')) && await f.getAttribute(`[data-tag-strip] [data-tag-name="${tname}"]`, 'aria-pressed') === 'true', `${N} profil kartındaki "${tname}" etiketi Akış'ı o etikete filtreli açar`);
+    check(/\/\?konu=[a-z0-9-]+$/.test(page.url()) && await f.evaluate(() => document.getElementById('kisgApp').dataset.activeView) === 'works' && postReqs.some(u => u.includes('tag_id=eq.')) && await f.getAttribute(`[data-tag-strip] [data-tag-name="${tname}"]`, 'aria-pressed') === 'true', `${N} profil kartındaki "${tname}" etiketi Akış'ı o etikete filtreli açar`);
+    // doğrudan konu linki (paylaşılan link) konu görünümünü açar
+    postReqs.length = 0;
+    await page.goto(`${SITE}/?konu=bakanliga-sikayet`); await settle(page, 1500); f = frameOf(page);
+    check(await until(() => f.$eval('[data-tag-head] .kt-head-name', e => e.textContent).then(t => t === 'Bakanlığa Şikayet').catch(() => false)) && postReqs.some(u => u.includes(`tag_id=eq.${T(1)}`)), `${N} paylaşılan konu linki doğrudan konu görünümünü açar`);
+    await page.screenshot({ path: path.join(OUT, `tags-topic-${N}.png`) });
     check(errs.length === 0, `${N} sayfa hatası yok ${errs.join(' ')}`);
     await ctx.close();
   }

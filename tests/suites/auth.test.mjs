@@ -258,6 +258,8 @@ for (const vp of VPS.slice(0, +(process.env.NVP || 2))) {
     await g.evaluate(() => document.querySelector('.kp-card [data-profile-action="edit"]').click()); await g.waitForSelector('#kaProfileDialog[open]');
     check(await g.locator('#kaPeDiscoverable, #kaPePhonePublic').count() === 0 && await g.isVisible('#kaProfileDialog .kpe-privacy a[data-view-link="account"]'), `${N} profil düzenle: görünürlük anahtarı yok, Hesap & Gizlilik bağlantısı var`);
     writes.length = 0;
+    // pencere alanları sunucudan gelen profille doldurulur; yazmadan önce dolmasını bekle (yoksa gelen veri yazılanı ezer)
+    await g.waitForFunction(() => document.getElementById('kaPe_profession')?.value === 'İş Güvenliği Uzmanı', null, { timeout: 5000 }).catch(() => {});
     await g.fill('#kaPe_profession', 'İSG Uzmanı'); await g.evaluate(() => document.getElementById('kaProfileForm').requestSubmit());
     for (let i = 0; i < 50 && !writes.some(w => w.table === 'profiles' && w.body?.profession === 'İSG Uzmanı'); i++) await settle(page, 100);   // sabit bekleme yerine kayıt gelene kadar
     await settle(page, 300);
