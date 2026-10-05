@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.33.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.33.1
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -8,6 +8,8 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.33.1: Konu Ara'da da "Yeni konu" satırı (Etiket Ekle ile aynı özellik): Post penceresi o etiketle açılır; konu Post
+ paylaşılınca oluşur (vazgeçilirse oluşmaz), Akış yeni konuya filtrelenir.
 v4.33.0: Kod sağlığı raporu düzeltmeleri: kayıt onayı ve "Uzmanlarda Görün" tercihi hesap bilgisine de yazılır (başka
  cihazda doğrulamada onay sunucuya kaydedilir, onboarding açılır); hesap silme Destek'e talep olarak yönlenir; istekler için
  merkezi süre sınırı (30 sn, yükleme 90 sn); yorum çift gönderim kilidi ve görünümler arası yorum sayısı eşitleme; eski
@@ -1790,7 +1792,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.33.0',
+  version: '4.33.1',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
@@ -4240,7 +4242,7 @@ const tags = (() => {
     }
     const name = clean(text).replace(/\s+/g, ' ').slice(0, 20), exact = rows.some(t => t.exact);
     list.innerHTML = rows.map(t => row(t)).join('')
-      + (st.pick && !exact && /[\p{L}\p{N}]/u.test(name) ? row({ name }, ' data-tag-new', { ico: svg('M12 5v14M5 12h14'), cls: ' kt-hot' }).replace('<span class="kt-txt">', '<span class="kt-txt"><span class="kt-create">Yeni etiket:</span>') : '')
+      + (!exact && /[\p{L}\p{N}]/u.test(name) ? row({ name }, ' data-tag-new', { ico: svg('M12 5v14M5 12h14'), cls: ' kt-hot' }).replace('<span class="kt-txt">', '<span class="kt-txt"><span class="kt-create">Yeni konu:</span>') : '')
       || '<p class="kt-empty">Bu adla bir etiket bulunamadı.</p>';
   }
   async function search() {
@@ -4266,7 +4268,8 @@ const tags = (() => {
     const b = e.target?.closest?.('[data-tag-name]'); if (!b) return;
     const t = { id: b.dataset.tagId || null, name: b.dataset.tagName }, cb = st.pick;
     dialogs.close(d);
-    if (cb) cb(t); else VIEWS.works.setTag(t);
+    // Yeni konu her iki modda aynı: Post'a etiket olarak eklenir; konu, o Post paylaşılınca oluşur (boş konu olmaz).
+    if (cb) cb(t); else if ('tagNew' in b.dataset) composer.open(null, '', t); else VIEWS.works.setTag(t);
   });
   return { open, trending, PP };
 })();
@@ -4296,15 +4299,15 @@ const composer = (() => {
     d.label.textContent = 'Fotoğraf Ekle';
   }
   function formError(text) { d.error.textContent = text; d.error.hidden = !text; }
-  async function open(post = null, intent = '') {
-    const user = await requireUser(() => open(post, intent)); if (!user) return;
+  async function open(post = null, intent = '', topic = null) {
+    const user = await requireUser(() => open(post, intent, topic)); if (!user) return;
     if (s.saving || d.root.open || (post && post.user_id !== user.id)) return;
     s.edit = post; s.file = null; clearPreview();
     d.title.textContent = post ? 'Postu Düzenle' : 'Yeni Post';
     d.submit.textContent = post ? 'Değişiklikleri Kaydet' : 'Post Yayınla';
     d.content.value = post?.content || '';
     // Akış bir etikete filtreliyse yeni post o etiketle başlar (× ile kaldırılabilir).
-    s.tag = !post && router.current === 'works' ? VIEWS.works.tag() : null; renderTag();
+    s.tag = topic || (!post && router.current === 'works' ? VIEWS.works.tag() : null); s.topic = !!topic; renderTag();
     formError('');
     if (post?.image_path) showPreview(storageUrl(post.image_path));
     dialogs.open(d.root, 'sheet');
@@ -4504,12 +4507,14 @@ const composer = (() => {
       d.file.disabled = false; removeImageBtn.disabled = false; setBusy(d.submit, false);
     }
     if (!committed) return;
+    const started = s.topic && s.tag?.id ? { id: s.tag.id, name: s.tag.name } : null;   // Konu Ara'dan başlatılan konu
     dialogs.close(d.root);
-    toast(current ? 'Post güncellendi.' : 'Post yayınlandı.');
+    toast(current ? 'Post güncellendi.' : started ? `“${started.name}” konusu başladı.` : 'Post yayınlandı.');
     // Kaydedilen Çalışma açık akışlara yerinde yansıtılır; liste yeniden yüklenmez, scroll kaymaz.
     let fresh = null, failed = false;
     try { fresh = await postData.fetch(savedId); } catch { failed = true; }
     emitPost('saved', { id: savedId, fresh, previous: current, failed });
+    if (started && router.current === 'works') VIEWS.works.setTag(started);
   }
   d.form.addEventListener('submit', savePost);
   d.root.addEventListener('close', () => { s.edit = null; s.file = null; s.tag = null; s.pick++; s.preparing = false; clearPreview(); formError(''); });

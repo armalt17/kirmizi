@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.33.0 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.33.1 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
 üretilir; yorumları çıkarılmış, ~500 bin karakterin altında). Yayın dosyasının TAMAMI, aşağıdaki Hostinger sayfalarındaki
@@ -1517,7 +1517,7 @@ version: '2026-09-30'   // legal_acceptances.document_version
 },
 siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
 historyRouting: true,
-version: '4.33.0',
+version: '4.33.1',
 hostWidthDesktopMax: 1480,
 routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
 legacyRoutes: { '/calisma': 'works' },
@@ -3770,7 +3770,7 @@ return;
 }
 const name = clean(text).replace(/\s+/g, ' ').slice(0, 20), exact = rows.some(t => t.exact);
 list.innerHTML = rows.map(t => row(t)).join('')
-+ (st.pick && !exact && /[\p{L}\p{N}]/u.test(name) ? row({ name }, ' data-tag-new', { ico: svg('M12 5v14M5 12h14'), cls: ' kt-hot' }).replace('<span class="kt-txt">', '<span class="kt-txt"><span class="kt-create">Yeni etiket:</span>') : '')
++ (!exact && /[\p{L}\p{N}]/u.test(name) ? row({ name }, ' data-tag-new', { ico: svg('M12 5v14M5 12h14'), cls: ' kt-hot' }).replace('<span class="kt-txt">', '<span class="kt-txt"><span class="kt-create">Yeni konu:</span>') : '')
 || '<p class="kt-empty">Bu adla bir etiket bulunamadı.</p>';
 }
 async function search() {
@@ -3795,7 +3795,7 @@ list.addEventListener('click', e => {
 const b = e.target?.closest?.('[data-tag-name]'); if (!b) return;
 const t = { id: b.dataset.tagId || null, name: b.dataset.tagName }, cb = st.pick;
 dialogs.close(d);
-if (cb) cb(t); else VIEWS.works.setTag(t);
+if (cb) cb(t); else if ('tagNew' in b.dataset) composer.open(null, '', t); else VIEWS.works.setTag(t);
 });
 return { open, trending, PP };
 })();
@@ -3824,14 +3824,14 @@ s.previewUrl = null; d.preview.hidden = true; $('img', d.preview).removeAttribut
 d.label.textContent = 'Fotoğraf Ekle';
 }
 function formError(text) { d.error.textContent = text; d.error.hidden = !text; }
-async function open(post = null, intent = '') {
-const user = await requireUser(() => open(post, intent)); if (!user) return;
+async function open(post = null, intent = '', topic = null) {
+const user = await requireUser(() => open(post, intent, topic)); if (!user) return;
 if (s.saving || d.root.open || (post && post.user_id !== user.id)) return;
 s.edit = post; s.file = null; clearPreview();
 d.title.textContent = post ? 'Postu Düzenle' : 'Yeni Post';
 d.submit.textContent = post ? 'Değişiklikleri Kaydet' : 'Post Yayınla';
 d.content.value = post?.content || '';
-s.tag = !post && router.current === 'works' ? VIEWS.works.tag() : null; renderTag();
+s.tag = topic || (!post && router.current === 'works' ? VIEWS.works.tag() : null); s.topic = !!topic; renderTag();
 formError('');
 if (post?.image_path) showPreview(storageUrl(post.image_path));
 dialogs.open(d.root, 'sheet');
@@ -4016,11 +4016,13 @@ s.saving = false; session.writes--; dialogs.lock(d.root, false);
 d.file.disabled = false; removeImageBtn.disabled = false; setBusy(d.submit, false);
 }
 if (!committed) return;
+const started = s.topic && s.tag?.id ? { id: s.tag.id, name: s.tag.name } : null;   // Konu Ara'dan başlatılan konu
 dialogs.close(d.root);
-toast(current ? 'Post güncellendi.' : 'Post yayınlandı.');
+toast(current ? 'Post güncellendi.' : started ? `“${started.name}” konusu başladı.` : 'Post yayınlandı.');
 let fresh = null, failed = false;
 try { fresh = await postData.fetch(savedId); } catch { failed = true; }
 emitPost('saved', { id: savedId, fresh, previous: current, failed });
+if (started && router.current === 'works') VIEWS.works.setTag(started);
 }
 d.form.addEventListener('submit', savePost);
 d.root.addEventListener('close', () => { s.edit = null; s.file = null; s.tag = null; s.pick++; s.preparing = false; clearPreview(); formError(''); });

@@ -105,12 +105,31 @@ try {
     await f.fill('#kaTagQ', 'kaz'); await settle(page, 600);
     const h2 = await f.$eval('#kaTagDialog', d => d.getBoundingClientRect().height);
     check(Math.abs(h2 - kb.h) < 2, `${N} arama sonuçları panel yüksekliğini zıplatmaz (${Math.round(kb.h)} → ${Math.round(h2)})`);
-    const res = await f.$$eval('#kaTagDialog .kt-row', b => b.map(x => x.textContent));
+    const res = await f.$$eval('#kaTagDialog .kt-row:not([data-tag-new])', b => b.map(x => x.textContent));
     check(JSON.stringify(res) === '["İş Kazaları"]' && rpc.some(x => x.fn === 'kisg_tags_search' && x.body.p_q === 'kaz'), `${N} panel: yazınca tüm etiketlerde canlı arama ${JSON.stringify(res)}`);
-    check(!(await f.$('#kaTagDialog [data-tag-new]')), `${N} filtre panelinde "yeni etiket" satırı yok`);
-    await f.click('#kaTagDialog .kt-row'); await settle(page, 900);
+    check((await f.$eval('#kaTagDialog [data-tag-new]', b => b.textContent).catch(() => '')) === 'Yeni konu:kaz', `${N} Konu Ara'da da aynı "Yeni konu" satırı (Etiket Ekle ile aynı özellik)`);
+    await f.click('#kaTagDialog .kt-row:not([data-tag-new])'); await settle(page, 900);
     check(!(await f.evaluate(() => document.getElementById('kaTagDialog').open)) && await f.getAttribute('[data-tag-strip] [data-tag-name="İş Kazaları"]', 'aria-pressed') === 'true', `${N} panelden seçilen etiket Akış'ı filtreler, panel kapanır`);
     await f.click('[data-tag-strip] [data-tag-name="İş Kazaları"]'); await settle(page, 700);
+
+    // ---- Konu Ara → Yeni konu: Post penceresi o etiketle açılır; paylaşınca konu oluşur, Akış o konuya filtrelenir ----
+    await f.click('[data-tag-strip] [data-tag-all]'); await f.waitForSelector('#kaTagDialog[open]'); await settle(page, 400);
+    await f.fill('#kaTagQ', 'Saha Güvenliği'); await settle(page, 600);
+    await f.click('#kaTagDialog [data-tag-new]'); await f.waitForSelector('#kaPostDialog[open]'); await settle(page, 300);
+    check(!(await f.evaluate(() => document.getElementById('kaTagDialog').open)) && (await f.textContent('#kaPostDialog [data-tag-chip-name]')) === 'Saha Güvenliği' && await f.isVisible('#kaPostDialog [data-tag-clear]'), `${N} Konu Ara'dan yeni konu: Post penceresi o etiketle açıldı (kaldırılabilir)`);
+    const tagsBefore = db.professional_tags.length;
+    await f.fill('#kaPostContent', 'Saha güvenliği konusunda ilk post'); writes.length = 0; rpc.length = 0;
+    await f.click('#kaPostSubmit'); await settle(page, 1800);
+    const ins0 = writes.find(w => w.table === 'professional_posts'), made = db.professional_tags.find(t => t.name === 'Saha Güvenliği');
+    check(rpc.some(x => x.fn === 'kisg_tag_resolve' && x.body.p_name === 'Saha Güvenliği') && made && ins0?.body.tag_id === made.id && db.professional_tags.length === tagsBefore + 1, `${N} konu Post paylaşılınca oluştu ve Posta bağlandı`);
+    check(await until(() => f.getAttribute(`[data-tag-strip] [data-tag-name="Saha Güvenliği"]`, 'aria-pressed').then(v => v === 'true').catch(() => false)), `${N} Akış yeni konuya filtrelendi`);
+    await f.click('[data-tag-strip] [data-tag-name="Saha Güvenliği"]'); await settle(page, 700);
+    // vazgeçilirse konu oluşmaz
+    await f.click('[data-tag-strip] [data-tag-all]'); await f.waitForSelector('#kaTagDialog[open]'); await settle(page, 400);
+    await f.fill('#kaTagQ', 'Boş Konu'); await settle(page, 600);
+    await f.click('#kaTagDialog [data-tag-new]'); await f.waitForSelector('#kaPostDialog[open]'); rpc.length = 0;
+    await f.evaluate(() => document.querySelector('#kaPostDialog [data-close]').click()); await settle(page, 400);
+    check(!db.professional_tags.some(t => t.name === 'Boş Konu') && !rpc.some(x => x.fn === 'kisg_tag_resolve'), `${N} Post paylaşılmadan vazgeçilirse konu oluşmaz`);
 
     // ---- composer: Akış etikete filtreliyken yeni post o etiketle başlar ----
     await f.click('[data-tag-strip] [data-tag-name="Yüksekte Çalışma"]'); await settle(page, 900);
@@ -132,7 +151,7 @@ try {
     check((await f.textContent('#kaTagTitle')) === 'Etiket Ekle', `${N} aynı panel "Etiket Ekle" olarak açılır`);
     await f.fill('#kaTagQ', 'Saha  Denetimi'); await settle(page, 600);
     const nw = await f.$eval('#kaTagDialog [data-tag-new]', b => b.textContent).catch(() => '');
-    check(nw === 'Yeni etiket:Saha Denetimi', `${N} listede yoksa yazılan ad yeni etiket olarak önerilir (${nw})`);
+    check(nw === 'Yeni konu:Saha Denetimi', `${N} listede yoksa yazılan ad yeni konu olarak önerilir (${nw})`);
     await f.click('#kaTagDialog [data-tag-new]'); await settle(page, 400);
     check(await f.evaluate(() => document.getElementById('kaPostDialog').open) && (await f.textContent('#kaPostDialog [data-tag-chip-name]')) === 'Saha Denetimi' && await f.isHidden('#kaPostDialog [data-tag-add]') && await f.isVisible('#kaPostDialog [data-tag-clear]'), `${N} seçilen etiket kaldırılabilir chip olarak görünür (en fazla 1)`);
     await f.fill('#kaPostContent', 'Etiketli yeni post'); writes.length = 0; rpc.length = 0;
