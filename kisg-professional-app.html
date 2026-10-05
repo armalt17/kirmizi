@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.32.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.32.1
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -8,6 +8,7 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.32.1: Akış sağ sütunu (Hizmet Bul aracı) da hizmeti verenin fotoğrafı + köşede kategori ikonu.
 v4.32.0: Hizmet Bul ve Uzmanlar sade kartlar: kompakt sayfa başlığı (ikon kutusu + başlık + tek satır); hizmet kartı
  solda hizmeti verenin fotoğrafı + köşede kategori ikonu, kategori bir kez, "kişi · şekil · bölge", "Hizmeti İncele" yok;
  uzman kartı yatay (fotoğraf + "meslek · sınıf" + "şehir · şirket"), "Profili Gör" yok; telefonda kutu yerine satır.
@@ -1783,7 +1784,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.32.0',
+  version: '4.32.1',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
@@ -2197,6 +2198,11 @@ const SIDE_CSS = `
 .kw-offer .ks-mark{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:10px;background:var(--surface-2)}
 .kw-offer .ks-mark svg{width:20px;height:20px;fill:none;stroke:var(--ink);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 .kw-offer .ks-mark .a{stroke:var(--red)}.kw-offer .ks-mark .f{fill:var(--red);stroke:none}
+.kw-offer .ks-lead{position:relative;flex:none}
+.kw-offer .ks-lead .k-avatar{width:40px;height:40px;font-size:14px}
+.kw-offer .k-avatar+.ks-mark{position:absolute;right:-7px;bottom:-5px;width:20px;height:20px;border-radius:6px;background:#fff;box-shadow:0 0 0 2px #fff,0 1px 3px rgba(20,26,36,.2)}
+.kw-offer .k-avatar+.ks-mark svg{width:13px;height:13px;stroke-width:1.7}
+.kw-offer:hover .k-avatar{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--ink)}
 .kw-offer-copy{display:grid;gap:2px;flex:1;min-width:0}
 .kw-offer-cta{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px;border-radius:14px;background:#f3f4f6}
 .kw-offer-cta .kw-hico{background:#fff}
@@ -4552,11 +4558,11 @@ function createWorksView() {
       + (clean(p.city) ? `<span class="kw-person-meta">${placeMeta(p.city)}</span>` : '')
       + `</span>${ICONS.chev}</a>`;
   }
-  // Sağ sütun (Hizmet Bul aracı): Uzmanlar listesiyle aynı satır dili — kategori ikonu → hizmet → kişi · şekil · bölge.
+  // Sağ sütun (Hizmet Bul aracı): Hizmet Bul kartıyla aynı dil — kişinin fotoğrafı + köşede kategori ikonu → hizmet → kişi · şekil · bölge.
   // "Öne Çıkan" (taç) yalnız veride güvenilir bir işaret varsa gösterilir (bkz. serviceFeatured); bugün DB'de yok.
   function offerRow(v) {
     const meta = compact([v.provider?.full_name, SERVICE_MODES[v.service_mode], clean(v.service_region)], ' · ');
-    return `<a class="kw-offer" href="${esc(urls.service(v.id))}" target="_top" title="${esc(v.category?.name || 'Hizmet')}">${serviceMark(serviceKind(v))}`
+    return `<a class="kw-offer" href="${esc(urls.service(v.id))}" target="_top" title="${esc(v.category?.name || 'Hizmet')}"><span class="ks-lead">${v.provider ? avatar(v.provider, 'lg') : ''}${serviceMark(serviceKind(v))}</span>`
       + `<span class="kw-offer-copy"><strong>${esc(v.title)}</strong>${meta ? `<span class="kw-offer-meta">${esc(meta)}</span>` : ''}</span>${serviceFeatured(v) ? featuredBadge() : ''}</a>`;
   }
   function renderSide() {

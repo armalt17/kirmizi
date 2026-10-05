@@ -83,7 +83,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   const side = await page.evaluate(() => { const r = document.getElementById('kisg-pro-sides').shadowRoot; return {
     head: r.querySelector('#kwServicesTitle')?.textContent.trim(), all: r.querySelector('.kw-side-head-services a')?.textContent.trim(), bottom: r.querySelectorAll('.kw-side-link').length,
     popular: /Popüler|Elite/i.test(r.textContent),
-    items: [...r.querySelectorAll('.kw-offer')].map(a => ({ title: a.querySelector('strong')?.textContent, by: a.querySelector('.kw-offer-meta')?.textContent.split(' · ')[0], cat: a.title, ico: !!a.querySelector('.ks-mark svg'), featured: a.querySelectorAll('.k-featured').length })),
+    items: [...r.querySelectorAll('.kw-offer')].map(a => ({ title: a.querySelector('strong')?.textContent, by: a.querySelector('.kw-offer-meta')?.textContent.split(' · ')[0], cat: a.title, ico: !!a.querySelector('.ks-lead .k-avatar + .ks-mark svg'), featured: a.querySelectorAll('.k-featured').length })),
     tool: !!r.querySelector('[data-side-find] input[type=search]') && !!r.querySelector('.kw-offer-cta [data-then="publish"]')
   }; });
   check(side.head === 'Hizmet Bul' && /^Tümünü gör/.test(side.all) && side.bottom === 0 && !side.popular && side.tool, `sağ panel "Hizmet Bul" aracı: arama + "Yayınla", Popüler yok: ${side.head} | ${side.all}`);
