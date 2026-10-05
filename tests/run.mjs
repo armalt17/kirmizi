@@ -45,6 +45,8 @@ const SUITES = [
   { name: 'skeleton', file: 'skeleton.test.mjs', note: 'yükleme iskeletleri' },
   { name: 'tags-db', file: 'tags-db.test.mjs', note: 'Konular V1 — yerel geçici PostgreSQL' },
   { name: 'tags-admin-db', file: 'tags-admin-db.test.mjs', note: 'Konular V2 admin — yerel geçici PostgreSQL' },
+  { name: 'post-images-db', file: 'post-images-db.test.mjs', note: 'İkinci fotoğraf — yerel geçici PostgreSQL' },
+  { name: 'post-images-web', file: 'post-images-web.test.mjs', note: 'İkinci fotoğraf — düzenleyici, kart, görüntüleyici' },
   { name: 'tags-web', file: 'tags-web.test.mjs', note: 'Konular V1 — şerit, panel, composer' },
   { name: 'code-health-pack', file: 'code-health-pack.test.mjs', note: 'Kod sağlığı raporu düzeltmeleri' },
 ];

@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.34.3 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.35.0 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
 üretilir; yorumları çıkarılmış, ~500 bin karakterin altında). Yayın dosyasının TAMAMI, aşağıdaki Hostinger sayfalarındaki
@@ -409,9 +409,9 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
 <div class="k-dialog-body">
 <label class="k-sr" for="kaPostContent">Post metni</label>
 <textarea id="kaPostContent" class="k-input k-textarea k-composer-text" maxlength="5000" placeholder="Bugün sahada ne yaptın, ne gördün, ne öğrendin?"></textarea>
-<div id="kaPostPreview" class="k-image-preview" hidden><img alt="Seçilen görsel önizlemesi"><button type="button" data-remove-image>Fotoğrafı Kaldır</button></div>
+<div id="kaPostPreview" class="k-image-preview" hidden></div>
 <div class="k-composer-row">
-<label class="k-file-button"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span data-photo-label>Fotoğraf Ekle</span><input id="kaPostImage" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif"></label>
+<label class="k-file-button"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 17 5-4.5 3.5 3 3.5-4 4 4.5"/></svg><span data-photo-label>Fotoğraf Ekle</span><input id="kaPostImage" type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif"></label>
 <button type="button" class="kt-add" data-tag-add><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Etiket Ekle</span></button>
 <span class="kt-chip is-on" data-tag-chip hidden><span data-tag-chip-name></span><button type="button" data-tag-clear aria-label="Etiketi kaldır">×</button></span>
 </div>
@@ -561,8 +561,9 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
 </dialog>
 
 <dialog id="kaMediaDialog" class="k-dialog k-media-dialog" aria-label="Post görseli" tabindex="-1" autofocus>
-<header class="k-dialog-head"><a class="k-media-open" data-media-work target="_top">Postu Gör <span aria-hidden="true">→</span></a><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
+<header class="k-dialog-head"><a class="k-media-open" data-media-work target="_top">Postu Gör <span aria-hidden="true">→</span></a><span class="k-media-count" data-media-count></span><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
 <div class="k-media-stage"><img alt="" data-media-img></div>
+<button type="button" class="k-media-nav" data-media-step="-1" aria-label="Önceki görsel" hidden>‹</button><button type="button" class="k-media-nav is-next" data-media-step="1" aria-label="Sonraki görsel" hidden>›</button>
 </dialog>
 
 <div class="k-toast" data-toast role="status" aria-live="polite" popover="manual" hidden></div>
@@ -693,6 +694,9 @@ font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helveti
 #kisgApp .kw-media-more svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 #kisgApp .kw-media.is-tall .kw-media-more{display:inline-flex}
 #kisgApp .kw-media.is-broken{display:none}
+#kisgApp .kw-media-set[data-n="2"]{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:12px;aspect-ratio:16/9;border-radius:14px;overflow:hidden}
+#kisgApp .kw-media-set[data-n="2"] .kw-media{height:100%;margin:0;border-radius:0}
+#kisgApp .kw-media-set[data-n="2"] .kw-post-image{width:100%;height:100%;max-height:none;object-fit:cover}
 #kisgApp .kw-post-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 #kisgApp .kw-post-actions{display:flex;align-items:center;gap:4px;margin:8px -8px 0 -10px}
 #kisgApp .kw-act,#kisgApp .kw-likes-static{position:relative;display:inline-flex;align-items:center;gap:7px;min-height:42px;padding:6px 14px 6px 10px;border:0;border-radius:var(--r-pill);background:transparent;font-size:13.5px;font-weight:700;white-space:nowrap;transition:background var(--t-fast),color var(--t-fast),transform var(--t-fast)}
@@ -959,7 +963,10 @@ font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helveti
 #kisgApp .k-file-button input{position:absolute;inset:0;width:100%;opacity:0;cursor:pointer}
 #kisgApp .k-file-button:focus-within,#kisgApp .k-file-button.is-called{outline:2px solid var(--ink);outline-offset:2px}
 #kisgApp .k-image-preview{position:relative;display:flex;justify-content:center;margin-top:8px;overflow:hidden;border-radius:14px;background:var(--surface-2)}
+#kisgApp .k-image-preview figure{position:relative;display:flex;justify-content:center;flex:1 1 0;min-width:0;margin:0}
+#kisgApp .k-image-preview[data-n="2"]{gap:2px}
 #kisgApp .k-image-preview img{display:block;max-width:100%;max-height:300px;object-fit:contain}
+#kisgApp .k-image-preview[data-n="2"] img{width:100%;height:200px;object-fit:cover}
 #kisgApp .k-image-preview button{position:absolute;top:8px;right:8px;min-height:32px;padding:0 12px;border:0;border-radius:var(--r-pill);background:rgba(20,26,36,.82);color:#fff;font-size:12.5px;font-weight:650}
 #kisgApp .k-login-top{display:flex;align-items:center;justify-content:space-between;padding:16px 14px 0 24px}
 #kisgApp .k-login-mark{display:block;width:44px;height:44px;border-radius:12px;object-fit:cover}
@@ -1016,6 +1023,10 @@ font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helveti
 #kisgApp .k-media-dialog:focus{outline:none}
 #kisgApp .k-media-stage{display:flex;flex:1 1 auto;min-height:0;max-height:calc(100dvh - 110px);overflow:auto;overscroll-behavior:contain;background:var(--surface-2);cursor:zoom-out}
 #kisgApp .k-media-stage img{display:block;max-width:100%;height:auto;margin:auto;cursor:default}
+#kisgApp .k-media-count{margin-left:auto;padding-right:8px;color:var(--muted);font-size:13px;font-weight:650}
+#kisgApp .k-media-nav{position:absolute;top:50%;left:12px;display:grid;place-items:center;width:44px;height:44px;padding:0 0 3px;border:0;border-radius:50%;background:rgba(20,26,36,.72);color:#fff;font-size:28px;line-height:1}
+#kisgApp .k-media-nav.is-next{left:auto;right:12px}
+#kisgApp .k-media-nav[hidden]{display:none}
 #kisgApp .av-stage{position:relative;display:grid;place-items:center;width:min(280px,100%);aspect-ratio:1;margin:4px auto 0;overflow:hidden;border-radius:18px}
 #kisgApp .av-current .av-big{width:180px;height:180px;font-size:52px}
 #kisgApp .av-canvas{width:100%;height:100%;border-radius:18px;background:var(--surface-2);cursor:grab;touch-action:none;outline:none}
@@ -1533,7 +1544,7 @@ version: '2026-09-30'   // legal_acceptances.document_version
 },
 siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
 historyRouting: true,
-version: '4.34.3',
+version: '4.35.0',
 hostWidthDesktopMax: 1480,
 routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
 legacyRoutes: { '/calisma': 'works' },
@@ -3224,16 +3235,16 @@ return { open, apply };
 const POST_SELECT = 'id,user_id,content,image_path,profile_featured_order,created_at,updated_at,category:professional_post_categories(id,name),author:profiles!professional_posts_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company),likes:professional_post_likes(count)';
 const postData = (() => {
 const COMMENT_COUNT = ',comments:professional_post_comments(count)', TAG = ',tag_id,tag:professional_tags(id,name)';
-let withCommentCount = true, withTag = true;
+let withCommentCount = true, withTag = true, withImg2 = true;
 const query = () => {
-let q = db.from('professional_posts').select(POST_SELECT + (withTag ? TAG : '') + (withCommentCount ? COMMENT_COUNT : ''));
+let q = db.from('professional_posts').select(POST_SELECT + (withImg2 ? ',image_path_2' : '') + (withTag ? TAG : '') + (withCommentCount ? COMMENT_COUNT : ''));
 if (withCommentCount) q = q.eq('comments.status', 'active');
 return q;
 };
 async function run(build) {
 let res = await build(query());
-while (res.error && (withTag || withCommentCount) && /PGRST2\d\d|42703|relationship|could not find/i.test(`${res.error.code} ${res.error.message}`)) {
-if (withTag) withTag = false; else withCommentCount = false;
+while (res.error && (withImg2 || withTag || withCommentCount) && /PGRST2\d\d|42703|relationship|could not find/i.test(`${res.error.code} ${res.error.message}`)) {
+if (withImg2 && /image_path_2/.test(res.error.message)) withImg2 = false; else if (withTag) withTag = false; else withCommentCount = false;
 res = await build(query());
 }
 return res;
@@ -3246,21 +3257,29 @@ const { data, error } = await run(q => q.eq('id', id).eq('status', 'active').may
 if (error) throw error;
 return data ? normalize(data) : null;
 }
-return { run, normalize, fetch, mark };
+return { run, normalize, fetch, mark, img2: () => withImg2 };
 })();
 const postBus = new Set();
 const emitPost = (kind, payload) => postBus.forEach(fn => { try { fn(kind, payload); } catch (e) { console.error(e); } });
 
 const mediaViewer = (() => {
 const d = $('#kaMediaDialog'), img = $('[data-media-img]', d), link = $('[data-media-work]', d), stage = $('.k-media-stage', d);
+const v = { list: [], i: 0, x: null }, count = $('[data-media-count]', d), navs = $$('[data-media-step]', d);
+function show(i) {
+v.i = (i + v.list.length) % v.list.length; img.src = v.list[v.i]; stage.scrollTop = 0;
+count.textContent = v.list.length > 1 ? `${v.i + 1} / ${v.list.length}` : ''; navs.forEach(b => { b.hidden = v.list.length < 2; });
+}
+navs.forEach(b => b.addEventListener('click', () => show(v.i + Number(b.dataset.mediaStep))));
+d.addEventListener('keydown', e => { if (v.list.length > 1 && /^Arrow(Left|Right)$/.test(e.key)) { e.preventDefault(); show(v.i + (e.key === 'ArrowRight' ? 1 : -1)); } });
+stage.addEventListener('touchstart', e => { v.x = e.touches.length === 1 ? e.touches[0].clientX : null; }, { passive: true });
+stage.addEventListener('touchend', e => { const dx = v.x == null ? 0 : e.changedTouches[0].clientX - v.x; if (v.list.length > 1 && Math.abs(dx) > 50) show(v.i + (dx < 0 ? 1 : -1)); v.x = null; }, { passive: true });
 d.addEventListener('close', () => { img.removeAttribute('src'); router.popModal(); });
 stage.addEventListener('click', e => { if (e.target !== img) dialogs.close(d); });
 return {
-open(src, work, alt) {
-img.src = src; img.alt = alt; link.href = work;
+open(list, i, work, alt) {
+v.list = [].concat(list); show(i || 0); img.alt = alt; link.href = work;
 dialogs.open(d, 'full');
 d.focus({ preventScroll: true });   // ilk bağlantıda odak halkası çıkmasın; Esc/Tab erişilebilirliği korunur
-stage.scrollTop = 0;
 router.pushModal(() => dialogs.close(d));
 }
 };
@@ -3292,7 +3311,7 @@ return `${like}${comment}<button type="button" class="kw-act kw-act-share" data-
 }
 const isLong = text => text.length > 520 || (text.match(/\n/g) || []).length > 9;
 function card(p, eager = false) {
-const a = p.author || {}, image = storageUrl(p.image_path), profile = urls.profile(p.user_id), work = urls.work(p.id), line = identity.feedLine(a);
+const a = p.author || {}, imgs = [p.image_path, p.image_path_2].filter(Boolean).map(storageUrl), profile = urls.profile(p.user_id), work = urls.work(p.id), line = identity.feedLine(a);
 const long = !detail && p.content ? isLong(p.content) : false;
 const edited = p.updated_at && p.updated_at !== p.created_at ? ' · düzenlendi' : '';
 const when = detail ? new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(p.created_at)) : relativeTime(p.created_at);
@@ -3304,7 +3323,7 @@ return `<article class="kw-post" data-post-id="${esc(p.id)}">`
 + `<div class="kw-post-body">`
 + (p.content ? (detail ? `<div class="kw-post-text"><p class="kw-post-content">${linkify(p.content)}</p></div>` : `<a class="kw-post-detail kw-post-text" href="${esc(work)}" target="_top"><p class="kw-post-content${long ? ' is-clamped' : ''}">${linkify(p.content, { inert: true })}</p></a>`) : '')
 + (long ? `<a class="kw-more-link" href="${esc(work)}" target="_top">Devamını oku</a>` : '')
-+ (image ? `<button type="button" class="kw-media" data-media="${esc(image)}" data-work="${esc(work)}" aria-label="Görseli tam boyut aç"><img class="kw-post-image" src="${esc(image)}" alt="${esc((p.content || 'Post görseli').slice(0, 120))}" loading="${eager ? 'eager' : 'lazy'}" decoding="async"><span class="kw-media-more" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4h5v5M9 20H4v-5M20 4l-6 6M4 20l6-6"/></svg>Tamamını gör</span></button>` : '')
++ (imgs.length ? `<div class="kw-media-set" data-n="${imgs.length}">${imgs.map((u, i) => `<button type="button" class="kw-media" data-media="${esc(u)}" data-work="${esc(work)}" aria-label="${imgs.length > 1 ? `Görsel ${i + 1}/${imgs.length}, tam boyut aç` : 'Görseli tam boyut aç'}"><img class="kw-post-image" src="${esc(u)}" alt="${esc((p.content || 'Post görseli').slice(0, 120))}" loading="${eager ? 'eager' : 'lazy'}" decoding="async">${imgs.length > 1 ? '' : '<span class="kw-media-more" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 4h5v5M9 20H4v-5M20 4l-6 6M4 20l6-6"/></svg>Tamamını gör</span>'}</button>`).join('')}</div>` : '')
 + (p.tag?.name ? `<div class="kw-post-tags"><button type="button" class="kt-chip kt-chip-sm" data-tag-filter="${esc(p.tag.id)}">${esc(p.tag.name)}</button></div>`
 : p.category?.name ? `<div class="kw-post-tags"><span class="k-tag">${esc(p.category.name)}</span></div>` : '')
 + `<div class="kw-post-actions" data-actions>${actions(p)}</div><div class="kw-thread" data-thread hidden></div></div></article>`;
@@ -3725,7 +3744,7 @@ else { shellHooks.leave(); navigateTop(urls.work(pid)); }
 return;
 }
 const media = t.closest('[data-media]');
-if (media) { mediaViewer.open(media.dataset.media, media.dataset.work, media.querySelector('img')?.alt || ''); return; }
+if (media) { const all = [...media.parentElement.querySelectorAll('[data-media]')]; mediaViewer.open(all.map(b => b.dataset.media), all.indexOf(media), media.dataset.work, media.querySelector('img')?.alt || ''); return; }
 const act = t.closest('[data-post-action]'); if (!act) return;
 const c = act.closest('[data-post-id]'), p = c && find(c.dataset.postId); if (!p) return;
 closePopovers();
@@ -3825,8 +3844,8 @@ root: $('#kaPostDialog'), form: $('#kaPostForm'), title: $('#kaPostTitle'), cont
 label: $('[data-photo-label]'), preview: $('#kaPostPreview'), error: $('#kaPostError'), submit: $('#kaPostSubmit'),
 tagAdd: $('[data-tag-add]'), tagChip: $('[data-tag-chip]')
 };
-const removeImageBtn = $('[data-remove-image]', d.preview);
-const s = { tag: null, edit: null, file: null, previewUrl: null, saving: false, preparing: false, pick: 0 };
+const s = { tag: null, edit: null, imgs: [], saving: false, preparing: false, pick: 0 };
+const maxImgs = () => (postData.img2() ? 2 : 1);
 function renderTag() {
 const t = s.edit ? s.edit.tag : s.tag;
 d.tagChip.hidden = !t; d.tagAdd.hidden = !!t || !!s.edit;
@@ -3836,23 +3855,26 @@ $('[data-tag-clear]', d.tagChip).hidden = !!s.edit;
 d.tagAdd.addEventListener('click', () => tags.open(t => { s.tag = t; renderTag(); }));
 $('[data-tag-clear]', d.tagChip).addEventListener('click', () => { s.tag = null; renderTag(); d.tagAdd.focus(); });
 
-function showPreview(url) { $('img', d.preview).src = url; d.preview.hidden = false; d.label.textContent = 'Fotoğrafı Değiştir'; }
-function clearPreview() {
-if (s.previewUrl) URL.revokeObjectURL(s.previewUrl);
-s.previewUrl = null; d.preview.hidden = true; $('img', d.preview).removeAttribute('src'); d.file.value = '';
-d.label.textContent = 'Fotoğraf Ekle';
+function renderPreview() {
+const n = s.imgs.length;
+d.preview.hidden = !n; d.preview.dataset.n = n;
+d.preview.innerHTML = s.imgs.map((m, i) => `<figure><img alt="Seçilen görsel ${i + 1}" src="${esc(m.url)}"><button type="button" data-remove-image="${i}">${n > 1 ? 'Kaldır' : 'Fotoğrafı Kaldır'}</button></figure>`).join('');
+d.label.textContent = !n ? 'Fotoğraf Ekle' : n < maxImgs() ? '2. Fotoğrafı Ekle' : 'Fotoğrafı Değiştir';
+d.file.closest('.k-file-button').hidden = n > 1;
 }
+function dropImg(i) { const [m] = s.imgs.splice(i, 1); if (m?.pick) URL.revokeObjectURL(m.url); renderPreview(); }
+function clearImgs() { s.imgs.forEach(m => m.pick && URL.revokeObjectURL(m.url)); s.imgs = []; d.file.value = ''; renderPreview(); }
 function formError(text) { d.error.textContent = text; d.error.hidden = !text; }
 async function open(post = null, intent = '', topic = null) {
 const user = await requireUser(() => open(post, intent, topic)); if (!user) return;
 if (s.saving || d.root.open || (post && post.user_id !== user.id)) return;
-s.edit = post; s.file = null; clearPreview();
+s.edit = post; clearImgs();
+s.imgs = [post?.image_path, post?.image_path_2].filter(Boolean).map(path => ({ path, url: storageUrl(path) })); renderPreview();
 d.title.textContent = post ? 'Postu Düzenle' : 'Yeni Post';
 d.submit.textContent = post ? 'Değişiklikleri Kaydet' : 'Post Yayınla';
 d.content.value = post?.content || '';
 s.tag = topic || (!post && router.current === 'works' ? VIEWS.works.tag() : null); s.topic = !!topic; renderTag();
 formError('');
-if (post?.image_path) showPreview(storageUrl(post.image_path));
 dialogs.open(d.root, 'sheet');
 const fileLabel = d.file.closest('.k-file-button');
 fileLabel.classList.toggle('is-called', intent === 'photo');
@@ -4000,39 +4022,40 @@ if (s.preparing) { formError('Fotoğraf hazırlanıyor, birkaç saniye sonra tek
 if (!session.user) { formError('Bu işlem için giriş yapmalısınız.'); return; }
 const current = s.edit;
 const content = d.content.value.trim();
-const removingExisting = !!current?.image_path && d.preview.hidden && !s.file;
-if (!content && !s.file && (!current?.image_path || removingExisting)) { formError('Post için metin veya görsel ekleyin.'); return; }
-const userId = session.user.id, file = s.file;
+if (!content && !s.imgs.length) { formError('Post için metin veya görsel ekleyin.'); return; }
+const userId = session.user.id, imgs = s.imgs.slice(), old = [current?.image_path, current?.image_path_2].filter(Boolean);
 s.saving = true; session.writes++; dialogs.lock(d.root, true);
-d.file.disabled = true; removeImageBtn.disabled = true; formError('');
+d.file.disabled = true; d.preview.inert = true; formError('');
 setBusy(d.submit, true, current ? 'Kaydediliyor...' : 'Yayınlanıyor...');
-let newPath = current?.image_path || null, uploaded = false, committed = false, savedId = null;
+const paths = [], uploaded = [];
+let committed = false, savedId = null;
 try {
 const postId = current?.id || newId();
-if (file) {
-const img = await compressImage(file);
-newPath = `${userId}/${postId}-${newId()}.${img.ext}`;
+for (const m of imgs) {
+if (m.path) { paths.push(m.path); continue; }
+const img = await compressImage(m.pick), path = `${userId}/${postId}-${newId()}.${img.ext}`;
 if (session.user?.id !== userId) throw new Error('Oturum değişti.');
-const { error } = await db.storage.from(CONFIG.imageBucket).upload(newPath, img.blob, { contentType: img.type, upsert: false, cacheControl: '31536000' });
+const { error } = await db.storage.from(CONFIG.imageBucket).upload(path, img.blob, { contentType: img.type, upsert: false, cacheControl: '31536000' });
 if (error) throw error;
-uploaded = true;
-} else if (removingExisting) newPath = null;
+uploaded.push(path); paths.push(path);
+}
 if (session.user?.id !== userId) throw new Error('Oturum değişti.');
 if (!current && s.tag && !s.tag.id) { const r = await db.rpc('kisg_tag_resolve', { p_name: s.tag.name }); if (r.error) throw r.error; s.tag = r.data?.[0] || null; }
-const payload = { content: content || null, image_path: newPath };
+const payload = { content: content || null, image_path: paths[0] || null, ...(postData.img2() ? { image_path_2: paths[1] || null } : {}) };
 const result = current
 ? await db.from('professional_posts').update(payload).eq('id', current.id).eq('user_id', userId).eq('status', 'active').select('id').single()
 : await db.from('professional_posts').insert({ id: postId, user_id: userId, ...payload, tag_id: s.tag?.id || null, status: 'active' }).select('id').single();
 if (result.error) throw result.error;
 committed = true; savedId = result.data.id;
-if (current?.image_path && current.image_path !== newPath) { try { await db.storage.from(CONFIG.imageBucket).remove([current.image_path]); } catch {} }
+const gone = old.filter(x => !paths.includes(x));
+if (gone.length) { try { await db.storage.from(CONFIG.imageBucket).remove(gone); } catch {} }
 } catch (err) {
 console.warn('Post kaydedilemedi:', err?.code || err?.message || err);
-if (uploaded && !committed && newPath) { try { await db.storage.from(CONFIG.imageBucket).remove([newPath]); } catch {} }
+if (uploaded.length && !committed) { try { await db.storage.from(CONFIG.imageBucket).remove(uploaded); } catch {} }
 formError(err?.userMessage || TAG_ERRORS[err?.hint] || storageErrorText(err) || errorText(err, 'Post kaydedilemedi.'));
 } finally {
 s.saving = false; session.writes--; dialogs.lock(d.root, false);
-d.file.disabled = false; removeImageBtn.disabled = false; setBusy(d.submit, false);
+d.file.disabled = false; d.preview.inert = false; setBusy(d.submit, false);
 }
 if (!committed) return;
 const started = s.topic && s.tag?.id ? { id: s.tag.id, name: s.tag.name } : null;   // Konu Ara'dan başlatılan konu
@@ -4044,28 +4067,26 @@ emitPost('saved', { id: savedId, fresh, previous: current, failed });
 if (started && router.current === 'works') VIEWS.works.setTag(started);
 }
 d.form.addEventListener('submit', savePost);
-d.root.addEventListener('close', () => { s.edit = null; s.file = null; s.tag = null; s.pick++; s.preparing = false; clearPreview(); formError(''); });
+d.root.addEventListener('close', () => { s.edit = null; s.tag = null; s.pick++; s.preparing = false; clearImgs(); formError(''); });
 d.file.addEventListener('change', async e => {
-const file = e.target.files?.[0]; if (!file) return;
+const max = maxImgs(), files = [...(e.target.files || [])].slice(0, max === 1 ? 1 : max - s.imgs.length); if (!files.length) return;
 const token = ++s.pick;
 s.preparing = true; formError('');
-let picked = null;
-try { picked = await prepareImage(file); }
+const picked = [];
+try { for (const file of files) picked.push(await prepareImage(file)); }
 catch (err) { if (token === s.pick) formError(err?.userMessage || MSG_BROKEN); }
 finally { if (token === s.pick) s.preparing = false; }
 d.file.value = '';                       // aynı fotoğraf yeniden seçilebilsin; kopya bellekte
-if (!picked || token !== s.pick || !d.root.open) return;
-s.file = picked; if (s.previewUrl) URL.revokeObjectURL(s.previewUrl);
-s.previewUrl = URL.createObjectURL(picked.blob); showPreview(s.previewUrl);
+if (!picked.length || token !== s.pick || !d.root.open) return;
+if (max === 1) s.imgs.splice(0).forEach(m => m.pick && URL.revokeObjectURL(m.url));
+s.imgs.push(...picked.slice(0, max - s.imgs.length).map(pick => ({ pick, url: URL.createObjectURL(pick.blob) }))); renderPreview();
 });
-$('img', d.preview).addEventListener('error', () => {
-if (!s.file || $('img', d.preview).getAttribute('src') !== s.previewUrl) return;
-const heic = !!s.file.info?.heic;
-s.file = null; clearPreview();
-if (s.edit?.image_path) showPreview(storageUrl(s.edit.image_path));
-formError(heic ? MSG_HEIC : MSG_BROKEN);
-});
-removeImageBtn.addEventListener('click', () => { s.file = null; clearPreview(); });
+d.preview.addEventListener('error', e => {
+const i = s.imgs.findIndex(m => m.pick && m.url === e.target.getAttribute?.('src')); if (i < 0) return;
+const heic = !!s.imgs[i].pick.info?.heic;
+dropImg(i); formError(heic ? MSG_HEIC : MSG_BROKEN);
+}, true);
+d.preview.addEventListener('click', e => { const b = e.target.closest?.('[data-remove-image]'); if (b) dropImg(Number(b.dataset.removeImage)); });
 return { open, onSession() { if (d.root.open && !s.saving) dialogs.close(d.root); } };
 })();
 
