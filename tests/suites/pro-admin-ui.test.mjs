@@ -32,7 +32,7 @@ function server(ctx) {
   st.tags = [
     { id: T1, name: 'Yüksekte Çalışma', pinned: false, blocked: false, created_at: iso(9000), last_post_at: iso(30), post_count: 12 },
     { id: T2, name: 'Yuksekte calisma2', pinned: false, blocked: false, created_at: iso(500), last_post_at: iso(60), post_count: 2 },
-    { id: T3, name: 'Bakanlığa Şikayet', pinned: true, blocked: false, created_at: iso(20000), last_post_at: null, post_count: 0 }];
+    { id: T3, name: 'Bakanlığa Şikayet', note: 'Mevzuat sorunlarını paylaş.', pinned: true, blocked: false, created_at: iso(20000), last_post_at: null, post_count: 0 }];
   st.T = { T1, T2, T3 };
   const withTotal = rows => rows.map(r => ({ ...r, total_count: rows.length }));
   const ADMIN_RPC = {
@@ -343,10 +343,20 @@ try {
     await f.fill('.pa-dialog input[name="name"]', 'Çatı İşleri');
     await f.click('.pa-dialog button[type="submit"]');
     check(await until(() => lastRpc(st, 'admin_update_tag')?.args.p_patch.name === 'Çatı İşleri') && await until(async () => (await f.textContent(`[data-tag="${T2}"]`)).includes('#Çatı İşleri')), `${vp.n}: yeniden adlandırıldı (gerekçe isteğe bağlı)`);
-    // sabitle
+    // sabitle (açıklama boş → note gönderilmez)
+    check((await f.textContent(`[data-tag="${T3}"]`)).includes('Mevzuat sorunlarını paylaş.'), `${vp.n}: sabit konunun açıklaması listede`);
     await f.click(`[data-tag="${T1}"] button:text-is("Sabitle")`);
     await f.click('.pa-dialog button[type="submit"]');
     check(await until(() => JSON.stringify(lastRpc(st, 'admin_update_tag')?.args.p_patch) === '{"pinned":true}') && await until(async () => (await f.textContent(`[data-tag="${T1}"]`)).includes('Sabit')), `${vp.n}: sabitlendi`);
+    // açıklama
+    await f.click(`[data-tag="${T1}"] button:text-is("Açıklama")`);
+    await f.fill('.pa-dialog textarea[name="note"]', 'Yüksekte çalışma deneyimlerini paylaş.');
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_update_tag')?.args.p_patch.note === 'Yüksekte çalışma deneyimlerini paylaş.') && await until(async () => (await f.textContent(`[data-tag="${T1}"]`)).includes('Yüksekte çalışma deneyimlerini paylaş.')), `${vp.n}: açıklama kaydedildi ve listede`);
+    await f.click(`[data-tag="${T1}"] button:text-is("Açıklama")`);
+    await f.fill('.pa-dialog textarea[name="note"]', '');
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => { const p = lastRpc(st, 'admin_update_tag')?.args.p_patch; return p && 'note' in p && p.note === null; }), `${vp.n}: boş açıklama → null (sitede görünmez)`);
     // engelle: gerekçe zorunlu
     await f.click(`[data-tag="${T1}"] button:text-is("Engelle")`);
     check((await f.textContent('.pa-dialog')).includes('mevcut postlar görünmeye devam eder'), `${vp.n}: engelleme açıklaması`);

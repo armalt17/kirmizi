@@ -47,6 +47,8 @@ const browser = await chromium.launch(LAUNCH);
 try {
   for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile', width: 390, height: 844, isMobile: true, hasTouch: true }]) {
     const N = vp.name, mobile = N === 'mobile';
+    // masaüstünde sabit konunun açıklaması var, mobilde yok (yoksa hiçbir şey görünmemeli)
+    const NOTE = 'Sahada yaşadığın mevzuat sorunlarını paylaş.'; TREND[0].note = mobile ? null : NOTE;
     seed();
     const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, isMobile: vp.isMobile, hasTouch: vp.hasTouch });
     await setup(ctx, true);
@@ -62,7 +64,7 @@ try {
     check(chips.map(c => c.t).join('|') === 'Konu Ara|Bakanlığa Şikayet|Yüksekte Çalışma|İş Kazaları|ATEX|Koruma Ekipmanları' && chips[0].all, `${N} şerit: "Konu Ara" başta → sabit → gündem → yeni ${JSON.stringify(chips.map(c => c.t))}`);
     const tagChips = chips.slice(1);
     check(tagChips.every(c => c.hash === '"#"' && !c.ico && c.bg === tagChips[0].bg), `${N} şerit: tüm etiketler aynı tasarım (# ön ek, ikon yok)`);
-    check(tagChips[0].title.includes('Kırmızı İSG') && !tagChips[1].title, `${N} sabit etiketin nedeni (title): ${tagChips[0].title}`);
+    check(tagChips[0].title === (mobile ? '' : NOTE) && !tagChips[1].title, `${N} sabit etiketin açıklaması (title): "${tagChips[0].title}"`);
     check(rpc.some(x => x.fn === 'kisg_tags_trending' && x.body.p_limit === 8), `${N} şerit verisi: kisg_tags_trending (8 slot)`);
     const sr = await f.evaluate(() => { const s = document.querySelector('[data-tag-strip]').getBoundingClientRect(), c = document.querySelector('.kw-composer').getBoundingClientRect(); return { above: s.bottom <= c.top + 1, sw: document.documentElement.scrollWidth - document.documentElement.clientWidth }; });
     check(sr.above && sr.sw <= 0, `${N} şerit composer'ın üstünde, sayfa taşmıyor`);
@@ -82,7 +84,7 @@ try {
     await f.click('[data-view="works"] [data-tag-off]'); await settle(page, 900);
     // sabit etiket filtrelenince nedeni görünür
     await f.click('[data-tag-strip] [data-tag-name="Bakanlığa Şikayet"]'); await settle(page, 700);
-    check(/Kırmızı İSG’nin sabitlediği önemli konu/.test(await f.textContent('[data-tag-note]')) && await f.isVisible('[data-tag-note]'), `${N} sabit konu filtresinde "Kırmızı İSG sabitledi" notu`);
+    check(mobile ? await f.isHidden('[data-tag-note]') : (await f.textContent('[data-tag-note]')) === NOTE && await f.isVisible('[data-tag-note] svg'), `${N} sabit konu filtresinde ${mobile ? 'açıklama yoksa not görünmez' : 'admin açıklaması iğne ikonuyla görünür'}`);
     await f.click('[data-tag-strip] [data-tag-name="Bakanlığa Şikayet"]'); await settle(page, 700);
     check(await f.isHidden('[data-tag-note]'), `${N} filtre kalkınca not gizlenir`);
     check(!(await f.$('[data-tag-strip] .kt-chip.is-on')) && (await f.$$eval('[data-view="works"] [data-post-id]', n => n.length)) >= 10, `${N} "Tüm Postlar" filtreyi kaldırır`);
@@ -92,7 +94,7 @@ try {
     const pl = await f.evaluate(() => { const d = document.getElementById('kaTagDialog'), r = d.getBoundingClientRect(); return { place: d.dataset.place, right: Math.round(window.innerWidth - r.right), w: Math.round(r.width), bottom: Math.round(window.innerHeight - r.bottom), title: d.querySelector('h2').textContent, secs: [...d.querySelectorAll('.kt-sec')].map(x => x.textContent), rows: d.querySelectorAll('.kt-row').length }; });
     check(pl.place === (mobile ? 'sheet' : 'center') && pl.title === 'Gündemdeki Konular' && JSON.stringify(pl.secs) === '["Sabit","Gündemde"]' && pl.rows === 5, `${N} panel: ${mobile ? 'alt sayfa' : 'ortada'}, Sabit + Gündemde (${JSON.stringify(pl)})`);
     if (!mobile) check(pl.right > 100 && pl.w <= 500, `${N} masaüstü panel yandan değil ortada açılır (${pl.right}px, ${pl.w}px)`);
-    check((await f.textContent('#kaTagDialog .kt-pinned .kt-meta')).startsWith('Kırmızı İSG’nin sabitlediği önemli konu'), `${N} panel: sabit konunun nedeni yazıyor`);
+    check(mobile ? !(await f.$('#kaTagDialog .kt-pinned .kt-meta')) : (await f.textContent('#kaTagDialog .kt-pinned .kt-meta')) === NOTE, `${N} panel: sabit konu ${mobile ? 'açıklamasızsa alt satır yok' : 'açıklaması görünür'}`);
     const top = await f.$eval('#kaTagDialog [data-tag-name="Yüksekte Çalışma"]', b => ({ rank: b.querySelector('.kt-rank')?.textContent, hot: b.classList.contains('kt-hot'), meta: b.querySelector('.kt-meta')?.textContent, heat: b.querySelector('.kt-heat')?.style.getPropertyValue('--w') }));
     check(top.rank === '1' && top.hot && top.meta === '1.280 gönderi · Son 24 saatte 42 yeni' && top.heat === '100%', `${N} gündem satırı: sıra, vurgulu ikon, sayılar, ısı çubuğu ${JSON.stringify(top)}`);
     check(!(await f.$('#kaTagDialog [data-tag-name="ATEX"] .kt-meta')) && (await f.$eval('#kaTagDialog [data-tag-name="ATEX"] .kt-heat', i => i.style.getPropertyValue('--w'))) === '23%', `${N} sayısı gelmeyen etiket (eski DB) sayı göstermez, ısı oranlı`);

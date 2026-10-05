@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.29.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.30.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -8,6 +8,8 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.30.0: Sabit konu açıklaması admin'den gelir (DB 20261008): panelde, şerit ipucunda ve filtre notunda (iğne ikonu)
+ görünür; açıklama yoksa hiçbir şey gösterilmez.
 v4.29.0: Konular sadeleşti: şeritte "Konu Ara" başta, tüm etiketler aynı (# ön ekli) tasarım, renk geçişleri kaldırıldı;
  sabit konunun nedeni ("Kırmızı İSG'nin sabitlediği önemli konu") panelde, şeritte ve filtrede görünür; Akış bir etikete
  filtreliyken "Paylaş" o etiketle açılır (× ile kaldırılabilir).
@@ -1758,7 +1760,7 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp :is(.kt-chip[data-tag-id],.kt-chip-sm,[data-tag-chip-name])::before{content:"#";margin-right:1px;opacity:.45}
 #kisgApp .kt-chip-sm{min-height:28px;padding:0 11px;background:var(--red-tint);box-shadow:none;color:var(--red-text);font-size:12.5px}
 #kisgApp .kt-chip button{margin-right:-6px;padding:0 4px;border:0;background:none;color:inherit;font-size:18px;line-height:1}
-#kisgApp .kt-note{margin:-4px 0 12px;padding:9px 12px;border-radius:12px;background:var(--red-tint);color:var(--red-text);font-size:13px;font-weight:600}
+#kisgApp .kt-note{display:flex;align-items:flex-start;gap:8px;margin:-4px 0 12px;padding:10px 12px;border-radius:12px;background:var(--red-tint);color:var(--red-text);font-size:13px;font-weight:600}
 #kisgApp .kt-ico{flex:none;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 #kisgApp .kt-new{padding:1px 7px;border-radius:var(--r-pill);background:var(--surface-2);color:var(--muted);font-size:10.5px;font-style:normal;font-weight:700}
 #kisgApp .kt-add{display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 15px;border:1px dashed var(--line-strong);border-radius:var(--r-pill);background:#fff;color:var(--muted);font-size:14px;font-weight:600}
@@ -1826,7 +1828,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.29.0',
+  version: '4.30.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
@@ -4190,7 +4192,6 @@ const tags = (() => {
   const st = { trend: null, p: null, pick: null, seq: 0, timer: 0 };
   const svg = (d, c = '') => `<svg aria-hidden="true" viewBox="0 0 24 24"${c}><path d="${d}"/></svg>`;
   const HASH = 'M5 9h14M5 15h14M10 4 8 20M16 4l-2 16', PP = 'M9 4h6l-1 6 3 3H7l3-3zM12 13v7';
-  const PINNED = 'Kırmızı İSG’nin sabitlediği önemli konu';
   const nf = n => Number(n).toLocaleString('tr-TR');
   const badge = t => (t.slot === 'new' ? '<i class="kt-new">yeni</i>' : '');
   function trending() {
@@ -4199,8 +4200,8 @@ const tags = (() => {
   }
   const row = (t, attr = '', o = {}) => `<button type="button" class="kt-row${o.cls || ''}" data-tag-id="${esc(t.id || '')}" data-tag-name="${esc(t.name)}"${attr} style="--i:${o.i || 0}">`
     + (o.rank ? `<b class="kt-rank">${o.rank}</b>` : '') + `<span class="kt-tile">${o.ico || svg(HASH)}</span><span class="kt-txt"><span>${esc(t.name)}</span>`
-    + (o.pin ? `<small class="kt-meta">${PINNED}${t.posts > 0 ? ` · ${nf(t.posts)} gönderi` : ''}</small>`
-      : t.posts != null ? `<small class="kt-meta">${nf(t.posts)} gönderi${t.posts_24h > 0 ? ` · <em>Son 24 saatte ${nf(t.posts_24h)} yeni</em>` : ''}</small>` : '')
+    + (o.pin && t.note ? `<small class="kt-meta">${esc(t.note)}</small>`
+      : t.posts > 0 || (t.posts != null && !o.pin) ? `<small class="kt-meta">${nf(t.posts)} gönderi${t.posts_24h > 0 ? ` · <em>Son 24 saatte ${nf(t.posts_24h)} yeni</em>` : ''}</small>` : '')
     + (o.w ? `<i class="kt-heat" style="--w:${o.w}%"></i>` : '') + `</span>${badge(t)}${svg('m9 6 6 6-6 6', ' class="kt-go"')}</button>`;
   function render(rows, text) {
     if (!text) {
@@ -4242,7 +4243,7 @@ const tags = (() => {
     dialogs.close(d);
     if (cb) cb(t); else VIEWS.works.setTag(t);
   });
-  return { open, trending, PINNED };
+  return { open, trending, PP };
 })();
 
 const composer = (() => {
@@ -4533,9 +4534,10 @@ function createWorksView() {
     if (!s.trend) return;
     const rows = s.tag && !s.trend.some(t => t.id === s.tag.id) ? [s.tag, ...s.trend] : s.trend;
     strip.innerHTML = '<button type="button" class="kt-chip kt-all" data-tag-all><svg class="kt-ico" aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>Konu Ara</button>'
-      + rows.map(t => `<button type="button" class="kt-chip${t.id === s.tag?.id ? ' is-on' : ''}" data-tag-id="${esc(t.id)}" data-tag-name="${esc(t.name)}" aria-pressed="${t.id === s.tag?.id}"${t.slot === 'pinned' ? ` title="${tags.PINNED}"` : ''}>${esc(t.name)}</button>`).join('');
-    const note = $('[data-tag-note]', el), pin = s.tag && s.trend.some(t => t.id === s.tag.id && t.slot === 'pinned');
-    note.hidden = !pin; note.textContent = pin ? `📌 ${tags.PINNED}. Bu konudaki paylaşımlar herkesin gündeminde kalır.` : '';
+      + rows.map(t => `<button type="button" class="kt-chip${t.id === s.tag?.id ? ' is-on' : ''}" data-tag-id="${esc(t.id)}" data-tag-name="${esc(t.name)}" aria-pressed="${t.id === s.tag?.id}"${t.slot === 'pinned' && t.note ? ` title="${esc(t.note)}"` : ''}>${esc(t.name)}</button>`).join('');
+    // Sabit konu açıklaması (admin yazar); yoksa hiçbir şey gösterilmez.
+    const note = $('[data-tag-note]', el), txt = s.tag && s.trend.find(t => t.id === s.tag.id && t.slot === 'pinned')?.note;
+    note.hidden = !txt; note.innerHTML = txt ? `<svg class="kt-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="${tags.PP}"/></svg><span>${esc(txt)}</span>` : '';
     strip.hidden = false; host.schedule();
   }
   function setTag(t) {

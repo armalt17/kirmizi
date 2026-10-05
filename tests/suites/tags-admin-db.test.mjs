@@ -42,6 +42,10 @@ r = runFile(MIG('20261006_tags_admin_v2.sql')); check(ok(r), `migration tekrar �
 r = runFile(MIG('20261006_tags_admin_v2.verify.sql'));
 const vrows = r.out.split('\n').filter(Boolean);
 check(ok(r) && vrows.length === 11 && vrows.every(l => l.endsWith('|t')), `verify: ${vrows.length} satırın hepsi ok ${vrows.filter(l => !l.endsWith('|t')).join(' ; ')}`);
+for (const f of ['20261007_tags_trending_v2.sql', '20261008_tags_pinned_note.sql', '20261008_tags_pinned_note.sql']) { r = runFile(MIG(f)); check(ok(r), `${f} uygulandı ${r.err}`); }
+r = runFile(MIG('20261008_tags_pinned_note.verify.sql'));
+const nrows = r.out.split('\n').filter(Boolean);
+check(ok(r) && nrows.length === 9 && nrows.every(l => l.endsWith('|t')), `20261008 verify: ${nrows.length} satır ok ${nrows.filter(l => !l.endsWith('|t')).join(' ; ')}`);
 
 // ---- veri ----
 const YC = resolve(A, 'Yüksekte Çalışma'), YC2 = resolve(M, 'Yuksekte calismalar'), KKD = resolve(A, 'KKD');
@@ -123,6 +127,30 @@ r = as('authenticated', user(A), `update public.professional_posts set tag_id = 
 check(ok(r) && psql(`select count(*) from public.professional_posts where tag_id = '${YC}'`).out === '5', 'kullanıcı postun etiketini hâlâ değiştiremez (guard)');
 r = admin(`select count(*) from public.admin_list_audit_log(p_target_type => 'tag')`);
 check(ok(r) && Number(r.out) >= 4, `audit listesinde etiket kayıtları (${r.out.trim()})`);
+
+// ---- sabit konu açıklaması (20261008) ----
+const BS = tagId('Bakanlığa Şikayet');
+const pinNote = () => as('anon', null, `select coalesce(string_agg(name || '=' || coalesce(note, '-'), ',' order by name), '') from public.kisg_tags_trending() where note is not null or slot = 'pinned'`).out.trim();
+check(pinNote() === 'Bakanlığa Şikayet=-,kişisel koruyucu=-', `açıklama yoksa note boş (${pinNote()})`);
+a0 = audits();
+r = admin(`select public.admin_update_tag('${BS}', '{"note":"  Sahada yaşadığın   mevzuat sorunlarını paylaş. "}', 'açıklama')`);
+check(ok(r) && JSON.parse(r.out).note === 'Sahada yaşadığın mevzuat sorunlarını paylaş.' && audits() === a0 + 1, `açıklama yazıldı, boşluklar toparlandı, audit ${r.err}`);
+check(pinNote().startsWith('Bakanlığa Şikayet=Sahada yaşadığın mevzuat sorunlarını paylaş.'), `gündemde sabit konunun açıklaması döner (${pinNote()})`);
+check(admin(`select note from public.admin_list_tags() where id = '${BS}'`).out.trim() === 'Sahada yaşadığın mevzuat sorunlarını paylaş.', 'admin listesinde açıklama');
+r = admin(`select public.admin_update_tag('${BS}', '{"note":"${'x'.repeat(161)}"}', 'x')`);
+check(!ok(r) && /KISG_ADMIN_INPUT/.test(r.err), '160 karakter sınırı');
+r = admin(`select public.admin_update_tag('${BS}', '{"note":5}', 'x')`);
+check(!ok(r) && /KISG_ADMIN_INPUT/.test(r.err), 'açıklama metin olmalı');
+r = admin(`select public.admin_update_tag('${BS}', '{"pinned":false}', 'x')`);
+check(ok(r) && !as('anon', null, `select count(*) from public.kisg_tags_trending() where note is not null`).out.trim().match(/^[1-9]/), 'sabit olmayan konunun açıklaması sitede dönmez');
+admin(`select public.admin_update_tag('${BS}', '{"pinned":true}', 'x')`);
+r = admin(`select public.admin_update_tag('${BS}', '{"note":"   "}', 'kaldır')`);
+check(ok(r) && JSON.parse(r.out).note === null && pinNote().startsWith('Bakanlığa Şikayet=-'), 'boş açıklama = açıklama yok');
+r = as('authenticated', user(A), `select public.admin_update_tag('${BS}', '{"note":"x"}', 'x')`);
+check(!ok(r) && /KISG_ADMIN_ONLY/.test(r.err), 'admin olmayan açıklama yazamaz');
+r = runFile(MIG('20261008_tags_pinned_note.rollback.sql'));
+check(ok(r) && psql(`select count(*) from information_schema.columns where table_name = 'professional_tags' and column_name = 'note'`).out === '0' && !/note/.test(psql(`select pg_get_function_result('public.kisg_tags_trending(integer)'::regprocedure)`).out), `20261008 geri alma ${r.err}`);
+r = runFile(MIG('20261008_tags_pinned_note.sql')); check(ok(r), '20261008 yeniden uygulanabilir');
 
 // ---- geri alma ----
 r = runFile(MIG('20261006_tags_admin_v2.rollback.sql'));

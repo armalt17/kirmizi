@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL ADMIN v1.3.0
+KIRMIZI İSG — PROFESSIONAL ADMIN v1.4.0
 
 KURULUM: Bu dosyanın TAMAMI Hostinger'da /pro-admin sayfasının Custom HTML/Embed içeriği olarak kullanılır.
 Ana uygulama (kisg-professional-app.html) ile aynı Supabase projesi ve aynı oturum (tarayıcı depolaması) kullanılır;
@@ -14,6 +14,7 @@ GÜVENLİK
    doğrudan tablodan, Supabase'de hazır olan RLS ile yapılır (bu dosya DB değiştirmez).
  - v1.3.0 Etiketler sekmesi: db/migrations/20261006_tags_admin_v2.sql gerekir (admin_list_tags, admin_update_tag,
    admin_merge_tags). Uygulanmamışsa sekme bunu söyler; diğer bölümler etkilenmez.
+ - v1.4.0 Sabit konu açıklaması (20261008_tags_pinned_note.sql): sitede sabit konunun altında görünür; boşsa hiçbir şey çıkmaz.
 
 BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler · Etiketler · Şikâyetler · Destek
 -->
@@ -242,7 +243,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.3.0',
+  version: '1.4.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -949,13 +950,15 @@ async function renderTags() {
       h('tbody', null, rows.map(r => h('tr', { 'data-tag': r.id },
         h('td', null, h('b', { style: 'color:var(--ink)', text: `#${r.name}` }),
           r.pinned ? h('span', { class: 'pa-badge is-pending', style: 'margin-left:6px', text: 'Sabit' }) : null,
-          r.blocked ? h('span', { class: 'pa-badge is-deleted', style: 'margin-left:6px', text: 'Engelli' }) : null),
+          r.blocked ? h('span', { class: 'pa-badge is-deleted', style: 'margin-left:6px', text: 'Engelli' }) : null,
+          r.pinned && r.note ? h('span', { class: 'pa-small', style: 'display:block;margin-top:4px', text: r.note }) : null),
         h('td', { 'data-label': 'Post', class: 'pa-num', text: num(r.post_count) }),
         h('td', { 'data-label': 'Oluşturma', class: 'pa-num', text: fmtDate(r.created_at) }),
         h('td', { 'data-label': 'Son aktivite', class: 'pa-num', text: fmtDate(r.last_post_at) }),
         h('td', null, h('div', { class: 'pa-actions' },
           btn('Yeniden adlandır', () => renameTag(r)),
           btn(r.pinned ? 'Sabitten kaldır' : 'Sabitle', () => toggleTag(r, 'pinned')),
+          r.pinned ? btn('Açıklama', () => noteTag(r)) : null,
           btn(r.blocked ? 'Engeli kaldır' : 'Engelle', () => toggleTag(r, 'blocked'), r.blocked ? '' : ' pa-btn-danger'),
           btn('Birleştir', () => mergeTag(r)))))))),
     pager(total, v.offset, off => { v.offset = off; renderTags(); })));
@@ -973,6 +976,18 @@ function renameTag(r) {
     }
   });
 }
+const noteField = v => h('label', { class: 'pa-field' }, h('span', { text: 'Sitede görünen açıklama (isteğe bağlı, en fazla 160 karakter)' }),
+  h('textarea', { name: 'note', maxlength: 160, placeholder: 'Örn. Sahada yaşadığın mevzuat ve denetim sorunlarını burada paylaş.', text: v || '' }));
+function noteTag(r) {
+  confirmDialog({
+    title: `#${r.name} açıklaması`, text: 'Sabit konunun altında gösterilir. Boş bırakırsanız sitede açıklama görünmez.', confirm: 'Kaydet', reasonRequired: false,
+    fields: noteField(r.note),
+    submit: async ({ reason, form }) => {
+      await rpc('admin_update_tag', { p_id: r.id, p_patch: { note: clean(form.elements.note.value) || null }, p_reason: reason || null });
+      toast('Açıklama kaydedildi.'); renderTags();
+    }
+  });
+}
 function toggleTag(r, key) {
   const on = !r[key];
   const t = key === 'pinned'
@@ -980,8 +995,10 @@ function toggleTag(r, key) {
     : [on ? 'Engellensin mi?' : 'Engel kaldırılsın mı?', on ? 'Bu etiketle yeni post paylaşılamaz; mevcut postlar görünmeye devam eder.' : 'Etiket yeniden kullanılabilir.', on ? 'Engelle' : 'Engeli kaldır'];
   confirmDialog({
     title: `#${r.name}: ${t[0]}`, text: t[1], confirm: t[2], danger: key === 'blocked' && on, reasonRequired: key === 'blocked' && on,
-    submit: async ({ reason }) => {
-      await rpc('admin_update_tag', { p_id: r.id, p_patch: { [key]: on }, p_reason: reason || null });
+    fields: key === 'pinned' && on ? noteField(r.note) : null,
+    submit: async ({ reason, form }) => {
+      const v = form.elements.note ? clean(form.elements.note.value) : '', note = v || r.note ? { note: v || null } : {};
+      await rpc('admin_update_tag', { p_id: r.id, p_patch: { [key]: on, ...note }, p_reason: reason || null });
       toast('Etiket güncellendi.'); renderTags();
     }
   });
