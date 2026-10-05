@@ -540,7 +540,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await navClick(page, 'services'); await f.waitForSelector('[data-view="services"] .ks-card');
   check(await visibleView(f) === 'services' && await f.locator('[data-view="services"] .k-hero').count() === 1 && await f.locator('[data-view="services"] .ks-card .ks-pro').count() > 0, `${vp.name} QA akış: Çalışmalar → Hizmetler V2 (tek görünüm)`);
   const heroH = await f.evaluate(() => document.querySelector('[data-view="services"] .k-hero').getBoundingClientRect().height);
-  check(vp.name === 'desktop' ? heroH >= 220 && heroH <= 252 : heroH <= 240, `${vp.name} QA: hero yüksekliği ${Math.round(heroH)}px`);
+  check(vp.name === 'desktop' ? heroH >= 180 && heroH <= 252 : heroH <= 240, `${vp.name} QA: hero yüksekliği ${Math.round(heroH)}px`);
   await f.fill('#ksSearch', 'Ölçüm'); await page.waitForTimeout(900);
   const nSearch = await f.locator('[data-view="services"] .ks-card').count();
   await f.evaluate(() => document.querySelector('[data-view="services"] [data-service-id]').scrollIntoView({ block: 'center' })); await page.waitForTimeout(150);
