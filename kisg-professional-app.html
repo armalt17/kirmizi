@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.34.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.34.1
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -8,6 +8,7 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.34.1: Hizmet Bul kartı açıklamasındaki bağlantılar yeniden tıklanabilir (v4.32.0 sade kartta düz metne dönmüştü).
 v4.34.0: Konu görünümü: konu kendi adresiyle açılır (/?konu=slug, paylaşılabilir); Akış üstünde tek satır konu başlığı
  (← Tüm Akış · #ad · Bu konuda paylaş · link), sabit konuda admin açıklaması; seçili çipte ×; geri tuşu ve "Akış" sekmesi
  ana akışa döner.
@@ -1804,7 +1805,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.34.0',
+  version: '4.34.1',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
@@ -3482,7 +3483,7 @@ const notifications = (() => {
 
 /* =========================================================================
    7b. Profil fotoğrafı: seç → kırp (sürükle/yakınlaştır) → 512×512 → WebP (≤150 KB hedef) →
-   sürümlü yeni dosya {user_id}/avatar-{zaman}.webp → profiles.avatar_url (satır güncellendiği doğrulanır).
+   sürümlü yeni dosya {user_id}/avatar-{zaman}.webp (WebP yoksa .jpg) → profiles.avatar_url (satır güncellendiği doğrulanır).
    Kayıt başarısızsa yeni dosya silinir, eski fotoğraf/URL olduğu gibi kalır; başarılıysa eski dosya temizlenir.
    ========================================================================= */
 const avatarManager = (() => {
@@ -5318,7 +5319,7 @@ function serviceCard(v, { provider = true } = {}) {
   return `<a class="kc-card ks-card${serviceFeatured(v) ? ' is-featured' : ''}" data-service-id="${esc(v.id)}" data-kind="${kind}" href="${esc(urls.service(v.id))}" target="_top">`
     + `<span class="ks-lead">${p ? avatar(p, 'lg') : ''}${serviceMark(kind)}</span>`
     + `<span class="ks-copy"><span class="ks-cat">${esc(v.category?.name || 'Hizmet')}</span><h2>${esc(v.title)}</h2>`
-    + (v.description ? `<span class="ks-description">${esc(clean(v.description).replace(/\s+/g, ' '))}</span>` : '')
+    + (v.description ? `<span class="ks-description">${linkify(clean(v.description).replace(/\s+/g, ' '), { inert: true })}</span>` : '')
     + (meta ? `<span class="ks-meta">${esc(meta)}</span>` : '') + `</span>`
     + (serviceFeatured(v) ? featuredBadge() : '') + `<svg class="ks-go" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a>`;
 }

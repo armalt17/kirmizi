@@ -270,7 +270,7 @@ function dims(b) {
   if (av) {
     const part = filePart(av.body, av.ct), d = dims(part.data);
     console.log(`INFO Avatar: ${av.path.split('/object/')[1]} ${part.ct} ${d?.join('x')} ${(part.data.length / 1024).toFixed(0)} KB, upsert=${av.headers['x-upsert']}`);
-    check(d?.[0] === 512 && d?.[1] === 512 && part.data.length <= 150 * 1024 && new RegExp(`${U1}/avatar-[a-z0-9]+\\.webp$`).test(av.path) && av.headers['x-upsert'] !== 'true', 'Avatar 512×512, ≤150KB, sürümlü yeni dosya (üzerine yazılmaz)');
+    check(d?.[0] === 512 && d?.[1] === 512 && part.data.length <= 150 * 1024 && new RegExp(`${U1}/avatar-[a-z0-9]+\\.${part.ct === 'image/jpeg' ? 'jpg' : 'webp'}$`).test(av.path) && av.headers['x-upsert'] !== 'true', 'Avatar 512×512, ≤150KB, sürümlü yeni dosya (üzerine yazılmaz)');
   } else check(false, 'Avatar yüklemesi yakalanamadı');
   const avWrite = writes.find(w => w.table === 'profiles' && 'avatar_url' in (w.body || {}));
   check(!!av && (avWrite?.body?.avatar_url || '').endsWith(`${U1}/${av.path.split('/').pop()}`), `avatar_url yeni dosyayı gösteriyor (${avWrite?.body?.avatar_url})`);

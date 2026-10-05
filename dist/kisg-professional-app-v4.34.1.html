@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.34.0 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.34.1 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
 üretilir; yorumları çıkarılmış, ~500 bin karakterin altında). Yayın dosyasının TAMAMI, aşağıdaki Hostinger sayfalarındaki
@@ -1526,7 +1526,7 @@ version: '2026-09-30'   // legal_acceptances.document_version
 },
 siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
 historyRouting: true,
-version: '4.34.0',
+version: '4.34.1',
 hostWidthDesktopMax: 1480,
 routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
 legacyRoutes: { '/calisma': 'works' },
@@ -4755,7 +4755,7 @@ const meta = compact([p?.full_name, SERVICE_MODES[v.service_mode], clean(v.servi
 return `<a class="kc-card ks-card${serviceFeatured(v) ? ' is-featured' : ''}" data-service-id="${esc(v.id)}" data-kind="${kind}" href="${esc(urls.service(v.id))}" target="_top">`
 + `<span class="ks-lead">${p ? avatar(p, 'lg') : ''}${serviceMark(kind)}</span>`
 + `<span class="ks-copy"><span class="ks-cat">${esc(v.category?.name || 'Hizmet')}</span><h2>${esc(v.title)}</h2>`
-+ (v.description ? `<span class="ks-description">${esc(clean(v.description).replace(/\s+/g, ' '))}</span>` : '')
++ (v.description ? `<span class="ks-description">${linkify(clean(v.description).replace(/\s+/g, ' '), { inert: true })}</span>` : '')
 + (meta ? `<span class="ks-meta">${esc(meta)}</span>` : '') + `</span>`
 + (serviceFeatured(v) ? featuredBadge() : '') + `<svg class="ks-go" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a>`;
 }
