@@ -83,7 +83,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   if (mobile) { await g.evaluate(() => document.querySelector('[data-view="experts"] [data-open-filters]').click()); await g.waitForSelector('#kaFilterDialog[open]'); scope = '#kaFilterDialog'; }
   else scope = '[data-view="experts"] [data-desktop-filters]';
   const pick = await g.evaluate(sel => { const w = document.querySelector(`${sel} [data-city-picker]`); const s = w.querySelector('select'); return { label: w.querySelector('[data-city-value]').textContent, opts: s.options.length, first: s.options[0].textContent, vis: w.querySelector('.kc-city-btn').getBoundingClientRect().height > 30 }; }, scope);
-  check(pick.label === 'Tüm Şehirler' && pick.opts === 82 && pick.first === 'Tüm Şehirler' && pick.vis, `${N} Uzmanlar şehir seçici: varsayılan "Tüm Şehirler", 81 il ${JSON.stringify(pick)}`);
+  check(pick.label === 'Tüm Şehirler' && pick.opts === 83 && pick.first === 'Tüm Şehirler' && pick.vis, `${N} Uzmanlar şehir seçici: varsayılan "Tüm Şehirler", 81 il + Yurtdışı ${JSON.stringify(pick)}`);
   await g.evaluate(sel => document.querySelector(`${sel} .kc-city-btn`).click(), scope);
   const searchRes = {};
   for (const q of ['ist', 'sanli', 'IZM', 'çan', 'xyz']) { await g.fill(`${scope} [data-city-q]`, q); searchRes[q] = await g.evaluate(sel => [...document.querySelectorAll(`${sel} [data-city-list] li`)].map(li => li.textContent), scope); }

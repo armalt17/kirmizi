@@ -87,9 +87,9 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
     tool: !!r.querySelector('[data-side-find] input[type=search]') && !!r.querySelector('.kw-offer-cta [data-then="publish"]')
   }; });
   check(side.head === 'Hizmet Bul' && /^Tümünü gör/.test(side.all) && side.bottom === 0 && !side.popular && side.tool, `sağ panel "Hizmet Bul" aracı: arama + "Yayınla", Popüler yok: ${side.head} | ${side.all}`);
-  check(side.items.length === 3 && JSON.stringify(side.items.map(x => x.title)) === JSON.stringify(['Yeni A1', 'İşyeri Hekimliği Hizmeti', 'Üçüncü Hizmet']), `sağlayıcı başına bir hizmet, en yeniden: ${side.items.map(x => `${x.title} (${x.by})`).join(' | ')}`);
-  check(new Set(side.items.map(x => x.by)).size === 3 && side.items.every(x => x.cat && x.ico && x.featured === 0), 'üç farklı sağlayıcı, kategori ikonu + adı (title), taç yok');
-  check(svcReqs.some(q => /status=eq\.active/.test(q) && /order=created_at\.desc/.test(q) && /limit=24/.test(q)), 'sorgu: aktif, en yeni, 24 aday');
+  check(side.items.length === 4 && JSON.stringify(side.items.map(x => x.title)) === JSON.stringify(['Yeni A1', 'İşyeri Hekimliği Hizmeti', 'Üçüncü Hizmet', 'Yeni A2']), `v4.36.0 dört satır: önce sağlayıcı başına bir hizmet (en yeniden), kalan yer en yeni hizmetle: ${side.items.map(x => `${x.title} (${x.by})`).join(' | ')}`);
+  check(new Set(side.items.slice(0, 3).map(x => x.by)).size === 3 && side.items.every(x => x.cat && x.ico && x.featured === 0), 'üç farklı sağlayıcı, kategori ikonu + adı (title), taç yok');
+  check(svcReqs.some(q => /status=eq\.active/.test(q) && /order=created_at\.desc/.test(q) && /limit=32/.test(q)), 'sorgu: aktif, en yeni, 32 aday (4 × 8)');
   await page.screenshot({ path: `${OUT}/services-v2-feed-desktop.png`, clip: { x: 0, y: 64, width: 1366, height: 836 } });
   await ctx.close();
 }

@@ -734,7 +734,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await page.goto('https://isgcalisanplatformu.com/'); await page.waitForTimeout(1200);
   const f = frameOf(page);
   const side = await page.evaluate(() => { const r = document.getElementById('kisg-pro-sides').shadowRoot; return [...r.querySelectorAll('.kw-offer')].map(a => ({ cat: a.title, title: a.querySelector('strong')?.textContent, by: a.querySelector('.kw-offer-meta')?.textContent, av: !!a.querySelector('.ks-mark svg'), href: a.getAttribute('href') })); });
-  check(side.length >= 2 && side.length <= 3 && side.every(x => x.cat && x.title && x.by && x.av && x.href.includes('/hizmet-detay?id=')), `vitrin: 2–3 hizmet satırı kategori ikonu/başlık/profesyonel ile (${side.length})`);
+  check(side.length >= 2 && side.length <= 4 && side.every(x => x.cat && x.title && x.by && x.av && x.href.includes('/hizmet-detay?id=')), `vitrin: 2–4 hizmet satırı (v4.36.0: 4) kategori ikonu/başlık/profesyonel ile (${side.length})`);
   const link = await page.evaluate(() => { const a = document.getElementById('kisg-pro-sides').shadowRoot.querySelector('.kw-vitrin-link'); return a ? a.textContent.trim() : ''; });
   check(/^Tümünü gör/.test(link), 'vitrin: başlıkta "Tümünü gör" bağlantısı');
   const feedW = await f.evaluate(() => document.querySelector('[data-view="works"] .kw-feed').getBoundingClientRect().width);

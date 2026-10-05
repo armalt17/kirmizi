@@ -201,7 +201,7 @@ try {
     await f.fill('#kaPostContent', 'ATEX postu (düzenlendi)'); writes.length = 0;
     await f.click('#kaPostSubmit'); await settle(page, 1200);
     const up = writes.find(w => w.table === 'professional_posts');
-    check(up && JSON.stringify(Object.keys(up.body).sort()) === '["content","image_path"]', `${N} düzenleme etiket/kategori göndermez ${JSON.stringify(up?.body)}`);
+    check(up && JSON.stringify(Object.keys(up.body).sort()) === '["content","image_path","image_path_2"]', `${N} düzenleme etiket/kategori göndermez ${JSON.stringify(up?.body)}`);
 
     // ---- profil kartındaki etiket → Akış filtreli ----
     await page.goto(`${SITE}/profil?id=${U1}`); await settle(page, 1500); f = frameOf(page);

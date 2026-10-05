@@ -36,7 +36,7 @@ for (const vp of VPS.slice(0, +(process.env.NVP || 2))) {
     check(su && su.body.email === 'zeynep@ornek.com' && su.body.data?.full_name === 'Zeynep Kaya' && !('phone' in su.body) && !su.url.includes('redirect_to'), `${N} kayıt: signUp e-posta+şifre+full_name (telefon/redirect yok) ${JSON.stringify(su?.body.data)}`);
     check(auth.triggered === 1 && noProfileInsert(rest), `${N} kayıt: profil satırını trigger oluşturdu, web insert/upsert yapmadı`);
     check(await paneOf(f) === 'onboard' && await acct(page) === 'user', `${N} onboarding: Adım 1 açıldı, oturum açık`);
-    check(await f.locator('#kaObCity option').count() === 82 && await f.locator('#kaObExp option').count() === 7 && await f.locator('#kaObCert option').count() === 6, `${N} onboarding: 81 il, 6 deneyim, 5 statü seçeneği`);
+    check(await f.locator('#kaObCity option').count() === 83 && await f.locator('#kaObExp option').count() === 7 && await f.locator('#kaObCert option').count() === 6, `${N} onboarding: 81 il + Yurtdışı, 6 deneyim, 5 statü seçeneği`);
     await page.screenshot({ path: `${OUT}/auth-onboard-${N}.png` });
     await submitPane(f, 'onboard'); await settle(page, 150);
     check((await errOf(f, 'onboard')).includes('Meslek'), `${N} onboarding: meslek zorunlu`);
