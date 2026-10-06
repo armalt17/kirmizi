@@ -249,7 +249,7 @@ function dims(b) {
   await f.setInputFiles('#kaPostImage', { name: 'IMG_0001.jpg', mimeType: 'image/jpeg', buffer: bigBuf });
   await f.fill('#kaPostContent', 'Boyut testi');
   await f.evaluate(() => document.getElementById('kaPostSubmit').click());
-  for (let i = 0; i < 100 && !uploads.some(u => u.path.includes('/professional-posts/')); i++) await page.waitForTimeout(100);   // 4032×3024 sıkıştırma yavaş makinede uzayabilir
+  for (let i = 0; i < 200 && !uploads.some(u => u.path.includes('/professional-posts/')); i++) await page.waitForTimeout(100);   // 4032×3024 sıkıştırma yavaş makinede uzayabilir
   const up = uploads.find(u => u.path.includes('/professional-posts/'));
   if (up) {
     const part = filePart(up.body, up.ct), d = dims(part.data);

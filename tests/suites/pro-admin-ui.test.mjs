@@ -333,11 +333,12 @@ try {
     const { T1, T2, T3 } = st.T;
     await until(() => visible(f, '.pa-stats'));
     await f.click('.pa-nav [data-sec="tags"]');
-    check(await until(() => f.locator('[data-tag]').count().then(n => n === 3)), `${vp.n}: Etiketler listesi`);
+    check(await until(() => f.locator('[data-tag]').count().then(n => n === 3)), `${vp.n}: Alanlar listesi`);
+    check((await f.textContent('.pa-nav [data-sec="tags"]')).trim() === 'Alanlar' && (await f.textContent('main h1, .pa-main h1').catch(() => '')).includes('Alanlar'), `${vp.n}: menü ve başlık "Alanlar" (v1.6.0; sitedeki dille aynı)`);
     const l0 = lastRpc(st, 'admin_list_tags').args;
     check(l0.p_sort === 'posts' && l0.p_filter === null && l0.p_offset === 0, `${vp.n}: varsayılan sıralama en çok post ${JSON.stringify(l0)}`);
     const row1 = await f.textContent(`[data-tag="${T1}"]`), row3 = await f.textContent(`[data-tag="${T3}"]`);
-    check(row1.includes('#Yüksekte Çalışma') && row1.includes('12') && /\d{4}/.test(row1) && row3.includes('Sabit'), `${vp.n}: ad, post sayısı, tarih, Sabit rozeti`);
+    check(row1.includes('Yüksekte Çalışma') && !row1.includes('#') && row1.includes('12') && /\d{4}/.test(row1) && row3.includes('Sabit'), `${vp.n}: ad (# yok), post sayısı, tarih, Sabit rozeti`);
     await f.click('.pa-chip:text-is("A–Z")');
     check(await until(() => lastRpc(st, 'admin_list_tags').args.p_sort === 'az') && await until(async () => (await f.locator('[data-tag]').first().getAttribute('data-tag')) === T3), `${vp.n}: alfabetik sıralama`);
     await f.click('.pa-chip:text-is("En yeni")');
@@ -353,7 +354,7 @@ try {
     check(await until(async () => (await f.textContent('.pa-dialog .pa-error').catch(() => '')).includes('Birleştir')), `${vp.n}: aynı ad varsa birleştirme önerilir`);
     await f.fill('.pa-dialog input[name="name"]', 'Çatı İşleri');
     await f.click('.pa-dialog button[type="submit"]');
-    check(await until(() => lastRpc(st, 'admin_update_tag')?.args.p_patch.name === 'Çatı İşleri') && await until(async () => (await f.textContent(`[data-tag="${T2}"]`)).includes('#Çatı İşleri')), `${vp.n}: yeniden adlandırıldı (gerekçe isteğe bağlı)`);
+    check(await until(() => lastRpc(st, 'admin_update_tag')?.args.p_patch.name === 'Çatı İşleri') && await until(async () => (await f.textContent(`[data-tag="${T2}"]`)).includes('Çatı İşleri')), `${vp.n}: yeniden adlandırıldı (gerekçe isteğe bağlı)`);
     // sabitle (açıklama boş → note gönderilmez)
     check((await f.textContent(`[data-tag="${T3}"]`)).includes('Mevzuat sorunlarını paylaş.'), `${vp.n}: sabit konunun açıklaması listede`);
     await f.click(`[data-tag="${T1}"] button:text-is("Sabitle")`);
