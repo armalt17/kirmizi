@@ -48,6 +48,7 @@ const SUITES = [
   { name: 'post-images-db', file: 'post-images-db.test.mjs', note: 'İkinci fotoğraf — yerel geçici PostgreSQL' },
   { name: 'post-images-web', file: 'post-images-web.test.mjs', note: 'İkinci fotoğraf — düzenleyici, kart, görüntüleyici' },
   { name: 'v436-pack', file: 'v436-pack.test.mjs', note: 'Sekme ikonları, Hizmet Alanı, Yurtdışı, yan kolon' },
+  { name: 'topics-web', file: 'topics-web.test.mjs', note: 'Konular sayfası' },
   { name: 'tags-web', file: 'tags-web.test.mjs', note: 'Konular V1 — şerit, panel, composer' },
   { name: 'code-health-pack', file: 'code-health-pack.test.mjs', note: 'Kod sağlığı raporu düzeltmeleri' },
 ];

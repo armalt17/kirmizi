@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.36.0 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.37.0 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
 üretilir; yorumları çıkarılmış, ~500 bin karakterin altında). Yayın dosyasının TAMAMI, aşağıdaki Hostinger sayfalarındaki
@@ -116,6 +116,20 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
 <a class="kw-jobs" href="https://isgcalisanplatformu.com/isg-is-ilanlari" target="_top"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5"/></svg><span>Sektördeki iş ilanlarını gör</span><span aria-hidden="true">→</span></a>
 </div>
 </aside>
+</div>
+</section>
+
+<!-- KONULAR (/?sayfa=konular) — Akış'ın parçası; Hostinger'da ayrı sayfa gerekmez -->
+<section class="ka-view kc kt-page" data-view="topics" hidden aria-labelledby="ktTitle">
+<div class="k-page kc-page">
+<a class="kt-pback" href="https://isgcalisanplatformu.com/" target="_top" data-view-link="works">← Akış</a>
+<header class="k-hero"><span class="k-hero-ico" aria-hidden="true">#</span><div class="k-hero-copy"><h1 id="ktTitle">Konular</h1><p>Sahada neler konuşuluyor? Bir konuya gir, deneyimini ekle.</p></div></header>
+<div class="kc-search" role="search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input data-topic-q type="search" maxlength="20" placeholder="Konu ara" aria-label="Konu ara" autocomplete="off" enterkeyhint="search"></div>
+<div data-topic-pins hidden></div>
+<div class="kc-results-head"><p data-topic-status role="status" aria-live="polite">Konular yükleniyor…</p><label class="ke-sort"><span>Sırala</span><select data-topic-sort aria-label="Konuları sırala"><option value="active">Son Aktif</option><option value="new">Yeni Açılan</option><option value="az">A–Z</option></select></label></div>
+<div class="kt-grid" data-topic-list aria-busy="true"></div>
+<button type="button" class="k-btn kc-more" data-topic-more hidden>Daha fazla konu</button>
+<button type="button" class="kt-start" data-topic-start><span class="kt-ht" aria-hidden="true">+</span><span class="kt-copy"><b data-topic-start-title>Aradığın konu yok mu?</b><small>Yeni bir konu başlat; ilk gönderiyi sen paylaş.</small></span></button>
 </div>
 </section>
 
@@ -552,7 +566,7 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
 </dialog>
 
 <dialog id="kaTagDialog" data-ico="hash" class="k-dialog kt-panel" aria-labelledby="kaTagTitle" data-stack data-fixed>
-<header class="kt-hero"><div><h2 id="kaTagTitle">Gündemdeki Konular</h2><p class="kt-live" data-tag-sub>Canlı · son 7 günün nabzı</p></div><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button><label class="kt-search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="kaTagQ" type="search" maxlength="20" placeholder="Etiket ara…" autocomplete="off" aria-label="Etiket ara"></label></header>
+<header class="kt-hero"><div><h2 id="kaTagTitle">Etiket Ekle</h2><p class="kt-live">Ara, seç ya da yenisini oluştur</p></div><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button><label class="kt-search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="kaTagQ" type="search" maxlength="20" placeholder="Etiket ara…" autocomplete="off" aria-label="Etiket ara"></label></header>
 <div class="kt-list" data-tag-list aria-live="polite"></div>
 </dialog>
 
@@ -871,6 +885,27 @@ font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helveti
 #kisgApp .kc-results{display:grid;gap:14px}
 #kisgApp .kc-card{position:relative;display:flex;flex-direction:column;min-width:0;border-radius:var(--r-lg);background:#fff;box-shadow:inset 0 0 0 1px var(--line);overflow-wrap:anywhere;transition:box-shadow var(--t),transform var(--t) var(--ease);animation:ka-enter .26s var(--ease)}
 #kisgApp .kc-more{display:flex;margin:24px auto 0;min-width:220px;min-height:48px}
+#kisgApp .kt-page .k-hero-ico{background:var(--red);color:#fff;font-size:26px;font-weight:800}
+#kisgApp .kt-pback{display:inline-flex;margin:0 0 12px 2px;color:var(--muted);font-size:14px;font-weight:650}
+#kisgApp .kt-pback:hover{color:var(--ink)}
+#kisgApp .kt-grid,#kisgApp [data-topic-pins]{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:10px}
+#kisgApp [data-topic-pins]{grid-template-columns:1fr;margin-top:18px}
+#kisgApp :is(.kt-item,.kt-start){display:flex;align-items:center;gap:14px;min-width:0;padding:14px 16px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px var(--line);text-align:left;transition:box-shadow var(--t-fast),transform var(--t-fast)}
+#kisgApp .kt-item:hover{box-shadow:inset 0 0 0 1px var(--red-line),0 6px 18px -12px rgba(227,10,23,.5)}
+#kisgApp .kt-item.is-pin{background:var(--red-tint);box-shadow:inset 0 0 0 1px var(--red-line)}
+#kisgApp .kt-ht{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:12px;background:var(--red);color:#fff;font-size:20px;font-weight:800}
+#kisgApp .kt-copy{display:grid;flex:1;min-width:0}
+#kisgApp .kt-copy b{overflow:hidden;color:var(--ink);font-size:16px;font-weight:750;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .kt-item .kt-copy b::before{content:"#";margin-right:2px;color:var(--red)}
+#kisgApp .kt-copy small{overflow:hidden;color:var(--muted);font-size:13px;text-overflow:ellipsis;white-space:nowrap}
+#kisgApp .kt-item.is-pin small{white-space:normal}
+#kisgApp .kt-copy em{color:var(--red-text);font-style:normal;font-weight:700}
+#kisgApp .kt-badge{justify-self:start;order:-1;margin-bottom:3px;padding:1px 8px;border-radius:var(--r-pill);background:var(--red);color:#fff;font-size:10.5px;font-style:normal;font-weight:750;letter-spacing:.02em}
+#kisgApp .kt-go{flex:none;width:18px;height:18px;fill:none;stroke:var(--red);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#kisgApp .kt-start{width:100%;margin-top:14px;border:1.5px dashed var(--red-line);box-shadow:none;background:transparent;cursor:pointer}
+#kisgApp .kt-start .kt-ht{background:#fff;color:var(--red);box-shadow:inset 0 0 0 1.5px var(--red)}
+#kisgApp .kt-page .kc-search{margin-top:4px}
+@media(max-width:640px){#kisgApp .kt-page .kc-page{padding-inline:16px}#kisgApp .kt-grid{grid-template-columns:1fr;gap:8px}#kisgApp :is(.kt-item,.kt-start){padding:12px 14px}#kisgApp .kt-ht{width:40px;height:40px;border-radius:11px}}
 #kisgApp .kc-sk{display:grid;gap:12px;align-content:start;padding:20px;border-radius:var(--r-lg);background:#fff;box-shadow:inset 0 0 0 1px var(--line);animation:k-skin .35s .2s both}
 #kisgApp .kc-sk-top{display:flex;align-items:center;gap:12px;margin-bottom:4px}
 #kisgApp .kc-sk-top span{display:grid;flex:1;gap:8px}
@@ -1437,18 +1472,13 @@ font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helveti
 #kisgApp .kt-row{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:8px 10px;border:0;border-radius:14px;background:none;color:var(--ink);font-size:15px;font-weight:650;text-align:left;cursor:pointer;animation:kt-in .4s var(--ease) both;animation-delay:calc(var(--i,0) * 45ms);transition:background var(--t-fast),transform var(--t-fast)}
 #kisgApp .kt-row:active{transform:scale(.98)}
 @keyframes kt-in{from{opacity:0;transform:translateY(10px)}}
-#kisgApp .kt-rank{flex:none;width:18px;color:var(--faint);font-size:15px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
 #kisgApp .kt-tile{display:grid;flex:none;width:42px;height:42px;place-items:center;border-radius:13px;background:var(--tb,var(--surface-2));color:var(--tf,var(--muted))}
 #kisgApp .kt-tile svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 #kisgApp :is(.kt-hot,.kt-pinned) .kt-tile{background:var(--red-tint);color:var(--red)}
-#kisgApp .kt-hot .kt-rank{color:var(--red)}
 #kisgApp .kt-txt{display:flex;flex:1;flex-direction:column;gap:2px;min-width:0}
 #kisgApp .kt-txt>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #kisgApp .kt-meta{color:var(--muted);font-size:12.5px;font-weight:500}
 #kisgApp .kt-meta em{color:var(--ink);font-style:normal;font-weight:650}
-#kisgApp .kt-heat{height:4px;margin-top:5px;border-radius:4px;background:var(--surface-2);overflow:hidden}
-#kisgApp .kt-heat::after{content:"";display:block;width:var(--w);height:100%;border-radius:inherit;background:var(--red);opacity:.75;animation:kt-grow 1s var(--ease) both;animation-delay:calc(var(--i,0) * 45ms + .15s)}
-@keyframes kt-grow{from{width:0}}
 #kisgApp .kt-go{flex:none;width:16px;height:16px;fill:none;stroke:var(--faint);stroke-width:2.2;stroke-linecap:round;transition:transform var(--t-fast),stroke var(--t-fast)}
 #kisgApp .kt-create{color:var(--red-text);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
 #kisgApp .kt-empty{padding:24px 10px;color:var(--muted);font-size:14px;text-align:center}
@@ -1540,9 +1570,9 @@ version: '2026-09-30'   // legal_acceptances.document_version
 },
 siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
 historyRouting: true,
-version: '4.36.0',
+version: '4.37.0',
 hostWidthDesktopMax: 1480,
-routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik' },
+routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik', topics: '/?sayfa=konular' },
 legacyRoutes: { '/calisma': 'works' },
 defaultView: 'works',
 returnPaths: ['/calisma-detay', '/hizmet-detay', '/profil'],
@@ -1563,7 +1593,7 @@ imageTargetBytes: 500 * 1024,
 imageHardLimitBytes: 1024 * 1024,
 allowJpegFallback: true
 });
-const LABELS = { works: 'Akış', experts: 'Uzmanlar', services: 'Hizmet Bul', profile: 'Profil', work: 'Post', service: 'Hizmet', account: 'Hesap & Gizlilik' };
+const LABELS = { works: 'Akış', experts: 'Uzmanlar', services: 'Hizmet Bul', profile: 'Profil', work: 'Post', service: 'Hizmet', account: 'Hesap & Gizlilik', topics: 'Konular' };
 const STATUS_OPTIONS = [['A', 'A Sınıfı'], ['B', 'B Sınıfı'], ['C', 'C Sınıfı'], ['İşyeri Hekimi', 'İşyeri Hekimi'], ['DSP', 'DSP (Diğer Sağlık Personeli)']];
 const SERVICE_MODES = { onsite: 'Yerinde', remote: 'Uzaktan', both: 'Yerinde + Uzaktan' };
 
@@ -1707,6 +1737,7 @@ const writeValues = (box, values) => $$('[data-filter]', box).forEach(i => { i.v
 const trFold = v => String(v || '').toLocaleLowerCase('tr-TR').replace(/[çğıöşüâîû]/g, c => ({ ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', â: 'a', î: 'i', û: 'u' })[c]).replace(/\u0307/g, '');
 const cityVariants = v => [...new Set([v, v.toLocaleLowerCase('tr-TR'), v.toLocaleUpperCase('tr-TR'), v.replace(/[ÇĞİÖŞÜçğıöşü]/g, c => ({ Ç: 'C', Ğ: 'G', İ: 'I', Ö: 'O', Ş: 'S', Ü: 'U', ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u' })[c])])];
 const cityClause = (column, city, ...also) => 'or(' + [city, ...also].flatMap(cityVariants).map(v => column + '.ilike.' + quote(likePattern(v))).join(',') + ')';
+const slugOf = n => trFold(n).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');   // konu adresi: /?konu=slug
 const REGION_ALL = 'Tüm Türkiye';
 const cityPicker = (() => {
 const chevron = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg>';
@@ -3789,17 +3820,15 @@ st.p ||= (async () => { await dbReady; const { data, error } = await db.rpc('kis
 return st.p.catch(e => { st.p = null; throw e; });
 }
 const row = (t, attr = '', o = {}) => `<button type="button" class="kt-row${o.cls || ''}" data-tag-id="${esc(t.id || '')}" data-tag-name="${esc(t.name)}"${attr} style="--i:${o.i || 0}">`
-+ (o.rank ? `<b class="kt-rank">${o.rank}</b>` : '') + `<span class="kt-tile">${o.ico || svg(HASH)}</span><span class="kt-txt"><span>${esc(t.name)}</span>`
++ `<span class="kt-tile">${o.ico || svg(HASH)}</span><span class="kt-txt"><span>${esc(t.name)}</span>`
 + (o.pin && t.note ? `<small class="kt-meta">${esc(t.note)}</small>`
 : t.posts > 0 || (t.posts != null && !o.pin) ? `<small class="kt-meta">${nf(t.posts)} gönderi${t.posts_24h > 0 ? ` · <em>Son 24 saatte ${nf(t.posts_24h)} yeni</em>` : ''}</small>` : '')
-+ (o.w ? `<i class="kt-heat" style="--w:${o.w}%"></i>` : '') + `</span>${badge(t)}${svg('m9 6 6 6-6 6', ' class="kt-go"')}</button>`;
++ `</span>${badge(t)}${svg('m9 6 6 6-6 6', ' class="kt-go"')}</button>`;
 function render(rows, text) {
 if (!text) {
 const pinned = rows.filter(t => t.slot === 'pinned'), hot = rows.filter(t => t.slot !== 'pinned');
-const max = Math.max(...hot.map(t => +t.score || 0), 0);
-let i = 0;
-list.innerHTML = (pinned.length ? `<p class="kt-sec">Sabit</p>${pinned.map(t => row(t, '', { i: i++, ico: svg(PP), cls: ' kt-pinned', pin: 1 })).join('')}` : '')
-+ (hot.length ? `<p class="kt-sec">Gündemde</p>${hot.map((t, n) => row(t, '', { i: i++, rank: n + 1, cls: n < 3 ? ' kt-hot' : '', w: max && t.score ? Math.max(6, Math.round(100 * t.score / max)) : 0 })).join('')}` : '')
+list.innerHTML = (pinned.length ? `<p class="kt-sec">Sabit</p>${pinned.map(t => row(t, '', { ico: svg(PP), cls: ' kt-pinned', pin: 1 })).join('')}` : '')
++ (hot.length ? `<p class="kt-sec">Gündemde</p>${hot.map(t => row(t)).join('')}` : '')
 || '<p class="kt-empty">Henüz etiket yok. İlk etiketi bir Post paylaşırken sen ekle.</p>';
 return;
 }
@@ -3816,8 +3845,6 @@ catch { if (seq === st.seq) list.innerHTML = '<p class="kt-empty">Etiketler şu 
 }
 async function open(onPick = null) {
 st.pick = onPick; q.value = '';
-$('#kaTagTitle').textContent = onPick ? 'Etiket Ekle' : 'Gündemdeki Konular';
-$('[data-tag-sub]', d).textContent = onPick ? 'Ara, seç ya da yenisini oluştur' : 'Canlı · son 7 günün nabzı';
 list.innerHTML = '<p class="kt-empty">Yükleniyor…</p>';
 const mob = window.matchMedia('(max-width:640px)').matches;
 dialogs.open(d, mob ? 'sheet' : 'center');
@@ -3830,7 +3857,7 @@ list.addEventListener('click', e => {
 const b = e.target?.closest?.('[data-tag-name]'); if (!b) return;
 const t = { id: b.dataset.tagId || null, name: b.dataset.tagName }, cb = st.pick;
 dialogs.close(d);
-if (cb) cb(t); else if ('tagNew' in b.dataset) composer.open(null, '', t); else VIEWS.works.setTag(t);
+cb?.(t);
 });
 return { open, trending, PP };
 })();
@@ -4061,7 +4088,7 @@ toast(current ? 'Post güncellendi.' : started ? `“${started.name}” konusu b
 let fresh = null, failed = false;
 try { fresh = await postData.fetch(savedId); } catch { failed = true; }
 emitPost('saved', { id: savedId, fresh, previous: current, failed });
-if (started && router.current === 'works') VIEWS.works.setTag(started);
+if (started && (router.current === 'works' || router.current === 'topics')) VIEWS.works.setTag(started, { toggle: false });
 }
 d.form.addEventListener('submit', savePost);
 d.root.addEventListener('close', () => { s.edit = null; s.tag = null; s.pick++; s.preparing = false; clearImgs(); formError(''); });
@@ -4107,7 +4134,6 @@ strip.innerHTML = '<button type="button" class="kt-chip kt-all" data-tag-all><sv
 + rows.map(t => `<button type="button" class="kt-chip${t.id === s.tag?.id ? ' is-on' : ''}" data-tag-id="${esc(t.id)}" data-tag-name="${esc(t.name)}" aria-pressed="${t.id === s.tag?.id}"${t.slot === 'pinned' && t.note ? ` title="${esc(t.note)}"` : ''}>${esc(t.name)}${t.id === s.tag?.id ? '<span class="kt-x" aria-hidden="true">×</span>' : ''}</button>`).join('');
 strip.hidden = false; renderHead();
 }
-const slugOf = n => trFold(n).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 function renderHead() {
 const head = $('[data-tag-head]', el), t = s.tag, note = t && s.trend?.find(x => x.id === t.id && x.slot === 'pinned')?.note;
 head.hidden = !t;
@@ -4288,7 +4314,7 @@ const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
 const trigger = t.closest('[data-composer]'); if (trigger) { composer.open(null, trigger.dataset.composerIntent || ''); return; }
 if (t.closest('[data-more]')) { loadPosts(); return; }
 const chip = t.closest('[data-tag-id]'); if (chip && strip.contains(chip)) { setTag({ id: chip.dataset.tagId, name: chip.dataset.tagName }); return; }
-if (t.closest('[data-tag-all]')) { tags.open(); return; }
+if (t.closest('[data-tag-all]')) { if (router.enabled) router.activate('topics', { mode: 'push' }); else navigateTop(CONFIG.siteUrl + CONFIG.routes.topics); return; }
 if (t.closest('[data-tag-off]')) { setTag(null); return; }
 if (t.closest('[data-tag-share]') && s.tag) { shareLink({ url: `${CONFIG.siteUrl}/?konu=${slugOf(s.tag.name)}`, title: `#${s.tag.name} | Kırmızı İSG`, text: `Kırmızı İSG'de #${s.tag.name} konusu`, copied: 'Konu linki kopyalandı.' }); return; }
 if (t.closest('[data-retry]')) loadPosts({ reset: !F.posts.length });
@@ -6018,7 +6044,69 @@ onSession, snapshot: () => null, isMounted: () => s.mounted
 };
 }
 
-const VIEWS = { works: createWorksView(), experts: createExpertsView(), services: createServicesView(), profile: createProfileView(), work: createWorkView(), service: createServiceView(), account: createAccountView() };
+function createTopicsView() {
+const el = $('[data-view="topics"]'), q = $('[data-topic-q]', el), list = $('[data-topic-list]', el), pins = $('[data-topic-pins]', el);
+const status = $('[data-topic-status]', el), more = $('[data-topic-more]', el), sortSel = $('[data-topic-sort]', el), startTitle = $('[data-topic-start-title]', el);
+const PAGE = 20, SORT = { active: ['last_post_at', false], new: ['created_at', false], az: ['name', true] };
+const s = { mounted: false, rows: [], page: 0, seq: 0, timer: 0 };
+const nf = n => Number(n).toLocaleString('tr-TR'), num = v => Number(Array.isArray(v) ? v[0]?.count : v) || 0;
+const GO = '<svg class="kt-go" aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>';
+function item(t, pin) {
+const n = num(t.posts), today = num(t.today ?? t.posts_24h);
+const meta = pin && t.note ? esc(t.note) : `${nf(n)} gönderi${today ? ` · <em>bugün ${nf(today)} yeni</em>` : t.last_post_at ? ` · ${esc(relativeTime(t.last_post_at))}` : ''}`;
+const badge = pin ? 'Sabit' : Date.now() - new Date(t.created_at) < 3 * 864e5 ? 'yeni' : '';
+return `<a class="kt-item${pin ? ' is-pin' : ''}" href="${esc(CONFIG.siteUrl)}/?konu=${esc(slugOf(t.name))}" target="_top" data-topic-id="${esc(t.id)}" data-topic-name="${esc(t.name)}">`
++ `<span class="kt-ht" aria-hidden="true">#</span><span class="kt-copy">${badge ? `<i class="kt-badge">${badge}</i>` : ''}<b>${esc(t.name)}</b><small>${meta}</small></span>${GO}</a>`;
+}
+function renderPins() {
+tags.trending().then(rows => {
+const p = rows.filter(t => t.slot === 'pinned');
+pins.innerHTML = p.map(t => item(t, true)).join(''); pins.hidden = !p.length || !!q.value.trim();
+}).catch(() => {});
+}
+async function load(reset) {
+const seq = ++s.seq, text = slugOf(q.value).replace(/-/g, ''), [col, asc] = SORT[sortSel.value] || SORT.active;
+if (reset) { s.page = 0; s.rows = []; list.setAttribute('aria-busy', 'true'); }
+status.textContent = 'Konular yükleniyor…'; more.hidden = true;
+pins.hidden = !pins.innerHTML || !!text;
+startTitle.textContent = text ? `“${clean(q.value).slice(0, 20)}” konusunu başlat` : 'Aradığın konu yok mu?';
+try {
+await dbReady;
+let qy = db.from('professional_tags').select('id,name,created_at,last_post_at,posts:professional_posts(count),today:professional_posts(count)', { count: 'exact' })
+.eq('blocked', false).eq('pinned', false).not('last_post_at', 'is', null)
+.eq('posts.status', 'active').eq('today.status', 'active').gte('today.created_at', new Date(Date.now() - 864e5).toISOString());
+if (text) qy = qy.like('normalized_name', `%${text}%`);
+const { data, error, count } = await qy.order(col, { ascending: asc, nullsFirst: false }).order('id', { ascending: true }).range(s.page * PAGE, s.page * PAGE + PAGE - 1);
+if (error) throw error;
+if (seq !== s.seq) return;
+s.rows = s.rows.concat(data || []); s.page++;
+list.innerHTML = s.rows.map(t => item(t)).join('');
+const total = Number.isInteger(count) ? count : s.rows.length;
+status.textContent = s.rows.length ? `${nf(total)} konu` : text ? 'Bu adla bir konu yok.' : 'Henüz konu yok.';
+more.hidden = s.rows.length >= total || (data || []).length < PAGE;
+} catch {
+if (seq === s.seq) status.textContent = 'Konular şu anda yüklenemedi. Biraz sonra tekrar dene.';
+} finally { if (seq === s.seq) { list.setAttribute('aria-busy', 'false'); host.schedule(); } }
+}
+q.addEventListener('input', () => { clearTimeout(s.timer); s.timer = setTimeout(() => load(true), 250); });
+sortSel.addEventListener('change', () => load(true));
+more.addEventListener('click', () => load(false));
+el.addEventListener('click', e => {
+const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
+if (t.closest('[data-topic-start]')) { const name = clean(q.value).replace(/\s+/g, ' ').slice(0, 20); composer.open(null, '', /[\p{L}\p{N}]/u.test(name) ? { name } : null); return; }
+const a = t.closest('[data-topic-id]');
+if (!a || !router.enabled || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+e.preventDefault();
+VIEWS.works.setTag({ id: a.dataset.topicId, name: a.dataset.topicName }, { toggle: false });
+});
+return {
+name: 'topics', el,
+mount() { s.mounted = true; renderPins(); return load(true); },
+snapshot: () => null, isMounted: () => s.mounted
+};
+}
+
+const VIEWS = { works: createWorksView(), experts: createExpertsView(), services: createServicesView(), profile: createProfileView(), work: createWorkView(), service: createServiceView(), account: createAccountView(), topics: createTopicsView() };
 session.on(kind => {
 authUI.render(kind);
 if (kind === 'user') notifications.onSession();
@@ -6063,6 +6151,7 @@ const stateOf = () => ({ kisgShell: { view: current, doc: bootId, params: { ...p
 function setTabs(name) {
 if (name === 'work') name = 'works';   // detaylar, kendi sekmesinin parçası
 if (name === 'service') name = 'services';
+if (name === 'topics') name = 'works';
 navEl.querySelectorAll('.ka-tab').forEach(a => {
 const on = a.dataset.viewLink === name;
 a.classList.toggle('is-active', on);
@@ -6154,7 +6243,8 @@ activate(st.view, { mode: 'pop', params: st.params || {} });
 function init() {
 const url = host.url();
 const fromPath = viewFromPath(url.pathname);
-const initial = fromPath || (VIEWS[root.dataset.initialView] ? root.dataset.initialView : CONFIG.defaultView);
+let initial = fromPath || (VIEWS[root.dataset.initialView] ? root.dataset.initialView : CONFIG.defaultView);
+if (initial === 'works' && url.searchParams.get('sayfa') === 'konular') initial = 'topics';
 if (PARAM_VIEWS.includes(initial) || initial === 'works') params = paramsFor(initial, paramsOf(url));
 enabled = Boolean(CONFIG.historyRouting && host.canRoute && fromPath && CONFIG.siteOrigins.includes(url.origin) && !shellVersion.stale);
 const legacy = fromPath && isLegacy(url.pathname);
