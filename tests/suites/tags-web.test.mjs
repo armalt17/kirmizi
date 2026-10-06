@@ -39,7 +39,6 @@ async function rpcMock(ctx, rpc, mode = {}) {
       if (!t) { t = { id: T(90 + db.professional_tags.length), name: body.p_name.trim(), normalized_name: norm(body.p_name), created_by: U1 }; db.professional_tags.push(t); }
       return J(r, [{ id: t.id, name: t.name }]);
     }
-    if (fn === 'kisg_tag_set_note') { const t = db.professional_tags.find(x => x.id === body.p_id); t.note = String(body.p_note || '').replace(/\s+/g, ' ').trim() || null; return J(r, t.note); }
     return r.fallback();
   });
 }
@@ -140,13 +139,9 @@ try {
     const ins0 = writes.find(w => w.table === 'professional_posts'), made = db.professional_tags.find(t => t.name === 'Saha Güvenliği');
     check(rpc.some(x => x.fn === 'kisg_tag_resolve' && x.body.p_name === 'Saha Güvenliği') && made && ins0?.body.tag_id === made.id && db.professional_tags.length === tagsBefore + 1, `${N} konu Post paylaşılınca oluştu ve Posta bağlandı`);
     check(await until(() => f.getAttribute(`[data-tag-strip] [data-tag-name="Saha Güvenliği"]`, 'aria-pressed').then(v => v === 'true').catch(() => false)) && await page.evaluate(() => location.search === '?konu=saha-guvenligi'), `${N} Akış yeni konuya geçti (/?konu=saha-guvenligi)`);
-    // v4.40.0: alanı açan kişiye bir kez açıklama daveti (zorunlu değil); yazınca başlıkta görünür ve düzenlenebilir
-    check(await until(() => f.evaluate(() => /Alanın açıldı/.test(document.querySelector('[data-tag-head] [data-note-form]')?.textContent || ''))), `${N} yeni alan: başlıkta açıklama daveti`);
-    await f.fill('[data-tag-head] [data-note-form] textarea', 'Sahada güvenlik  uygulamaları'); rpc.length = 0;
-    await f.click('[data-tag-head] [data-note-form] button[type="submit"]');
-    check(await until(() => f.evaluate(() => document.querySelector('[data-tag-head] .kt-head-note span')?.textContent === 'Sahada güvenlik uygulamaları' && !!document.querySelector('[data-tag-head] [data-note-edit]'))) && rpc.some(x => x.fn === 'kisg_tag_set_note' && x.body.p_note === 'Sahada güvenlik  uygulamaları'), `${N} alanı açan açıklamayı yazdı, başlıkta "Düzenle" ile görünür`);
-    await f.click('[data-tag-head] [data-note-edit]'); await f.fill('[data-tag-head] [data-note-form] textarea', ''); await f.click('[data-tag-head] [data-note-form] button[type="submit"]');
-    check(await until(() => f.evaluate(() => !document.querySelector('[data-tag-head] .kt-head-note') && !!document.querySelector('[data-tag-head] .kt-note-add'))), `${N} açıklama silinebilir (zorunlu değil), "＋ açıklama ekle" geri gelir`);
+    // v4.40.1: açıklamayı yalnız yönetim yazar — alanı açan kullanıcıya da davet/düzenleme yok
+    await settle(page, 800);
+    check(await f.evaluate(() => !document.querySelector('[data-tag-head] [data-note-form], [data-tag-head] [data-note-edit], [data-tag-head] .kt-note-add')), `${N} yeni alan: kullanıcıya açıklama daveti/düzenleme yok (yalnız yönetim yazar)`);
     await f.click('[data-tag-strip] [data-tag-name="Saha Güvenliği"]'); await settle(page, 700);
     // başkasının alanı: açıklama görünür, düzenleme yok; sabit alan: düzenleme yok
     await f.click('[data-tag-strip] [data-tag-name="ATEX"]');

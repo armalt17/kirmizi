@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.40.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.40.1
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -8,8 +8,7 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
-v4.40.0: Alan açıklaması her alanda (yalnız sabitte değil); alanı açan kendi alanının açıklamasını yazar/değiştirir
- (db/migrations/20261012_tag_note_owner.sql), yeni açılan alanda bir kez davet; sabit alanınkini yönetim yazar; zorunlu değil.
+v4.40.1: Alan açıklaması her alanın başlığında görünür; yalnız yönetim (admin paneli) yazar. Kullanıcı düzenlemesi geri alındı.
 v4.39.0: Konular → Alanlar (algı; davranış ve veri aynı, yeni SQL yok): satırda son yazanların yüzleri, "Ad: son söz", saat;
  bugün konuşulanlarda canlı nokta ve "Şu an konuşulanlar" bölümü; # işaretleri kalktı (şeritte kırmızı "Alanlar", kartta
  "X alanında", başlıkta "X alanı"); Post penceresinde "Alan seç". Adres /?sayfa=alanlar (eski /?sayfa=konular da açılır).
@@ -1798,12 +1797,6 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .kt-head-note{display:flex;flex-basis:100%;align-items:flex-start;gap:7px;color:var(--red-text);font-size:13px;font-weight:600}
 #kisgApp .kt-head-note.is-plain{color:var(--text);font-weight:500}
 #kisgApp .kt-head-note span{flex:1}
-#kisgApp :is(.kt-note-edit,.kt-note-add){flex:none;padding:0;border:0;background:none;color:var(--muted);font:inherit;font-size:12.5px;font-weight:700;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
-#kisgApp .kt-note-add{flex-basis:100%;text-align:left;color:var(--red-text);text-decoration:none}
-#kisgApp .kt-note-form{display:grid;flex-basis:100%;gap:8px;color:var(--text);font-size:13px}
-#kisgApp .kt-note-form b{color:var(--ink)}
-#kisgApp .kt-note-form textarea{width:100%;min-height:64px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:12px;background:#fff;font:inherit;font-size:16px;resize:vertical}
-#kisgApp .kt-note-form span{display:flex;justify-content:flex-end;gap:8px}
 #kisgApp .kt-x{margin-left:2px;font-size:15px;line-height:1}
 #kisgApp .kt-ico{flex:none;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 #kisgApp .kt-new{padding:1px 7px;border-radius:var(--r-pill);background:var(--surface-2);color:var(--muted);font-size:10.5px;font-style:normal;font-weight:700}
@@ -1934,7 +1927,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.40.0',
+  version: '4.40.1',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik', topics: '/?sayfa=alanlar', saved: '/?sayfa=kaydedilenler' },
@@ -4729,7 +4722,7 @@ const composer = (() => {
     let fresh = null, failed = false;
     try { fresh = await postData.fetch(savedId); } catch { failed = true; }
     emitPost('saved', { id: savedId, fresh, previous: current, failed });
-    if (started && (router.current === 'works' || router.current === 'topics')) { VIEWS.works.inviteNote(started.id); VIEWS.works.setTag(started, { toggle: false }); }
+    if (started && (router.current === 'works' || router.current === 'topics')) VIEWS.works.setTag(started, { toggle: false });
   }
   d.form.addEventListener('submit', savePost);
   d.root.addEventListener('close', () => { s.edit = null; s.tag = null; s.pick++; s.preparing = false; clearImgs(); formError(''); });
@@ -4783,25 +4776,21 @@ function createWorksView() {
   }
   /* Konu görünümü (v4.34.0): konu Akış'ın içinde kendi adresiyle açılır (/?konu=slug). Ana akışa dönüş:
      "← Tüm Akış", seçili çipteki ×, geri tuşu ve üstteki "Akış" sekmesi. Sabit konuda admin açıklaması altta. */
-  /* v4.40.0: açıklama her alanda (yalnız sabitte değil). Alanı açan kendi alanının açıklamasını yazar/değiştirir (kisg_tag_set_note);
-     sabit alanınkini yönetim yazar. Zorunlu değil; yeni açılan alanda bir kez davet edilir. */
+  /* v4.40.1: açıklama her alanın başlığında (yalnız sabitte değil); yalnız yönetim yazar (admin paneli, admin_update_tag). */
   async function loadMeta(t) {
     if (!t) return;
-    try { await dbReady; const { data } = await db.from('professional_tags').select('id,note,created_by,pinned').eq('id', t.id).maybeSingle(); if (s.tag?.id === t.id) s.meta = data || { id: t.id }; }
+    try { await dbReady; const { data } = await db.from('professional_tags').select('id,note,pinned').eq('id', t.id).maybeSingle(); if (s.tag?.id === t.id) s.meta = data || { id: t.id }; }
     catch { if (s.tag?.id === t.id) s.meta = { id: t.id }; }
     renderHead();
   }
   function renderHead() {
     const head = $('[data-tag-head]', el), t = s.tag, m = t && s.meta?.id === t.id ? s.meta : null;
-    const note = m?.note ?? (t && s.trend?.find(x => x.id === t.id && x.slot === 'pinned')?.note), own = !!(m && !m.pinned && session.user && m.created_by === session.user.id);
+    const note = m?.note ?? (t && s.trend?.find(x => x.id === t.id && x.slot === 'pinned')?.note);
     const pin = m?.pinned ?? (t && s.trend?.some(x => x.id === t.id && x.slot === 'pinned'));
-    if (m && !own) s.noteEdit = false;   // alan bilgisi gelene kadar davet beklenir
     head.hidden = !t;
     head.innerHTML = t ? `<button type="button" class="kt-back" data-tag-off>← Tüm Akış</button><span class="kt-head-name">${esc(t.name)}</span>`
       + `<button type="button" class="kt-share" data-tag-share aria-label="Alan linkini paylaş" title="Alan linkini paylaş"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button>`
-      + (s.noteEdit && own ? `<form class="kt-note-form" data-note-form>${s.noteInvite === t.id ? '<b>Alanın açıldı.</b> İstersen burada ne konuşulacağını bir cümleyle anlat.' : ''}<textarea name="note" maxlength="160" rows="2" placeholder="Bu alanda ne konuşulur? (isteğe bağlı, en fazla 160 karakter)">${esc(note || '')}</textarea><span><button type="button" class="k-btn" data-note-cancel>${s.noteInvite === t.id ? 'Şimdi değil' : 'Vazgeç'}</button><button type="submit" class="k-btn k-btn-primary">Kaydet</button></span></form>`
-        : note ? `<p class="kt-head-note${pin ? '' : ' is-plain'}"><svg class="kt-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="${pin ? tags.PP : 'M12 8h.01M11 12h1v4h1M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z'}"/></svg><span>${esc(note)}</span>${own ? '<button type="button" class="kt-note-edit" data-note-edit>Düzenle</button>' : ''}</p>`
-          : own ? '<button type="button" class="kt-note-add" data-note-edit>＋ Alanına kısa bir açıklama ekle</button>' : '') : '';
+      + (note ? `<p class="kt-head-note${pin ? '' : ' is-plain'}"><svg class="kt-ico" aria-hidden="true" viewBox="0 0 24 24"><path d="${pin ? tags.PP : 'M12 8h.01M11 12h1v4h1M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z'}"/></svg><span>${esc(note)}</span></p>` : '') : '';
     host.schedule();
   }
   // Konu seçimi adres üzerinden yürür (geri tuşu çalışsın); adres yönetimi yoksa doğrudan uygulanır.
@@ -4823,7 +4812,7 @@ function createWorksView() {
   }
   function applyTag(t) {
     s.tag = t ? { id: t.id, name: t.name } : null;
-    s.meta = null; s.noteEdit = !!t && s.noteInvite === t.id;
+    s.meta = null;
     renderStrip(); renderHead(); loadMeta(s.tag);
     if (!s.mounted) { s.tagFirst = true; return; }
     if (host.scrollY() > host.shellTop() + 4) host.scrollTo(host.shellTop(), true);
@@ -4994,8 +4983,6 @@ function createWorksView() {
     const chip = t.closest('[data-tag-id]'); if (chip && strip.contains(chip)) { setTag({ id: chip.dataset.tagId, name: chip.dataset.tagName }); return; }
     if (t.closest('[data-tag-all]')) { if (router.enabled) router.activate('topics', { mode: 'push' }); else navigateTop(CONFIG.siteUrl + CONFIG.routes.topics); return; }
     if (t.closest('[data-tag-off]')) { setTag(null); return; }
-    if (t.closest('[data-note-edit]')) { s.noteEdit = true; renderHead(); $('[data-note-form] textarea', el)?.focus(); return; }
-    if (t.closest('[data-note-cancel]')) { s.noteEdit = false; s.noteInvite = null; renderHead(); return; }
     if (t.closest('[data-tag-share]') && s.tag) { shareLink({ url: `${CONFIG.siteUrl}/?konu=${slugOf(s.tag.name)}`, title: `#${s.tag.name} | Kırmızı İSG`, text: `Kırmızı İSG'de #${s.tag.name} konusu`, copied: 'Alan linki kopyalandı.' }); return; }
     if (t.closest('[data-retry]')) loadPosts({ reset: !F.posts.length });
   });
@@ -5174,17 +5161,6 @@ function createWorksView() {
     loadRails();
     await loadPosts({ reset: true });
   }
-  el.addEventListener('submit', async e => {
-    const form = e.target.closest?.('[data-note-form]'); if (!form || !s.tag) return;
-    e.preventDefault();
-    const btn = $('[type="submit"]', form), id = s.tag.id; setBusy(btn, true, 'Kaydediliyor...');
-    try {
-      const { data, error } = await db.rpc('kisg_tag_set_note', { p_id: id, p_note: clean(form.elements.note.value) || null });
-      if (error) throw error;
-      if (s.meta?.id === id) s.meta.note = data || null;
-      s.noteEdit = false; s.noteInvite = null; renderHead(); toast(data ? 'Açıklama kaydedildi.' : 'Açıklama kaldırıldı.');
-    } catch (err) { setBusy(btn, false); toast(/PGRST202/.test(`${err?.code} ${err?.message}`) ? 'Açıklama için veritabanı güncellemesi henüz uygulanmamış.' : 'Açıklama kaydedilemedi. Tekrar dene.'); }
-  });
   function onSession(kind) {
     renderComposerAvatar();
     if (s.tag) renderHead();
@@ -5204,7 +5180,7 @@ function createWorksView() {
     s.experts.forEach(p => { if (p.id === uid) p.avatar_url = url; });
     s.services.forEach(v => { if (v.user_id === uid && v.provider) v.provider.avatar_url = url; });
   })(shellHooks.avatarChanged);
-  return { name: 'works', el, mount, onSession, snapshot, setTag, route, tag: () => s.tag, inviteNote: id => { s.noteInvite = id; }, isMounted: () => s.mounted, onView: name => newPosts.onView(name) };
+  return { name: 'works', el, mount, onSession, snapshot, setTag, route, tag: () => s.tag, isMounted: () => s.mounted, onView: name => newPosts.onView(name) };
 }
 
 /* =========================================================================

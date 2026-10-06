@@ -52,7 +52,6 @@ const SUITES = [
   { name: 'topics-web', file: 'topics-web.test.mjs', note: 'Konular sayfası' },
   { name: 'saved-items-db', file: 'saved-items-db.test.mjs', note: 'Kaydedilenler — yerel geçici PostgreSQL' },
   { name: 'saved-web', file: 'saved-web.test.mjs', note: 'Kaydedilenler — kartlar, sayfa, misafir' },
-  { name: 'tag-note-owner-db', file: 'tag-note-owner-db.test.mjs', note: 'Alan açıklaması (alanı açan) — yerel geçici PostgreSQL' },
   { name: 'tags-web', file: 'tags-web.test.mjs', note: 'Konular V1 — şerit, panel, composer' },
   { name: 'code-health-pack', file: 'code-health-pack.test.mjs', note: 'Kod sağlığı raporu düzeltmeleri' },
 ];

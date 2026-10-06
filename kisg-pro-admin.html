@@ -244,7 +244,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.7.0',
+  version: '1.7.1',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -1054,7 +1054,7 @@ const noteField = v => h('label', { class: 'pa-field' }, h('span', { text: 'Site
   h('textarea', { name: 'note', maxlength: 160, placeholder: 'Örn. Sahada yaşadığın mevzuat ve denetim sorunlarını burada paylaş.', text: v || '' }));
 function noteTag(r) {
   confirmDialog({
-    title: `${r.name} açıklaması`, text: 'Alanın başlığında gösterilir (alanı açan kişi de kendi alanınınkini yazabilir). Boş bırakırsanız açıklama görünmez.', confirm: 'Kaydet', reasonRequired: false,
+    title: `${r.name} açıklaması`, text: 'Sitede alanın başlığında herkese gösterilir; yalnız yönetim yazar. Boş bırakırsanız açıklama görünmez.', confirm: 'Kaydet', reasonRequired: false,
     fields: noteField(r.note),
     submit: async ({ reason, form }) => {
       await rpc('admin_update_tag', { p_id: r.id, p_patch: { note: clean(form.elements.note.value) || null }, p_reason: reason || null });
