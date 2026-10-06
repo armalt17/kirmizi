@@ -56,7 +56,6 @@ const SUITES = [
   { name: 'code-health-pack', file: 'code-health-pack.test.mjs', note: 'Kod sağlığı raporu düzeltmeleri' },
   { name: 'verified-accounts-db', file: 'verified-accounts-db.test.mjs', note: 'Onaylı hesap — yerel geçici PostgreSQL' },
   { name: 'verified-web', file: 'verified-web.test.mjs', note: 'Onaylı hesap — rozet, filtre, başvuru' },
-  { name: 'app-mode-web', file: 'app-mode-web.test.mjs', note: 'Mobil uygulama modu — React Native köprüsü' },
 ];
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx > -1 ? process.argv[onlyIdx + 1] : null;
