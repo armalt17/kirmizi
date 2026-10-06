@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, check } from '../helpers/harness.mjs';
-import { buildEmbed, LIMIT, DIST, distName } from '../../tools/build-embed.mjs';
+import { buildEmbed, esmin, LIMIT, DIST, distName } from '../../tools/build-embed.mjs';
 
 const src = fs.readFileSync(path.join(ROOT, 'kisg-professional-app.html'), 'utf8');
 const { html, version } = buildEmbed(src);   // derleme kendi içinde her çıkarmayı V8 ile denetler
@@ -14,9 +14,10 @@ check(dist.length <= LIMIT && dist.length < 496692, `yayın dosyası ${dist.leng
 const code = s => s.slice(s.indexOf('<script>') + 8, s.indexOf('</script>'));
 let ok = true; try { new Function(code(dist)); } catch (e) { ok = false; console.log(e.message); }
 check(ok, 'yayın dosyasının betiği sözdizimsel olarak geçerli');
-check(dist.includes(`version: '${version}'`) && /KURULUM:/.test(dist.slice(0, 1200)), 'yayın dosyası sürüm ve KURULUM notunu taşıyor');
+check(new RegExp(`version:\\s*["']${version.replace(/\./g, '\\.')}["']`).test(dist) && /KURULUM:/.test(dist.slice(0, 1200)), 'yayın dosyası sürüm ve KURULUM notunu taşıyor');
 
-// Bağımsız denetim: kaynaktan yalnız boşluk ve yorum düşmüş olmalı. Boşluklar atlanarak iki metin karakter karakter
+// Bağımsız denetim: betik dışındaki kısımlarda (işaretleme, CSS) kaynaktan yalnız boşluk ve yorum düşmüş olmalı;
+// betik esbuild ile küçültülür (v4.42.0) — yayındaki betik, kaynağın esbuild çıktısıyla birebir aynı olmalı. Boşluklar atlanarak iki metin karakter karakter
 // eşlenir; uyuşmazlıkta kaynak bir yorum başında (// veya /* … */, HTML'de <!-- … -->) olmalı ve yorum atlanır.
 function onlyWhitespaceAndComments(a, b, label) {
   let i = 0, j = 0, dropped = 0;
@@ -37,4 +38,6 @@ function onlyWhitespaceAndComments(a, b, label) {
   return j >= b.length && (i >= a.length || /^(\s|\/\/[^\n]*|\/\*[\s\S]*?\*\/)*$/.test(a.slice(i)));
 }
 const bodyOf = s => s.slice(s.indexOf('-->') + 3);
-check(onlyWhitespaceAndComments(bodyOf(src), bodyOf(dist), 'gövde'), 'kaynak ile yayın arasında yalnız boşluk ve yorum farkı var');
+const noScript = s => s.replace(/<script>[\s\S]*?<\/script>/g, '<script></script>');
+check(onlyWhitespaceAndComments(noScript(bodyOf(src)), noScript(bodyOf(dist)), 'gövde'), 'işaretleme ve CSS: kaynak ile yayın arasında yalnız boşluk ve yorum farkı var');
+check(code(dist) === esmin(code(src)), 'betik: yayındaki kod kaynağın esbuild küçültmesiyle aynı');

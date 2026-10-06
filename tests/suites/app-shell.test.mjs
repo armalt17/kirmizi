@@ -8,7 +8,9 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await setup(ctx, true);
   const page = await ctx.newPage();
   page.on('pageerror', e => errors.push(`${vp.name} parent: ${e.message}`));
-  page.on('console', m => { if (m.type() === 'error') errors.push(`${vp.name} console: ${m.text()}`); });
+  // Sahte sunucuda tanımlı olmayan isteğe bağlı RPC'ler (migration öncesi durum) 404 döner; uygulama bunları sessizce yok sayar.
+  const OPTIONAL_404 = /\/rest\/v1\/rpc\/(kisg_tags_trending|kisg_verified_users)\b/;
+  page.on('console', m => { if (m.type() === 'error' && !(/status of 404/.test(m.text()) && OPTIONAL_404.test(m.location()?.url || ''))) errors.push(`${vp.name} console: ${m.text()}`); });
   await page.goto('https://isgcalisanplatformu.com/');
   await page.waitForTimeout(800);
   let f = frameOf(page);
@@ -687,7 +689,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await setup(ctx2, true);
   const p2 = await ctx2.newPage();
   await p2.goto('https://isgcalisanplatformu.com/'); await p2.waitForTimeout(900);
-  check(await frameOf(p2).evaluate(() => document.getElementById('kisgApp').dataset.routing) === 'shell' && JSON.parse(await p2.evaluate(() => localStorage.getItem('kisg:shell:version'))).v === (APP.match(/version: '([^']+)'/) || [])[1], 'QA sürüm koruması: normal durumda shell modu, sürüm kaydı');
+  check(await frameOf(p2).evaluate(() => document.getElementById('kisgApp').dataset.routing) === 'shell' && JSON.parse(await p2.evaluate(() => localStorage.getItem('kisg:shell:version'))).v === (APP.match(/version:\s*["'](\d+\.\d+\.\d+)["']/) || [])[1], 'QA sürüm koruması: normal durumda shell modu, sürüm kaydı');
   await ctx2.close();
 }
 

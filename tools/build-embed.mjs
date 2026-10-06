@@ -10,8 +10,11 @@
 //   4) <script>: satır başında başlayan yorumlar (// ve /* */) ile satır başı girintileri — yalnız V8 o noktanın bir
 //      metin/şablon dizisinin DIŞINDA olduğunu doğruladıysa. Denetim: satırın/yorumun başına '@' eklenir; betik yine
 //      ayrıştırılabiliyorsa '@' bir dizinin içine düşmüştür ve o satıra dokunulmaz (ör. CSS/HTML şablonları).
+//   5) v4.42.0: <script> ayrıca esbuild ile küçültülür (boşluklar, yerel değişken adları; davranış aynı, üst düzey
+//      adlar korunur). Kaynak dosya ve içindeki tüm notlar AYNEN kalır; yalnız yayın dosyası küçülür.
 // Boyut sınırı aşılırsa çıkış kodu 1 (sessizce büyük dosya yayınlanmasın).
 import fs from 'node:fs';
+import { transformSync } from 'esbuild';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -50,6 +53,12 @@ function minifyScript(code) {
   if (!parses(out)) throw new Error('Küçültülmüş betik ayrıştırılamadı');
   return out;
 }
+// Sözdizimi hedefi verilmez (esnext): kaynakta kullanılan dil özellikleri aynen kalır, yalnız küçültülür.
+export const esmin = code => {
+  const out = transformSync(code, { minify: true, legalComments: 'none', charset: 'utf8' }).code.trimEnd();
+  if (!parses(out)) throw new Error('esbuild çıktısı ayrıştırılamadı');
+  return out;
+};
 const minifyCss = css => css.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map(l => l.replace(INDENT, '')).filter(l => l.trim()).join('\n');
 const minifyHtml = html => html.split('\n').map(l => l.replace(INDENT, '')).join('\n');
 
@@ -64,7 +73,7 @@ export function buildEmbed(src) {
   // <style> ve <script> blokları ayrı işlenir; aradaki işaretlemenin yalnız girintisi alınır
   const parts = body.split(/(<style>[\s\S]*?<\/style>|<script>[\s\S]*?<\/script>)/);
   const out = parts.map(p => (p.startsWith('<style>') ? `<style>${minifyCss(p.slice(7, -8))}</style>`
-    : p.startsWith('<script>') ? `<script>${minifyScript(p.slice(8, -9))}</script>` : minifyHtml(p))).join('');
+    : p.startsWith('<script>') ? `<script>${esmin(minifyScript(p.slice(8, -9)))}</script>` : minifyHtml(p))).join('');
   return { html: header + out, version };
 }
 

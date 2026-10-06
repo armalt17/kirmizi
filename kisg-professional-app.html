@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.41.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.42.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -7,7 +7,11 @@ KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-ap
 Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
+MOBİL UYGULAMA (React Native WebView): docs/REACT-NATIVE-ENTEGRASYON.md — uygulama modu, köprü mesajları, oturum paylaşımı.
 
+v4.42.0: Mobil uygulama modu (React Native WebView ya da ?app=1): Hostinger üst/alt gizli, "Uygulamayı İndir" yok, Pro düğmesi
+ uygulamanın ödeme ekranını açar (kisg:pro), oturum köprüsü (kisg:session, window.kisgApp). Ayrıntı: docs/REACT-NATIVE-ENTEGRASYON.md.
+ Yayın dosyası artık esbuild ile küçültülür (kaynak ve notları aynen kalır).
 v4.41.0: Onaylı hesap: kırmızı rozet (aktif Pro + yönetim onaylı belge), profilde başvuru penceresi (yalnız Pro), Hizmetler'de "Onaylı hesaplar" filtresi.
 v4.40.1: Alan açıklaması her alanın başlığında görünür; yalnız yönetim (admin paneli) yazar. Kullanıcı düzenlemesi geri alındı.
 v4.39.0: Konular → Alanlar (algı; davranış ve veri aynı, yeni SQL yok): satırda son yazanların yüzleri, "Ad: son söz", saat;
@@ -1943,7 +1947,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.41.0',
+  version: '4.42.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik', topics: '/?sayfa=alanlar', saved: '/?sayfa=kaydedilenler' },
@@ -2021,7 +2025,8 @@ function linkify(text, { inert = false } = {}) {
 // gerçek <a> kendi target=_blank davranışıyla açılır, uygulama yönlendirmesine düşmez.
 // v4.22.0 Harici Link Uyarısı: Kırmızı İSG dışındaki http/https bağlantılar (linkify, sosyal, WhatsApp vb.)
 // doğrudan açılmaz; önce onay penceresi, "Siteye Git" → yeni sekme, noopener/noreferrer. İç bağlantılar aynı.
-const openExternal = href => { try { window.open(href, '_blank', 'noopener,noreferrer'); } catch {} };
+// Mobil uygulamada dış bağlantıyı uygulama açar (kisg:open → tarayıcı / ilgili uygulama).
+const openExternal = href => { if (native()) return toNative({ type: 'kisg:open', url: href }); try { window.open(href, '_blank', 'noopener,noreferrer'); } catch {} };
 const isExternalUrl = href => { try { return !CONFIG.siteOrigins.includes(new URL(href).origin); } catch { return false; } };
 const extWarn = (() => {
   let pending = null;
@@ -2694,6 +2699,21 @@ const storageUrl = path => (path && db ? db.storage.from(CONFIG.imageBucket).get
 /* =========================================================================
    5. Oturum: tek yaşam döngüsü + ortak "ben" profili
    ========================================================================= */
+/* Mobil uygulama modu (v4.42.0): Kırmızı İSG React Native uygulamasının WebView'ında açılınca (window.ReactNativeWebView
+   varsa ya da ilk adres ?app=1 ise; sekme boyunca hatırlanır) Hostinger üst/alt bölümleri gizlenir, "Uygulamayı İndir"
+   kalkar, Pro düğmesi uygulamanın kendi ödeme ekranını açar ve oturum uygulamayla paylaşılır.
+   Köprü sözleşmesi (mesaj türleri, window.kisgApp): docs/REACT-NATIVE-ENTEGRASYON.md */
+const inApp = (() => {
+  const w = host.win || window;
+  try {
+    const on = !!w.ReactNativeWebView || new URL(w.location.href).searchParams.get('app') === '1' || w.sessionStorage.getItem('kisg:app') === '1';
+    if (on) w.sessionStorage.setItem('kisg:app', '1');
+    return on;
+  } catch { return !!w.ReactNativeWebView; }
+})();
+const native = () => (host.win || window).ReactNativeWebView || null;
+const toNative = msg => { try { native()?.postMessage(JSON.stringify(msg)); } catch {} };
+
 const session = (() => {
   const ME_KEY = 'kisg:me:v1';
   const listeners = new Set();
@@ -2726,7 +2746,10 @@ const session = (() => {
     } catch {}
   }
   async function start() {
-    db.auth.onAuthStateChange((_event, s) => { setTimeout(() => apply(s?.user || null), 0); });
+    db.auth.onAuthStateChange((event, s) => {
+      setTimeout(() => apply(s?.user || null), 0);
+      if (inApp && event !== 'INITIAL_SESSION') toNative({ type: 'kisg:session', event, access_token: s?.access_token || null, refresh_token: s?.refresh_token || null });
+    });
     try { const { data } = await db.auth.getSession(); apply(data.session?.user || null); }
     catch { apply(null); }
     finally { resolveReady(); }
@@ -3011,6 +3034,7 @@ async function copyText(text) {
   return ok;
 }
 async function shareLink({ url, title, text, copied = 'Bağlantı kopyalandı.' }) {
+  if (native()) { toNative({ type: 'kisg:share', url, title, text }); return; }   // mobil uygulama: yerel paylaşım sayfası
   if (navigator.share) { try { await navigator.share({ title, text, url }); return; } catch (e) { if (e?.name === 'AbortError') return; } }
   toast((await copyText(url)) ? copied : 'Bağlantı kopyalanamadı.');
 }
@@ -3831,7 +3855,8 @@ const verifyFlow = (() => {
       const pro = !!(Array.isArray(pr.data) ? pr.data[0] : pr.data)?.is_premium, v = vr.data, name = clean(session.me?.full_name);
       const same = v && key(v.verified_name) === key(name), ok = v?.status === 'approved' && same;
       if (ok && pro) return set('<p><b>Hesabın onaylı.</b> Pro üyeliğin sürdükçe adının yanında kırmızı onay rozeti görünür.</p>');
-      if (!pro) return set(`<p><b>Onaylı hesap Pro'ya özel.</b> ${ok ? 'Pro üyeliğin sona erdiği için rozetin duraklatıldı; uygulamadan yenilersen yeniden belge istemeden geri gelir.' : 'Pro üyelik Kırmızı İSG uygulamasından alınır; aynı hesapla giriş yaptığında burada da geçerli olur.'}</p>`, STORES);
+      if (!pro) return set(`<p><b>Onaylı hesap Pro'ya özel.</b> ${ok ? 'Pro üyeliğin sona erdiği için rozetin duraklatıldı; uygulamadan yenilersen yeniden belge istemeden geri gelir.' : 'Pro üyelik Kırmızı İSG uygulamasından alınır; aynı hesapla giriş yaptığında burada da geçerli olur.'}</p>`,
+        native() ? '<button type="button" class="k-btn k-btn-primary" data-vf-pro>Pro\'ya geç</button>' : STORES);
       if (v?.status === 'pending') return set('<p><b>Belgen inceleniyor.</b>' + DAY + '</p>');
       const why = v?.status === 'approved' ? 'Adın değiştiği için rozetin kalktı; yeni adınla belge yükle.' : v?.reason ? `Önceki başvuru reddedildi: ${esc(v.reason)}` : '';
       set(`${why ? `<p class="k-form-error">${why}</p>` : ''}<p>Adının <b>${esc(name)}</b> olarak göründüğü bir belgenin fotoğrafını yükle: İSG sertifikası, diploma, kimlik ya da ehliyet.</p>`
@@ -3848,6 +3873,7 @@ const verifyFlow = (() => {
     $('[data-vf-name]', d).textContent = file ? file.name : 'Fotoğraf seç'; err(bad); $('[data-vf-send]', d).disabled = !file;
   });
   d.addEventListener('click', async e => {
+    if (e.target.closest?.('[data-vf-pro]')) { toNative({ type: 'kisg:pro', from: 'verify' }); dialogs.close(d); return; }
     const b = e.target.closest?.('[data-vf-send]'); if (!b || !file || !session.user) return;
     b.disabled = true; b.textContent = 'Gönderiliyor…';
     const bk = db.storage.from('kisg-verifications'), path = `${session.user.id}/${Date.now()}.${file.type.slice(6).replace('jpeg', 'jpg')}`;
@@ -6264,6 +6290,11 @@ const profilePdf = (() => {
      Dosya Blob olarak üretilir; mobilde kullanıcı etkileşimi hâlâ geçerliyse sistem paylaşım sayfası
      (Dosyalara kaydet / WhatsApp vb.), değilse üst dokümandan gerçek dosya indirmesi yapılır. */
   async function deliver({ blob, name, title }) {
+    // Mobil uygulama: WebView indirme/paylaşma yapamaz; dosya base64 olarak uygulamaya verilir (kisg:file).
+    if (native()) {
+      const data = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1] || ''); fr.onerror = () => r(''); fr.readAsDataURL(blob); });
+      if (data) { toNative({ type: 'kisg:file', name, title, mime: 'application/pdf', base64: data }); return; }
+    }
     const file = typeof File === 'function' ? new File([blob], name, { type: 'application/pdf' }) : null;
     const touch = window.matchMedia('(pointer: coarse)').matches;
     if (touch && file && navigator.canShare?.({ files: [file] }) && navigator.userActivation?.isActive !== false) {
@@ -7640,6 +7671,29 @@ async function applyAuthLanding(x) {
 }
 
 appChrome.init();
+if (inApp) {
+  navEl.querySelector('.kpn-get')?.remove();
+  // Hostinger'ın üst/alt bölümleri: iframe'in ata zincirindeki kardeşler gizlenir (nav ve yan paneller hariç).
+  const hideHost = () => {
+    try {
+      const d = host.win.document, keep = ['kisg-pro-nav', 'kisg-pro-sides'].map(id => d.getElementById(id));
+      for (let n = host.frame; n && n.parentElement && n !== d.body; n = n.parentElement)
+        for (const x of n.parentElement.children) if (x !== n && !keep.includes(x) && !/^(SCRIPT|STYLE|LINK)$/.test(x.tagName)) x.style.setProperty('display', 'none', 'important');
+    } catch {}
+  };
+  if (host.framed && host.frame) { hideHost(); setTimeout(hideHost, 1500); }
+  (host.win || window).kisgApp = {
+    version: CONFIG.version,
+    async setSession(access_token, refresh_token) {
+      await dbReady;
+      const { data, error } = await db.auth.setSession({ access_token, refresh_token });
+      if (error || !data?.session?.user) return false;
+      session.adopt(data.session.user); return true;
+    },
+    async signOut() { await dbReady; await db.auth.signOut(); return true; }
+  };
+  toNative({ type: 'kisg:ready', version: CONFIG.version });
+}
 const initialView = router.init();
 router.start(initialView, snapshots.take());
 host.sync();

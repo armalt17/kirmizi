@@ -1,7 +1,10 @@
 // Kod Sağlığı Raporu düzeltmeleri (v4.33.0) — hedefli test.
 // Kayıt onayı/tercih başka cihazda, hesap silme talebi, istek süre sınırı, yorum çift gönderim kilidi,
 // yorum sayısının görünümler arası eşitlenmesi, hata veren görselin yeniden görünmesi, şehir seçici erişilebilirliği.
-import { chromium, APP, db, writes, check, LAUNCH, setup, frameOf, resetDb, U1 } from '../helpers/harness.mjs';
+import { chromium, fs, ROOT, db, writes, check, LAUNCH, setup, frameOf, resetDb, U1 } from '../helpers/harness.mjs';
+import path from 'node:path';
+// Statik kontroller kaynak dosyada yapılır (yayın dosyası esbuild ile küçültülür; v4.42.0).
+const APP = fs.readFileSync(path.join(ROOT, 'kisg-professional-app.html'), 'utf8');
 
 const SITE = 'https://isgcalisanplatformu.com';
 const P5 = 'bbbbbbbb-0000-4000-8000-000000000005';

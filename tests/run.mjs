@@ -54,6 +54,9 @@ const SUITES = [
   { name: 'saved-web', file: 'saved-web.test.mjs', note: 'Kaydedilenler — kartlar, sayfa, misafir' },
   { name: 'tags-web', file: 'tags-web.test.mjs', note: 'Konular V1 — şerit, panel, composer' },
   { name: 'code-health-pack', file: 'code-health-pack.test.mjs', note: 'Kod sağlığı raporu düzeltmeleri' },
+  { name: 'verified-accounts-db', file: 'verified-accounts-db.test.mjs', note: 'Onaylı hesap — yerel geçici PostgreSQL' },
+  { name: 'verified-web', file: 'verified-web.test.mjs', note: 'Onaylı hesap — rozet, filtre, başvuru' },
+  { name: 'app-mode-web', file: 'app-mode-web.test.mjs', note: 'Mobil uygulama modu — React Native köprüsü' },
 ];
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx > -1 ? process.argv[onlyIdx + 1] : null;
