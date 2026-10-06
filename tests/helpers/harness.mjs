@@ -116,8 +116,11 @@ function handleRpc(route, fn) {
     if (!auth || auth.startsWith('sb_publishable_')) return json({ code: '42501', message: 'permission denied for function get_my_private_profile' }, 401);
     let sub = null; try { sub = JSON.parse(Buffer.from(auth.split('.')[1], 'base64url').toString()).sub; } catch {}
     const p = db.profiles.find(x => x.id === sub) || db.profiles.find(x => x.id === U1);
-    return json(p ? [{ id: p.id, email: 'a@b.c', phone: p.phone ?? null, show_phone_publicly: !!p.show_phone_publicly, is_premium: false, daily_reports_used: 0, monthly_reports_used: 0, last_report_date: null, onesignal_notification_id: null }] : []);
+    return json(p ? [{ id: p.id, email: 'a@b.c', phone: p.phone ?? null, show_phone_publicly: !!p.show_phone_publicly, is_premium: !!p.is_premium, daily_reports_used: 0, monthly_reports_used: 0, last_report_date: null, onesignal_notification_id: null }] : []);
   }
+  // Onaylı hesap (v4.41.0): db._verified tanımlıysa migration uygulanmış sayılır.
+  if (fn === 'kisg_verified_users' && db._verified) return json(db._verified);
+  if (fn === 'kisg_submit_verification' && db._verified) return db._submitErr ? json({ code: '42501', message: db._submitErr }, 400) : json('pending');
   return json({ code: 'PGRST202', message: 'unknown' }, 404);
 }
 async function handleRest(route) {

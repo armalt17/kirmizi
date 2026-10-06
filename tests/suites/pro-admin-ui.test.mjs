@@ -2,7 +2,7 @@
 // Hostinger üst sayfa + srcdoc iframe simülasyonu; Supabase Auth ve RPC sahte sunucu ile karşılanır.
 // Doğrulananlar: giriş / yetki kapısı, yalnız admin RPC kullanımı (tablo isteği yok), bölümler, aksiyonların
 // RPC argümanları, gerekçe zorunluluğu, hata eşleme, mobil yerleşim.
-import { chromium, fs, ROOT, OUT, libs, check, LAUNCH } from '../helpers/harness.mjs';
+import { chromium, fs, ROOT, OUT, libs, check, LAUNCH, IMG } from '../helpers/harness.mjs';
 import path from 'node:path';
 
 const ADMIN_HTML = fs.readFileSync(path.join(ROOT, 'kisg-pro-admin.html'), 'utf8');
@@ -40,6 +40,13 @@ function server(ctx) {
     { id: C2, name: 'Risk Değerlendirmesi', slug: 'risk-degerlendirmesi', sort_order: 20, is_active: true, services: 2, all_services: 2 },
     { id: C3, name: 'Diğer', slug: 'diger', sort_order: 30, is_active: false, services: 0, all_services: 0 }];
   st.C = { C1, C2, C3 };
+  // v1.8.0 Onaylar: A bekliyor (Pro), M bekliyor (Pro değil), P onaylı
+  const P = '33333333-3333-4333-8333-333333333333';
+  st.verif = [
+    { user_id: A, full_name: 'Ayşe Yılmaz', role: 'İSG Uzmanı', city: 'İstanbul', status: 'pending', doc_path: `${A}/1.jpg`, verified_name: null, reason: null, submitted_at: iso(30), decided_at: null, is_pro: true, pro_until: iso(-30000) },
+    { user_id: M, full_name: 'Mehmet Öztürk', role: 'İSG Uzmanı', city: 'Kocaeli', status: 'pending', doc_path: `${M}/2.png`, verified_name: null, reason: null, submitted_at: iso(20), decided_at: null, is_pro: false, pro_until: null },
+    { user_id: P, full_name: 'Can Demir', role: null, city: null, status: 'approved', doc_path: null, verified_name: 'Can Demir', reason: null, submitted_at: iso(900), decided_at: iso(800), is_pro: true, pro_until: null }];
+  st.removed = [];
   const withTotal = rows => rows.map(r => ({ ...r, total_count: rows.length }));
   const ADMIN_RPC = {
     admin_overview: () => ({ users_total: 1296, users_new_7d: 12, posts: { active: 14, hidden: 1, deleted: 3 }, comments: { active: 9, deleted: 3 }, services: { active: 3, archived: 1 }, reports: { pending: 2 }, active_suspensions: 1, active_bans: 0, warnings_30d: 2, admin_actions_7d: 4 }),
@@ -57,6 +64,9 @@ function server(ctx) {
     admin_update_service_category: a => { const c = st.cats.find(x => x.id === a.p_id); Object.assign(c, a.p_patch); return { name: c.name, is_active: c.is_active }; },
     admin_reorder_service_categories: a => { a.p_ids.forEach((id, i) => { st.cats.find(x => x.id === id).sort_order = (i + 1) * 10; }); return a.p_ids.length; },
     admin_delete_service_category: a => { if (st.cats.find(x => x.id === a.p_id).all_services) throw { code: '23503', message: 'KISG_CATEGORY_IN_USE' }; st.cats = st.cats.filter(x => x.id !== a.p_id); return {}; },
+    admin_list_verifications: a => st.verif.filter(v => !a.p_status || v.status === a.p_status),
+    admin_decide_verification: a => { const v = st.verif.find(x => x.user_id === a.p_user); if (a.p_approve && !v.is_pro) throw { code: '55000', message: 'KISG_NOT_PRO: kullanicinin Pro uyeligi aktif degil' }; const d = v.doc_path; Object.assign(v, { status: a.p_approve ? 'approved' : 'rejected', reason: a.p_approve ? null : a.p_reason, doc_path: null, decided_at: iso(0), verified_name: a.p_approve ? v.full_name : v.verified_name }); return d; },
+    admin_revoke_verification: a => { Object.assign(st.verif.find(x => x.user_id === a.p_user), { status: 'rejected', reason: a.p_reason }); return null; },
     admin_update_profile: a => ({ changed: Object.keys(a.p_patch) }),
     admin_moderate_content: a => { if (a.p_id === 'fail') throw 0; const p = posts.find(x => x.id === a.p_id); if (a.p_action === 'hide') p.status = 'hidden'; if (a.p_action === 'restore') p.status = 'active'; if (a.p_action === 'delete') p.status = 'deleted'; return { status: p.status }; },
     admin_sanction_user: () => 'ffffffff-0000-4000-8000-000000000001',
@@ -66,7 +76,15 @@ function server(ctx) {
   st.ready = Promise.all([
     ctx.route('https://isgcalisanplatformu.com/**', r => r.fulfill({ contentType: 'text/html', body: hostPage(new URL(r.request().url()).pathname) })),
     ctx.route('https://cdn.jsdelivr.net/**', r => { const f = libs[r.request().url()]; return f ? r.fulfill({ headers: { 'access-control-allow-origin': '*' }, body: fs.readFileSync(f) }) : r.fulfill({ status: 404 }); }),
-    ctx.route('https://twaptpofhbnnfciowoig.supabase.co/storage/**', r => r.fulfill({ status: 404, headers: H, body: '' })),
+    ctx.route('https://twaptpofhbnnfciowoig.supabase.co/storage/**', r => {
+      const req = r.request(), p = new URL(req.url()).pathname, J = b => r.fulfill({ headers: H, contentType: 'application/json', body: JSON.stringify(b) });
+      if (req.method() === 'OPTIONS') return r.fulfill({ status: 200, headers: H });
+      const sign = /\/object\/sign\/kisg-verifications\/(.+)$/.exec(p);
+      if (sign && req.method() === 'POST') return J({ signedURL: `/object/sign/kisg-verifications/${sign[1]}?token=t` });
+      if (sign && req.method() === 'GET') return r.fulfill({ headers: H, contentType: 'image/png', body: IMG });
+      if (/\/object\/kisg-verifications$/.test(p) && req.method() === 'DELETE') { const b = JSON.parse(req.postData() || '{}'); if (st.failRemove) return r.fulfill({ status: 400, headers: H, contentType: 'application/json', body: '{"message":"x"}' }); st.removed.push(...(b.prefixes || [])); return J((b.prefixes || []).map(name => ({ name }))); }
+      return r.fulfill({ status: 404, headers: H, body: '' });
+    }),
     ctx.route('https://twaptpofhbnnfciowoig.supabase.co/auth/v1/**', r => {
       const req = r.request(), p = new URL(req.url()).pathname;
       if (req.method() === 'OPTIONS') return r.fulfill({ status: 200, headers: H });
@@ -129,7 +147,7 @@ async function open(browser, { uid = null, width = 1280, height = 900, qs = '' }
 const until = async (fn, ms = 5000) => { const t = Date.now(); while (Date.now() - t < ms) { if (await fn()) return true; await new Promise(r => setTimeout(r, 50)); } return false; };
 const visible = (f, sel) => f.locator(sel).first().isVisible().catch(() => false);
 const lastRpc = (st, name) => [...st.rpc].reverse().find(x => x.name === name);
-const ALLOWED = new Set(['kisg_is_admin', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category']);
+const ALLOWED = new Set(['kisg_is_admin', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification']);
 
 // ---------------- statik ----------------
 check(!/service_role|service-role|serviceRole/i.test(ADMIN_HTML.replace(/service_role YOKTUR|service_role YOK/g, '')), 'admin HTML\'de service role anahtarı/kullanımı yok');
@@ -431,6 +449,48 @@ try {
     const ov = await f.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     check(ov <= 1 && !errs.length && !st.table.length, `${vp.n}: yatay taşma, sayfa hatası ve tablo isteği yok ${errs.join(' ')}`);
     await page.screenshot({ path: path.join(OUT, `pro-admin-categories-${vp.width}.png`), fullPage: true });
+    await ctx.close();
+  }
+  // ---------------- 4e) Onaylar (v1.8.0) ----------------
+  for (const vp of [{ n: 'masaüstü', width: 1280, height: 900 }, { n: 'mobil', width: 390, height: 844 }]) {
+    const { ctx, page, f, st, errs } = await open(browser, { uid: X, width: vp.width, height: vp.height });
+    await until(() => visible(f, '.pa-stats'));
+    check(await until(async () => (await f.textContent('[data-verify-count]')).trim() === '2'), `${vp.n}: menüde bekleyen onay sayısı`);
+    await f.click('.pa-nav [data-sec="verify"]');
+    check(await until(() => f.locator('[data-verify]').count().then(n => n === 2)), `${vp.n}: Onaylar: 2 bekleyen başvuru`);
+    const A1 = `[data-verify="${A}"]`, M1 = `[data-verify="${M}"]`;
+    const row = await f.evaluate(s => { const r = document.querySelector(s), img = r.querySelector('.pa-vdoc img'); return { src: img?.src || '', ok: img?.complete && img.naturalWidth > 0, txt: r.textContent }; }, A1);
+    check(row.src.includes('/object/sign/kisg-verifications/') && row.src.includes('token=') && /Profildeki ad: Ayşe Yılmaz/.test(row.txt) && /Pro: aktif/.test(row.txt), `${vp.n}: belge imzalı bağlantıyla görünür, profildeki ad ve Pro durumu ${row.src.slice(-60)}`);
+    check(await until(() => f.evaluate(s => { const i = document.querySelector(s + ' .pa-vdoc img'); return i?.complete && i.naturalWidth > 0; }, A1)), `${vp.n}: belge görseli yüklendi`);
+    check(await f.isDisabled(`${M1} button:text-is("Onayla")`) && /Pro: aktif değil/.test(await f.textContent(M1)), `${vp.n}: Pro olmayan başvuru onaylanamaz`);
+    // onayla → belge silinir
+    await f.click(`${A1} button:text-is("Onayla")`); await f.waitForSelector('.pa-dialog'); await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => st.removed.includes(`${A}/1.jpg`)) && lastRpc(st, 'admin_decide_verification')?.args.p_user === A && lastRpc(st, 'admin_decide_verification').args.p_approve === true, `${vp.n}: onaylandı, belge depodan silindi`);
+    check(await until(() => f.locator('[data-verify]').count().then(n => n === 1)) && await until(async () => (await f.textContent('[data-verify-count]')).trim() === '1'), `${vp.n}: liste ve sayı güncellendi`);
+    // reddet: sebep seçimi + not
+    await f.click(`${M1} button:text-is("Reddet")`); await f.waitForSelector('.pa-dialog select[name="why"]');
+    await f.selectOption('.pa-dialog select[name="why"]', 'Pro üyelik aktif değil'); await f.fill('.pa-dialog textarea[name="reason"]', 'Uygulamadan yenileyin');
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_decide_verification')?.args.p_reason === 'Pro üyelik aktif değil — Uygulamadan yenileyin' && st.removed.includes(`${M}/2.png`)), `${vp.n}: reddedildi (sebep + not), belge silindi`);
+    check(await until(async () => /Bekleyen başvuru yok/.test(await f.textContent('[data-main]'))), `${vp.n}: kuyruk boş`);
+    // onaylı → geri al (gerekçe zorunlu)
+    await f.click('.pa-chips button:text-is("Onaylı")');
+    await until(() => f.locator('[data-verify]').count().then(n => n === 2));
+    check(!await f.locator('[data-verify] .pa-vdoc').count(), `${vp.n}: karar verilmiş kayıtlarda belge yok`);
+    await f.click(`[data-verify="33333333-3333-4333-8333-333333333333"] button:text-is("Onayı geri al")`); await f.waitForSelector('.pa-dialog');
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await f.isVisible('.pa-dialog .pa-error') && !lastRpc(st, 'admin_revoke_verification'), `${vp.n}: geri almada gerekçe zorunlu`);
+    await f.fill('.pa-dialog textarea[name="reason"]', 'Şikâyet'); await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_revoke_verification')?.args.p_reason === 'Şikâyet'), `${vp.n}: onay geri alındı`);
+    // belge silinemezse uyarı
+    st.verif.push({ user_id: 'dddddddd-0000-4000-8000-000000000001', full_name: 'Deniz Ak', status: 'pending', doc_path: 'dddddddd-0000-4000-8000-000000000001/x.jpg', submitted_at: iso(1), is_pro: true });
+    st.failRemove = true;
+    await f.click('.pa-chips button:text-is("Bekleyen")'); await f.waitForSelector('[data-verify] button:text-is("Onayla")');
+    await f.click('[data-verify] button:text-is("Onayla")'); await f.waitForSelector('.pa-dialog'); await f.click('.pa-dialog button[type="submit"]');
+    check(await until(async () => /belge silinemedi/.test(await f.textContent('[data-toast]'))), `${vp.n}: belge silinemezse yöneticiye uyarı`);
+    const ov = await f.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    check(ov <= 1 && !errs.length && !st.table.length && st.rpc.every(x => ALLOWED.has(x.name)), `${vp.n}: taşma, hata, tablo isteği yok; yalnız izinli RPC ${errs.join(' ')}`);
+    await page.screenshot({ path: path.join(OUT, `pro-admin-verify-${vp.width}.png`), fullPage: true });
     await ctx.close();
   }
   // ---------------- 5) mobil ----------------

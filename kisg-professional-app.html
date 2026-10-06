@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.40.1
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.41.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -8,6 +8,7 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.41.0: Onaylı hesap: kırmızı rozet (aktif Pro + yönetim onaylı belge), profilde başvuru penceresi (yalnız Pro), Hizmetler'de "Onaylı hesaplar" filtresi.
 v4.40.1: Alan açıklaması her alanın başlığında görünür; yalnız yönetim (admin paneli) yazar. Kullanıcı düzenlemesi geri alındı.
 v4.39.0: Konular → Alanlar (algı; davranış ve veri aynı, yeni SQL yok): satırda son yazanların yüzleri, "Ad: son söz", saat;
  bugün konuşulanlarda canlı nokta ve "Şu an konuşulanlar" bölümü; # işaretleri kalktı (şeritte kırmızı "Alanlar", kartta
@@ -790,6 +791,12 @@ Acil kapatma: CONFIG.historyRouting=false.
   <div class="kn-list" data-notif-list></div>
 </dialog>
 
+<dialog id="kaVerifyDialog" data-ico="badge" class="k-dialog k-dialog-sm" aria-labelledby="kaVerifyTitle">
+  <header class="k-dialog-head"><h2 id="kaVerifyTitle">Hesabını onayla</h2><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
+  <div class="k-dialog-body" data-vf-body></div>
+  <footer class="k-dialog-foot" data-vf-foot hidden></footer>
+</dialog>
+
 <dialog id="kaMediaDialog" class="k-dialog k-media-dialog" aria-label="Post görseli" tabindex="-1" autofocus>
   <header class="k-dialog-head"><a class="k-media-open" data-media-work target="_top">Postu Gör <span aria-hidden="true">→</span></a><span class="k-media-count" data-media-count></span><button type="button" class="k-icon-btn" data-close aria-label="Kapat">×</button></header>
   <div class="k-media-stage"><img alt="" data-media-img></div>
@@ -1210,6 +1217,15 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .ks-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 #kisgApp .ks-chip{min-height:38px;padding:0 16px;border:0;border-radius:var(--r-pill);background:#fff;box-shadow:inset 0 0 0 1px var(--line);color:var(--text);font-size:13.5px;font-weight:650;white-space:nowrap;transition:background var(--t-fast),color var(--t-fast),box-shadow var(--t-fast)}
 #kisgApp .ks-chip[aria-pressed="true"]{background:var(--ink);box-shadow:none;color:#fff}
+/* Onaylı hesap rozeti (v4.41.0): kimliği onaylı olanlar için seçiciler çalışma anında eklenir (verified.paint) */
+:root{--vseal:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpolygon fill='%23d1121e' stroke='%23d1121e' stroke-width='2.2' stroke-linejoin='round' points='12,1.4 15.3,4 19.5,4.5 20,8.7 22.6,12 20,15.3 19.5,19.5 15.3,20 12,22.6 8.7,20 4.5,19.5 4,15.3 1.4,12 4,8.7 4.5,4.5 8.7,4'/%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M7.8 12.3l2.8 2.8 5.6-5.8'/%3E%3C/svg%3E")}
+[data-vu]::after,.kp-vchip::before,.ks-vchip::before{content:"";display:none;flex:none;width:.95em;height:.95em;margin-left:.28em;vertical-align:-.13em;background:var(--vseal) center/contain no-repeat}
+.kp-vchip{display:none;align-items:center;gap:5px;width:max-content;margin:6px 0 0;padding:3px 10px 3px 6px;border-radius:999px;background:var(--red-tint);color:#d1121e;font-size:12.5px;font-weight:700}
+.kp-vchip::before,.ks-vchip::before{display:inline-block;margin:0 4px 0 0}
+#kisgApp .ks-vchip[aria-pressed="true"]{background:var(--red-tint);box-shadow:inset 0 0 0 1px #d1121e;color:#d1121e}
+#kisgApp button.kp-account{width:100%;border:0;font:inherit;text-align:left;cursor:pointer}
+#kisgApp [data-desktop-filters] .kc-field:has([data-filter="verified"]){display:none}
+#kaVerifyDialog .av-pick{margin:12px 0 14px}
 /* v4.23.0 Hizmet kartı kimliği: sol üstte kategori işareti (tek kırmızı detay), sağ üstte kategoriye özgü çok soluk motif,
    kategori etiketi büyük harf + kırmızı çizgi yerine sade hap. Renk ailesi değişmez (beyaz, koyu tipografi, kırmızı aksan). */
 /* Öne Çıkan: küçük taç rozeti; yalnız veride güvenilir işaret varsa basılır (serviceFeatured). */
@@ -1927,7 +1943,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.40.1',
+  version: '4.41.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik', topics: '/?sayfa=alanlar', saved: '/?sayfa=kaydedilenler' },
@@ -3778,6 +3794,71 @@ const avatarManager = (() => {
    Sayı gösterilmez. Kayıtlar oturum başına bir kez yüklenir; [data-save="post|service:id"] düğmeleri her yerde eşitlenir.
    Tablo yoksa (migration öncesi) düğmeler gizli kalır.
    ========================================================================= */
+/* Onaylı hesap (v4.41.0): rozet = aktif Pro + yönetimin onayladığı belge (kisg_verified_users).
+   Rozet CSS ile [data-vu="kimlik"] taşıyan adlara eklenir; sonradan çizilen kartlar yeniden çizim gerekmeden rozet alır.
+   Migration yoksa (RPC yok) rozet, filtre ve başvuru satırı hiç görünmez. */
+const SEAL = '<svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,1.4 15.3,4 19.5,4.5 20,8.7 22.6,12 20,15.3 19.5,19.5 15.3,20 12,22.6 8.7,20 4.5,19.5 4,15.3 1.4,12 4,8.7 4.5,4.5 8.7,4"/><path d="M7.8 12.3l2.8 2.8 5.6-5.8"/></svg>';
+const verified = (() => {
+  const api = { ids: new Set(), ok: false }, css = document.createElement('style');
+  document.head.append(css);
+  api.has = id => api.ids.has(id);
+  api.ready = (async () => {
+    try {
+      await dbReady;
+      const r = await db.rpc('kisg_verified_users'); if (r.error) return api;
+      (r.data || []).forEach(x => { const id = typeof x === 'string' ? x : Object.values(x || {})[0]; if (/^[0-9a-f-]{36}$/i.test(id)) api.ids.add(id); });
+      const l = [...api.ids]; api.ok = true;
+      css.textContent = l.length ? l.map(id => `:root [data-vu="${id}"]::after`) + '{display:inline-block}' + l.map(id => `:root [data-vu-chip="${id}"]`) + '{display:flex}' : '';
+    } catch {}
+    return api;
+  })();
+  return api;
+})();
+const verifyFlow = (() => {
+  const d = $('#kaVerifyDialog'), body = $('[data-vf-body]', d), foot = $('[data-vf-foot]', d);
+  const store = (h, t) => `<a class="k-btn k-btn-primary" href="${h}" target="_blank" rel="noopener">${t}</a>`;
+  const STORES = store('https://play.google.com/store/apps/details?id=com.fk.kirmiziisgapp&amp;hl=tr', 'Google Play') + store('https://apps.apple.com/us/app/k%C4%B1rm%C4%B1z%C4%B1-i-sg-app/id6759110075', 'App Store');
+  const key = v => trFold(clean(v)).replace(/\s+/g, ' ');
+  const DAY = ' Sonuç genelde 1 iş günü içinde profilinde görünür.';
+  let file = null;
+  const set = (b, f = '') => { body.innerHTML = b; foot.innerHTML = f; foot.hidden = !f; host.schedule(); };
+  const err = t => { const e = $('[data-vf-err]', d); if (e) { e.textContent = t; e.hidden = !t; } };
+  async function open() {
+    file = null; set('<p class="k-hint">Yükleniyor…</p>'); dialogs.open(d);
+    try {
+      const [pr, vr] = await Promise.all([db.rpc('get_my_private_profile'), db.from('professional_verifications').select('status,reason,verified_name').maybeSingle()]);
+      if (vr.error) throw vr.error;
+      const pro = !!(Array.isArray(pr.data) ? pr.data[0] : pr.data)?.is_premium, v = vr.data, name = clean(session.me?.full_name);
+      const same = v && key(v.verified_name) === key(name), ok = v?.status === 'approved' && same;
+      if (ok && pro) return set('<p><b>Hesabın onaylı.</b> Pro üyeliğin sürdükçe adının yanında kırmızı onay rozeti görünür.</p>');
+      if (!pro) return set(`<p><b>Onaylı hesap Pro'ya özel.</b> ${ok ? 'Pro üyeliğin sona erdiği için rozetin duraklatıldı; uygulamadan yenilersen yeniden belge istemeden geri gelir.' : 'Pro üyelik Kırmızı İSG uygulamasından alınır; aynı hesapla giriş yaptığında burada da geçerli olur.'}</p>`, STORES);
+      if (v?.status === 'pending') return set('<p><b>Belgen inceleniyor.</b>' + DAY + '</p>');
+      const why = v?.status === 'approved' ? 'Adın değiştiği için rozetin kalktı; yeni adınla belge yükle.' : v?.reason ? `Önceki başvuru reddedildi: ${esc(v.reason)}` : '';
+      set(`${why ? `<p class="k-form-error">${why}</p>` : ''}<p>Adının <b>${esc(name)}</b> olarak göründüğü bir belgenin fotoğrafını yükle: İSG sertifikası, diploma, kimlik ya da ehliyet.</p>`
+        + '<label class="k-btn av-pick"><input type="file" accept="image/jpeg,image/png,image/webp" data-vf-file><span data-vf-name>Fotoğraf seç</span></label>'
+        + '<p class="kg-delete-info" role="note">Belgeni yalnız yönetim görür ve karar verilince silinir. TC kimlik numarası gibi bilgileri kapatabilirsin; bize yalnız adın lazım.</p><p class="k-form-error" data-vf-err role="alert" hidden></p>',
+        '<button type="button" class="k-btn k-btn-primary" data-vf-send disabled>Onaya gönder</button>');
+    } catch { set('<p>Durum okunamadı. Bağlantını kontrol edip tekrar dene.</p>'); }
+  }
+  d.addEventListener('change', e => {
+    const i = e.target.closest?.('[data-vf-file]'); if (!i) return;
+    file = i.files?.[0] || null;
+    const bad = !file ? '' : !/^image\/(jpeg|png|webp)$/.test(file.type) ? 'JPG, PNG veya WEBP fotoğraf seç.' : file.size > 8 << 20 ? 'Fotoğraf en fazla 8 MB olabilir.' : '';
+    if (bad) file = null;
+    $('[data-vf-name]', d).textContent = file ? file.name : 'Fotoğraf seç'; err(bad); $('[data-vf-send]', d).disabled = !file;
+  });
+  d.addEventListener('click', async e => {
+    const b = e.target.closest?.('[data-vf-send]'); if (!b || !file || !session.user) return;
+    b.disabled = true; b.textContent = 'Gönderiliyor…';
+    const bk = db.storage.from('kisg-verifications'), path = `${session.user.id}/${Date.now()}.${file.type.slice(6).replace('jpeg', 'jpg')}`;
+    let r = await bk.upload(path, file, { contentType: file.type });
+    if (!r.error) { r = await db.rpc('kisg_submit_verification', { p_path: path }); if (r.error) bk.remove([path]).catch(() => {}); }
+    if (r.error) { b.disabled = false; b.textContent = 'Onaya gönder'; return err(/PRO_ONLY|row-level/i.test(r.error.message) ? 'Pro üyeliğin aktif görünmüyor.' : 'Gönderilemedi. Tekrar dene.'); }
+    set('<p><b>Belgen alındı ve inceleniyor.</b>' + DAY + '</p>'); toast('Belgen onaya gönderildi.');
+  });
+  return { open };
+})();
+
 const saved = (() => {
   const st = { uid: null, keys: new Set(), p: null, busy: new Set(), off: false }, subs = new Set();
   const label = on => (on ? 'Kaydedilenlerden çıkar' : 'Kaydet');
@@ -3923,7 +4004,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
     const when = detail ? new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(p.created_at)) : relativeTime(p.created_at);
     return `<article class="kw-post" data-post-id="${esc(p.id)}">`
       + `<a class="kw-post-avatar" href="${esc(profile)}" target="_top" aria-label="${esc(a.full_name || 'Kullanıcı')} profiline git">${avatar(a, 'lg')}</a>`
-      + `<header class="kw-post-head"><div class="kw-post-who"><div class="kw-post-name-row"><a class="kw-post-author-link" href="${esc(profile)}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a></div>`
+      + `<header class="kw-post-head"><div class="kw-post-who"><div class="kw-post-name-row"><a class="kw-post-author-link" href="${esc(profile)}" target="_top" data-vu="${esc(p.user_id)}">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a></div>`
       + `<div class="kw-post-sub">${line ? `<span class="kw-post-profession" title="${esc(line)}">${esc(line)}</span>` : ''}<span class="kw-post-time"><time datetime="${esc(p.created_at)}">${esc(when)}</time>${edited}</span></div></div>`
       + `<div class="kw-owner" data-owner-slot>${ownerMenu(p)}</div></header>`
       + `<div class="kw-post-body">`
@@ -4096,7 +4177,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       const like = likeActions(c, own);
       const menu = editing ? '' : commentMenu(c, own);
       return `<li class="cm-item" data-comment-id="${esc(c.id)}"><a class="cm-av" href="${esc(urls.profile(c.user_id))}" target="_top" aria-label="${esc(a.full_name || 'Kullanıcı')} profili">${avatar(a, 'sm')}</a>`
-        + `<div class="cm-bubble"><div class="cm-meta"><a class="cm-name" href="${esc(urls.profile(c.user_id))}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a>${role ? `<span class="cm-role">${esc(role)}</span>` : ''}</div>${body}</div>`
+        + `<div class="cm-bubble"><div class="cm-meta"><a class="cm-name" href="${esc(urls.profile(c.user_id))}" target="_top" data-vu="${esc(c.user_id)}">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a>${role ? `<span class="cm-role">${esc(role)}</span>` : ''}</div>${body}</div>`
         + `<div class="cm-foot"><time datetime="${esc(c.created_at)}">${esc(relativeTime(c.created_at))}${c.updated_at && c.updated_at !== c.created_at ? ' · düzenlendi' : ''}</time>${like}${menu}</div></li>`;
     }
     // Akış önizlemesi: kutu/balon yok; küçük avatar, tek satır kimlik + zaman, en fazla 2 satır metin.
@@ -4110,7 +4191,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       const menu = editing ? '' : commentMenu(c, own);
       const edited = c.updated_at && c.updated_at !== c.created_at ? ' · düzenlendi' : '';
       return `<div class="cp" data-comment-id="${esc(c.id)}"><a class="cp-av" href="${esc(prof)}" target="_top" aria-label="${esc(a.full_name || 'Kullanıcı')} profili">${avatar(a, 'sm')}</a>`
-        + `<div class="cp-main"><div class="cp-meta"><a class="cp-name" href="${esc(prof)}" target="_top">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a>${role ? `<span class="cp-role">${esc(role)}</span>` : ''}<span class="cp-time"><span aria-hidden="true">· </span><time datetime="${esc(c.created_at)}" title="${esc(relativeTime(c.created_at) + edited)}">${esc(shortTime(c.created_at))}</time>${edited ? '<span class="cp-edited"> · düzenlendi</span>' : ''}</span></div>${body}`
+        + `<div class="cp-main"><div class="cp-meta"><a class="cp-name" href="${esc(prof)}" target="_top" data-vu="${esc(c.user_id)}">${esc(a.full_name || 'Kırmızı İSG üyesi')}</a>${role ? `<span class="cp-role">${esc(role)}</span>` : ''}<span class="cp-time"><span aria-hidden="true">· </span><time datetime="${esc(c.created_at)}" title="${esc(relativeTime(c.created_at) + edited)}">${esc(shortTime(c.created_at))}</time>${edited ? '<span class="cp-edited"> · düzenlendi</span>' : ''}</span></div>${body}`
         + (!editing && like ? `<div class="cp-acts">${like.replace(/^<span class="cm-sep" aria-hidden="true">·<\/span>/, '')}</div>` : '') + `</div>`
         + `<div class="cp-side">${menu}</div></div>`;
     }
@@ -4833,7 +4914,7 @@ function createWorksView() {
   function personRow(p) {
     const role = identity.role(p) || identity.feedLine(p);
     const cert = identity.certTag(p);
-    return `<a class="kw-person" href="${esc(urls.profile(p.id))}" target="_top">${avatar(p, 'lg')}<span class="kw-person-copy"><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>`
+    return `<a class="kw-person" href="${esc(urls.profile(p.id))}" target="_top">${avatar(p, 'lg')}<span class="kw-person-copy"><strong data-vu="${esc(p.id)}">${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>`
       + (role || cert ? `<span class="kw-person-role">${esc(compact([role, cert]))}</span>` : '')
       + (clean(p.city) ? `<span class="kw-person-meta">${placeMeta(p.city)}</span>` : '')
       + `</span>${ICONS.chev}</a>`;
@@ -4841,9 +4922,9 @@ function createWorksView() {
   // Sağ sütun (Hizmet Bul aracı): Hizmet Bul kartıyla aynı dil — kişinin fotoğrafı + köşede kategori ikonu → hizmet → kişi · şekil · bölge.
   // "Öne Çıkan" (taç) yalnız veride güvenilir bir işaret varsa gösterilir (bkz. serviceFeatured); bugün DB'de yok.
   function offerRow(v) {
-    const meta = compact([v.provider?.full_name, SERVICE_MODES[v.service_mode], clean(v.service_region)], ' · ');
+    const meta = compact([v.provider?.full_name && `<span data-vu="${esc(v.user_id)}">${esc(v.provider.full_name)}</span>`, esc(SERVICE_MODES[v.service_mode] || ''), esc(clean(v.service_region))], ' · ');
     return `<a class="kw-offer" href="${esc(urls.service(v.id))}" target="_top" title="${esc(v.category?.name || 'Hizmet')}"><span class="ks-lead">${v.provider ? avatar(v.provider, 'lg') : ''}${serviceMark(serviceKind(v))}</span>`
-      + `<span class="kw-offer-copy"><strong>${esc(v.title)}</strong>${meta ? `<span class="kw-offer-meta">${esc(meta)}</span>` : ''}</span>${serviceFeatured(v) ? featuredBadge() : ''}</a>`;
+      + `<span class="kw-offer-copy"><strong>${esc(v.title)}</strong>${meta ? `<span class="kw-offer-meta">${meta}</span>` : ''}</span>${serviceFeatured(v) ? featuredBadge() : ''}</a>`;
   }
   function renderSide() {
     sideExperts.innerHTML = s.experts.length ? s.experts.map(personRow).join('')
@@ -5408,7 +5489,7 @@ function createExpertsView() {
     // v4.32.0: yatay sade kart (fotoğraf + ad + "meslek · sınıf" + "şehir · şirket"); kartın tamamı profile gider.
     const where = compact([clean(p.city), p.current_company]);
     return `<a class="kc-card ke-card" href="${esc(urls.profile(p.id))}" target="_top" title="${esc(counts)}">`
-      + `<span class="ke-av">${avatar(p, 'lg')}</span><span class="ke-copy"><h2>${esc(p.full_name || 'Kırmızı İSG üyesi')}</h2>`
+      + `<span class="ke-av">${avatar(p, 'lg')}</span><span class="ke-copy"><h2 data-vu="${esc(p.id)}">${esc(p.full_name || 'Kırmızı İSG üyesi')}</h2>`
       + (role || cert ? `<span class="ke-role">${esc(compact([role, cert]))}</span>` : '')
       + (where ? `<span class="ke-meta">${esc(where)}</span>` : '')
       + (serving ? `<span class="ke-serving" title="Kırmızı İSG'de yayında aktif hizmeti var">Hizmet veriyor</span>` : '')
@@ -5520,12 +5601,12 @@ const serviceMark = kind => `<span class="ks-mark" aria-hidden="true"><svg viewB
 // kategori bir kez (küçük gri ad), başlık, kısa açıklama, "kişi · şekil · bölge"; kartın tamamı detaya gider.
 function serviceCard(v, { provider = true } = {}) {
   const p = provider ? v.provider : null, kind = serviceKind(v);
-  const meta = compact([p?.full_name, SERVICE_MODES[v.service_mode], clean(v.service_region)], ' · ');
+  const meta = compact([p?.full_name && `<span data-vu="${esc(v.user_id)}">${esc(p.full_name)}</span>`, esc(SERVICE_MODES[v.service_mode] || ''), esc(clean(v.service_region))], ' · ');
   return `<a class="kc-card ks-card${serviceFeatured(v) ? ' is-featured' : ''}" data-service-id="${esc(v.id)}" data-kind="${kind}" href="${esc(urls.service(v.id))}" target="_top">`
     + `<span class="ks-lead">${p ? avatar(p, 'lg') : ''}${serviceMark(kind)}</span>`
     + `<span class="ks-copy"><span class="ks-cat">${esc(v.category?.name || 'Hizmet')}</span><h2>${esc(v.title)}</h2>`
     + (v.description ? `<span class="ks-description">${linkify(clean(v.description).replace(/\s+/g, ' '), { inert: true })}</span>` : '')
-    + (meta ? `<span class="ks-meta">${esc(meta)}</span>` : '') + `</span>`
+    + (meta ? `<span class="ks-meta">${meta}</span>` : '') + `</span>`
     + (serviceFeatured(v) ? featuredBadge() : '') + saved.html('service', v.id, true) + `<svg class="ks-go" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a>`;
 }
 // Hizmet kayıt olayları: katalog, profil ve detay aynı hizmeti anında günceller.
@@ -5543,12 +5624,13 @@ function createServicesView() {
   const options = () => st.categories.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
   const filterMarkup = prefix => `<label class="kc-field kc-field-cat" for="${prefix}-category"><span class="kc-flabel">Kategori</span><select id="${prefix}-category" data-filter="category"><option value="">Tüm kategoriler</option>${options()}</select></label>`
     + `<label class="kc-field" for="${prefix}-mode"><span class="kc-flabel">Hizmet Şekli</span><select id="${prefix}-mode" data-filter="mode"><option value="">Tüm hizmet şekilleri</option>${Object.entries(SERVICE_MODES).map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>`
-    + cityPicker.markup(`${prefix}-region`, 'region');
+    + cityPicker.markup(`${prefix}-region`, 'region')
+    + (verified.ok ? `<label class="kc-field" for="${prefix}-verified"><span class="kc-flabel">Hesap</span><select id="${prefix}-verified" data-filter="verified"><option value="">Tüm hesaplar</option><option value="1">Onaylı hesaplar</option></select></label>` : '');
   const card = v => serviceCard(v);
 
   const catalog = createCatalog({
     name: 'services', el, sheetTitle: 'Hizmetleri Filtrele', filterMarkup,
-    blank: () => ({ category: '', mode: '', region: '' }),
+    blank: () => ({ category: '', mode: '', region: '', verified: '' }),
     text: { loading: 'Hizmetler yükleniyor…', loadingMore: 'Diğer hizmetler yükleniyor…', count: n => `${n} hizmet listeleniyor`, empty: 'Henüz yayınlanmış hizmet yok.', emptyFiltered: 'Bu filtrelere uygun hizmet bulunamadı.' },
     card, skeletonCount: 6,
     skeleton: () => '<div class="kc-sk kc-sk-row ks-sk" aria-hidden="true"><i class="k-sk k-sk-circle"></i><span><i class="k-sk k-sk-short"></i><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div>',
@@ -5561,6 +5643,7 @@ function createServicesView() {
       if (search) { const p = quote(likePattern(search)); qy = qy.ilike('search_provider.full_name', likePattern(search)); clauses.push('or(title.ilike.' + p + ',description.ilike.' + p + ',service_region.ilike.' + p + ',search_provider.not.is.null)'); }
       if (filters.category) qy = qy.eq('category_id', filters.category);
       if (filters.mode) qy = qy.eq('service_mode', filters.mode);
+      if (filters.verified) { const ids = [...(await verified.ready).ids]; if (!ids.length) return { rows: [], more: false, page }; qy = qy.in('user_id', ids); }
       // service_region serbest metindir ("Kocaeli, Sakarya" gibi birden çok il içerebilir): seçilen il metinde aranır.
       // Hizmet Bölgesi V1.1: il seçildiğinde "Tüm Türkiye" hizmetleri de listelenir (her ile hizmet verir).
       if (filters.region) clauses.push(cityClause('service_region', filters.region, REGION_ALL));
@@ -5574,15 +5657,20 @@ function createServicesView() {
   });
 
   /* ---- Kategori şeridi: masaüstü kategori seçicisinin yerine; seçim aynı filtre alanına yazılır ---- */
+  const vSel = () => $('[data-desktop-filters] [data-filter="verified"]', el);
+  verified.ready.then(() => { if (verified.ok) { catalog.renderFilters(); renderChips(); } });
   const currentCategory = () => $('[data-desktop-filters] [data-filter="category"]', el)?.value || catalog.state.filters.category || '';
   function renderChips() {
     if (!st.categories.length) { chips.hidden = true; return; }
     const cur = String(currentCategory());
-    chips.innerHTML = [['', 'Tümü'], ...st.categories.map(c => [String(c.id), c.name])]
+    chips.innerHTML = (vSel() ? `<button type="button" class="ks-chip ks-vchip" data-vchip aria-pressed="${!!vSel().value}">Onaylı hesaplar</button>` : '')
+      + [['', 'Tümü'], ...st.categories.map(c => [String(c.id), c.name])]
       .map(([id, name]) => `<button type="button" class="ks-chip" data-chip="${esc(id)}" aria-pressed="${id === cur}">${esc(name)}</button>`).join('');
     chips.hidden = false;
   }
   chips.addEventListener('click', e => {
+    const v = e.target?.closest?.('[data-vchip]');
+    if (v && vSel()) { vSel().value = vSel().value ? '' : '1'; v.setAttribute('aria-pressed', String(!!vSel().value)); vSel().dispatchEvent(new Event('input', { bubbles: true })); return; }
     const b = e.target?.closest?.('[data-chip]'); if (!b) return;
     const sel = $('[data-desktop-filters] [data-filter="category"]', el); if (!sel) return;
     sel.value = b.dataset.chip;
@@ -5807,7 +5895,7 @@ function createServiceView() {
     const line = p ? providerLine(p, identity.statusShort(p)) : '';
     side.innerHTML = `<div class="kh-card">`
       + `<p class="kh-label">Hizmeti sunan profesyonel</p>`
-      + (p ? `<a class="kh-pro" href="${esc(urls.profile(v.user_id))}" target="_top">${avatar(p, 'xl')}<span class="kh-pro-copy"><strong>${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${line ? `<span>${esc(line)}</span>` : ''}${compact([p.current_company, p.city]) ? `<small>${esc(compact([p.current_company, p.city]))}</small>` : ''}</span></a>`
+      + (p ? `<a class="kh-pro" href="${esc(urls.profile(v.user_id))}" target="_top">${avatar(p, 'xl')}<span class="kh-pro-copy"><strong data-vu="${esc(v.user_id)}">${esc(p.full_name || 'Kırmızı İSG üyesi')}</strong>${line ? `<span>${esc(line)}</span>` : ''}${compact([p.current_company, p.city]) ? `<small>${esc(compact([p.current_company, p.city]))}</small>` : ''}</span></a>`
         : '<p class="k-hint">Profesyonel bilgileri şu anda görüntülenemiyor.</p>')
       + `<div class="kh-actions">`
       + `<a class="k-btn k-btn-primary k-btn-block" href="${esc(urls.profile(v.user_id))}" target="_top">Profili Gör</a>`
@@ -6231,7 +6319,7 @@ function createProfileView() {
       + (own() ? '' : `<div class="kp-more"><button type="button" class="kw-dots" data-popover-trigger aria-label="Profil seçenekleri" aria-expanded="false">···</button><div class="k-popover kw-menu" hidden><button type="button" data-profile-action="report">Profili bildir</button></div></div>`)
       + `<p class="kp-kicker"><span class="k-badge">KIRMIZI İSG KİŞİ KARTI</span></p>`
       + `<div class="kp-head"><div class="kp-av">${avatar(p, 'profile')}${own() ? `<button type="button" class="kp-av-edit" data-profile-action="avatar" aria-label="Profil fotoğrafını değiştir">${PICONS.camera}</button>` : ''}</div>`
-      + `<div class="kp-idn"><h1 id="kpName">${esc(p.full_name || 'Kırmızı İSG üyesi')}</h1>${role ? `<p class="kp-role">${esc(role)}</p>` : ''}`
+      + `<div class="kp-idn"><h1 id="kpName" data-vu="${esc(p.id)}">${esc(p.full_name || 'Kırmızı İSG üyesi')}</h1><p class="kp-vchip" data-vu-chip="${esc(p.id)}">Onaylı hesap</p>${role ? `<p class="kp-role">${esc(role)}</p>` : ''}`
       + (showStatus ? `<p class="kp-cert"><span class="k-tag k-tag-cert"><i aria-hidden="true"></i>${esc(status)}</span></p>` : '')
       + `<p class="kp-serving" data-kp-serving hidden></p></div></div>`
       + (facts ? `<ul class="kp-facts">${facts}</ul>` : '')
@@ -6242,6 +6330,7 @@ function createProfileView() {
       + `<button type="button" class="k-btn${own() ? '' : ' k-btn-primary kp-act-keep'}" data-profile-action="share">${ICONS.share}<span>Profili Paylaş</span></button>`
       + (own() ? `<button type="button" class="k-btn" data-profile-action="pdf">${PICONS.download}<span data-pdf-label>${s.pdfReady?.id === p.id ? 'PDF hazır · Kaydet' : 'PDF Olarak İndir'}</span></button>` : '') + `</div>`
       + (own() ? `<a class="kp-account" href="${esc(urls.view('account'))}" target="_top" data-view-link="account">${PICONS.shield}<span><b>Hesap &amp; Gizlilik</b><small>Uzmanlar'da görünürlük, telefon ve hesap ayarları</small></span><span class="kp-account-go" aria-hidden="true">→</span></a>` : '')
+      + (own() && verified.ok ? `<button type="button" class="kp-account" data-profile-action="verify">${SEAL}<span><b>Onaylı hesap</b><small>${verified.has(p.id) ? 'Hesabın onaylı · Pro sürdükçe rozet görünür' : 'Adının yanında kırmızı onay rozeti · Pro üyelere özel'}</small></span><span class="kp-account-go" aria-hidden="true">→</span></button>` : '')
       + (missing.length ? `<p class="kp-hint">Kişi kartını tamamla: ${esc(missing.join(', '))} ekle. <button type="button" class="k-text-button" data-profile-action="edit">Şimdi ekle</button></p>` : '')
       + `</article>`;
   }
@@ -6254,6 +6343,7 @@ function createProfileView() {
     renderCompose();
     host.schedule();
   }
+  verified.ready.then(() => { if (verified.ok && own()) renderCard(); });
   function renderSkeleton() {
     cardSlot.innerHTML = '<div class="kp-card kp-card-sk" aria-hidden="true"><div class="kp-head"><i class="k-sk kp-sk-av"></i><span class="kp-sk-lines"><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk k-sk-short"></i><i class="k-sk"></i></div>';
     postsBox.innerHTML = '<div class="kw-post kw-sk" aria-hidden="true"><div class="kw-sk-head"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>';
@@ -6643,6 +6733,7 @@ function createProfileView() {
     switch (a.dataset.profileAction) {
       case 'edit': openEditor(); break;
       case 'avatar': avatarManager.open(); break;
+      case 'verify': verifyFlow.open(); break;
       case 'share': if (s.profile) shareLink({ url: urls.profile(s.profile.id), title: `${s.profile.full_name || 'Profil'} | Kırmızı İSG`, text: compact([s.profile.full_name, identity.role(s.profile)], ' — '), copied: 'Profil bağlantısı kopyalandı.' }); break;
       case 'pdf': downloadPdf(a); break;
       case 'report': closePopovers(); if (s.profile) reports.open({ type: 'profile', id: s.profile.id, ownerId: s.profile.id }); break;
@@ -6704,7 +6795,7 @@ function createWorkView() {
   function render() {
     const p = F.posts[0]; if (!p) return;
     const a = p.author || {};
-    box.innerHTML = feed.card(p, true) + `<a class="kd-profile" href="${esc(urls.profile(p.user_id))}" target="_top"><span>${esc(a.full_name || 'Kırmızı İSG üyesi')}</span><span>Profili Gör <span aria-hidden="true">→</span></span></a>`;
+    box.innerHTML = feed.card(p, true) + `<a class="kd-profile" href="${esc(urls.profile(p.user_id))}" target="_top"><span data-vu="${esc(p.user_id)}">${esc(a.full_name || 'Kırmızı İSG üyesi')}</span><span>Profili Gör <span aria-hidden="true">→</span></span></a>`;
     feed.threads.rerenderAll();
     host.schedule();
   }
