@@ -95,7 +95,7 @@ const acts = f => f.evaluate(() => [...document.querySelectorAll('.kh-actions a'
   const q = reqs.filter(u => /search_provider/.test(u)).pop() || '';
   check(/search_provider:profiles!professional_services_user_id_fkey\(id\)/.test(q) && !/fkey\(\)/.test(q) && /search_provider\.full_name=ilike/.test(q), `arama: sağlayıcı gömülü okuması (id) (${(q.match(/search_provider:[^,&]*/) || [''])[0]})`);
   check(await f.locator('[data-view="services"] .ks-card').count() > 0, 'arama sonuçları listeleniyor');
-  const ver = await f.evaluate(() => /version:\s*["']4\.42\.0["']/.test(document.querySelector('script')?.textContent || ''));
+  const ver = await f.evaluate(() => /version:\s*["']4\.42\.0["']/.test(document.documentElement.outerHTML));
   check(ver, 'sürüm 4.42.0');
   await ctx.close();
 }
