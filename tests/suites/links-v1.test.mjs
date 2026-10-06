@@ -98,7 +98,9 @@ try {
     await page.goto(`${SITE}/hizmetler`); await settle(page, 1200);
     f = frameOf(page);
     const cardSel = `[data-service-id="${SVC_ID}"] .ks-description`;
-    await until(() => f.$(cardSel).then(Boolean));
+    await until(() => f.$(`[data-service-id="${SVC_ID}"]`).then(Boolean));
+    // v4.32.0: mobil satır kartında açıklama gösterilmez; kart bağlantıları masaüstünde denetlenir
+    if (N === 'desktop') {
     st = await linkState(f, cardSel);
     check(st && JSON.stringify(st.links.map(l => l.href)) === JSON.stringify(['https://ornek.com/hizmet', 'https://ornek.com/iletisim']) && st.links.every(l => l.tag === 'SPAN') && st.nestedA === 0, `${N} Hizmet Bul kartı: linkler (nokta/parantez hariç), iç içe <a> yok ${JSON.stringify(st?.links.map(l => l.href))}`);
     const svcUrl = page.url();
@@ -111,6 +113,7 @@ try {
     await settle(page, 400);
     check(pop4 && pop4.url() === 'https://ornek.com/iletisim' && page.url() === svcUrl, `${N} Hizmet Bul kartı: klavye (Enter) ile de açılır`);
     if (pop4) await pop4.close();
+    } else check(!(await f.isVisible(cardSel)), `${N} Hizmet Bul kartı: mobil satırda açıklama yok`);
     // kartın geri kalanı detaya gider (davranış değişmedi)
     await f.click(`[data-service-id="${SVC_ID}"] h2`); await settle(page, 1000);
     check(page.url().includes('/hizmet-detay'), `${N} Hizmet Bul kartı: başlığa tıklama hâlâ detaya gider`);

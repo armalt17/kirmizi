@@ -71,7 +71,7 @@ try {
     writes.length = 0; let rpc = 0; page.on('request', r => { if (/\/rpc\/|\/auth\/v1\/admin|functions\/v1/.test(r.url())) rpc++; });
     await f.click('[data-account-delete]'); await settle(page, 400);
     const dlg = await f.evaluate(() => { const d = document.getElementById('kaDeleteDialog'); return { open: d.open, text: d.textContent, buttons: [...d.querySelectorAll('footer button')].map(b => b.textContent) }; });
-    check(dlg.open && /web üzerinden yapılamıyor/.test(dlg.text) && JSON.stringify(dlg.buttons) === '["Kapat"]', `${N}: Hesabı Sil → onay penceresi durumu açıklıyor, silme butonu yok`);
+    check(dlg.open && /Destek üzerinden alıyoruz/.test(dlg.text) && JSON.stringify(dlg.buttons) === '["Vazgeç","Silme Talebi Gönder"]', `${N}: Silme Talebi → pencere talep akışını açıklıyor; doğrudan silme yok, Destek'e yönlendirir ${JSON.stringify(dlg.buttons)}`);
     await f.click('#kaDeleteDialog footer [data-close]'); await settle(page, 300);
     check(!(await f.evaluate(() => document.getElementById('kaDeleteDialog').open)) && writes.length === 0 && rpc === 0 && db.profiles.length === 2, `${N}: silme/yazma isteği gönderilmedi`);
 

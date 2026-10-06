@@ -53,7 +53,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   const f = frameOf(page); await f.waitForSelector('[data-view="works"] [data-post-id]');
   let txt = await uiText(page);
   check(!/Çalışma/.test(txt), `${N} Akış: kullanıcıya görünen metinde "Çalışma" yok ${(txt.match(/.{0,30}Çalışma.{0,30}/) || [''])[0]}`);
-  check(/Son Post ·/.test(txt) && /Yeni Post|Post paylaş/.test(txt), `${N} Akış: "Son Post", "Post paylaş…" görünüyor`);
+  check(!/Son Post ·/.test(txt) && /Yeni Post|Post paylaş/.test(txt), `${N} Akış: "Post paylaş…" görünüyor; "Son Post ·" satırı yok (v4.25.0'da kaldırıldı)`);
   await f.evaluate(() => document.querySelector('[data-view="works"] [data-media]').click()); await settle(page, 500);
   check((await f.textContent('#kaMediaDialog .k-media-open')).includes('Postu Gör'), `${N} görüntüleyici: "Postu Gör →"`);
   await page.keyboard.press('Escape'); await settle(page, 300);
@@ -75,7 +75,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await page.goto('https://isgcalisanplatformu.com/uzmanlar'); await settle(page, 1500);
   g = frameOf(page); await g.waitForSelector('[data-view="experts"] .ke-card');
   txt = await uiText(page);
-  const counters = await g.evaluate(() => [...document.querySelectorAll('[data-view="experts"] .ke-activity')].map(x => x.textContent));
+  const counters = await g.evaluate(() => [...document.querySelectorAll('[data-view="experts"] .ke-card')].map(x => (x.title.match(/(\d+ Post( · \d+ Hizmet)?|\d+ Hizmet)$/) || [])[0]).filter(Boolean));
   check(!/Çalışma/.test(txt), `${N} Uzmanlar: "Çalışma" yok`);
   check(await g.locator('[data-view="experts"] input[data-filter="city"]').count() === 0, `${N} Uzmanlar: serbest metin şehir girişi kaldırıldı`);
   const all0 = await names(g, 'experts');
@@ -83,7 +83,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   if (mobile) { await g.evaluate(() => document.querySelector('[data-view="experts"] [data-open-filters]').click()); await g.waitForSelector('#kaFilterDialog[open]'); scope = '#kaFilterDialog'; }
   else scope = '[data-view="experts"] [data-desktop-filters]';
   const pick = await g.evaluate(sel => { const w = document.querySelector(`${sel} [data-city-picker]`); const s = w.querySelector('select'); return { label: w.querySelector('[data-city-value]').textContent, opts: s.options.length, first: s.options[0].textContent, vis: w.querySelector('.kc-city-btn').getBoundingClientRect().height > 30 }; }, scope);
-  check(pick.label === 'Tüm Şehirler' && pick.opts === 82 && pick.first === 'Tüm Şehirler' && pick.vis, `${N} Uzmanlar şehir seçici: varsayılan "Tüm Şehirler", 81 il ${JSON.stringify(pick)}`);
+  check(pick.label === 'Tüm Şehirler' && pick.opts === 83 && pick.first === 'Tüm Şehirler' && pick.vis, `${N} Uzmanlar şehir seçici: varsayılan "Tüm Şehirler", 81 il + Yurtdışı ${JSON.stringify(pick)}`);
   await g.evaluate(sel => document.querySelector(`${sel} .kc-city-btn`).click(), scope);
   const searchRes = {};
   for (const q of ['ist', 'sanli', 'IZM', 'çan', 'xyz']) { await g.fill(`${scope} [data-city-q]`, q); searchRes[q] = await g.evaluate(sel => [...document.querySelectorAll(`${sel} [data-city-list] li`)].map(li => li.textContent), scope); }
@@ -100,7 +100,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   };
   const expCity = c => db.profiles.filter(p => p.is_discoverable && p.city && ['İstanbul', 'istanbul', 'ISTANBUL', 'Istanbul'].includes(c === 'İstanbul' ? p.city : '') ).map(p => p.full_name).sort().join();
   let r = await run('İstanbul', 'ist');
-  const cnt = await g.evaluate(() => [...document.querySelectorAll('[data-view="experts"] .ke-activity')].map(x => x.textContent));
+  const cnt = await g.evaluate(() => [...document.querySelectorAll('[data-view="experts"] .ke-card')].map(x => (x.title.match(/(\d+ Post( · \d+ Hizmet)?|\d+ Hizmet)$/) || [])[0]).filter(Boolean));
   check(cnt.length > 0 && cnt.every(c => /^\d+ Post( · \d+ Hizmet)?$|^\d+ Hizmet$/.test(c)) && cnt.some(c => /Post/.test(c)), `${N} Uzmanlar kart sayacı "${cnt[0]}"`);
   check(r.sort().join() === expCity('İstanbul') && r.includes('Ayşe Yılmaz') && r.length === 4, `${N} Uzmanlar İstanbul → yalnız İstanbul/istanbul/ISTANBUL (${r.join(', ')})`);
   check(reqLog.some(x => x.table === 'profiles' && /city\.ilike\."%İstanbul%"/.test(x.url) && /city\.ilike\."%istanbul%"/.test(x.url) && /city\.ilike\."%Istanbul%"/.test(x.url)), `${N} Uzmanlar sorgusu profiles.city üzerinde Türkçe yazım varyantlarıyla`);

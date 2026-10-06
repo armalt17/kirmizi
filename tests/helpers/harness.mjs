@@ -116,8 +116,11 @@ function handleRpc(route, fn) {
     if (!auth || auth.startsWith('sb_publishable_')) return json({ code: '42501', message: 'permission denied for function get_my_private_profile' }, 401);
     let sub = null; try { sub = JSON.parse(Buffer.from(auth.split('.')[1], 'base64url').toString()).sub; } catch {}
     const p = db.profiles.find(x => x.id === sub) || db.profiles.find(x => x.id === U1);
-    return json(p ? [{ id: p.id, email: 'a@b.c', phone: p.phone ?? null, show_phone_publicly: !!p.show_phone_publicly, is_premium: false, daily_reports_used: 0, monthly_reports_used: 0, last_report_date: null, onesignal_notification_id: null }] : []);
+    return json(p ? [{ id: p.id, email: 'a@b.c', phone: p.phone ?? null, show_phone_publicly: !!p.show_phone_publicly, is_premium: !!p.is_premium, daily_reports_used: 0, monthly_reports_used: 0, last_report_date: null, onesignal_notification_id: null }] : []);
   }
+  // Onaylı hesap (v4.41.0): db._verified tanımlıysa migration uygulanmış sayılır.
+  if (fn === 'kisg_verified_users' && db._verified) return json(db._verified);
+  if (fn === 'kisg_submit_verification' && db._verified) return db._submitErr ? json({ code: '42501', message: db._submitErr }, 400) : json('pending');
   return json({ code: 'PGRST202', message: 'unknown' }, 404);
 }
 async function handleRest(route) {
@@ -136,7 +139,7 @@ async function handleRest(route) {
   if (method === 'POST') {
     const body = JSON.parse(req.postData() || '{}'); writes.push({ table, body });
     const list = (Array.isArray(body) ? body : [body]).map(b => ({ id: table === 'professional_post_comments' && b.post_id === 'bbbbbbbb-0000-4000-8000-000000000005' ? ++seq : (b.id || `dddddddd-0000-4000-8000-${String(++seq).padStart(12, '0')}`), created_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...b }));
-    if (!['professional_post_likes', 'professional_comment_likes', 'professional_post_comments', 'professional_posts', 'professional_services'].includes(table)) return json([], 201);
+    if (!['professional_post_likes', 'professional_comment_likes', 'professional_post_comments', 'professional_posts', 'professional_services', 'professional_saved_items'].includes(table)) return json([], 201);
     rows.push(...list);
     return json(accept.includes('pgrst.object') ? list[0] : list, 201);
   }

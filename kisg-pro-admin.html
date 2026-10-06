@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL ADMIN v1.2.0
+KIRMIZI İSG — PROFESSIONAL ADMIN v1.4.0
 
 KURULUM: Bu dosyanın TAMAMI Hostinger'da /pro-admin sayfasının Custom HTML/Embed içeriği olarak kullanılır.
 Ana uygulama (kisg-professional-app.html) ile aynı Supabase projesi ve aynı oturum (tarayıcı depolaması) kullanılır;
@@ -12,8 +12,13 @@ GÜVENLİK
  - Arayüzdeki "yönetici" kontrolü (kisg_is_admin) yalnız ekranı göstermek içindir; yetki sunucudadır.
  - v1.2.0 Destek sekmesi: public.support_requests için RPC yoktur; liste ve durum (open/resolved) değişikliği
    doğrudan tablodan, Supabase'de hazır olan RLS ile yapılır (bu dosya DB değiştirmez).
+ - v1.3.0 Etiketler sekmesi: db/migrations/20261006_tags_admin_v2.sql gerekir (admin_list_tags, admin_update_tag,
+   admin_merge_tags). Uygulanmamışsa sekme bunu söyler; diğer bölümler etkilenmez.
+ - v1.4.0 Sabit konu açıklaması (20261008_tags_pinned_note.sql): sitede sabit konunun altında görünür; boşsa hiçbir şey çıkmaz.
 
-BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler · Şikâyetler · Destek
+BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler · Hizmet Kategorileri · Alanlar · Şikâyetler · Destek · Onaylar
+ - v1.8.0 Onaylar (20261013_verified_accounts.sql): onaylı hesap başvuruları. Belge gizli depodan (kisg-verifications)
+   10 dakikalık imzalı bağlantıyla görülür; onay/ret kararıyla birlikte depodan silinir.
 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -60,8 +65,11 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
       <button type="button" data-sec="posts">Postlar</button>
       <button type="button" data-sec="comments">Yorumlar</button>
       <button type="button" data-sec="services">Hizmetler</button>
+      <button type="button" data-sec="categories">Hizmet Kategorileri</button>
+      <button type="button" data-sec="tags">Alanlar</button>
       <button type="button" data-sec="reports">Şikâyetler <span class="pa-count" data-pending hidden></span></button>
       <button type="button" data-sec="support">Destek</button>
+      <button type="button" data-sec="verify">Onaylar <span class="pa-count" data-verify-count hidden></span></button>
     </nav>
     <main class="pa-main" data-main tabindex="-1"></main>
   </div>
@@ -171,6 +179,14 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
 #kisgAdmin .pa-who b{color:var(--ink);font-weight:650}
 #kisgAdmin .pa-body{display:-webkit-box;max-width:560px;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:3;white-space:pre-wrap;word-break:break-word}
 #kisgAdmin .pa-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+#kisgAdmin .pa-vlist{display:grid;gap:12px}
+#kisgAdmin .pa-vrow{display:flex;gap:16px;padding:14px}
+#kisgAdmin .pa-vdoc{flex:none;display:grid;place-items:center;width:220px;height:150px;border-radius:10px;background:var(--surface-2,#f6f7f9);overflow:hidden;color:var(--faint);font-size:12.5px}
+#kisgAdmin .pa-vdoc img{width:100%;height:100%;object-fit:contain}
+#kisgAdmin .pa-vinfo{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+#kisgAdmin .pa-vinfo b{color:var(--ink);font-size:15px}
+#kisgAdmin .pa-vinfo .pa-actions{justify-content:flex-start;margin-top:6px}
+@media (max-width:640px){#kisgAdmin .pa-vrow{flex-direction:column}#kisgAdmin .pa-vdoc{width:100%;height:200px}}
 #kisgAdmin .pa-num{font-variant-numeric:tabular-nums;white-space:nowrap}
 #kisgAdmin .pa-empty{padding:40px 16px;color:var(--muted);text-align:center}
 #kisgAdmin .pa-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border-top:1px solid var(--line-soft);color:var(--muted);font-size:13px}
@@ -239,7 +255,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.2.0',
+  version: '1.8.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -331,13 +347,14 @@ const LABEL = {
   sanction: { warning: 'Uyarı', suspension: 'Askı', ban: 'Ban' },
   support: { open: 'Açık', resolved: 'Çözüldü' },
   supportCategory: { technical: 'Teknik sorun', account: 'Hesap / profil sorunu', suggestion: 'Öneri / geri bildirim', other: 'Diğer' },
-  target: { post: 'Post', comment: 'Yorum', profile: 'Profil', service: 'Hizmet' },
+  target: { post: 'Post', comment: 'Yorum', profile: 'Profil', service: 'Hizmet', tag: 'Alan', service_category: 'Hizmet kategorisi' },
   reason: { spam: 'Spam', inappropriate: 'Uygunsuz içerik', misleading: 'Yanıltıcı', harassment: 'Taciz / hakaret', fake_profile: 'Sahte profil', other: 'Diğer' },
   action_taken: { none: 'İşlem yok', content_hidden: 'İçerik gizlendi', content_deleted: 'İçerik silindi', user_warned: 'Uyarıldı', user_suspended: 'Askıya alındı', user_banned: 'Banlandı', other: 'Diğer' },
   audit: { 'profile.update': 'Profil düzenlendi', 'post.hide': 'Post gizlendi', 'post.restore': 'Post geri açıldı', 'post.delete': 'Post silindi',
     'comment.hide': 'Yorum gizlendi', 'comment.restore': 'Yorum geri açıldı', 'comment.delete': 'Yorum silindi',
     'service.hide': 'Hizmet gizlendi', 'service.restore': 'Hizmet geri açıldı', 'sanction.create': 'Yaptırım uygulandı',
-    'sanction.revoke': 'Yaptırım kaldırıldı', 'report.resolve': 'Şikâyet sonuçlandırıldı' }
+    'sanction.revoke': 'Yaptırım kaldırıldı', 'report.resolve': 'Şikâyet sonuçlandırıldı',
+    'tag.update': 'Alan düzenlendi', 'tag.merge': 'Alanlar birleştirildi' }
 };
 const badge = (kind, value) => h('span', { class: `pa-badge is-${value}` , text: LABEL[kind]?.[value] || value || '—' });
 const who = (name, sub) => h('span', { class: 'pa-who' }, h('b', { text: clean(name) || 'İsimsiz kullanıcı' }), sub ? h('span', { class: 'pa-small', text: sub }) : null);
@@ -379,6 +396,12 @@ function explain(err) {
   if (/PGRST301|JWT|401/.test(raw) && !/KISG/.test(raw)) return new AdminError('Oturumunuz sona erdi. Lütfen tekrar giriş yapın.', 'session', true);
   if (/KISG_ADMIN_FIELD/.test(raw)) return new AdminError(`Bu alan buradan düzenlenemez: ${tail}`, 'field');
   if (/KISG_ADMIN_TARGET/.test(raw)) return new AdminError('Yönetici hesabına yaptırım uygulanamaz.', 'target');
+  if (/KISG_CATEGORY_EXISTS/.test(raw)) return new AdminError('Bu adda bir kategori zaten var.', 'exists');
+  if (/KISG_CATEGORY_IN_USE/.test(raw)) return new AdminError('Bu kategoride hizmet var; silinemez. Sitede görünmesin istiyorsanız "Gizle"yi kullanın.', 'in_use');
+  if (/KISG_TAG_EXISTS/.test(raw)) return new AdminError('Bu adda bir alan zaten var. İkisini birleştirmek için "Birleştir"i kullanın.', 'exists');
+  if (/KISG_NOT_PRO/.test(raw)) return new AdminError('Kullanıcının Pro üyeliği aktif değil; onaylanamaz. "Pro üyelik aktif değil" sebebiyle reddedin.', 'state');
+  if (/KISG_VERIFY_STATE/.test(raw)) return new AdminError('Bu başvuruya zaten karar verilmiş. Listeyi yenileyin.', 'state');
+  if (/PGRST202/.test(raw)) return new AdminError('Bu bölüm için veritabanı güncellemesi henüz uygulanmamış.', 'missing');
   if (/KISG_ADMIN_NOT_FOUND/.test(raw)) return new AdminError('Kayıt bulunamadı. Liste yenilendi.', 'not_found');
   if (/KISG_ADMIN_STATE/.test(raw)) return new AdminError(`İşlem yapılamadı: ${tail || 'kayıt durumu uygun değil'}`, 'state');
   if (/KISG_ADMIN_INPUT/.test(raw)) {
@@ -531,10 +554,13 @@ const SECTIONS = {
   posts: { title: 'Postlar', render: () => renderContent('post') },
   comments: { title: 'Yorumlar', render: () => renderContent('comment') },
   services: { title: 'Hizmetler', render: () => renderContent('service') },
+  categories: { title: 'Hizmet Kategorileri', render: renderCategories },
+  tags: { title: 'Alanlar', render: renderTags },
   reports: { title: 'Şikâyetler', render: renderReports },
-  support: { title: 'Destek', render: renderSupport }
+  support: { title: 'Destek', render: renderSupport },
+  verify: { title: 'Onaylar', render: renderVerifications }
 };
-const view = { users: { q: '', filter: 'all', offset: 0 }, post: { status: 'active', q: '', offset: 0 }, comment: { status: 'active', q: '', offset: 0 }, service: { status: 'active', q: '', offset: 0 }, reports: { status: 'pending', type: null, offset: 0 }, support: { status: 'open', category: null, offset: 0 } };
+const view = { users: { q: '', filter: 'all', offset: 0 }, post: { status: 'active', q: '', offset: 0 }, comment: { status: 'active', q: '', offset: 0 }, service: { status: 'active', q: '', offset: 0 }, reports: { status: 'pending', type: null, offset: 0 }, support: { status: 'open', category: null, offset: 0 }, tags: { q: '', sort: 'posts', filter: null, offset: 0 }, verify: { status: 'pending' } };
 
 function show(section, opts = {}) {
   state.section = section;
@@ -560,6 +586,7 @@ async function renderOverview() {
   catch (e) { if (seq === renderSeq) main.replaceChildren(head('Genel Bakış'), failed(e, renderOverview)); return; }
   if (seq !== renderSeq) return;
   setPending(o?.reports?.pending);
+  rpc('admin_list_verifications', { p_status: 'pending' }).then(r => setVerifyCount(r?.length), () => {});
   const s = (label, value, sub, go, alert) => h(go ? 'button' : 'div', { class: `pa-stat${alert ? ' is-alert' : ''}`, type: go ? 'button' : null, onclick: go ? () => show(go) : null },
     h('span', { text: label }), h('b', { text: num(value) }), sub ? h('small', { text: sub }) : null);
   const st = (obj, k) => Number(obj?.[k] || 0);
@@ -917,6 +944,236 @@ async function setSupportStatus(r, status, btn) {
     toast(status === 'resolved' ? 'Talep çözüldü olarak işaretlendi.' : 'Talep yeniden açıldı.');
     renderSupport();
   } catch (e) { toast(e.message || 'İşlem tamamlanamadı.', true); if (btn) btn.disabled = false; }
+}
+
+/* ----- Hizmet Kategorileri (Hizmet Bul çipleri + Hizmet Yayınla formu aynı listeyi, bu sırayla okur) ----- */
+async function renderCategories() {
+  const seq = ++renderSeq;
+  const bodyBox = h('div', null, loading());
+  main.replaceChildren(head('Hizmet Kategorileri', 'Hizmet Bul ve Hizmet Yayınla’daki kategoriler: ekle, yeniden adlandır, sırala, gizle'),
+    h('div', { class: 'pa-tools' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: '+ Yeni kategori', onclick: () => editCategory(null) })),
+    bodyBox);
+  let rows;
+  try { rows = await rpc('admin_list_service_categories', {}); }
+  catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, renderCategories)); return; }
+  if (seq !== renderSeq) return;
+  rows ||= [];
+  if (!rows.length) { bodyBox.replaceChildren(h('div', { class: 'pa-card pa-empty', text: 'Kategori yok.' })); host.sync(); return; }
+  const btn = (text, onclick, cls = '', attrs = {}) => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick, ...attrs });
+  const move = async (i, d) => {
+    const ids = rows.map(r => r.id); [ids[i], ids[i + d]] = [ids[i + d], ids[i]];
+    try { await rpc('admin_reorder_service_categories', { p_ids: ids, p_reason: null }); toast('Sıra kaydedildi.'); renderCategories(); }
+    catch (e) { toast(e.message || 'Sıra kaydedilemedi.', true); }
+  };
+  bodyBox.replaceChildren(h('div', { class: 'pa-card' },
+    h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Sıra', 'Kategori', 'Aktif hizmet', 'Durum', ''].map(t => h('th', { text: t })))),
+      h('tbody', null, rows.map((r, i) => h('tr', { 'data-category': r.id },
+        h('td', { 'data-label': 'Sıra' }, h('div', { class: 'pa-actions' },
+          btn('↑', () => move(i, -1), '', { disabled: i === 0, 'aria-label': `${r.name} yukarı` }),
+          btn('↓', () => move(i, 1), '', { disabled: i === rows.length - 1, 'aria-label': `${r.name} aşağı` }))),
+        h('td', null, h('b', { style: 'color:var(--ink)', text: r.name }), h('span', { class: 'pa-small', style: 'display:block', text: r.slug })),
+        h('td', { 'data-label': 'Aktif hizmet', class: 'pa-num', text: num(r.services) }),
+        h('td', { 'data-label': 'Durum' }, h('span', { class: `pa-badge ${r.is_active ? 'is-active' : 'is-deleted'}`, text: r.is_active ? 'Görünür' : 'Gizli' })),
+        h('td', null, h('div', { class: 'pa-actions' },
+          btn('Yeniden adlandır', () => editCategory(r)),
+          btn(r.is_active ? 'Gizle' : 'Göster', () => toggleCategory(r)),
+          Number(r.all_services) ? null : btn('Sil', () => deleteCategory(r), ' pa-btn-danger')))))))));
+  host.sync();
+}
+function editCategory(r) {
+  confirmDialog({
+    title: r ? `${r.name} yeniden adlandır` : 'Yeni kategori', confirm: r ? 'Kaydet' : 'Ekle', reasonRequired: false,
+    text: r ? 'Yeni ad Hizmet Bul’da ve bu kategorideki tüm hizmetlerde görünür.' : 'Listenin sonuna eklenir ve hemen Hizmet Bul ile Hizmet Yayınla’da görünür.',
+    fields: h('label', { class: 'pa-field' }, h('span', { text: 'Kategori adı (2–60 karakter)' }), h('input', { name: 'name', maxlength: 60, required: true, value: r?.name || '' })),
+    submit: async ({ reason, form }) => {
+      const name = clean(form.elements.name.value);
+      if (name.length < 2) throw new AdminError('Ad en az 2 karakter olmalı.', 'input');
+      if (r) await rpc('admin_update_service_category', { p_id: r.id, p_patch: { name }, p_reason: reason || null });
+      else await rpc('admin_create_service_category', { p_name: name, p_reason: reason || null });
+      toast(r ? 'Kategori yeniden adlandırıldı.' : 'Kategori eklendi.'); renderCategories();
+    }
+  });
+}
+function toggleCategory(r) {
+  const on = !r.is_active;
+  confirmDialog({
+    title: `${r.name}: ${on ? 'gösterilsin mi?' : 'gizlensin mi?'}`, confirm: on ? 'Göster' : 'Gizle', danger: !on, reasonRequired: false,
+    text: on ? 'Kategori Hizmet Bul’da ve Hizmet Yayınla formunda yeniden görünür.' : `Hizmet Bul’da ve Hizmet Yayınla formunda görünmez. Bu kategorideki ${num(r.services)} aktif hizmet silinmez, yayında kalır.`,
+    submit: async ({ reason }) => {
+      await rpc('admin_update_service_category', { p_id: r.id, p_patch: { is_active: on }, p_reason: reason || null });
+      toast(on ? 'Kategori gösteriliyor.' : 'Kategori gizlendi.'); renderCategories();
+    }
+  });
+}
+function deleteCategory(r) {
+  confirmDialog({
+    title: `${r.name} silinsin mi?`, text: 'Bu kategoride hiç hizmet yok. Silme geri alınamaz.', confirm: 'Sil', danger: true, reasonRequired: false,
+    submit: async ({ reason }) => {
+      await rpc('admin_delete_service_category', { p_id: r.id, p_reason: reason || null });
+      toast('Kategori silindi.'); renderCategories();
+    }
+  });
+}
+
+/* ----- Onaylar (onaylı hesap rozeti; 20261013_verified_accounts.sql). Rozet = aktif Pro + onaylı belge + aynı ad.
+   Belge gizli depodadır; 10 dakikalık imzalı bağlantıyla görülür ve karar verildiği anda depodan silinir. ----- */
+const VERIFY_BUCKET = 'kisg-verifications';
+const VERIFY_REJECT = ['Ad okunmuyor', 'Ad uyuşmuyor', 'Belge uygun değil', 'Pro üyelik aktif değil'];
+function setVerifyCount(n) { const el = $('[data-verify-count]'); n = Number(n) || 0; el.textContent = n > 99 ? '99+' : String(n); el.hidden = !n; }
+async function renderVerifications() {
+  const seq = ++renderSeq, v = view.verify;
+  const bodyBox = h('div', null, loading());
+  main.replaceChildren(head('Onaylar', 'Onaylı hesap başvuruları: belgedeki ad, profildeki adla aynı kişiyse onaylayın. Belge karar verilince silinir.'),
+    h('div', { class: 'pa-tools' }, chips([['pending', 'Bekleyen'], ['approved', 'Onaylı'], ['rejected', 'Reddedilen']], v.status, x => { v.status = x; renderVerifications(); })),
+    bodyBox);
+  let rows, urls;
+  try {
+    rows = (await rpc('admin_list_verifications', { p_status: v.status })) || [];
+    const st = (await client()).storage.from(VERIFY_BUCKET);
+    urls = await Promise.all(rows.map(r => (r.doc_path ? st.createSignedUrl(r.doc_path, 600).then(x => x.data?.signedUrl || '', () => '') : '')));
+  } catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, renderVerifications)); return; }
+  if (seq !== renderSeq) return;
+  if (v.status === 'pending') setVerifyCount(rows.length);
+  if (!rows.length) { bodyBox.replaceChildren(h('div', { class: 'pa-card pa-empty', text: v.status === 'pending' ? 'Bekleyen başvuru yok.' : 'Kayıt yok.' })); host.sync(); return; }
+  const btn = (text, onclick, cls = '', attrs = {}) => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick, ...attrs });
+  const pro = r => (r.is_pro ? `Pro: aktif${r.pro_until ? ` (${fmtDate(r.pro_until)} tarihine kadar)` : ''}` : 'Pro: aktif değil');
+  bodyBox.replaceChildren(h('div', { class: 'pa-vlist' }, rows.map((r, i) => h('div', { class: 'pa-card pa-vrow', 'data-verify': r.user_id },
+    r.status === 'pending' ? (urls[i] ? h('a', { class: 'pa-vdoc', href: urls[i], target: '_blank', rel: 'noopener', title: 'Belgeyi büyük aç' }, h('img', { src: urls[i], alt: `${r.full_name || 'Kullanıcı'} belgesi` })) : h('div', { class: 'pa-vdoc', text: 'Belge açılamadı' })) : null,
+    h('div', { class: 'pa-vinfo' },
+      h('b', { text: r.full_name || '—' }), h('span', { class: 'pa-small', text: [r.role, r.city].filter(Boolean).join(' · ') }),
+      h('p', { class: 'pa-small', text: `${pro(r)} · ${r.status === 'pending' ? 'Gönderim' : 'Karar'}: ${fmtDate(r.status === 'pending' ? r.submitted_at : r.decided_at)}` }),
+      r.status === 'pending' ? h('p', { text: `Profildeki ad: ${r.full_name || '—'} → belgedeki adla karşılaştırın.` }) : null,
+      r.status === 'approved' && r.verified_name !== r.full_name ? h('p', { class: 'pa-small', text: `Onaydaki ad: ${r.verified_name} (ad değiştiği için rozet görünmüyor)` }) : null,
+      r.reason ? h('p', { class: 'pa-small', text: `Sebep: ${r.reason}` }) : null,
+      h('div', { class: 'pa-actions' },
+        r.status === 'pending' ? [btn('Onayla', () => approveVerification(r), ' pa-btn-primary', { disabled: !r.is_pro, title: r.is_pro ? '' : 'Pro aktif değil' }), btn('Reddet', () => rejectVerification(r))] : null,
+        r.status === 'approved' ? btn('Onayı geri al', () => revokeVerification(r), ' pa-btn-danger') : null))))));
+  host.sync();
+}
+async function decideVerification(r, approve, reason) {
+  const path = await rpc('admin_decide_verification', { p_user: r.user_id, p_approve: approve, p_reason: reason || null });
+  const gone = !path || !(await (await client()).storage.from(VERIFY_BUCKET).remove([path])).error;
+  toast(gone ? `${approve ? 'Hesap onaylandı' : 'Başvuru reddedildi'}; belge silindi.` : `Karar kaydedildi ama belge silinemedi. Supabase > Storage > ${VERIFY_BUCKET} altından silin: ${path}`, !gone);
+  renderVerifications();
+}
+function approveVerification(r) {
+  confirmDialog({
+    title: `${r.full_name} onaylansın mı?`, confirm: 'Onayla', reason: false,
+    text: 'Belgedeki ad profildeki adla aynı kişiyi gösteriyorsa onaylayın. Pro sürdükçe adın yanında kırmızı rozet görünür; belge depodan silinir.',
+    submit: () => decideVerification(r, true)
+  });
+}
+function rejectVerification(r) {
+  confirmDialog({
+    title: `${r.full_name}: reddet`, confirm: 'Reddet', danger: true, reasonLabel: 'Ek not (kullanıcı görür)', reasonRequired: false,
+    text: 'Kullanıcı sebebi görür ve yeni belgeyle tekrar başvurabilir. Belge depodan silinir.',
+    fields: h('label', { class: 'pa-field' }, h('span', { text: 'Sebep' }), h('select', { name: 'why' }, VERIFY_REJECT.map(t => h('option', { value: t, text: t })))),
+    submit: ({ reason, form }) => decideVerification(r, false, [form.elements.why.value, reason].filter(Boolean).join(' — '))
+  });
+}
+function revokeVerification(r) {
+  confirmDialog({
+    title: `${r.full_name}: onay geri alınsın mı?`, confirm: 'Geri al', danger: true,
+    text: 'Rozet hemen kalkar. Kullanıcı sebebi görür ve yeni belgeyle tekrar başvurabilir.',
+    submit: async ({ reason }) => { await rpc('admin_revoke_verification', { p_user: r.user_id, p_reason: reason }); toast('Onay geri alındı.'); renderVerifications(); }
+  });
+}
+
+/* ----- Alanlar (sitede Konular → Alanlar, v4.39.0; veride professional_tags) ----- */
+async function renderTags() {
+  const seq = ++renderSeq, v = view.tags;
+  const bodyBox = h('div', null, loading());
+  main.replaceChildren(head('Alanlar', 'Sitedeki konuşma alanları: yeniden adlandırma, sabitleme, engelleme ve birleştirme'),
+    h('div', { class: 'pa-tools' }, searchBox(v.q, 'Alan ara', q => { v.q = q; v.offset = 0; renderTags(); }),
+      chips([['posts', 'En çok post'], ['new', 'En yeni'], ['az', 'A–Z']], v.sort, x => { v.sort = x; v.offset = 0; renderTags(); }),
+      chips([[null, 'Tümü'], ['pinned', 'Sabit'], ['blocked', 'Engelli']], v.filter, x => { v.filter = x; v.offset = 0; renderTags(); })),
+    bodyBox);
+  let rows;
+  try { rows = await rpc('admin_list_tags', { p_q: v.q || null, p_sort: v.sort, p_filter: v.filter, p_limit: CONFIG.pageSize, p_offset: v.offset }); }
+  catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, renderTags)); return; }
+  if (seq !== renderSeq) return;
+  rows ||= [];
+  const total = Number(rows[0]?.total_count || 0);
+  if (!rows.length) { bodyBox.replaceChildren(h('div', { class: 'pa-card pa-empty', text: 'Alan yok.' })); host.sync(); return; }
+  const btn = (text, onclick, cls = '') => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick });
+  bodyBox.replaceChildren(h('div', { class: 'pa-card' },
+    h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Alan', 'Post', 'Oluşturma', 'Son aktivite', ''].map(t => h('th', { text: t })))),
+      h('tbody', null, rows.map(r => h('tr', { 'data-tag': r.id },
+        h('td', null, h('b', { style: 'color:var(--ink)', text: r.name }),
+          r.pinned ? h('span', { class: 'pa-badge is-pending', style: 'margin-left:6px', text: 'Sabit' }) : null,
+          r.blocked ? h('span', { class: 'pa-badge is-deleted', style: 'margin-left:6px', text: 'Engelli' }) : null,
+          r.note ? h('span', { class: 'pa-small', style: 'display:block;margin-top:4px', text: r.note }) : null),
+        h('td', { 'data-label': 'Post', class: 'pa-num', text: num(r.post_count) }),
+        h('td', { 'data-label': 'Oluşturma', class: 'pa-num', text: fmtDate(r.created_at) }),
+        h('td', { 'data-label': 'Son aktivite', class: 'pa-num', text: fmtDate(r.last_post_at) }),
+        h('td', null, h('div', { class: 'pa-actions' },
+          btn('Yeniden adlandır', () => renameTag(r)),
+          btn(r.pinned ? 'Sabitten kaldır' : 'Sabitle', () => toggleTag(r, 'pinned')),
+          btn('Açıklama', () => noteTag(r)),
+          btn(r.blocked ? 'Engeli kaldır' : 'Engelle', () => toggleTag(r, 'blocked'), r.blocked ? '' : ' pa-btn-danger'),
+          btn('Birleştir', () => mergeTag(r)))))))),
+    pager(total, v.offset, off => { v.offset = off; renderTags(); })));
+  host.sync();
+}
+function renameTag(r) {
+  confirmDialog({
+    title: `${r.name} yeniden adlandır`, text: 'Postlar alana kimlikle bağlıdır; yeni ad tüm postlarda ve paylaşılmış bağlantılarda görünür.', confirm: 'Kaydet', reasonRequired: false,
+    fields: h('label', { class: 'pa-field' }, h('span', { text: 'Yeni ad (en fazla 20 karakter)' }), h('input', { name: 'name', maxlength: 20, required: true, value: r.name })),
+    submit: async ({ reason, form }) => {
+      const name = clean(form.elements.name.value);
+      if (!name) throw new AdminError('Ad boş olamaz.', 'input');
+      await rpc('admin_update_tag', { p_id: r.id, p_patch: { name }, p_reason: reason || null });
+      toast('Alan yeniden adlandırıldı.'); renderTags();
+    }
+  });
+}
+const noteField = v => h('label', { class: 'pa-field' }, h('span', { text: 'Sitede görünen açıklama (isteğe bağlı, en fazla 160 karakter)' }),
+  h('textarea', { name: 'note', maxlength: 160, placeholder: 'Örn. Sahada yaşadığın mevzuat ve denetim sorunlarını burada paylaş.', text: v || '' }));
+function noteTag(r) {
+  confirmDialog({
+    title: `${r.name} açıklaması`, text: 'Sitede alanın başlığında herkese gösterilir; yalnız yönetim yazar. Boş bırakırsanız açıklama görünmez.', confirm: 'Kaydet', reasonRequired: false,
+    fields: noteField(r.note),
+    submit: async ({ reason, form }) => {
+      await rpc('admin_update_tag', { p_id: r.id, p_patch: { note: clean(form.elements.note.value) || null }, p_reason: reason || null });
+      toast('Açıklama kaydedildi.'); renderTags();
+    }
+  });
+}
+function toggleTag(r, key) {
+  const on = !r[key];
+  const t = key === 'pinned'
+    ? [on ? 'Sabitlensin mi?' : 'Sabitten kaldırılsın mı?', on ? 'Alan, Alanlar sayfasında ve Akış şeridinin başında, skordan bağımsız "Sabit" olarak görünür.' : 'Alan yalnız gündem skoruna göre görünür.', on ? 'Sabitle' : 'Kaldır']
+    : [on ? 'Engellensin mi?' : 'Engel kaldırılsın mı?', on ? 'Bu alanda yeni post paylaşılamaz; mevcut postlar görünmeye devam eder.' : 'Alan yeniden kullanılabilir.', on ? 'Engelle' : 'Engeli kaldır'];
+  confirmDialog({
+    title: `${r.name}: ${t[0]}`, text: t[1], confirm: t[2], danger: key === 'blocked' && on, reasonRequired: key === 'blocked' && on,
+    fields: key === 'pinned' && on ? noteField(r.note) : null,
+    submit: async ({ reason, form }) => {
+      const v = form.elements.note ? clean(form.elements.note.value) : '', note = v || r.note ? { note: v || null } : {};
+      await rpc('admin_update_tag', { p_id: r.id, p_patch: { [key]: on, ...note }, p_reason: reason || null });
+      toast('Alan güncellendi.'); renderTags();
+    }
+  });
+}
+function mergeTag(r) {
+  const sel = h('select', { name: 'target', required: true }, h('option', { value: '', text: 'Önce arayın…' }));
+  const find = async q => {
+    try {
+      const list = (await rpc('admin_list_tags', { p_q: q || null, p_limit: 20 }) || []).filter(x => x.id !== r.id);
+      sel.replaceChildren(...(list.length ? list.map(x => h('option', { value: x.id, text: `${x.name} (${num(x.post_count)} post)` })) : [h('option', { value: '', text: 'Sonuç yok' })]));
+    } catch (e) { toast(e.message, true); }
+  };
+  find('');
+  confirmDialog({
+    title: `${r.name} birleştir`, text: `${r.name} alanının ${num(r.post_count)} postu hedef alana taşınır ve ${r.name} silinir. Geri alınamaz.`, confirm: 'Birleştir', danger: true,
+    fields: h('div', { style: 'display:flex;flex-direction:column;gap:8px' }, searchBox('', 'Hedef alan ara', find), h('label', { class: 'pa-field' }, h('span', { text: 'Hedef alan' }), sel)),
+    submit: async ({ reason }) => {
+      if (!sel.value) throw new AdminError('Hedef alan seçin.', 'input');
+      const res = await rpc('admin_merge_tags', { p_source: r.id, p_target: sel.value, p_reason: reason });
+      toast(`Birleştirildi: ${num(res?.moved_posts)} post taşındı.`); renderTags();
+    }
+  });
 }
 
 /* ---------------------------------------------------------------------------

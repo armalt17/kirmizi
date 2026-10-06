@@ -56,7 +56,6 @@ const clickBell = page => page.evaluate(() => document.getElementById('kisg-pro-
 const panelItems = (page, mobile, f) => mobile
   ? f.evaluate(() => [...document.querySelectorAll('#kaNotifDialog .kn-item')].map(x => ({ id: x.dataset.notifId, unread: x.classList.contains('is-unread'), text: x.querySelector('.kn-text').textContent, snip: x.querySelector('.kn-snippet')?.textContent || '' })))
   : page.evaluate(() => [...document.getElementById('kisg-pro-nav').shadowRoot.querySelectorAll('[data-notif-panel] .kn-item')].map(x => ({ id: x.dataset.notifId, unread: x.classList.contains('is-unread'), text: x.querySelector('.kn-text').textContent, snip: x.querySelector('.kn-snippet')?.textContent || '' })));
-const allBtn = (page, mobile, f) => mobile ? f.evaluate(() => { const b = document.querySelector('#kaNotifDialog [data-notif-all]'); return !b.hidden; }) : page.evaluate(() => !document.getElementById('kisg-pro-nav').shadowRoot.querySelector('[data-notif-panel] [data-notif-all]').hidden);
 
 const browser = await chromium.launch(LAUNCH);
 for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile', width: 390, height: 844, isMobile: true, hasTouch: true }]) {
@@ -116,7 +115,11 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await page.screenshot({ path: `${OUT}/notif-${N}.png` });
   check(items.length === 20 && new Set(items.map(i => i.id)).size === 20, `${N} son 20 bildirim, tekrar yok (${items.length})`);
   check(items[0].text.includes('Postuna yorum yaptı') && items[0].snip.includes('sahada da deneyeceğiz') && items[1].text.includes('Postuna yorum yaptı') && items[1].snip === '' && items.some(i => /Mehmet Şahin Öztürk Postunu beğendi/.test(i.text)), `${N} metinler + yorum özeti (erişilemeyen yorumda özet yok): "${items[1].text}" ${items[1].snip.slice(0, 30)}`);
-  check(items.filter(i => i.unread).length === 14 && await allBtn(page, mobile, f), `${N} okunmamış satırlar ayrışıyor (14), "Tümünü okundu işaretle" görünür`);
+  check(items.filter(i => i.unread).length === 14, `${N} bu açılışta yeni olan 14 satır vurgulu`);
+  // v4.36.0: panel açılınca hepsi okunmuş sayılır — tek UPDATE, rozet kalkar, tek tek tıklamak gerekmez
+  const pa = notifReqs.filter(r => r.m === 'PATCH'); b = await bellState(page);
+  check(pa.length === 1 && JSON.stringify(Object.keys(JSON.parse(pa[0].body))) === '["read_at"]' && pa[0].url.includes(`recipient_id=eq.${U1}`) && pa[0].url.includes('read_at=is.null') && !/[?&]id=eq\./.test(pa[0].url), `${N} açılış: tek toplu UPDATE (yalnız read_at, yalnız kendi okunmamışları) ${pa.map(x => x.url).join(' ')}`);
+  check(b.badge === '' && b.label === 'Bildirimler' && db[NT].filter(r => r.recipient_id === U1 && !r.read_at).length === 0 && !(await page.evaluate(() => !!document.getElementById('kisg-pro-nav').shadowRoot.querySelector('[data-notif-all]'))), `${N} rozet kalktı, veritabanında okunmamış kalmadı, ayrı "Tümünü okundu" düğmesi yok`);
   check(!notifReqs.some(r => r.m === 'POST'), `${N} istemci bildirim INSERT etmiyor`);
   // tek bildirim → okundu + Post Detay + yorum vurgusu
   notifReqs.length = 0;
@@ -125,9 +128,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   else await page.evaluate(id => document.getElementById('kisg-pro-nav').shadowRoot.querySelector(`[data-notif-id="${id}"]`).click(), target.id);
   await settle(page, 400);
   b = await bellState(page);
-  const patch = notifReqs.find(r => r.m === 'PATCH');
-  check(patch && JSON.stringify(Object.keys(JSON.parse(patch.body))) === '["read_at"]' && patch.url.includes(`id=eq.${target.id}`) && patch.url.includes('read_at=is.null') && db[NT].find(r => r.id === target.id).read_at, `${N} tıklama: yalnız o kaydın read_at'i güncellendi (${patch?.url})`);
-  check(b.badge === '9+' && /13 okunmamış/.test(b.label), `${N} badge anında güncellendi (13)`);
+  check(!notifReqs.some(r => r.m === 'PATCH') && db[NT].find(r => r.id === target.id).read_at && b.badge === '', `${N} tıklama: zaten okunmuş, ek UPDATE yok`);
   await f.waitForSelector(`[data-view="work"] [data-post-id="${PID1}"]`);
   const flash = await f.waitForSelector('[data-view="work"] [data-comment-id="cccccccc-0000-4000-8000-000000000077"].is-flash', { timeout: 5000 }).then(() => true).catch(() => false);
   await settle(page, 900);
@@ -139,9 +140,9 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   const nn = mkNotif({ created_at: new Date().toISOString(), actor_id: U2, type: 'post_like', post_id: PID1 });
   db[NT].push(nn); const sent = emitNotif(rt, nn); await settle(page, 900);
   b = await bellState(page);
-  check(sent === 1 && /14 okunmamış/.test(b.label), `${N} Realtime: yeni bildirim → badge güncellendi, yenileme yok (${before} → ${b.label})`);
+  check(sent === 1 && /1 okunmamış/.test(b.label), `${N} Realtime: yeni bildirim → badge güncellendi, yenileme yok (${before} → ${b.label})`);
   emitNotif(rt, nn); await settle(page, 700);
-  check(/14 okunmamış/.test((await bellState(page)).label), `${N} aynı olay iki kez gelse de sayaç çift artmadı`);
+  check(/1 okunmamış/.test((await bellState(page)).label), `${N} aynı olay iki kez gelse de sayaç çift artmadı`);
   // panel açıkken Realtime
   await clickBell(page); await settle(page, 900);
   const n2 = mkNotif({ created_at: new Date(Date.now() + 1000).toISOString(), type: 'post_comment', post_id: PID1, comment_id: 'cccccccc-0000-4000-8000-000000000077' });
@@ -150,16 +151,12 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   check(items[0].id === n2.id && items.length === 20 && new Set(items.map(i => i.id)).size === 20 && items.filter(i => i.id === n2.id).length === 1, `${N} panel açıkken yeni bildirim başa eklendi, duplicate yok`);
   // başka kullanıcıya olay → sayaç değişmez
   const other = mkNotif({ recipient_id: U2 }); db[NT].push(other); const sentOther = emitNotif(rt, other); await settle(page, 600);
-  check(sentOther === 0 && /15 okunmamış/.test((await bellState(page)).label), `${N} başka kullanıcının bildirimi bu kanala gelmez`);
-  // tümünü okundu
-  notifReqs.length = 0;
-  if (mobile) await f.evaluate(() => document.querySelector('#kaNotifDialog [data-notif-all]').click());
-  else await page.evaluate(() => document.getElementById('kisg-pro-nav').shadowRoot.querySelector('[data-notif-panel] [data-notif-all]').click());
-  await settle(page, 600);
-  const pa = notifReqs.filter(r => r.m === 'PATCH');
-  b = await bellState(page); items = await panelItems(page, mobile, f);
-  check(pa.length === 1 && JSON.stringify(Object.keys(JSON.parse(pa[0].body))) === '["read_at"]' && pa[0].url.includes(`recipient_id=eq.${U1}`) && pa[0].url.includes('read_at=is.null') && !/[?&]id=eq\./.test(pa[0].url), `${N} tümünü okundu: tek UPDATE, yalnız read_at, yalnız kendi okunmamışları`);
-  check(b.badge === '' && items.every(i => !i.unread) && !(await allBtn(page, mobile, f)) && db[NT].filter(r => r.recipient_id === U1 && !r.read_at).length === 0 && db[NT].find(r => r.id === other.id).read_at === null, `${N} badge kalktı, satırlar okundu, buton gizlendi; başka kullanıcının kaydına dokunulmadı`);
+  check(sentOther === 0 && (await bellState(page)).badge === '' && db[NT].find(r => r.id === n2.id).read_at, `${N} panel açıkken gelen de okundu sayıldı; başka kullanıcının bildirimi bu kanala gelmez`);
+  // yeniden açılış: vurgu kalmaz, başkasının bildirimi etkilenmez
+  if (mobile) { await f.click('#kaNotifDialog [data-close]'); await settle(page, 300); } else { await page.mouse.click(40, 600); await settle(page, 300); }
+  await clickBell(page); await settle(page, 900);
+  items = await panelItems(page, mobile, f);
+  check(items.length === 20 && items.every(i => !i.unread) && db[NT].find(r => r.id === other.id).read_at === null, `${N} yeniden açınca vurgu yok; başka kullanıcının bildirimi dokunulmadı`);
   if (mobile) { await f.click('#kaNotifDialog [data-close]'); await settle(page, 300); } else { await page.mouse.click(40, 600); await settle(page, 300); }
   // diğer sayfalarda tutarlılık
   for (const path of ['/uzmanlar', '/hizmetler', `/profil?id=${U2}`]) {
