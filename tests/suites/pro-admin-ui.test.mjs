@@ -357,6 +357,7 @@ try {
     check(await until(() => lastRpc(st, 'admin_update_tag')?.args.p_patch.name === 'Çatı İşleri') && await until(async () => (await f.textContent(`[data-tag="${T2}"]`)).includes('Çatı İşleri')), `${vp.n}: yeniden adlandırıldı (gerekçe isteğe bağlı)`);
     // sabitle (açıklama boş → note gönderilmez)
     check((await f.textContent(`[data-tag="${T3}"]`)).includes('Mevzuat sorunlarını paylaş.'), `${vp.n}: sabit konunun açıklaması listede`);
+    check(await f.locator(`[data-tag="${T2}"] button:text-is("Açıklama")`).count() === 1, `${vp.n}: sabit olmayan alanda da "Açıklama" (v1.7.0)`);
     await f.click(`[data-tag="${T1}"] button:text-is("Sabitle")`);
     await f.click('.pa-dialog button[type="submit"]');
     check(await until(() => JSON.stringify(lastRpc(st, 'admin_update_tag')?.args.p_patch) === '{"pinned":true}') && await until(async () => (await f.textContent(`[data-tag="${T1}"]`)).includes('Sabit')), `${vp.n}: sabitlendi`);

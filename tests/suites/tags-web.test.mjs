@@ -9,7 +9,7 @@ const until = async (fn, ms = 6000) => { const t = Date.now(); while (Date.now()
 const T = n => `aaaa0000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const TAGS = [
   { id: T(1), name: 'Bakanlığa Şikayet', pinned: true }, { id: T(2), name: 'Yüksekte Çalışma' }, { id: T(3), name: 'İş Kazaları' },
-  { id: T(4), name: 'ATEX' }, { id: T(5), name: 'Koruma Ekipmanları' }
+  { id: T(4), name: 'ATEX', created_by: U2, note: 'Patlayıcı ortam ekipmanları ve bölge sınıflandırması' }, { id: T(5), name: 'Koruma Ekipmanları' }
 ];
 const TREND = [{ ...TAGS[0], slot: 'pinned', score: null }, { ...TAGS[1], slot: 'trending', score: 12.9, posts: 1280, posts_24h: 42 }, { ...TAGS[2], slot: 'trending', score: 4.1 }, { ...TAGS[3], slot: 'trending', score: 3 }, { ...TAGS[4], slot: 'new', score: null }];
 const norm = s => s.toLocaleLowerCase('tr-TR').replace(/[çğıöşü]/g, c => ({ ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u' })[c]).replace(/[^a-z0-9]/g, '');
@@ -36,9 +36,10 @@ async function rpcMock(ctx, rpc, mode = {}) {
     if (fn === 'kisg_tag_resolve') {
       if (mode.blocked) return J(r, { code: 'P0001', message: 'Bu etiket kullanilamiyor.', hint: 'tag_blocked' }, 400);
       let t = db.professional_tags.find(x => norm(x.name) === norm(body.p_name));
-      if (!t) { t = { id: T(90 + db.professional_tags.length), name: body.p_name.trim() }; db.professional_tags.push(t); }
+      if (!t) { t = { id: T(90 + db.professional_tags.length), name: body.p_name.trim(), normalized_name: norm(body.p_name), created_by: U1 }; db.professional_tags.push(t); }
       return J(r, [{ id: t.id, name: t.name }]);
     }
+    if (fn === 'kisg_tag_set_note') { const t = db.professional_tags.find(x => x.id === body.p_id); t.note = String(body.p_note || '').replace(/\s+/g, ' ').trim() || null; return J(r, t.note); }
     return r.fallback();
   });
 }
@@ -139,7 +140,20 @@ try {
     const ins0 = writes.find(w => w.table === 'professional_posts'), made = db.professional_tags.find(t => t.name === 'Saha Güvenliği');
     check(rpc.some(x => x.fn === 'kisg_tag_resolve' && x.body.p_name === 'Saha Güvenliği') && made && ins0?.body.tag_id === made.id && db.professional_tags.length === tagsBefore + 1, `${N} konu Post paylaşılınca oluştu ve Posta bağlandı`);
     check(await until(() => f.getAttribute(`[data-tag-strip] [data-tag-name="Saha Güvenliği"]`, 'aria-pressed').then(v => v === 'true').catch(() => false)) && await page.evaluate(() => location.search === '?konu=saha-guvenligi'), `${N} Akış yeni konuya geçti (/?konu=saha-guvenligi)`);
+    // v4.40.0: alanı açan kişiye bir kez açıklama daveti (zorunlu değil); yazınca başlıkta görünür ve düzenlenebilir
+    check(await until(() => f.evaluate(() => /Alanın açıldı/.test(document.querySelector('[data-tag-head] [data-note-form]')?.textContent || ''))), `${N} yeni alan: başlıkta açıklama daveti`);
+    await f.fill('[data-tag-head] [data-note-form] textarea', 'Sahada güvenlik  uygulamaları'); rpc.length = 0;
+    await f.click('[data-tag-head] [data-note-form] button[type="submit"]');
+    check(await until(() => f.evaluate(() => document.querySelector('[data-tag-head] .kt-head-note span')?.textContent === 'Sahada güvenlik uygulamaları' && !!document.querySelector('[data-tag-head] [data-note-edit]'))) && rpc.some(x => x.fn === 'kisg_tag_set_note' && x.body.p_note === 'Sahada güvenlik  uygulamaları'), `${N} alanı açan açıklamayı yazdı, başlıkta "Düzenle" ile görünür`);
+    await f.click('[data-tag-head] [data-note-edit]'); await f.fill('[data-tag-head] [data-note-form] textarea', ''); await f.click('[data-tag-head] [data-note-form] button[type="submit"]');
+    check(await until(() => f.evaluate(() => !document.querySelector('[data-tag-head] .kt-head-note') && !!document.querySelector('[data-tag-head] .kt-note-add'))), `${N} açıklama silinebilir (zorunlu değil), "＋ açıklama ekle" geri gelir`);
     await f.click('[data-tag-strip] [data-tag-name="Saha Güvenliği"]'); await settle(page, 700);
+    // başkasının alanı: açıklama görünür, düzenleme yok; sabit alan: düzenleme yok
+    await f.click('[data-tag-strip] [data-tag-name="ATEX"]');
+    check(await until(() => f.evaluate(() => document.querySelector('[data-tag-head] .kt-head-note.is-plain span')?.textContent === 'Patlayıcı ortam ekipmanları ve bölge sınıflandırması' && !document.querySelector('[data-tag-head] [data-note-edit]'))), `${N} başka kullanıcının alanında açıklama görünür (sabit olmasa da), düzenleme yok`);
+    await f.click('[data-tag-strip] [data-tag-name="Bakanlığa Şikayet"]');
+    check(await until(() => f.evaluate(() => document.querySelector('[data-tag-head] .kt-head-name')?.textContent === 'Bakanlığa Şikayet')) && await f.evaluate(() => !document.querySelector('[data-tag-head] [data-note-edit]')), `${N} sabit alanda düzenleme düğmesi yok (yönetim yazar)`);
+    await f.click('[data-tag-strip] [data-tag-name="Bakanlığa Şikayet"]'); await settle(page, 500);
     // vazgeçilirse konu oluşmaz
     await f.click('[data-tag-strip] [data-tag-all]'); await f.waitForSelector('[data-view="topics"]:not([hidden])'); await settle(page, 400);
     await f.fill('[data-topic-q]', 'Boş Konu'); await settle(page, 500);
