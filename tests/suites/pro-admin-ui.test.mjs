@@ -34,6 +34,12 @@ function server(ctx) {
     { id: T2, name: 'Yuksekte calisma2', pinned: false, blocked: false, created_at: iso(500), last_post_at: iso(60), post_count: 2 },
     { id: T3, name: 'Bakanlığa Şikayet', note: 'Mevzuat sorunlarını paylaş.', pinned: true, blocked: false, created_at: iso(20000), last_post_at: null, post_count: 0 }];
   st.T = { T1, T2, T3 };
+  const C1 = 'c1c1c1c1-0000-4000-8000-000000000001', C2 = 'c2c2c2c2-0000-4000-8000-000000000002', C3 = 'c3c3c3c3-0000-4000-8000-000000000003';
+  st.cats = [
+    { id: C1, name: 'İş Güvenliği Uzmanlığı', slug: 'is-guvenligi-uzmanligi', sort_order: 10, is_active: true, services: 4, all_services: 5 },
+    { id: C2, name: 'Risk Değerlendirmesi', slug: 'risk-degerlendirmesi', sort_order: 20, is_active: true, services: 2, all_services: 2 },
+    { id: C3, name: 'Diğer', slug: 'diger', sort_order: 30, is_active: false, services: 0, all_services: 0 }];
+  st.C = { C1, C2, C3 };
   const withTotal = rows => rows.map(r => ({ ...r, total_count: rows.length }));
   const ADMIN_RPC = {
     admin_overview: () => ({ users_total: 1296, users_new_7d: 12, posts: { active: 14, hidden: 1, deleted: 3 }, comments: { active: 9, deleted: 3 }, services: { active: 3, archived: 1 }, reports: { pending: 2 }, active_suspensions: 1, active_bans: 0, warnings_30d: 2, admin_actions_7d: 4 }),
@@ -46,6 +52,11 @@ function server(ctx) {
       .sort((x, y) => a.p_sort === 'az' ? x.name.localeCompare(y.name, 'tr') : a.p_sort === 'new' ? y.created_at.localeCompare(x.created_at) : y.post_count - x.post_count)),
     admin_update_tag: a => { if (a.p_patch.name === 'Yüksekte Çalışma') throw { code: '23505', message: 'KISG_TAG_EXISTS: bu adda etiket var, birlestirmeyi kullan' }; const t = st.tags.find(x => x.id === a.p_id); Object.assign(t, a.p_patch); return { name: t.name, pinned: t.pinned, blocked: t.blocked }; },
     admin_merge_tags: a => { const s = st.tags.find(x => x.id === a.p_source), t = st.tags.find(x => x.id === a.p_target); t.post_count += s.post_count; st.tags = st.tags.filter(x => x !== s); return { target_id: t.id, moved_posts: s.post_count }; },
+    admin_list_service_categories: () => st.cats.slice().sort((x, y) => x.sort_order - y.sort_order),
+    admin_create_service_category: a => { if (a.p_name === 'Diğer') throw { code: '23505', message: 'KISG_CATEGORY_EXISTS: bu adda kategori var' }; const c = { id: 'c4c4c4c4-0000-4000-8000-000000000004', name: a.p_name, slug: 'yeni', sort_order: 40, is_active: true, services: 0, all_services: 0 }; st.cats.push(c); return c; },
+    admin_update_service_category: a => { const c = st.cats.find(x => x.id === a.p_id); Object.assign(c, a.p_patch); return { name: c.name, is_active: c.is_active }; },
+    admin_reorder_service_categories: a => { a.p_ids.forEach((id, i) => { st.cats.find(x => x.id === id).sort_order = (i + 1) * 10; }); return a.p_ids.length; },
+    admin_delete_service_category: a => { if (st.cats.find(x => x.id === a.p_id).all_services) throw { code: '23503', message: 'KISG_CATEGORY_IN_USE' }; st.cats = st.cats.filter(x => x.id !== a.p_id); return {}; },
     admin_update_profile: a => ({ changed: Object.keys(a.p_patch) }),
     admin_moderate_content: a => { if (a.p_id === 'fail') throw 0; const p = posts.find(x => x.id === a.p_id); if (a.p_action === 'hide') p.status = 'hidden'; if (a.p_action === 'restore') p.status = 'active'; if (a.p_action === 'delete') p.status = 'deleted'; return { status: p.status }; },
     admin_sanction_user: () => 'ffffffff-0000-4000-8000-000000000001',
@@ -118,7 +129,7 @@ async function open(browser, { uid = null, width = 1280, height = 900, qs = '' }
 const until = async (fn, ms = 5000) => { const t = Date.now(); while (Date.now() - t < ms) { if (await fn()) return true; await new Promise(r => setTimeout(r, 50)); } return false; };
 const visible = (f, sel) => f.locator(sel).first().isVisible().catch(() => false);
 const lastRpc = (st, name) => [...st.rpc].reverse().find(x => x.name === name);
-const ALLOWED = new Set(['kisg_is_admin', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags']);
+const ALLOWED = new Set(['kisg_is_admin', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category']);
 
 // ---------------- statik ----------------
 check(!/service_role|service-role|serviceRole/i.test(ADMIN_HTML.replace(/service_role YOKTUR|service_role YOK/g, '')), 'admin HTML\'de service role anahtarı/kullanımı yok');
@@ -379,6 +390,45 @@ try {
     const ov = await f.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     check(ov <= 1 && !errs.length && !st.table.length, `${vp.n}: yatay taşma, sayfa hatası ve tablo isteği yok ${errs.join(' ')}`);
     await page.screenshot({ path: path.join(OUT, `pro-admin-tags-${vp.width}.png`), fullPage: true });
+    await ctx.close();
+  }
+  // ---------------- 4d) Hizmet Kategorileri (v1.5.0) ----------------
+  for (const vp of [{ n: 'masaüstü', width: 1280, height: 900 }, { n: 'mobil', width: 390, height: 844 }]) {
+    const { ctx, page, f, st, errs } = await open(browser, { uid: X, width: vp.width, height: vp.height });
+    const { C1, C2, C3 } = st.C;
+    const order = () => f.$$eval('[data-category]', r => r.map(x => x.dataset.category));
+    await until(() => visible(f, '.pa-stats'));
+    await f.click('.pa-nav [data-sec="categories"]');
+    check(await until(() => f.locator('[data-category]').count().then(n => n === 3)), `${vp.n}: Hizmet Kategorileri listesi (sıraya göre)`);
+    const r1 = await f.textContent(`[data-category="${C1}"]`), r3 = await f.textContent(`[data-category="${C3}"]`);
+    check(r1.includes('İş Güvenliği Uzmanlığı') && r1.includes('4') && r1.includes('Görünür') && r3.includes('Gizli'), `${vp.n}: ad, aktif hizmet sayısı, durum`);
+    check(await f.locator(`[data-category="${C1}"] button:text-is("Sil")`).count() === 0 && await f.locator(`[data-category="${C3}"] button:text-is("Sil")`).count() === 1, `${vp.n}: yalnız hizmeti hiç olmayan kategori silinebilir`);
+    check(await f.locator(`[data-category="${C1}"] [aria-label$="yukarı"]`).isDisabled() && await f.locator(`[data-category="${C3}"] [aria-label$="aşağı"]`).isDisabled(), `${vp.n}: ilk satırda ↑, son satırda ↓ pasif`);
+    // sırala
+    await f.click(`[data-category="${C2}"] [aria-label$="yukarı"]`);
+    check(await until(() => JSON.stringify(lastRpc(st, 'admin_reorder_service_categories')?.args.p_ids) === JSON.stringify([C2, C1, C3])) && await until(async () => JSON.stringify(await order()) === JSON.stringify([C2, C1, C3])), `${vp.n}: ↑ ile sıra kaydedildi (tam liste) ve liste yenilendi`);
+    // ekle (aynı ad → anlaşılır hata)
+    await f.click('button:text-is("+ Yeni kategori")'); await f.waitForSelector('.pa-dialog input[name="name"]');
+    await f.fill('.pa-dialog input[name="name"]', 'Diğer'); await f.click('.pa-dialog button[type="submit"]');
+    check(await until(async () => (await f.textContent('.pa-dialog .pa-error').catch(() => '')).includes('zaten var')), `${vp.n}: aynı adlı kategori: anlaşılır hata`);
+    await f.fill('.pa-dialog input[name="name"]', 'Yangın Güvenliği'); await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_create_service_category')?.args.p_name === 'Yangın Güvenliği') && await until(() => f.locator('[data-category]').count().then(n => n === 4)), `${vp.n}: yeni kategori eklendi (gerekçe isteğe bağlı)`);
+    // yeniden adlandır
+    await f.click(`[data-category="${C2}"] button:text-is("Yeniden adlandır")`); await f.waitForSelector('.pa-dialog input[name="name"]');
+    check(await f.inputValue('.pa-dialog input[name="name"]') === 'Risk Değerlendirmesi', `${vp.n}: yeniden adlandırma mevcut adla açılır`);
+    await f.fill('.pa-dialog input[name="name"]', 'Risk Analizi'); await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_update_service_category')?.args.p_patch.name === 'Risk Analizi') && await until(async () => (await f.textContent(`[data-category="${C2}"]`)).includes('Risk Analizi')), `${vp.n}: yeniden adlandırıldı`);
+    // gizle / göster
+    await f.click(`[data-category="${C1}"] button:text-is("Gizle")`); await f.waitForSelector('.pa-dialog');
+    check((await f.textContent('.pa-dialog')).includes('4 aktif hizmet silinmez'), `${vp.n}: gizleme uyarısı hizmetlerin silinmediğini söyler`);
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => JSON.stringify(lastRpc(st, 'admin_update_service_category')?.args.p_patch) === '{"is_active":false}') && await until(async () => (await f.textContent(`[data-category="${C1}"]`)).includes('Gizli')), `${vp.n}: gizlendi`);
+    // sil
+    await f.click(`[data-category="${C3}"] button:text-is("Sil")`); await f.waitForSelector('.pa-dialog'); await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_delete_service_category')?.args.p_id === C3) && await until(() => f.locator(`[data-category="${C3}"]`).count().then(n => n === 0)), `${vp.n}: hizmetsiz kategori silindi`);
+    const ov = await f.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    check(ov <= 1 && !errs.length && !st.table.length, `${vp.n}: yatay taşma, sayfa hatası ve tablo isteği yok ${errs.join(' ')}`);
+    await page.screenshot({ path: path.join(OUT, `pro-admin-categories-${vp.width}.png`), fullPage: true });
     await ctx.close();
   }
   // ---------------- 5) mobil ----------------

@@ -63,6 +63,7 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
       <button type="button" data-sec="posts">Postlar</button>
       <button type="button" data-sec="comments">Yorumlar</button>
       <button type="button" data-sec="services">Hizmetler</button>
+      <button type="button" data-sec="categories">Hizmet Kategorileri</button>
       <button type="button" data-sec="tags">Etiketler</button>
       <button type="button" data-sec="reports">Şikâyetler <span class="pa-count" data-pending hidden></span></button>
       <button type="button" data-sec="support">Destek</button>
@@ -243,7 +244,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.4.0',
+  version: '1.5.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -335,7 +336,7 @@ const LABEL = {
   sanction: { warning: 'Uyarı', suspension: 'Askı', ban: 'Ban' },
   support: { open: 'Açık', resolved: 'Çözüldü' },
   supportCategory: { technical: 'Teknik sorun', account: 'Hesap / profil sorunu', suggestion: 'Öneri / geri bildirim', other: 'Diğer' },
-  target: { post: 'Post', comment: 'Yorum', profile: 'Profil', service: 'Hizmet', tag: 'Etiket' },
+  target: { post: 'Post', comment: 'Yorum', profile: 'Profil', service: 'Hizmet', tag: 'Etiket', service_category: 'Hizmet kategorisi' },
   reason: { spam: 'Spam', inappropriate: 'Uygunsuz içerik', misleading: 'Yanıltıcı', harassment: 'Taciz / hakaret', fake_profile: 'Sahte profil', other: 'Diğer' },
   action_taken: { none: 'İşlem yok', content_hidden: 'İçerik gizlendi', content_deleted: 'İçerik silindi', user_warned: 'Uyarıldı', user_suspended: 'Askıya alındı', user_banned: 'Banlandı', other: 'Diğer' },
   audit: { 'profile.update': 'Profil düzenlendi', 'post.hide': 'Post gizlendi', 'post.restore': 'Post geri açıldı', 'post.delete': 'Post silindi',
@@ -384,6 +385,8 @@ function explain(err) {
   if (/PGRST301|JWT|401/.test(raw) && !/KISG/.test(raw)) return new AdminError('Oturumunuz sona erdi. Lütfen tekrar giriş yapın.', 'session', true);
   if (/KISG_ADMIN_FIELD/.test(raw)) return new AdminError(`Bu alan buradan düzenlenemez: ${tail}`, 'field');
   if (/KISG_ADMIN_TARGET/.test(raw)) return new AdminError('Yönetici hesabına yaptırım uygulanamaz.', 'target');
+  if (/KISG_CATEGORY_EXISTS/.test(raw)) return new AdminError('Bu adda bir kategori zaten var.', 'exists');
+  if (/KISG_CATEGORY_IN_USE/.test(raw)) return new AdminError('Bu kategoride hizmet var; silinemez. Sitede görünmesin istiyorsanız "Gizle"yi kullanın.', 'in_use');
   if (/KISG_TAG_EXISTS/.test(raw)) return new AdminError('Bu adda bir etiket zaten var. İkisini birleştirmek için "Birleştir"i kullanın.', 'exists');
   if (/PGRST202/.test(raw)) return new AdminError('Bu bölüm için veritabanı güncellemesi henüz uygulanmamış.', 'missing');
   if (/KISG_ADMIN_NOT_FOUND/.test(raw)) return new AdminError('Kayıt bulunamadı. Liste yenilendi.', 'not_found');
@@ -538,6 +541,7 @@ const SECTIONS = {
   posts: { title: 'Postlar', render: () => renderContent('post') },
   comments: { title: 'Yorumlar', render: () => renderContent('comment') },
   services: { title: 'Hizmetler', render: () => renderContent('service') },
+  categories: { title: 'Hizmet Kategorileri', render: renderCategories },
   tags: { title: 'Etiketler', render: renderTags },
   reports: { title: 'Şikâyetler', render: renderReports },
   support: { title: 'Destek', render: renderSupport }
@@ -925,6 +929,76 @@ async function setSupportStatus(r, status, btn) {
     toast(status === 'resolved' ? 'Talep çözüldü olarak işaretlendi.' : 'Talep yeniden açıldı.');
     renderSupport();
   } catch (e) { toast(e.message || 'İşlem tamamlanamadı.', true); if (btn) btn.disabled = false; }
+}
+
+/* ----- Hizmet Kategorileri (Hizmet Bul çipleri + Hizmet Yayınla formu aynı listeyi, bu sırayla okur) ----- */
+async function renderCategories() {
+  const seq = ++renderSeq;
+  const bodyBox = h('div', null, loading());
+  main.replaceChildren(head('Hizmet Kategorileri', 'Hizmet Bul ve Hizmet Yayınla’daki kategoriler: ekle, yeniden adlandır, sırala, gizle'),
+    h('div', { class: 'pa-tools' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: '+ Yeni kategori', onclick: () => editCategory(null) })),
+    bodyBox);
+  let rows;
+  try { rows = await rpc('admin_list_service_categories', {}); }
+  catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, renderCategories)); return; }
+  if (seq !== renderSeq) return;
+  rows ||= [];
+  if (!rows.length) { bodyBox.replaceChildren(h('div', { class: 'pa-card pa-empty', text: 'Kategori yok.' })); host.sync(); return; }
+  const btn = (text, onclick, cls = '', attrs = {}) => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick, ...attrs });
+  const move = async (i, d) => {
+    const ids = rows.map(r => r.id); [ids[i], ids[i + d]] = [ids[i + d], ids[i]];
+    try { await rpc('admin_reorder_service_categories', { p_ids: ids, p_reason: null }); toast('Sıra kaydedildi.'); renderCategories(); }
+    catch (e) { toast(e.message || 'Sıra kaydedilemedi.', true); }
+  };
+  bodyBox.replaceChildren(h('div', { class: 'pa-card' },
+    h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Sıra', 'Kategori', 'Aktif hizmet', 'Durum', ''].map(t => h('th', { text: t })))),
+      h('tbody', null, rows.map((r, i) => h('tr', { 'data-category': r.id },
+        h('td', { 'data-label': 'Sıra' }, h('div', { class: 'pa-actions' },
+          btn('↑', () => move(i, -1), '', { disabled: i === 0, 'aria-label': `${r.name} yukarı` }),
+          btn('↓', () => move(i, 1), '', { disabled: i === rows.length - 1, 'aria-label': `${r.name} aşağı` }))),
+        h('td', null, h('b', { style: 'color:var(--ink)', text: r.name }), h('span', { class: 'pa-small', style: 'display:block', text: r.slug })),
+        h('td', { 'data-label': 'Aktif hizmet', class: 'pa-num', text: num(r.services) }),
+        h('td', { 'data-label': 'Durum' }, h('span', { class: `pa-badge ${r.is_active ? 'is-active' : 'is-deleted'}`, text: r.is_active ? 'Görünür' : 'Gizli' })),
+        h('td', null, h('div', { class: 'pa-actions' },
+          btn('Yeniden adlandır', () => editCategory(r)),
+          btn(r.is_active ? 'Gizle' : 'Göster', () => toggleCategory(r)),
+          Number(r.all_services) ? null : btn('Sil', () => deleteCategory(r), ' pa-btn-danger')))))))));
+  host.sync();
+}
+function editCategory(r) {
+  confirmDialog({
+    title: r ? `${r.name} yeniden adlandır` : 'Yeni kategori', confirm: r ? 'Kaydet' : 'Ekle', reasonRequired: false,
+    text: r ? 'Yeni ad Hizmet Bul’da ve bu kategorideki tüm hizmetlerde görünür.' : 'Listenin sonuna eklenir ve hemen Hizmet Bul ile Hizmet Yayınla’da görünür.',
+    fields: h('label', { class: 'pa-field' }, h('span', { text: 'Kategori adı (2–60 karakter)' }), h('input', { name: 'name', maxlength: 60, required: true, value: r?.name || '' })),
+    submit: async ({ reason, form }) => {
+      const name = clean(form.elements.name.value);
+      if (name.length < 2) throw new AdminError('Ad en az 2 karakter olmalı.', 'input');
+      if (r) await rpc('admin_update_service_category', { p_id: r.id, p_patch: { name }, p_reason: reason || null });
+      else await rpc('admin_create_service_category', { p_name: name, p_reason: reason || null });
+      toast(r ? 'Kategori yeniden adlandırıldı.' : 'Kategori eklendi.'); renderCategories();
+    }
+  });
+}
+function toggleCategory(r) {
+  const on = !r.is_active;
+  confirmDialog({
+    title: `${r.name}: ${on ? 'gösterilsin mi?' : 'gizlensin mi?'}`, confirm: on ? 'Göster' : 'Gizle', danger: !on, reasonRequired: false,
+    text: on ? 'Kategori Hizmet Bul’da ve Hizmet Yayınla formunda yeniden görünür.' : `Hizmet Bul’da ve Hizmet Yayınla formunda görünmez. Bu kategorideki ${num(r.services)} aktif hizmet silinmez, yayında kalır.`,
+    submit: async ({ reason }) => {
+      await rpc('admin_update_service_category', { p_id: r.id, p_patch: { is_active: on }, p_reason: reason || null });
+      toast(on ? 'Kategori gösteriliyor.' : 'Kategori gizlendi.'); renderCategories();
+    }
+  });
+}
+function deleteCategory(r) {
+  confirmDialog({
+    title: `${r.name} silinsin mi?`, text: 'Bu kategoride hiç hizmet yok. Silme geri alınamaz.', confirm: 'Sil', danger: true, reasonRequired: false,
+    submit: async ({ reason }) => {
+      await rpc('admin_delete_service_category', { p_id: r.id, p_reason: reason || null });
+      toast('Kategori silindi.'); renderCategories();
+    }
+  });
 }
 
 /* ----- Etiketler ----- */
