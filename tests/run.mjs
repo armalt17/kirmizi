@@ -50,6 +50,8 @@ const SUITES = [
   { name: 'post-images-web', file: 'post-images-web.test.mjs', note: 'İkinci fotoğraf — düzenleyici, kart, görüntüleyici' },
   { name: 'v436-pack', file: 'v436-pack.test.mjs', note: 'Sekme ikonları, Hizmet Alanı, Yurtdışı, yan kolon' },
   { name: 'topics-web', file: 'topics-web.test.mjs', note: 'Konular sayfası' },
+  { name: 'saved-items-db', file: 'saved-items-db.test.mjs', note: 'Kaydedilenler — yerel geçici PostgreSQL' },
+  { name: 'saved-web', file: 'saved-web.test.mjs', note: 'Kaydedilenler — kartlar, sayfa, misafir' },
   { name: 'tags-web', file: 'tags-web.test.mjs', note: 'Konular V1 — şerit, panel, composer' },
   { name: 'code-health-pack', file: 'code-health-pack.test.mjs', note: 'Kod sağlığı raporu düzeltmeleri' },
 ];

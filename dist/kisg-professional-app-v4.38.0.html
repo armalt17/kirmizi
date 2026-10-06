@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.37.0 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.38.0 (yayın dosyası — kaynak ve sürüm geçmişi: kisg-professional-app.html)
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
 üretilir; yorumları çıkarılmış, ~500 bin karakterin altında). Yayın dosyasının TAMAMI, aşağıdaki Hostinger sayfalarındaki
@@ -52,6 +52,7 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
 <a data-me-link="profile" target="_top">Profilim</a>
 <a data-me-link="works" target="_top">Postlarım</a>
 <a data-me-link="services" target="_top">Hizmetlerim</a>
+<a data-view-link="saved" href="https://isgcalisanplatformu.com/?sayfa=kaydedilenler" target="_top">Kaydedilenler</a>
 <button type="button" data-action="avatar">Profil fotoğrafı</button>
 <a data-view-link="account" href="https://isgcalisanplatformu.com/hesaplar-ve-gizlilik" target="_top">Hesap &amp; Gizlilik</a>
 <button type="button" data-action="support">Destek &amp; Geri Bildirim</button>
@@ -129,7 +130,22 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
 <div class="kc-results-head"><p data-topic-status role="status" aria-live="polite">Konular yükleniyor…</p><label class="ke-sort"><span>Sırala</span><select data-topic-sort aria-label="Konuları sırala"><option value="active">Son Aktif</option><option value="new">Yeni Açılan</option><option value="az">A–Z</option></select></label></div>
 <div class="kt-grid" data-topic-list aria-busy="true"></div>
 <button type="button" class="k-btn kc-more" data-topic-more hidden>Daha fazla konu</button>
-<button type="button" class="kt-start" data-topic-start><span class="kt-ht" aria-hidden="true">+</span><span class="kt-copy"><b data-topic-start-title>Aradığın konu yok mu?</b><small>Yeni bir konu başlat; ilk gönderiyi sen paylaş.</small></span></button>
+<div class="kt-start" data-topic-none hidden><span class="kt-ht" aria-hidden="true">#</span><span class="kt-copy"><b data-topic-none-title></b><small>Konular, etiketle paylaşılan ilk Post ile oluşur.</small></span><button type="button" class="k-btn k-btn-primary" data-topic-start></button></div>
+</div>
+</section>
+
+<!-- KAYDEDİLENLER (/?sayfa=kaydedilenler) — yalnız kullanıcıya özel -->
+<section class="ka-view kc ksv-page" data-view="saved" hidden aria-labelledby="ksvTitle">
+<div class="k-page kc-page">
+<header class="k-hero"><span class="k-hero-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h11v15.2L12 15.8l-5.5 3.9z"/></svg></span><div class="k-hero-copy"><h1 id="ksvTitle">Kaydedilenler</h1><p>Kaydettiğin Postlar ve hizmetler. Yalnız sen görürsün.</p></div></header>
+<div class="kp-tabs" role="tablist" aria-label="Kaydedilenler">
+<button type="button" role="tab" aria-selected="true" data-saved-tab="posts">Postlar<span class="kp-count" data-saved-count="posts"></span></button>
+<button type="button" role="tab" aria-selected="false" tabindex="-1" data-saved-tab="services">Hizmetler<span class="kp-count" data-saved-count="services"></span></button>
+</div>
+<p class="ksv-gone" data-saved-gone hidden><span></span><button type="button" class="k-text-button" data-saved-clean>Listeden kaldır</button></p>
+<div class="kw-sheet ksv-posts" data-saved-panel="posts"><div class="kw-list" data-saved-posts aria-live="polite"></div></div>
+<div class="kc-results ks-grid" data-saved-panel="services" data-saved-services hidden></div>
+<div class="k-empty" data-saved-empty hidden><strong data-saved-empty-text></strong><p data-saved-empty-hint></p><div data-saved-empty-act></div></div>
 </div>
 </section>
 
@@ -885,6 +901,27 @@ font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helveti
 #kisgApp .kc-results{display:grid;gap:14px}
 #kisgApp .kc-card{position:relative;display:flex;flex-direction:column;min-width:0;border-radius:var(--r-lg);background:#fff;box-shadow:inset 0 0 0 1px var(--line);overflow-wrap:anywhere;transition:box-shadow var(--t),transform var(--t) var(--ease);animation:ka-enter .26s var(--ease)}
 #kisgApp .kc-more{display:flex;margin:24px auto 0;min-width:220px;min-height:48px}
+#kisgApp .k-save{display:inline-grid;place-items:center;flex:none;width:38px;height:38px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--muted);cursor:pointer;transition:color var(--t-fast),background var(--t-fast)}
+#kisgApp .k-save svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
+#kisgApp .k-save:hover{background:var(--surface-2);color:var(--ink)}
+#kisgApp .k-save.is-on{color:var(--red)}
+#kisgApp .k-save.is-on svg{fill:currentColor}
+#kisgApp .k-save[hidden]{display:none}
+#kisgApp .kw-post-actions .k-save{margin-left:auto}
+#kisgApp .kw-post-actions .k-save:not([hidden])+.kw-act-share{margin-left:0}
+@media(max-width:359px){#kisgApp .kw-post-actions .k-save:not([hidden])+.kw-act-share .kw-act-label{display:none}}
+#kisgApp .ks-card .k-save{align-self:center;margin:-6px 0 -6px 4px}
+#kisgApp .kh-actions .k-save{width:100%;height:46px;border-radius:var(--r-pill);box-shadow:inset 0 0 0 1px var(--line-strong);color:var(--ink)}
+#kisgApp .kh-actions .k-save::after{content:"Kaydet";margin-left:8px;font-size:14.5px;font-weight:700}
+#kisgApp .kh-actions .k-save.is-on{color:var(--red)}
+#kisgApp .kh-actions .k-save.is-on::after{content:"Kaydedildi"}
+#kisgApp .kh-actions .k-save{grid-auto-flow:column}
+#kisgApp .ksv-page .k-hero-ico{background:var(--red);color:#fff}
+#kisgApp .ksv-page .kp-tabs{max-width:420px}
+#kisgApp .ksv-posts{border-radius:18px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+#kisgApp .ksv-posts:has(.kw-list:empty){display:none}
+#kisgApp .ksv-gone{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0 0 12px;padding:10px 14px;border-radius:12px;background:var(--surface-2);color:var(--muted);font-size:13.5px}
+@media(max-width:640px){#kisgApp .ksv-page .kc-page{padding-inline:12px}#kisgApp .ksv-page .kp-tabs{margin:0 0 12px;max-width:none}#kisgApp .ksv-posts{margin-inline:-12px;border-radius:0;box-shadow:none}}
 #kisgApp .kt-page .k-hero-ico{background:var(--red);color:#fff;font-size:26px;font-weight:800}
 #kisgApp .kt-pback{display:inline-flex;margin:0 0 12px 2px;color:var(--muted);font-size:14px;font-weight:650}
 #kisgApp .kt-pback:hover{color:var(--ink)}
@@ -902,7 +939,9 @@ font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helveti
 #kisgApp .kt-copy em{color:var(--red-text);font-style:normal;font-weight:700}
 #kisgApp .kt-badge{justify-self:start;order:-1;margin-bottom:3px;padding:1px 8px;border-radius:var(--r-pill);background:var(--red);color:#fff;font-size:10.5px;font-style:normal;font-weight:750;letter-spacing:.02em}
 #kisgApp .kt-go{flex:none;width:18px;height:18px;fill:none;stroke:var(--red);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#kisgApp .kt-start{width:100%;margin-top:14px;border:1.5px dashed var(--red-line);box-shadow:none;background:transparent;cursor:pointer}
+#kisgApp .kt-start{flex-wrap:wrap;width:100%;margin-top:14px;border:1.5px dashed var(--red-line);box-shadow:none;background:transparent}
+#kisgApp .kt-start[hidden]{display:none}
+#kisgApp .kt-start .k-btn{flex:none;min-height:42px}
 #kisgApp .kt-start .kt-ht{background:#fff;color:var(--red);box-shadow:inset 0 0 0 1.5px var(--red)}
 #kisgApp .kt-page .kc-search{margin-top:4px}
 @media(max-width:640px){#kisgApp .kt-page .kc-page{padding-inline:16px}#kisgApp .kt-grid{grid-template-columns:1fr;gap:8px}#kisgApp :is(.kt-item,.kt-start){padding:12px 14px}#kisgApp .kt-ht{width:40px;height:40px;border-radius:11px}}
@@ -1570,9 +1609,9 @@ version: '2026-09-30'   // legal_acceptances.document_version
 },
 siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
 historyRouting: true,
-version: '4.37.0',
+version: '4.38.0',
 hostWidthDesktopMax: 1480,
-routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik', topics: '/?sayfa=konular' },
+routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik', topics: '/?sayfa=konular', saved: '/?sayfa=kaydedilenler' },
 legacyRoutes: { '/calisma': 'works' },
 defaultView: 'works',
 returnPaths: ['/calisma-detay', '/hizmet-detay', '/profil'],
@@ -1593,7 +1632,7 @@ imageTargetBytes: 500 * 1024,
 imageHardLimitBytes: 1024 * 1024,
 allowJpegFallback: true
 });
-const LABELS = { works: 'Akış', experts: 'Uzmanlar', services: 'Hizmet Bul', profile: 'Profil', work: 'Post', service: 'Hizmet', account: 'Hesap & Gizlilik', topics: 'Konular' };
+const LABELS = { works: 'Akış', experts: 'Uzmanlar', services: 'Hizmet Bul', profile: 'Profil', work: 'Post', service: 'Hizmet', account: 'Hesap & Gizlilik', topics: 'Konular', saved: 'Kaydedilenler' };
 const STATUS_OPTIONS = [['A', 'A Sınıfı'], ['B', 'B Sınıfı'], ['C', 'C Sınıfı'], ['İşyeri Hekimi', 'İşyeri Hekimi'], ['DSP', 'DSP (Diğer Sağlık Personeli)']];
 const SERVICE_MODES = { onsite: 'Yerinde', remote: 'Uzaktan', both: 'Yerinde + Uzaktan' };
 
@@ -1798,6 +1837,7 @@ return { markup, sync };
 })();
 
 const ICONS = {
+bookmark: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6.5 4.5h11v15.2L12 15.8l-5.5 3.9z"/></svg>',
 user: '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg>',
 heart: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20.3c-.3 0-.6-.1-.8-.3C6.4 15.8 3 12.8 3 9.1 3 6.5 5 4.5 7.5 4.5c1.8 0 3.4 1 4.5 2.6 1.1-1.6 2.7-2.6 4.5-2.6C19 4.5 21 6.5 21 9.1c0 3.7-3.4 6.7-8.2 10.9-.2.2-.5.3-.8.3Z"/></svg>',
 comment: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.5 11.6c0 4.3-3.8 7.6-8.5 7.6-1.1 0-2.2-.2-3.2-.5L4 20.2l1.4-3.6c-1.2-1.3-1.9-3-1.9-5 0-4.3 3.8-7.6 8.5-7.6s8.5 3.3 8.5 7.6Z"/></svg>',
@@ -3260,6 +3300,53 @@ onShellClick(e => { if (e.target?.closest?.('[data-action="avatar"]')) { closePo
 return { open, apply };
 })();
 
+const saved = (() => {
+const st = { uid: null, keys: new Set(), p: null, busy: new Set(), off: false }, subs = new Set();
+const label = on => (on ? 'Kaydedilenlerden çıkar' : 'Kaydet');
+const html = (type, id, inert = false) => {
+const k = `${type}:${id}`, on = st.keys.has(k), tag = inert ? 'span' : 'button';
+return `<${tag} ${inert ? 'role="button" tabindex="0"' : 'type="button"'} class="k-save${on ? ' is-on' : ''}" data-save="${esc(k)}" aria-pressed="${on}" aria-label="${label(on)}" title="${label(on)}"${st.off ? ' hidden' : ''}>${ICONS.bookmark}</${tag}>`;
+};
+function paint() {
+$$('[data-save]').forEach(b => { const on = st.keys.has(b.dataset.save); b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', label(on)); b.title = label(on); b.hidden = st.off; });
+}
+function load() {
+const uid = session.user?.id || null;
+if (uid !== st.uid) { st.uid = uid; st.keys = new Set(); st.p = null; }
+if (!uid) { paint(); return Promise.resolve(); }
+st.p ||= (async () => {
+await dbReady;
+const { data, error } = await db.from('professional_saved_items').select('target_type,target_id').eq('user_id', uid).limit(1000);
+if (uid !== st.uid) return;
+if (error) { st.off = /42P01|PGRST20[05]|does not exist|schema cache/i.test(`${error.code} ${error.message}`); if (!st.off) st.p = null; }
+else st.keys = new Set((data || []).map(r => `${r.target_type}:${r.target_id}`));
+paint();
+})();
+return st.p;
+}
+async function toggle(k) {
+const user = await requireUser(() => toggle(k)); if (!user) return;
+await load();
+if (st.off || st.busy.has(k)) return;
+const [type, id] = k.split(':'), on = !st.keys.has(k), uid = user.id;
+st.busy.add(k); on ? st.keys.add(k) : st.keys.delete(k); paint();
+try {
+const q = db.from('professional_saved_items');
+const { error } = on ? await q.insert({ user_id: uid, target_type: type, target_id: id }) : await q.delete().eq('user_id', uid).eq('target_type', type).eq('target_id', id);
+if (error && !(on && String(error.code) === '23505')) throw error;
+toast(on ? 'Kaydedildi. Hesap menüsünden “Kaydedilenler”de bulabilirsin.' : 'Kaydedilenlerden çıkarıldı.');
+subs.forEach(fn => fn(type, id, on));
+} catch (e) {
+if (st.uid === uid) { on ? st.keys.delete(k) : st.keys.add(k); paint(); }
+toast(/KISG_SAVED_LIMIT/.test(e?.message || '') ? 'En fazla 1000 içerik kaydedebilirsin.' : on ? 'Bu içerik kaydedilemedi; yayından kaldırılmış olabilir.' : 'Kayıt kaldırılamadı. Tekrar dene.');
+} finally { st.busy.delete(k); }
+}
+const act = e => { const b = e.target?.closest?.('[data-save]'); if (!b || !root.contains(b)) return; e.preventDefault(); e.stopPropagation(); toggle(b.dataset.save); };
+root.addEventListener('click', act, true);
+root.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target?.matches?.('span[data-save]')) act(e); }, true);
+return { html, load, toggle, subscribe: fn => subs.add(fn), get off() { return st.off; } };
+})();
+
 const POST_SELECT = 'id,user_id,content,image_path,profile_featured_order,created_at,updated_at,category:professional_post_categories(id,name),author:profiles!professional_posts_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company),likes:professional_post_likes(count)';
 const postData = (() => {
 const COMMENT_COUNT = ',comments:professional_post_comments(count)', TAG = ',tag_id,tag:professional_tags(id,name)';
@@ -3335,7 +3422,7 @@ const cc = p.comment_count > 0 ? String(p.comment_count) : '';
 const comment = !detail && cc
 ? `<span class="kw-act-pair"><a class="kw-act kw-act-count" href="${esc(urls.work(p.id))}" target="_top" data-comment-count-link aria-label="${cc} yorumun tümünü gör"><span class="kw-act-ico">${ICONS.comment}</span><span class="kw-like-num" data-comment-count>${cc}</span></a><button type="button" class="kw-act kw-act-comment" data-post-action="comment" aria-expanded="${!!threads.isOpen(p.id)}"><span class="kw-act-label">Yorum Yap</span></button></span>`
 : `<button type="button" class="kw-act kw-act-comment" data-post-action="comment" aria-expanded="${!!threads.isOpen(p.id)}"><span class="kw-act-ico">${ICONS.comment}</span><span class="kw-like-num" data-comment-count>${cc}</span><span class="kw-act-label">Yorum Yap</span></button>`;
-return `${like}${comment}<button type="button" class="kw-act kw-act-share" data-post-action="share"><span class="kw-act-ico">${ICONS.send}</span><span class="kw-act-label">Paylaş</span></button>`;
+return `${like}${comment}${saved.html('post', p.id)}<button type="button" class="kw-act kw-act-share" data-post-action="share"><span class="kw-act-ico">${ICONS.send}</span><span class="kw-act-label">Paylaş</span></button>`;
 }
 const isLong = text => text.length > 520 || (text.match(/\n/g) || []).length > 9;
 function card(p, eager = false) {
@@ -4810,7 +4897,7 @@ return `<a class="kc-card ks-card${serviceFeatured(v) ? ' is-featured' : ''}" da
 + `<span class="ks-copy"><span class="ks-cat">${esc(v.category?.name || 'Hizmet')}</span><h2>${esc(v.title)}</h2>`
 + (v.description ? `<span class="ks-description">${linkify(clean(v.description).replace(/\s+/g, ' '), { inert: true })}</span>` : '')
 + (meta ? `<span class="ks-meta">${esc(meta)}</span>` : '') + `</span>`
-+ (serviceFeatured(v) ? featuredBadge() : '') + `<svg class="ks-go" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a>`;
++ (serviceFeatured(v) ? featuredBadge() : '') + saved.html('service', v.id, true) + `<svg class="ks-go" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a>`;
 }
 const serviceBus = new Set();
 const emitService = (kind, payload) => serviceBus.forEach(fn => { try { fn(kind, payload); } catch (e) { console.error(e); } });
@@ -5077,7 +5164,7 @@ side.innerHTML = `<div class="kh-card">`
 + `<div class="kh-actions">`
 + `<a class="k-btn k-btn-primary k-btn-block" href="${esc(urls.profile(v.user_id))}" target="_top">Profili Gör</a>`
 + (digits ? `<a class="k-btn k-btn-block" href="tel:+${esc(digits)}">${PICONS.phone}Ara · ${esc(phoneDisplay(phone))}</a><a class="k-btn k-btn-block" href="https://wa.me/${esc(digits)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:currentColor;stroke:none">${SOCIAL_ICONS.whatsapp}</svg>WhatsApp</a>` : '')
-+ `<button type="button" class="k-btn k-btn-block" data-service-action="share">${ICONS.share}Hizmeti Paylaş</button></div>`
++ `<button type="button" class="k-btn k-btn-block" data-service-action="share">${ICONS.share}Hizmeti Paylaş</button>${saved.html('service', v.id)}</div>`
 + (digits ? '' : '<p class="kh-note">İletişim bilgileri profesyonelin izin verdiği ölçüde gösterilir; profilinden ulaşabilirsin.</p>')
 + `</div>`;
 renderOwner();
@@ -6044,9 +6131,81 @@ onSession, snapshot: () => null, isMounted: () => s.mounted
 };
 }
 
+function createSavedView() {
+const el = $('[data-view="saved"]'), postsBox = $('[data-saved-posts]', el), svcBox = $('[data-saved-services]', el);
+const gone = $('[data-saved-gone]', el), empty = $('[data-saved-empty]', el);
+const feed = createPostFeed({ scope: $('[data-saved-panel="posts"]', el), onRemoved: () => render() });
+const s = { mounted: false, tab: 'posts', rev: 0, services: [], gone: [], loaded: false };
+const ordered = (rows, ids) => ids.map(id => rows.find(r => r.id === id)).filter(Boolean);
+function render() {
+const posts = feed.f.posts, n = { posts: posts.length, services: s.services.length };
+$$('[data-saved-tab]', el).forEach(b => { const on = b.dataset.savedTab === s.tab; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+$$('[data-saved-count]', el).forEach(c => { c.textContent = s.loaded && n[c.dataset.savedCount] ? String(n[c.dataset.savedCount]) : ''; });
+$('[data-saved-panel="posts"]', el).hidden = s.tab !== 'posts'; svcBox.hidden = s.tab !== 'services';
+postsBox.innerHTML = posts.map(p => feed.card(p)).join(''); feed.threads.rerenderAll();
+svcBox.innerHTML = s.services.map(v => serviceCard(v)).join('');
+gone.hidden = !s.gone.length; $('span', gone).textContent = `${s.gone.length} kayıt artık yayında değil (kaldırılmış veya gizlenmiş).`;
+const guest = !session.user, none = s.loaded && !n[s.tab];
+empty.hidden = !(guest || none || s.failed);
+$('[data-saved-empty-text]', el).textContent = guest ? 'Kaydettiklerini görmek için giriş yap.' : s.failed ? 'Kaydedilenler şu anda yüklenemedi.' : s.tab === 'posts' ? 'Henüz kaydettiğin Post yok.' : 'Henüz kaydettiğin hizmet yok.';
+$('[data-saved-empty-hint]', el).textContent = guest || s.failed ? '' : `${s.tab === 'posts' ? 'Post' : 'Hizmet'} kartlarındaki kaydet simgesine dokunarak buraya ekleyebilirsin.`;
+$('[data-saved-empty-act]', el).innerHTML = guest ? '<button type="button" class="k-btn k-btn-primary" data-action="login">Giriş Yap</button>' : s.failed ? '<button type="button" class="k-btn" data-saved-retry>Yeniden dene</button>' : '';
+host.schedule();
+}
+async function load() {
+const rev = ++s.rev, uid = session.user?.id;
+feed.f.posts = []; s.services = []; s.gone = []; s.loaded = false; s.failed = false;
+if (!uid) { s.loaded = true; render(); return; }
+postsBox.innerHTML = '<div class="kw-post kw-sk" aria-hidden="true"><div class="kw-sk-head"><i class="k-sk k-sk-circle"></i><span><i class="k-sk"></i><i class="k-sk k-sk-short"></i></span></div><i class="k-sk"></i><i class="k-sk k-sk-short"></i></div>';
+try {
+await dbReady;
+const { data, error } = await db.from('professional_saved_items').select('target_type,target_id,created_at').eq('user_id', uid).order('created_at', { ascending: false }).limit(1000);
+if (error) throw error;
+const ids = t => (data || []).filter(r => r.target_type === t).map(r => r.target_id), pIds = ids('post'), sIds = ids('service');
+const [pr, sr] = await Promise.all([
+pIds.length ? postData.run(q => q.in('id', pIds).eq('status', 'active')) : { data: [] },
+sIds.length ? db.from('professional_services').select(SERVICE_SELECT).in('id', sIds).eq('status', 'active') : { data: [] }]);
+if (pr.error || sr.error) throw pr.error || sr.error;
+if (rev !== s.rev) return;
+feed.f.posts = ordered((pr.data || []).map(postData.normalize), pIds);
+s.services = ordered(sr.data || [], sIds);
+const live = new Set([...feed.f.posts, ...s.services].map(x => x.id));
+s.gone = (data || []).filter(r => !live.has(r.target_id));
+s.loaded = true; render();
+feed.syncLikes(feed.f.posts.map(p => p.id));
+} catch { if (rev === s.rev) { s.failed = true; s.loaded = true; render(); } }
+}
+saved.subscribe((type, id, on) => {
+if (on || !s.mounted) return;
+if (type === 'post') feed.f.posts = feed.f.posts.filter(p => p.id !== id); else s.services = s.services.filter(v => v.id !== id);
+render();
+});
+el.addEventListener('click', async e => {
+const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
+const tab = t.closest('[data-saved-tab]');
+if (tab) { s.tab = tab.dataset.savedTab; render(); return; }
+if (t.closest('[data-saved-retry]')) { load(); return; }
+if (t.closest('[data-saved-clean]') && session.user) {
+const uid = session.user.id, list = s.gone;
+for (const type of ['post', 'service']) {
+const ids = list.filter(r => r.target_type === type).map(r => r.target_id);
+if (ids.length) { const { error } = await db.from('professional_saved_items').delete().eq('user_id', uid).eq('target_type', type).in('target_id', ids); if (error) { toast('Kayıtlar kaldırılamadı. Tekrar dene.'); return; } }
+}
+s.gone = []; render(); toast('Yayında olmayan kayıtlar kaldırıldı.');
+}
+});
+return {
+name: 'saved', el,
+mount() { s.mounted = true; return load(); },
+route() { if (s.mounted) load(); },
+onSession(kind) { if (kind === 'user' && s.mounted) load(); },
+snapshot: () => null, isMounted: () => s.mounted
+};
+}
+
 function createTopicsView() {
 const el = $('[data-view="topics"]'), q = $('[data-topic-q]', el), list = $('[data-topic-list]', el), pins = $('[data-topic-pins]', el);
-const status = $('[data-topic-status]', el), more = $('[data-topic-more]', el), sortSel = $('[data-topic-sort]', el), startTitle = $('[data-topic-start-title]', el);
+const status = $('[data-topic-status]', el), more = $('[data-topic-more]', el), sortSel = $('[data-topic-sort]', el), none = $('[data-topic-none]', el);
 const PAGE = 20, SORT = { active: ['last_post_at', false], new: ['created_at', false], az: ['name', true] };
 const s = { mounted: false, rows: [], page: 0, seq: 0, timer: 0 };
 const nf = n => Number(n).toLocaleString('tr-TR'), num = v => Number(Array.isArray(v) ? v[0]?.count : v) || 0;
@@ -6069,7 +6228,7 @@ const seq = ++s.seq, text = slugOf(q.value).replace(/-/g, ''), [col, asc] = SORT
 if (reset) { s.page = 0; s.rows = []; list.setAttribute('aria-busy', 'true'); }
 status.textContent = 'Konular yükleniyor…'; more.hidden = true;
 pins.hidden = !pins.innerHTML || !!text;
-startTitle.textContent = text ? `“${clean(q.value).slice(0, 20)}” konusunu başlat` : 'Aradığın konu yok mu?';
+none.hidden = true;
 try {
 await dbReady;
 let qy = db.from('professional_tags').select('id,name,created_at,last_post_at,posts:professional_posts(count),today:professional_posts(count)', { count: 'exact' })
@@ -6084,6 +6243,10 @@ list.innerHTML = s.rows.map(t => item(t)).join('');
 const total = Number.isInteger(count) ? count : s.rows.length;
 status.textContent = s.rows.length ? `${nf(total)} konu` : text ? 'Bu adla bir konu yok.' : 'Henüz konu yok.';
 more.hidden = s.rows.length >= total || (data || []).length < PAGE;
+const name = clean(q.value).replace(/\s+/g, ' ').slice(0, 20);
+none.hidden = !text || !/[\p{L}\p{N}]/u.test(name) || s.rows.some(t => slugOf(t.name).replace(/-/g, '') === text);
+$('[data-topic-none-title]', el).textContent = `“${name}” adında bir konu yok`;
+$('[data-topic-start]', el).textContent = `#${name} etiketiyle Post paylaş`;
 } catch {
 if (seq === s.seq) status.textContent = 'Konular şu anda yüklenemedi. Biraz sonra tekrar dene.';
 } finally { if (seq === s.seq) { list.setAttribute('aria-busy', 'false'); host.schedule(); } }
@@ -6093,7 +6256,7 @@ sortSel.addEventListener('change', () => load(true));
 more.addEventListener('click', () => load(false));
 el.addEventListener('click', e => {
 const t = e.target?.nodeType === 1 ? e.target : null; if (!t) return;
-if (t.closest('[data-topic-start]')) { const name = clean(q.value).replace(/\s+/g, ' ').slice(0, 20); composer.open(null, '', /[\p{L}\p{N}]/u.test(name) ? { name } : null); return; }
+if (t.closest('[data-topic-start]')) { composer.open(null, '', { name: clean(q.value).replace(/\s+/g, ' ').slice(0, 20) }); return; }
 const a = t.closest('[data-topic-id]');
 if (!a || !router.enabled || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 e.preventDefault();
@@ -6106,11 +6269,11 @@ snapshot: () => null, isMounted: () => s.mounted
 };
 }
 
-const VIEWS = { works: createWorksView(), experts: createExpertsView(), services: createServicesView(), profile: createProfileView(), work: createWorkView(), service: createServiceView(), account: createAccountView(), topics: createTopicsView() };
+const VIEWS = { works: createWorksView(), experts: createExpertsView(), services: createServicesView(), profile: createProfileView(), work: createWorkView(), service: createServiceView(), account: createAccountView(), topics: createTopicsView(), saved: createSavedView() };
 session.on(kind => {
 authUI.render(kind);
 if (kind === 'user') notifications.onSession();
-if (kind === 'user') composer.onSession();
+if (kind === 'user') { composer.onSession(); saved.load(); }
 reports.onSession();
 support.onSession();
 Object.values(VIEWS).forEach(v => { try { v.onSession?.(kind); } catch (e) { console.error(e); } });
@@ -6185,6 +6348,7 @@ if (name === 'profile') VIEWS.profile.route({ ...params });
 if (name === 'work') VIEWS.work.route({ ...params });
 if (name === 'service') VIEWS.service.route({ ...params });
 if (name === 'account') VIEWS.account.route();
+if (name === 'saved') VIEWS.saved.route();
 if (name === 'works') VIEWS.works.route({ ...params });
 VIEWS.works.onView?.(name);
 }
@@ -6244,7 +6408,7 @@ function init() {
 const url = host.url();
 const fromPath = viewFromPath(url.pathname);
 let initial = fromPath || (VIEWS[root.dataset.initialView] ? root.dataset.initialView : CONFIG.defaultView);
-if (initial === 'works' && url.searchParams.get('sayfa') === 'konular') initial = 'topics';
+if (initial === 'works') initial = { konular: 'topics', kaydedilenler: 'saved' }[url.searchParams.get('sayfa')] || initial;
 if (PARAM_VIEWS.includes(initial) || initial === 'works') params = paramsFor(initial, paramsOf(url));
 enabled = Boolean(CONFIG.historyRouting && host.canRoute && fromPath && CONFIG.siteOrigins.includes(url.origin) && !shellVersion.stale);
 const legacy = fromPath && isLegacy(url.pathname);

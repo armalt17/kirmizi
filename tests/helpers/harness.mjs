@@ -136,7 +136,7 @@ async function handleRest(route) {
   if (method === 'POST') {
     const body = JSON.parse(req.postData() || '{}'); writes.push({ table, body });
     const list = (Array.isArray(body) ? body : [body]).map(b => ({ id: table === 'professional_post_comments' && b.post_id === 'bbbbbbbb-0000-4000-8000-000000000005' ? ++seq : (b.id || `dddddddd-0000-4000-8000-${String(++seq).padStart(12, '0')}`), created_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...b }));
-    if (!['professional_post_likes', 'professional_comment_likes', 'professional_post_comments', 'professional_posts', 'professional_services'].includes(table)) return json([], 201);
+    if (!['professional_post_likes', 'professional_comment_likes', 'professional_post_comments', 'professional_posts', 'professional_services', 'professional_saved_items'].includes(table)) return json([], 201);
     rows.push(...list);
     return json(accept.includes('pgrst.object') ? list[0] : list, 201);
   }

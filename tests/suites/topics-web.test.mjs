@@ -65,11 +65,15 @@ try {
     // Sıralama A–Z
     await f.selectOption('[data-topic-sort]', 'az');
     check(await until(() => f.evaluate(() => document.querySelector('[data-topic-list] .kt-item b')?.textContent === 'Acil Durum')) && reqs.some(r => /order=name\.asc/.test(r.url)), `${N} A–Z sıralaması (ilk: Acil Durum)`);
-    // Arama: Türkçe karakterden bağımsız; sabitler gizlenir; yoksa "konusunu başlat"
+    // v4.38.0: arama boşken "konu yok / paylaş" aksiyonu görünmez (doğrudan Post'a götürmez)
+    check(await f.evaluate(() => document.querySelector('[data-topic-none]').hidden && !document.querySelector('[data-view="topics"] [data-topic-start]')?.offsetParent), `${N} arama boşken doğrudan Post paylaşmaya götüren aksiyon yok`);
+    // Arama: Türkçe karakterden bağımsız; sabitler gizlenir; yoksa mevcut yol (etiketle Post) açıklanır
     await f.fill('[data-topic-q]', 'yuksek');
     check(await until(() => f.evaluate(() => [...document.querySelectorAll('[data-topic-list] .kt-item b')].map(b => b.textContent).join() === 'Yüksekte Çalışma')) && await f.evaluate(() => document.querySelector('[data-topic-pins]').hidden), `${N} arama "yuksek" → Yüksekte Çalışma; sabitler gizli`);
+    await f.fill('[data-topic-q]', 'Yüksekte Çalışma');
+    check(await until(() => f.evaluate(() => document.querySelectorAll('[data-topic-list] .kt-item').length === 1 && document.querySelector('[data-topic-none]').hidden)) && await f.evaluate(() => document.querySelector('[data-topic-list] .kt-item b').textContent === 'Yüksekte Çalışma'), `${N} konu varsa "konu yok" aksiyonu görünmez`);
     await f.fill('[data-topic-q]', 'Asbest Söküm');
-    check(await until(() => f.evaluate(() => document.querySelector('[data-topic-status]').textContent === 'Bu adla bir konu yok.' && document.querySelector('[data-topic-start-title]').textContent === '“Asbest Söküm” konusunu başlat')), `${N} sonuç yok → "“Asbest Söküm” konusunu başlat"`);
+    check(await until(() => f.evaluate(() => { const n = document.querySelector('[data-topic-none]'); return document.querySelector('[data-topic-status]').textContent === 'Bu adla bir konu yok.' && !n.hidden && n.querySelector('[data-topic-none-title]').textContent === '“Asbest Söküm” adında bir konu yok' && /ilk Post ile oluşur/.test(n.textContent) && n.querySelector('[data-topic-start]').textContent === '#Asbest Söküm etiketiyle Post paylaş'; })), `${N} sonuç yok → "“Asbest Söküm” adında bir konu yok" + açıklama + "#Asbest Söküm etiketiyle Post paylaş"`);
     await f.click('[data-topic-start]');
     await f.waitForSelector('#kaPostDialog[open]');
     check(await f.evaluate(() => !document.querySelector('[data-tag-chip]').hidden && document.querySelector('[data-tag-chip-name]').textContent === 'Asbest Söküm'), `${N} yeni konu: düzenleyici o konuyla açıldı`);
