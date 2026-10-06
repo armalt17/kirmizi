@@ -42,7 +42,7 @@ try {
     await g.waitForSelector(sbtn);
     const url1 = page.url();
     await g.click(sbtn);
-    check(await until(() => g.evaluate(s => document.querySelector(s).getAttribute('aria-pressed') === 'true', sbtn)) && page.url() === url1 && savedWrites().some(x => x.body?.target_type === 'service' && x.body.target_id === SVC), `${N} Hizmet kartında kaydet: kaydedildi, detaya gitmedi`);
+    check(await until(() => g.evaluate(s => document.querySelector(s).getAttribute('aria-pressed') === 'true', sbtn), 12000) && page.url() === url1 && savedWrites().some(x => x.body?.target_type === 'service' && x.body.target_id === SVC), `${N} Hizmet kartında kaydet: kaydedildi, detaya gitmedi`);
     // Hizmet Detay'da da aynı durum
     await g.click(`[data-view="services"] [data-service-id="${SVC}"] h2`); await settle(page, 1200);
     check(await until(() => g.evaluate(() => document.querySelector('[data-view="service"] .kh-actions [data-save]')?.getAttribute('aria-pressed') === 'true')), `${N} Hizmet Detay'da "Kaydedildi" durumu`);

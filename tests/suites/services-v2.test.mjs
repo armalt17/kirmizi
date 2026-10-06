@@ -24,7 +24,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
     featured: c.querySelectorAll('.k-featured').length, price: /₺|TL\b|fiyat|teklif|puan/i.test(c.textContent)
   })));
   check(cards.length === 6, `${vp.name}: 6 hizmet kartı`);
-  check(cards.every(c => JSON.stringify(c.order) === JSON.stringify(['ks-lead', 'ks-copy', 'ks-go'])), `${vp.name}: v4.32 kart: kişi fotoğrafı → metin → ok (${cards[0].order.join(',')})`);
+  check(cards.every(c => JSON.stringify(c.order) === JSON.stringify(['ks-lead', 'ks-copy', 'k-save', 'ks-go'])), `${vp.name}: v4.32 kart: kişi fotoğrafı → metin → kaydet (v4.38) → ok (${cards[0].order.join(',')})`);
   check(cards.every(c => c.title && c.cat && c.pro && !c.cta), `${vp.name}: her kartta kategori, profesyonelin fotoğrafı; ayrı "Hizmeti İncele" yok`);
   check(/^Mehmet Şahin Öztürk · /.test(cards.find(c => c.title === 'Gürültü ve Toz Ölçümü')?.line) && /^Ayşe Yılmaz · /.test(cards.find(c => c.title === 'Uzaktan İSG Danışmanlığı')?.line), `${vp.name}: "kişi · şekil · bölge" satırı`);
   check(cards.every(c => c.featured === 0), `${vp.name}: DB'de öne çıkarma alanı yok → taç rozeti yok`);
