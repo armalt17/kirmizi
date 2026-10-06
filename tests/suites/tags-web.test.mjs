@@ -61,9 +61,9 @@ try {
 
     // ---- şerit ----
     const chips = await f.$$eval('[data-tag-strip] .kt-chip', b => b.map(x => ({ t: x.textContent.trim(), all: x.matches('[data-tag-all]'), title: x.title, hash: getComputedStyle(x, '::before').content, ico: x.querySelectorAll('svg').length, bg: getComputedStyle(x).backgroundColor })));
-    check(chips.map(c => c.t).join('|') === 'Konu Ara|Bakanlığa Şikayet|Yüksekte Çalışma|İş Kazaları|ATEX|Koruma Ekipmanları' && chips[0].all, `${N} şerit: "Konu Ara" başta → sabit → gündem → yeni ${JSON.stringify(chips.map(c => c.t))}`);
+    check(chips.map(c => c.t).join('|') === 'Alanlar|Bakanlığa Şikayet|Yüksekte Çalışma|İş Kazaları|ATEX|Koruma Ekipmanları' && chips[0].all, `${N} şerit: kırmızı "Alanlar" başta → sabit → gündem → yeni ${JSON.stringify(chips.map(c => c.t))}`);
     const tagChips = chips.slice(1);
-    check(tagChips.every(c => c.hash === '"#"' && !c.ico && c.bg === tagChips[0].bg), `${N} şerit: tüm etiketler aynı tasarım (# ön ek, ikon yok)`);
+    check(tagChips.every(c => c.hash === 'none' && !c.ico && c.bg === tagChips[0].bg) && chips[0].bg === 'rgb(227, 10, 23)', `${N} şerit: alanlar aynı sade tasarım (# yok, ikon yok), "Alanlar" kırmızı (v4.39.0)`);
     check(tagChips[0].title === (mobile ? '' : NOTE) && !tagChips[1].title, `${N} sabit etiketin açıklaması (title): "${tagChips[0].title}"`);
     check(rpc.some(x => x.fn === 'kisg_tags_trending' && x.body.p_limit === 8), `${N} şerit verisi: kisg_tags_trending (8 slot)`);
     const sr = await f.evaluate(() => { const s = document.querySelector('[data-tag-strip]').getBoundingClientRect(), c = document.querySelector('.kw-composer').getBoundingClientRect(); return { above: s.bottom <= c.top + 1, sw: document.documentElement.scrollWidth - document.documentElement.clientWidth }; });
@@ -96,7 +96,7 @@ try {
     await f.click('[data-tag-strip] [data-tag-name="Yüksekte Çalışma"]'); await settle(page, 900);
     check((await f.$$eval('[data-view="works"] [data-post-id]', n => n.length)) >= 10 && page.url() === `${SITE}/`, `${N} aynı etikete (×) tekrar dokunmak filtreyi kaldırır`);
     await f.click('[data-tag-strip] [data-tag-name="ATEX"]'); await settle(page, 900);
-    check(/“ATEX” etiketinde henüz Post yok/.test(await f.textContent('[data-view="works"] [data-list]')), `${N} boş filtre: etikete özgü boş durum`);
+    check(/“ATEX” alanında henüz Post yok/.test(await f.textContent('[data-view="works"] [data-list]')), `${N} boş filtre: alana özgü boş durum`);
     await f.click('[data-view="works"] [data-tag-off]'); await settle(page, 900);
     // sabit etiket filtrelenince nedeni görünür
     await f.click('[data-tag-strip] [data-tag-name="Bakanlığa Şikayet"]'); await settle(page, 700);
@@ -109,7 +109,7 @@ try {
     await f.evaluate(() => document.querySelector('[data-view="works"] [data-composer]').click()); await f.waitForSelector('#kaPostDialog[open]');
     await f.click('#kaPostDialog [data-tag-add]'); await f.waitForSelector('#kaTagDialog[open]'); await settle(page, 500);
     const pl = await f.evaluate(() => { const d = document.getElementById('kaTagDialog'), r = d.getBoundingClientRect(); return { place: d.dataset.place, right: Math.round(window.innerWidth - r.right), w: Math.round(r.width), title: d.querySelector('#kaTagTitle').textContent, secs: [...d.querySelectorAll('.kt-sec')].map(x => x.textContent), rows: d.querySelectorAll('.kt-row').length, rank: d.querySelectorAll('.kt-rank,.kt-heat').length }; });
-    check(pl.place === (mobile ? 'sheet' : 'center') && pl.title === 'Etiket Ekle' && JSON.stringify(pl.secs) === '["Sabit","Gündemde"]' && pl.rows === 5 && pl.rank === 0, `${N} Etiket Ekle paneli: ${mobile ? 'alt sayfa' : 'ortada'}, Sabit + Gündemde, sıra/ısı çubuğu yok (${JSON.stringify(pl)})`);
+    check(pl.place === (mobile ? 'sheet' : 'center') && pl.title === 'Alan seç' && JSON.stringify(pl.secs) === '["Sabit","Gündemde"]' && pl.rows === 5 && pl.rank === 0, `${N} Alan seç paneli: ${mobile ? 'alt sayfa' : 'ortada'}, Sabit + Gündemde, sıra/ısı çubuğu yok (${JSON.stringify(pl)})`);
     if (!mobile) check(pl.right > 100 && pl.w <= 500, `${N} masaüstü panel yandan değil ortada açılır (${pl.right}px, ${pl.w}px)`);
     check(mobile ? !(await f.$('#kaTagDialog .kt-pinned .kt-meta')) : (await f.textContent('#kaTagDialog .kt-pinned .kt-meta')) === NOTE, `${N} panel: sabit konu ${mobile ? 'açıklamasızsa alt satır yok' : 'açıklaması görünür'}`);
     const top = await f.$eval('#kaTagDialog [data-tag-name="Yüksekte Çalışma"]', b => b.querySelector('.kt-meta')?.textContent);
@@ -122,7 +122,7 @@ try {
     const h2 = await f.$eval('#kaTagDialog', d => d.getBoundingClientRect().height);
     check(Math.abs(h2 - kb.h) < 2, `${N} arama sonuçları panel yüksekliğini zıplatmaz (${Math.round(kb.h)} → ${Math.round(h2)})`);
     const res = await f.$$eval('#kaTagDialog .kt-row:not([data-tag-new])', b => b.map(x => x.textContent));
-    check(JSON.stringify(res) === '["İş Kazaları"]' && rpc.some(x => x.fn === 'kisg_tags_search' && x.body.p_q === 'kaz') && (await f.$eval('#kaTagDialog [data-tag-new]', b => b.textContent).catch(() => '')) === 'Yeni konu:kaz', `${N} panel: canlı arama + "Yeni konu" satırı ${JSON.stringify(res)}`);
+    check(JSON.stringify(res) === '["İş Kazaları"]' && rpc.some(x => x.fn === 'kisg_tags_search' && x.body.p_q === 'kaz') && (await f.$eval('#kaTagDialog [data-tag-new]', b => b.textContent).catch(() => '')) === 'Yeni alan:kaz', `${N} panel: canlı arama + "Yeni alan" satırı ${JSON.stringify(res)}`);
     await f.click('#kaTagDialog .kt-row:not([data-tag-new])'); await settle(page, 600);
     check(!(await f.evaluate(() => document.getElementById('kaTagDialog').open)) && (await f.textContent('#kaPostDialog [data-tag-chip-name]')) === 'İş Kazaları', `${N} panelden seçilen etiket Post'a eklenir, panel kapanır`);
     await f.evaluate(() => document.querySelector('#kaPostDialog [data-close]').click()); await settle(page, 400);
@@ -165,10 +165,10 @@ try {
     await f.click('[data-view="works"] .kw-composer-main'); await f.waitForSelector('#kaPostDialog[open]');
     check(await f.isVisible('#kaPostDialog [data-tag-add]') && await f.isHidden('#kaPostDialog [data-tag-chip]'), `${N} composer: "+ Etiket Ekle" görünür`);
     await f.click('#kaPostDialog [data-tag-add]'); await f.waitForSelector('#kaTagDialog[open]');
-    check((await f.textContent('#kaTagTitle')) === 'Etiket Ekle', `${N} aynı panel "Etiket Ekle" olarak açılır`);
+    check((await f.textContent('#kaTagTitle')) === 'Alan seç', `${N} aynı panel "Alan seç" olarak açılır`);
     await f.fill('#kaTagQ', 'Saha  Denetimi'); await settle(page, 600);
     const nw = await f.$eval('#kaTagDialog [data-tag-new]', b => b.textContent).catch(() => '');
-    check(nw === 'Yeni konu:Saha Denetimi', `${N} listede yoksa yazılan ad yeni konu olarak önerilir (${nw})`);
+    check(nw === 'Yeni alan:Saha Denetimi', `${N} listede yoksa yazılan ad yeni alan olarak önerilir (${nw})`);
     await f.click('#kaTagDialog [data-tag-new]'); await settle(page, 400);
     check(await f.evaluate(() => document.getElementById('kaPostDialog').open) && (await f.textContent('#kaPostDialog [data-tag-chip-name]')) === 'Saha Denetimi' && await f.isHidden('#kaPostDialog [data-tag-add]') && await f.isVisible('#kaPostDialog [data-tag-clear]'), `${N} seçilen etiket kaldırılabilir chip olarak görünür (en fazla 1)`);
     await f.fill('#kaPostContent', 'Etiketli yeni post'); writes.length = 0; rpc.length = 0;
@@ -232,7 +232,7 @@ try {
     await f.fill('#kaTagQ', 'Yasak Konu'); await settle(page, 600); await f.click('#kaTagDialog [data-tag-new]');
     await f.fill('#kaPostContent', 'deneme'); writes.length = 0;
     await f.click('#kaPostSubmit'); await settle(page, 1200);
-    check(/Bu etiket kullanılamıyor/.test(await f.textContent('#kaPostError')) && !writes.some(w => w.table === 'professional_posts'), 'engellenmiş etiket: Türkçe hata, post gönderilmedi');
+    check(/Bu alan kullanılamıyor/.test(await f.textContent('#kaPostError')) && !writes.some(w => w.table === 'professional_posts'), 'engellenmiş etiket: Türkçe hata, post gönderilmedi');
     await ctx.close();
   }
 
