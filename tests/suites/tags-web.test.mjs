@@ -118,6 +118,8 @@ try {
     check(kb.fs >= 16, `${N} arama kutusu 16px (iOS odakta yakınlaştırmaz) ${kb.fs}`);
     check(kb.focused === !mobile, `${N} ${mobile ? 'dokunmatikte klavye kendiliğinden açılmaz' : 'masaüstünde arama odaklı açılır'}`);
     await page.screenshot({ path: path.join(OUT, `tags-panel-${N}.png`) });
+    // v4.43.0: mobilde aramaya dokununca klavye açılır ve panel görünen alana sığar; zıplama ölçümü bundan sonra yapılır.
+    if (mobile) { await f.focus('#kaTagQ'); await settle(page, 1100); kb.h = await f.$eval('#kaTagDialog', d => d.getBoundingClientRect().height); }
     await f.fill('#kaTagQ', 'kaz'); await settle(page, 600);
     const h2 = await f.$eval('#kaTagDialog', d => d.getBoundingClientRect().height);
     check(Math.abs(h2 - kb.h) < 2, `${N} arama sonuçları panel yüksekliğini zıplatmaz (${Math.round(kb.h)} → ${Math.round(h2)})`);

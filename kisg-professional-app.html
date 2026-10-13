@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.42.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.43.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -8,6 +8,9 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.43.0: Mobil klavye: giriş, kayıt, Post yazma vb. pencerelerde bir yazı alanı odaktayken pencere görünen alanın üstüne
+ yaslanır, üst menü ve dekoratif bant gizlenir, odaktaki alan pencere içinde görünür tutulur; iOS klavyeyi bildirmezse
+ klavye ekranın ~%45'i sayılır. Masaüstü ve klavye kapalı görünüm aynı.
 v4.42.0: Yayın dosyası artık esbuild ile küçültülür (~80 bin karakter yer açıldı); kaynak ve notları aynen kalır. Davranış değişmedi.
 v4.41.0: Onaylı hesap: kırmızı rozet (aktif Pro + yönetim onaylı belge), profilde başvuru penceresi (yalnız Pro), Hizmetler'de "Onaylı hesaplar" filtresi.
 v4.40.1: Alan açıklaması her alanın başlığında görünür; yalnız yönetim (admin paneli) yazar. Kullanıcı düzenlemesi geri alındı.
@@ -1913,6 +1916,8 @@ Acil kapatma: CONFIG.historyRouting=false.
 #kisgApp .k-band>:is(.k-icon-btn,.kn-head-actions){position:absolute;top:18px;right:14px;z-index:1}
 #kisgApp [data-tone="danger"]{--band:var(--red-tint)}
 #kisgApp [data-tone="danger"] .k-band-ghost{color:#f3cfd2}
+/* v4.43.0 klavye modu (mobil): yer açmak için dekoratif üst bant, logo ve açıklama gizlenir; pencere üste yaslı */
+@media(max-width:640px){#kisgApp .k-dialog[data-kb]{inset:auto 0 auto 0;margin:0 auto;animation:none}#kisgApp .k-dialog[data-kb] .k-login-top{min-height:0;padding-top:6px;background:#fff}#kisgApp .k-dialog[data-kb] :is(.k-login-art,.k-login-mark,.k-login-lead,.k-band-tile,.k-band-ghost){display:none}#kisgApp .k-dialog[data-kb] .k-band{padding:14px 56px 4px 16px;background:#fff}#kisgApp .k-dialog[data-kb] .k-band>:is(.k-icon-btn,.kn-head-actions){top:6px}#kisgApp .k-dialog[data-kb] .k-dialog-body{padding-top:8px}}
 @media(max-width:640px){#kisgApp .k-dialog[data-place="sheet"] .k-dialog-foot{position:sticky;bottom:0;z-index:2;background:#fff}#kisgApp .k-dialog .k-band{padding:88px 56px 4px 16px;background:linear-gradient(var(--band) 72px,#fff 0)}#kisgApp .k-band-tile{left:16px;top:16px;width:40px;height:40px}#kisgApp .k-band-ghost{height:72px}#kisgApp .k-dialog .k-band h2{font-size:20px}}
 
 @media(max-width:359px){
@@ -1944,7 +1949,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.42.0',
+  version: '4.43.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik', topics: '/?sayfa=alanlar', saved: '/?sayfa=kaydedilenler' },
@@ -2582,14 +2587,30 @@ const host = (() => {
   }
   // Üst dokümanda iframe'in üstünü örten sabit alan (Professional nav) — dialoglar bunun altına yerleşir.
   let cover = () => 0;
+  // v4.43.0 klavye modu: mobilde açık penceredeki yazı alanına odaklanınca data-kb; odak çıkınca kalkar.
+  const KB_FIELD = 'textarea, [contenteditable="true"], input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="hidden"])';
+  let kbBase = 1, kbHook = () => {};
+  const kbOpen = () => !!document.querySelector('dialog[open][data-kb]');
+  const kbDialog = t => (t?.matches?.(KB_FIELD) && window.matchMedia('(max-width:640px)').matches ? t.closest('dialog[open]') : null);
+  const kbPlace = d => { place(d); [80, 250, 500, 900].forEach(ms => setTimeout(() => place(d), ms)); };
+  // Klavye modunda üst sayfadaki sabit menü gizlenir (kbHook); pencere o alanı da kullanır.
+  document.addEventListener('focusin', e => { const d = kbDialog(e.target); if (!d) return; if (!('kb' in d.dataset)) { d.dataset.kb = ''; kbHook(true); } kbPlace(d); });
+  document.addEventListener('focusout', e => {
+    const d = e.target?.closest?.('dialog[data-kb]'); if (!d) return;
+    setTimeout(() => { if (kbDialog(document.activeElement) === d) return; delete d.dataset.kb; kbHook(kbOpen()); if (d.open) kbPlace(d); }, 120);
+  });
   // İframe dokümanı koordinatlarında görünen alan. Çerçevesiz kullanımda null (CSS yeterli).
   function visible() {
     if (!framed || !win) return null;
     const r = frameRect(); if (!r) return null;
     // Görünen alan görsel viewport'tan hesaplanır: iOS'ta alt araç çubuğu ve klavye bu alanın dışındadır
     // (innerHeight bunları içerir → dialog ekranın altına taşar). Klavye açıkken offsetTop da hesaba katılır.
-    const vv = win.visualViewport, vTop = vv ? vv.offsetTop : 0, vH = vv ? vv.height : win.innerHeight;
-    const edge = Math.max(0, r.top, cover(), vTop);
+    const vv = win.visualViewport, vTop = vv ? vv.offsetTop : 0;
+    let vH = vv ? vv.height : win.innerHeight;
+    // v4.43.0 klavye: yazı alanı odaktayken görünen alan klavye kadar küçülmediyse (iOS bazen geç/hiç bildirmiyor)
+    // klavyenin ekranın ~%45'ini kapladığı varsayılır; aksi halde pencere klavyenin altına yerleşiyordu.
+    if (kbOpen()) { if (vH >= kbBase * 0.85) vH = Math.min(vH, kbBase * 0.55); } else kbBase = Math.max(vH, 1);
+    const edge = Math.max(0, r.top, kbOpen() ? 0 : cover(), vTop);
     const bottom = Math.min(vTop + vH, r.bottom);
     return { top: edge - r.top, height: Math.max(200, bottom - edge) };
   }
@@ -2602,12 +2623,28 @@ const host = (() => {
     el.style.bottom = 'auto'; el.style.marginTop = '0';
     // Tam ekran görüntüleyici (mobil) görünen alanın tamamını kaplar.
     if (el.dataset.place === 'full' && window.matchMedia('(max-width:640px)').matches) { el.style.maxHeight = el.style.height = box.height + 'px'; el.style.top = box.top + 'px'; return; }
+    // v4.43.0 klavye modu (mobil, pencerede yazı alanı odakta): pencere görünen alanın ÜSTÜNE yaslanır, yüksekliği görünen
+    // alan kadardır ve odaktaki alan pencere içinde görünür tutulur. Alta yaslı yerleşim klavye ölçümü gecikince alanları
+    // klavyenin altında bırakıyordu (giriş, kayıt, Post yazma).
+    if ('kb' in el.dataset && window.matchMedia('(max-width:640px)').matches) {
+      el.style.height = ''; el.style.maxHeight = Math.max(200, box.height - 6) + 'px'; el.style.top = (box.top + 6) + 'px';
+      keepFocus(el); return;
+    }
     const sheet = el.dataset.place === 'sheet' && window.matchMedia('(max-width:640px)').matches;
     el.style.maxHeight = Math.max(220, box.height - 24) + 'px';
     // data-fixed: yükseklik içerikle değişmez (arama sonuçları zıplatmaz); klavye açılınca görünen alana sığar.
     if ('fixed' in el.dataset) el.style.height = Math.min(Math.max(220, box.height - 24), sheet ? 1e4 : 560) + 'px';
     const h = el.getBoundingClientRect().height;
     el.style.top = (box.top + (sheet ? Math.max(12, box.height - h) : Math.max(12, (box.height - h) / 2))) + 'px';
+  }
+  // Odaktaki alanı pencerenin (kaydırılan öğe) görünen kısmında tutar; üst dokümanı kaydırmaz (scrollIntoView kullanılmaz).
+  function keepFocus(el) {
+    const a = document.activeElement; if (!a || a === el || !el.contains(a)) return;
+    const d = el.getBoundingClientRect(), r = a.getBoundingClientRect();
+    const foot = [...el.querySelectorAll('.k-dialog-foot')].find(f => f.offsetParent && getComputedStyle(f).position === 'sticky');
+    const top = d.top + 12, bottom = d.bottom - (foot ? foot.offsetHeight : 0) - 12;
+    if (r.top < top) el.scrollTop -= top - r.top;
+    else if (r.bottom > bottom) el.scrollTop += Math.min(r.bottom - bottom, r.top - top);
   }
   function available() {
     let viewport, top, footer = 0;
@@ -2647,7 +2684,7 @@ const host = (() => {
     sync();
   }
   function float(el, on) { if (on) { floating.add(el); place(el); } else floating.delete(el); }
-  return { framed, win, frame, installHostWidth, doc: win ? win.document : null, canRoute: !!win && typeof win.history?.pushState === 'function', url, scrollY, scrollTo, shellTop, sync, schedule, float, place, lock, reach, setCover: fn => { cover = fn; }, repositionFloating: () => floating.forEach(place) };
+  return { framed, win, frame, installHostWidth, doc: win ? win.document : null, canRoute: !!win && typeof win.history?.pushState === 'function', url, scrollY, scrollTo, shellTop, sync, schedule, float, place, lock, reach, setCover: fn => { cover = fn; }, setKbHook: fn => { kbHook = fn; }, kbChanged: () => kbHook(kbOpen()), repositionFloating: () => floating.forEach(place) };
 })();
 
 /* =========================================================================
@@ -2857,6 +2894,7 @@ $$('dialog').forEach(d => {
     host.float(d, false);
     shellHooks.modal(Boolean(root.querySelector('dialog[open]')));
     ['top', 'bottom', 'maxHeight', 'marginTop', 'height'].forEach(k => { d.style[k] = ''; });
+    if ('kb' in d.dataset) { delete d.dataset.kb; host.kbChanged(); }
     if (!root.querySelector('dialog[open]')) { host.reach(false); host.lock(false); }
     const t = dialogs.triggers.get(d); if (t?.isConnected) t.focus({ preventScroll: true });
   });
@@ -7528,6 +7566,7 @@ const appChrome = (() => {
       hostEl = pd.createElement('div');
       hostEl.id = 'kisg-pro-nav';
       host.setCover(() => { try { return hostEl.getBoundingClientRect().bottom; } catch { return 0; } });
+      host.setKbHook(on => { try { hostEl.style.visibility = on ? 'hidden' : ''; } catch {} });
       hostEl.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147480000;will-change:transform;transform:translate3d(0,0,0)';
       const shadow = hostEl.attachShadow({ mode: 'open' });
       const st = pd.createElement('style'); st.textContent = NAV_CSS;

@@ -17,7 +17,9 @@ for (const vp of VPS.slice(0, +(process.env.NVP || 2))) {
     const pgeo = await page.evaluate(() => { const fr = document.querySelector('iframe').getBoundingClientRect(); return { top: fr.top, vh: innerHeight }; });
     const drect = await f.evaluate(() => { const r = document.getElementById('kaLoginDialog').getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; });
     const onTop = pgeo.top + drect.top, onBottom = pgeo.top + drect.bottom;
-    check(N === 'mobile' ? geo.w === vp.width && Math.abs(onBottom - pgeo.vh) < 3 : geo.w <= 440 && onTop > 60 && onBottom < pgeo.vh, `${N} kayıt: ${N === 'mobile' ? 'alt sayfa (bottom sheet)' : 'ortalanmış modal'} ${JSON.stringify({ w: geo.w, top: Math.round(onTop), bottom: Math.round(onBottom), vh: pgeo.vh })}`);
+    // v4.43.0: mobilde e-posta kendiliğinden odaklanır (klavye açılır) → pencere klavye modunda görünen alanın üstüne yaslıdır.
+    const kbMode = await f.evaluate(() => 'kb' in document.getElementById('kaLoginDialog').dataset);
+    check(N === 'mobile' ? geo.w === vp.width && kbMode && onTop < 90 && onBottom <= pgeo.vh * 0.56 : geo.w <= 440 && onTop > 60 && onBottom < pgeo.vh, `${N} kayıt: ${N === 'mobile' ? 'tam genişlik, klavye modunda üstte (alanlar klavyenin üstünde)' : 'ortalanmış modal'} ${JSON.stringify({ w: geo.w, top: Math.round(onTop), bottom: Math.round(onBottom), vh: pgeo.vh })}`);
     await go(f, 'signup'); await settle(page, 200);
     check(await paneOf(f) === 'signup' && await f.isVisible('#kaSignupName') && await f.locator('#kaSignupDialog, #kaLoginDialog input[type="tel"]').count() === 0, `${N} kayıt: Kayıt Ol sekmesi, telefon alanı yok`);
     await page.screenshot({ path: `${OUT}/auth-signup-${N}.png` });
