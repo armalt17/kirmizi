@@ -82,7 +82,8 @@ function server(ctx) {
     admin_merge_tags: a => { const s = st.tags.find(x => x.id === a.p_source), t = st.tags.find(x => x.id === a.p_target); t.post_count += s.post_count; st.tags = st.tags.filter(x => x !== s); return { target_id: t.id, moved_posts: s.post_count }; },
     admin_list_service_categories: () => st.cats.slice().sort((x, y) => x.sort_order - y.sort_order),
     admin_create_service_category: a => { if (a.p_name === 'Diğer') throw { code: '23505', message: 'KISG_CATEGORY_EXISTS: bu adda kategori var' }; const c = { id: 'c4c4c4c4-0000-4000-8000-000000000004', name: a.p_name, slug: 'yeni', sort_order: 40, is_active: true, services: 0, all_services: 0 }; st.cats.push(c); return c; },
-    admin_update_service_category: a => { const c = st.cats.find(x => x.id === a.p_id); Object.assign(c, a.p_patch); return { name: c.name, is_active: c.is_active }; },
+    admin_update_service_category: a => { const c = st.cats.find(x => x.id === a.p_id); Object.assign(c, a.p_patch); return { name: c.name, is_active: c.is_active, icon: c.icon ?? null }; },
+    admin_service_category_icons: () => st.cats.map(c => ({ id: c.id, icon: c.icon ?? null })),
     admin_reorder_service_categories: a => { a.p_ids.forEach((id, i) => { st.cats.find(x => x.id === id).sort_order = (i + 1) * 10; }); return a.p_ids.length; },
     admin_delete_service_category: a => { if (st.cats.find(x => x.id === a.p_id).all_services) throw { code: '23503', message: 'KISG_CATEGORY_IN_USE' }; st.cats = st.cats.filter(x => x.id !== a.p_id); return {}; },
     admin_list_verifications: a => st.verif.filter(v => !a.p_status || v.status === a.p_status),
@@ -198,7 +199,7 @@ async function open(browser, { uid = null, width = 1280, height = 900, qs = '' }
 const until = async (fn, ms = 5000) => { const t = Date.now(); while (Date.now() - t < ms) { if (await fn()) return true; await new Promise(r => setTimeout(r, 50)); } return false; };
 const visible = (f, sel) => f.locator(sel).first().isVisible().catch(() => false);
 const lastRpc = (st, name) => [...st.rpc].reverse().find(x => x.name === name);
-const ALLOWED = new Set(['kisg_is_admin', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification',
+const ALLOWED = new Set(['kisg_is_admin', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_service_category_icons', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification',
   'admin_report_config', 'admin_report_usage', 'admin_set_ai_setting', 'admin_upsert_ai_model', 'admin_set_ai_prompt', 'admin_set_report_limit', 'admin_upsert_checklist_item', 'admin_reorder_checklist']);
 
 // ---------------- statik ----------------
@@ -485,11 +486,16 @@ try {
     check(await until(async () => (await f.textContent('.pa-dialog .pa-error').catch(() => '')).includes('zaten var')), `${vp.n}: aynı adlı kategori: anlaşılır hata`);
     await f.fill('.pa-dialog input[name="name"]', 'Yangın Güvenliği'); await f.click('.pa-dialog button[type="submit"]');
     check(await until(() => lastRpc(st, 'admin_create_service_category')?.args.p_name === 'Yangın Güvenliği') && await until(() => f.locator('[data-category]').count().then(n => n === 4)), `${vp.n}: yeni kategori eklendi (gerekçe isteğe bağlı)`);
-    // yeniden adlandır
-    await f.click(`[data-category="${C2}"] button:text-is("Yeniden adlandır")`); await f.waitForSelector('.pa-dialog input[name="name"]');
-    check(await f.inputValue('.pa-dialog input[name="name"]') === 'Risk Değerlendirmesi', `${vp.n}: yeniden adlandırma mevcut adla açılır`);
-    await f.fill('.pa-dialog input[name="name"]', 'Risk Analizi'); await f.click('.pa-dialog button[type="submit"]');
-    check(await until(() => lastRpc(st, 'admin_update_service_category')?.args.p_patch.name === 'Risk Analizi') && await until(async () => (await f.textContent(`[data-category="${C2}"]`)).includes('Risk Analizi')), `${vp.n}: yeniden adlandırıldı`);
+    // düzenle: yeniden adlandır + simge seç (v1.10.0)
+    await f.click(`[data-category="${C2}"] button:text-is("Düzenle")`); await f.waitForSelector('.pa-dialog input[name="name"]');
+    check(await f.inputValue('.pa-dialog input[name="name"]') === 'Risk Değerlendirmesi', `${vp.n}: düzenleme mevcut adla açılır`);
+    check(await f.locator('.pa-dialog .pa-icon-opt').count() === 23 && await f.isChecked('.pa-dialog input[name="icon"][value=""]'), `${vp.n}: 22 simge + "Otomatik"; simgesiz kategoride Otomatik seçili`);
+    await f.fill('.pa-dialog input[name="name"]', 'Risk Analizi');
+    await f.click('.pa-dialog .pa-icon-opt[title="Uyarı / risk"]');
+    check((await f.textContent('.pa-dialog')).includes('Seçili: Uyarı / risk'), `${vp.n}: seçilen simgenin adı yazılır`);
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => { const p = lastRpc(st, 'admin_update_service_category')?.args.p_patch; return p?.name === 'Risk Analizi' && p?.icon === 'alert'; }) && await until(async () => (await f.textContent(`[data-category="${C2}"]`)).includes('Risk Analizi')), `${vp.n}: yeniden adlandırıldı ve simge kaydedildi`);
+    check(await until(async () => !(await f.textContent(`[data-category="${C2}"]`)).includes('otomatik') && (await f.textContent(`[data-category="${C1}"]`)).includes('otomatik')), `${vp.n}: listede seçili simge, seçilmeyende "otomatik"`);
     // gizle / göster
     await f.click(`[data-category="${C1}"] button:text-is("Gizle")`); await f.waitForSelector('.pa-dialog');
     check((await f.textContent('.pa-dialog')).includes('4 aktif hizmet silinmez'), `${vp.n}: gizleme uyarısı hizmetlerin silinmediğini söyler`);
