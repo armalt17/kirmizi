@@ -1213,6 +1213,7 @@ const FR_PURPOSE = { report_analyze: 'Analiz', finding_rewrite: 'Yeniden yazma' 
 const FR_LIMITS = [
   ['free_monthly_limit', 'Ücretsiz: aylık analiz hakkı', 'Bulgu çıkan analizde düşer. Bulgu çıkmazsa, hata olursa ya da yalnız checklist kullanılırsa düşmez.', 0, 1000],
   ['premium_daily_limit', 'PRO: günlük analiz hakkı', 'Aynı kural; gün Türkiye saatine göre döner.', 0, 1000],
+  ['max_daily_limit', 'MAX: günlük analiz hakkı', 'Ayrı MAX aboneliği. Uygulamada sayı gösterilmez ("Yüksek limit"); yalnız son 3 hakta görünür.', 0, 1000],
   ['report_rewrite_daily_limit', 'Günlük "Yeniden yaz" sınırı', '“Yeniden yaz / Ben söyleyeyim” üst sınırı; analiz hakkından düşmez.', 0, 1000],
   ['report_max_photos', 'Rapor başına en çok fotoğraf', 'Fazlası maliyeti ve analiz süresini artırır.', 1, 20],
   ['report_max_drafts', 'Telefonda en çok yarım rapor', 'Dolunca uzman yeni rapora başlamadan önce bir taslağı bitirir ya da siler.', 1, 20]];

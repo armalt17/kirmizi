@@ -60,7 +60,7 @@ function server(ctx) {
       { target: 'default', purpose: 'report_analyze', prompt: 'Sen deneyimli bir iş güvenliği uzmanısın. Tespitleri nesnel yaz; öneriler ...sağlanmalıdır diliyle.', updated_at: iso(600) },
       { target: 'default', purpose: 'finding_rewrite', prompt: 'Bulguyu hukuki dille yeniden yaz; öneri ...sağlanmalıdır.', updated_at: iso(600) },
       { target: 'openai', purpose: 'report_analyze', prompt: 'ChatGPT için özel analiz talimatı: kısa ve nesnel yaz.', updated_at: iso(100) }],
-    limits: { free_monthly_limit: '5', premium_daily_limit: '50', report_rewrite_daily_limit: '40', report_max_photos: '8', report_max_drafts: '5' },
+    limits: { free_monthly_limit: '5', premium_daily_limit: '50', max_daily_limit: '30', report_rewrite_daily_limit: '40', report_max_photos: '8', report_max_drafts: '5' },
     checklist: [
       { id: Q1, deficiency_title: 'Uyarı levhaları eksik', finding_text: 'Levha yok.', recommendation_text: 'Levha asılmalıdır.', default_priority: 'onemli', explanation: null, is_active: true, order_index: 1, question: 'Uyarı levhaları var mı?' },
       { id: Q2, deficiency_title: 'Yangın tüpü dolum tarihi geçmiş', finding_text: null, recommendation_text: null, default_priority: 'iyilestirme', explanation: null, is_active: true, order_index: 2, question: 'Yangın tüpü kontrol edildi mi?' }]
@@ -615,7 +615,7 @@ try {
     check(await until(() => f.locator('[data-prompt]').count().then(n => n === 1)), `${vp.n}: Yeniden yazma prompt'ları ayrı`);
     // Limitler
     await tab('Limitler');
-    check(await until(() => visible(f, 'input[name="premium_daily_limit"]')) && await f.inputValue('input[name="premium_daily_limit"]') === '50', `${vp.n}: Limitler mevcut değerlerle`);
+    check(await until(() => visible(f, 'input[name="premium_daily_limit"]')) && await f.inputValue('input[name="premium_daily_limit"]') === '50' && await f.inputValue('input[name="max_daily_limit"]') === '30', `${vp.n}: Limitler mevcut değerlerle`);
     await f.fill('input[name="report_max_photos"]', '30'); await f.click('button:text-is("Değişiklikleri kaydet")');
     check(await until(async () => /en çok fotoğraf: 1 ile 20/.test(await f.textContent('[data-toast]'))), `${vp.n}: aralık dışı limit engellenir`);
     await f.fill('input[name="report_max_photos"]', '10'); await f.fill('input[name="premium_daily_limit"]', '60');
