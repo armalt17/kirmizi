@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL ADMIN v1.4.0
+KIRMIZI İSG — PROFESSIONAL ADMIN v1.9.0
 
 KURULUM: Bu dosyanın TAMAMI Hostinger'da /pro-admin sayfasının Custom HTML/Embed içeriği olarak kullanılır.
 Ana uygulama (kisg-professional-app.html) ile aynı Supabase projesi ve aynı oturum (tarayıcı depolaması) kullanılır;
@@ -16,9 +16,14 @@ GÜVENLİK
    admin_merge_tags). Uygulanmamışsa sekme bunu söyler; diğer bölümler etkilenmez.
  - v1.4.0 Sabit konu açıklaması (20261008_tags_pinned_note.sql): sitede sabit konunun altında görünür; boşsa hiçbir şey çıkmaz.
 
-BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler · Hizmet Kategorileri · Alanlar · Şikâyetler · Destek · Onaylar
+BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler · Hizmet Kategorileri · Alanlar · Şikâyetler · Destek · Onaylar · Saha Raporu
  - v1.8.0 Onaylar (20261013_verified_accounts.sql): onaylı hesap başvuruları. Belge gizli depodan (kisg-verifications)
    10 dakikalık imzalı bağlantıyla görülür; onay/ret kararıyla birlikte depodan silinir.
+ - v1.9.0 Saha Raporu (mobil uygulamanın AI destekli saha raporu; kirmizi-isg-mobile
+   supabase/migrations/20261019220000_admin_report_rpcs.sql ve rapor şeması): model seçimi, modeller, prompt'lar,
+   limitler, checklist ve kullanım/maliyet. Yalnız ayarlar ve toplu sayılar; uzmanların rapor içerikleri görünmez.
+   Veritabanında yoksa sekme bunu söyler; diğer bölümler etkilenmez.
+   Test kopyası (staging): tools/build-admin-staging.mjs → dist-admin/kisg-pro-admin-staging-v{sürüm}.html
 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -70,6 +75,7 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
       <button type="button" data-sec="reports">Şikâyetler <span class="pa-count" data-pending hidden></span></button>
       <button type="button" data-sec="support">Destek</button>
       <button type="button" data-sec="verify">Onaylar <span class="pa-count" data-verify-count hidden></span></button>
+      <button type="button" data-sec="fieldreports">Saha Raporu</button>
     </nav>
     <main class="pa-main" data-main tabindex="-1"></main>
   </div>
@@ -208,6 +214,8 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
 #kisgAdmin .pa-layer{position:fixed;inset:0;z-index:50;display:flex;justify-content:center;align-items:center;padding:16px;background:rgba(20,26,36,.42)}
 #kisgAdmin .pa-dialog{display:flex;flex-direction:column;gap:14px;width:min(520px,100%);max-height:calc(100% - 32px);overflow:auto;padding:22px;border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-pop)}
 #kisgAdmin .pa-dialog h2{color:var(--ink);font-size:18px}
+#kisgAdmin .pa-dialog.is-wide{width:min(880px,100%)}
+#kisgAdmin .pa-dialog.is-wide textarea[name="prompt"]{min-height:min(52vh,460px);font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 #kisgAdmin .pa-dialog-foot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
 #kisgAdmin .pa-layer.is-drawer{justify-content:flex-end;align-items:stretch;padding:0}
 #kisgAdmin .pa-drawer{display:flex;flex-direction:column;width:min(640px,100%);height:100%;overflow:auto;background:#fff;box-shadow:var(--shadow-pop)}
@@ -221,6 +229,18 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
 #kisgAdmin .pa-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 #kisgAdmin .pa-radio{display:flex;flex-wrap:wrap;gap:8px}
 #kisgAdmin .pa-radio label{display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:var(--r-pill);font-size:13.5px;font-weight:600}
+
+/* Saha Raporu */
+#kisgAdmin .pa-form{display:grid;gap:16px;padding:18px}
+#kisgAdmin .pa-form-row{display:grid;grid-template-columns:260px minmax(0,1fr);gap:6px 16px;align-items:start}
+#kisgAdmin .pa-form-row>div:first-child b{display:block;color:var(--ink);font-size:14px}
+#kisgAdmin .pa-form-row>div:first-child span{color:var(--muted);font-size:12.5px}
+#kisgAdmin .pa-form-row :is(select,input[type="number"]){width:100%;max-width:420px;min-height:40px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;font-size:14px}
+#kisgAdmin .pa-form-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px;padding:14px 18px;border-top:1px solid var(--line-soft)}
+#kisgAdmin .pa-note{padding:12px 14px;border-radius:var(--r-md);background:var(--surface-2);color:var(--muted);font-size:13px}
+#kisgAdmin .pa-note b{color:var(--ink)}
+#kisgAdmin .pa-preview{display:-webkit-box;max-width:640px;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:3;color:var(--muted);font-size:12.5px;white-space:pre-wrap;word-break:break-word}
+#kisgAdmin .pa-section-gap{margin-top:20px}
 
 #kisgAdmin .pa-toast{position:fixed;left:50%;bottom:24px;z-index:60;max-width:min(520px,calc(100% - 32px));padding:12px 18px;border-radius:var(--r-md);background:var(--ink);color:#fff;font-size:14px;transform:translateX(-50%);box-shadow:var(--shadow-pop)}
 #kisgAdmin .pa-toast.is-error{background:var(--red-text)}
@@ -239,6 +259,7 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
   #kisgAdmin .pa-report{grid-template-columns:minmax(0,1fr)}
   #kisgAdmin .pa-kv{grid-template-columns:minmax(0,1fr)}
   #kisgAdmin .pa-grid2{grid-template-columns:minmax(0,1fr)}
+  #kisgAdmin .pa-form-row{grid-template-columns:minmax(0,1fr)}
   #kisgAdmin .pa-me-mail{display:none}
 }
 </style>
@@ -255,7 +276,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.8.0',
+  version: '1.9.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -347,14 +368,18 @@ const LABEL = {
   sanction: { warning: 'Uyarı', suspension: 'Askı', ban: 'Ban' },
   support: { open: 'Açık', resolved: 'Çözüldü' },
   supportCategory: { technical: 'Teknik sorun', account: 'Hesap / profil sorunu', suggestion: 'Öneri / geri bildirim', other: 'Diğer' },
-  target: { post: 'Post', comment: 'Yorum', profile: 'Profil', service: 'Hizmet', tag: 'Alan', service_category: 'Hizmet kategorisi' },
+  target: { post: 'Post', comment: 'Yorum', profile: 'Profil', service: 'Hizmet', tag: 'Alan', service_category: 'Hizmet kategorisi',
+    ai_model: 'AI modeli', ai_setting: 'Model seçimi', ai_prompt: 'Prompt', app_setting: 'Rapor limiti', checklist_question: 'Checklist' },
   reason: { spam: 'Spam', inappropriate: 'Uygunsuz içerik', misleading: 'Yanıltıcı', harassment: 'Taciz / hakaret', fake_profile: 'Sahte profil', other: 'Diğer' },
   action_taken: { none: 'İşlem yok', content_hidden: 'İçerik gizlendi', content_deleted: 'İçerik silindi', user_warned: 'Uyarıldı', user_suspended: 'Askıya alındı', user_banned: 'Banlandı', other: 'Diğer' },
   audit: { 'profile.update': 'Profil düzenlendi', 'post.hide': 'Post gizlendi', 'post.restore': 'Post geri açıldı', 'post.delete': 'Post silindi',
     'comment.hide': 'Yorum gizlendi', 'comment.restore': 'Yorum geri açıldı', 'comment.delete': 'Yorum silindi',
     'service.hide': 'Hizmet gizlendi', 'service.restore': 'Hizmet geri açıldı', 'sanction.create': 'Yaptırım uygulandı',
     'sanction.revoke': 'Yaptırım kaldırıldı', 'report.resolve': 'Şikâyet sonuçlandırıldı',
-    'tag.update': 'Alan düzenlendi', 'tag.merge': 'Alanlar birleştirildi' }
+    'tag.update': 'Alan düzenlendi', 'tag.merge': 'Alanlar birleştirildi',
+    'ai_model.create': 'AI modeli eklendi', 'ai_model.update': 'AI modeli düzenlendi', 'ai_setting.update': 'Model seçimi değişti',
+    'ai_prompt.update': 'Prompt düzenlendi', 'ai_prompt.delete': 'Özel prompt kaldırıldı', 'report_limit.update': 'Rapor limiti değişti',
+    'checklist.create': 'Checklist maddesi eklendi', 'checklist.update': 'Checklist maddesi düzenlendi', 'checklist.reorder': 'Checklist sırası değişti' }
 };
 const badge = (kind, value) => h('span', { class: `pa-badge is-${value}` , text: LABEL[kind]?.[value] || value || '—' });
 const who = (name, sub) => h('span', { class: 'pa-who' }, h('b', { text: clean(name) || 'İsimsiz kullanıcı' }), sub ? h('span', { class: 'pa-small', text: sub }) : null);
@@ -400,6 +425,7 @@ function explain(err) {
   if (/KISG_CATEGORY_IN_USE/.test(raw)) return new AdminError('Bu kategoride hizmet var; silinemez. Sitede görünmesin istiyorsanız "Gizle"yi kullanın.', 'in_use');
   if (/KISG_TAG_EXISTS/.test(raw)) return new AdminError('Bu adda bir alan zaten var. İkisini birleştirmek için "Birleştir"i kullanın.', 'exists');
   if (/KISG_NOT_PRO/.test(raw)) return new AdminError('Kullanıcının Pro üyeliği aktif değil; onaylanamaz. "Pro üyelik aktif değil" sebebiyle reddedin.', 'state');
+  if (/KISG_MODEL_IN_USE/.test(raw)) return new AdminError('Bu model Model seçiminde kullanılıyor. Önce orada başka bir model seçin.', 'in_use');
   if (/KISG_VERIFY_STATE/.test(raw)) return new AdminError('Bu başvuruya zaten karar verilmiş. Listeyi yenileyin.', 'state');
   if (/PGRST202/.test(raw)) return new AdminError('Bu bölüm için veritabanı güncellemesi henüz uygulanmamış.', 'missing');
   if (/KISG_ADMIN_NOT_FOUND/.test(raw)) return new AdminError('Kayıt bulunamadı. Liste yenilendi.', 'not_found');
@@ -496,11 +522,11 @@ $('[data-layer]').addEventListener('click', ev => { if (ev.target === ev.current
 document.addEventListener('keydown', ev => { if (ev.key === 'Escape') closeLayer(); });
 
 // Gerekçe isteyen onay penceresi. fields: ek form alanları (Node). submit(values) → Promise
-function confirmDialog({ title, text, confirm = 'Onayla', danger = false, reason = true, reasonLabel = 'Gerekçe', reasonRequired = true, fields = null, submit }) {
+function confirmDialog({ title, text, confirm = 'Onayla', danger = false, reason = true, reasonLabel = 'Gerekçe', reasonRequired = true, fields = null, wide = false, submit }) {
   const err = h('p', { class: 'pa-error', hidden: true });
   const reasonEl = reason ? h('textarea', { name: 'reason', maxlength: 1000, required: reasonRequired }) : null;
   const btn = h('button', { type: 'submit', class: `pa-btn ${danger ? 'pa-btn-danger' : 'pa-btn-primary'}`, text: confirm });
-  const form = h('form', { class: 'pa-dialog', role: 'dialog', 'aria-modal': 'true', 'aria-label': title, novalidate: true },
+  const form = h('form', { class: `pa-dialog${wide ? ' is-wide' : ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': title, novalidate: true },
     h('h2', { text: title }), text ? h('p', { class: 'pa-muted', text }) : null, fields,
     reason ? h('label', { class: 'pa-field' }, h('span', { text: reasonLabel + (reasonRequired ? '' : ' (isteğe bağlı)') }), reasonEl) : null,
     err, h('div', { class: 'pa-dialog-foot' }, h('button', { type: 'button', class: 'pa-btn', text: 'Vazgeç', onclick: closeLayer }), btn));
@@ -558,9 +584,10 @@ const SECTIONS = {
   tags: { title: 'Alanlar', render: renderTags },
   reports: { title: 'Şikâyetler', render: renderReports },
   support: { title: 'Destek', render: renderSupport },
-  verify: { title: 'Onaylar', render: renderVerifications }
+  verify: { title: 'Onaylar', render: renderVerifications },
+  fieldreports: { title: 'Saha Raporu', render: renderFieldReports }
 };
-const view = { users: { q: '', filter: 'all', offset: 0 }, post: { status: 'active', q: '', offset: 0 }, comment: { status: 'active', q: '', offset: 0 }, service: { status: 'active', q: '', offset: 0 }, reports: { status: 'pending', type: null, offset: 0 }, support: { status: 'open', category: null, offset: 0 }, tags: { q: '', sort: 'posts', filter: null, offset: 0 }, verify: { status: 'pending' } };
+const view = { users: { q: '', filter: 'all', offset: 0 }, post: { status: 'active', q: '', offset: 0 }, comment: { status: 'active', q: '', offset: 0 }, service: { status: 'active', q: '', offset: 0 }, reports: { status: 'pending', type: null, offset: 0 }, support: { status: 'open', category: null, offset: 0 }, tags: { q: '', sort: 'posts', filter: null, offset: 0 }, verify: { status: 'pending' }, fr: { tab: 'routing', purpose: 'report_analyze', days: 30 } };
 
 function show(section, opts = {}) {
   state.section = section;
@@ -1174,6 +1201,326 @@ function mergeTag(r) {
       toast(`Birleştirildi: ${num(res?.moved_posts)} post taşındı.`); renderTags();
     }
   });
+}
+
+/* ----- Saha Raporu (v1.9.0): mobil uygulamanın yapay zekâ destekli saha raporu ayarları. Yalnız ayarlar ve toplu
+   kullanım sayıları; uzmanların rapor içerikleri burada görünmez. RPC'ler: admin_report_config, admin_set_ai_setting,
+   admin_upsert_ai_model, admin_set_ai_prompt, admin_set_report_limit, admin_upsert_checklist_item,
+   admin_reorder_checklist, admin_report_usage. ----- */
+const FR_TABS = [['routing', 'Model seçimi'], ['models', 'Modeller'], ['prompts', 'Prompt’lar'], ['limits', 'Limitler'], ['checklist', 'Checklist'], ['usage', 'Kullanım ve maliyet']];
+const FR_STYLE = [['sade', 'Sade', 'Kısa, yalın cümleler'], ['dengeli', 'Dengeli', 'Önerilen'], ['ayrintili', 'Ayrıntılı', 'Daha açıklayıcı öneriler']];
+const FR_PURPOSE = { report_analyze: 'Analiz', finding_rewrite: 'Yeniden yazma' };
+const FR_LIMITS = [
+  ['free_monthly_limit', 'Ücretsiz: aylık analiz hakkı', 'Bulgu çıkan analizde düşer. Bulgu çıkmazsa, hata olursa ya da yalnız checklist kullanılırsa düşmez.', 0, 1000],
+  ['premium_daily_limit', 'PRO: günlük analiz hakkı', 'Aynı kural; gün Türkiye saatine göre döner.', 0, 1000],
+  ['report_rewrite_daily_limit', 'Günlük "Yeniden yaz" sınırı', '“Yeniden yaz / Ben söyleyeyim” üst sınırı; analiz hakkından düşmez.', 0, 1000],
+  ['report_max_photos', 'Rapor başına en çok fotoğraf', 'Fazlası maliyeti ve analiz süresini artırır.', 1, 20],
+  ['report_max_drafts', 'Telefonda en çok yarım rapor', 'Dolunca uzman yeni rapora başlamadan önce bir taslağı bitirir ya da siler.', 1, 20]];
+const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 4 });
+const pct = (a, b) => (Number(b) ? `%${nf.format(Math.round((Number(a) / Number(b)) * 1000) / 10)}` : '—');
+const modelPrice = m => `${usd.format(m.input_usd_per_mtok)} / ${usd.format(m.output_usd_per_mtok)}`;
+const PRIORITY = { acil: ['Acil', 'is-deleted'], onemli: ['Önemli', 'is-active'], iyilestirme: ['İşaretsiz (eski)', 'is-pending'] };
+
+async function renderFieldReports() {
+  const seq = ++renderSeq, v = view.fr;
+  const bodyBox = h('div', null, loading());
+  main.replaceChildren(head('Saha Raporu', 'Mobil uygulamadaki yapay zekâ destekli saha raporu: model, prompt, limit ve checklist ayarları; kullanım ve maliyet. Değişiklikler hemen geçerli olur.'),
+    h('div', { class: 'pa-tools' }, chips(FR_TABS, v.tab, x => { v.tab = x; renderFieldReports(); })),
+    bodyBox);
+  let cfg, usage;
+  try {
+    if (v.tab === 'usage') usage = await rpc('admin_report_usage', { p_days: v.days });
+    else cfg = await rpc('admin_report_config', {});
+  } catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, renderFieldReports)); return; }
+  if (seq !== renderSeq) return;
+  const render = { routing: frRouting, models: frModels, prompts: frPrompts, limits: frLimits, checklist: frChecklist, usage: frUsage }[v.tab];
+  bodyBox.replaceChildren(render(v.tab === 'usage' ? usage : cfg));
+  host.sync();
+}
+
+// Değişen alanları listeleyip tek onayla sırayla kaydeder (her biri sunucuda ayrı denetim kaydı).
+function frSaveChanges(changes, title, apply) {
+  if (!changes.length) { toast('Değişiklik yok.'); return; }
+  confirmDialog({
+    title, confirm: 'Kaydet', reasonRequired: false,
+    fields: h('ul', { class: 'pa-list' }, changes.map(c => h('li', null, h('b', { style: 'color:var(--ink)', text: c.label }), h('span', { class: 'pa-muted', text: `${c.from} → ${c.to}` })))),
+    submit: async ({ reason }) => {
+      for (const c of changes) await apply(c, reason || null);
+      toast('Kaydedildi.'); renderFieldReports();
+    }
+  });
+}
+
+function frRouting(cfg) {
+  const s = cfg.settings || {}, models = cfg.models || [];
+  const label = key => key ? (models.find(m => m.key === key)?.label || key) : null;
+  const opts = (vision, empty) => [
+    ...(empty ? [h('option', { value: '', text: empty })] : []),
+    ...models.filter(m => (m.enabled || false) && (!vision || m.supports_vision)).map(m => h('option', { value: m.key, text: `${m.label} — ${modelPrice(m)}` }))];
+  const sel = (key, vision, empty) => {
+    const el = h('select', { name: key, 'aria-label': key }, opts(vision, empty));
+    el.value = s[key] || '';
+    if (el.value !== (s[key] || '')) { el.prepend(h('option', { value: s[key], text: `${label(s[key])} (kapalı ya da fotoğraf okuyamıyor)` })); el.value = s[key]; }
+    return el;
+  };
+  const threshold = h('input', { type: 'number', name: 'report_complex_photos', min: 0, max: 20, step: 1, value: s.report_complex_photos ?? '4', 'aria-label': 'Eşik' });
+  const style = h('div', { class: 'pa-radio', role: 'radiogroup', 'aria-label': 'Yazım tarzı' }, FR_STYLE.map(([val, text, sub]) =>
+    h('label', null, h('input', { type: 'radio', name: 'report_style', value: val, checked: (s.report_style || 'dengeli') === val }), `${text} `, h('span', { class: 'pa-small', text: sub }))));
+  const fields = {
+    report_model_text: sel('report_model_text', false),
+    report_model: sel('report_model', true),
+    report_model_complex: sel('report_model_complex', true),
+    rewrite_model: sel('rewrite_model', true, 'Fotoğraflı analiz modeliyle aynı'),
+    report_fallback_model: sel('report_fallback_model', false, 'Yok')
+  };
+  const row = (title, sub, control) => h('div', { class: 'pa-form-row' }, h('div', null, h('b', { text: title }), h('span', { text: sub })), control);
+  const save = () => {
+    const n = Number(threshold.value);
+    if (!Number.isInteger(n) || n < 0 || n > 20) { toast('Eşik 0 ile 20 arasında bir tam sayı olmalı.', true); return; }
+    const next = Object.fromEntries(Object.entries(fields).map(([k, el]) => [k, el.value]));
+    next.report_complex_photos = String(n);
+    next.report_style = style.querySelector('input:checked')?.value || 'dengeli';
+    const names = { report_model_text: 'Yalnız yazı', report_model: 'Fotoğraflı', report_model_complex: 'Çok fotoğraflı', rewrite_model: 'Fotoğraflı yeniden yazma', report_fallback_model: 'Yedek model', report_complex_photos: 'Çok fotoğraf eşiği', report_style: 'Yazım tarzı' };
+    const fmt = (k, val) => k === 'report_style' ? (FR_STYLE.find(x => x[0] === val)?.[1] || val) : k === 'report_complex_photos' ? (val === '0' ? 'kapalı' : `${val} fotoğraf`) : (label(val) || (k === 'rewrite_model' ? 'fotoğraflı modelle aynı' : 'yok'));
+    const changes = Object.keys(next).filter(k => (s[k] || '') !== next[k]).map(k => ({ key: k, value: next[k], label: names[k], from: fmt(k, s[k] || ''), to: fmt(k, next[k]) }));
+    frSaveChanges(changes, 'Model seçimi kaydedilsin mi?', (c, reason) => rpc('admin_set_ai_setting', { p_key: c.key, p_value: c.value, p_reason: reason }));
+  };
+  return h('div', null,
+    h('div', { class: 'pa-card' },
+      h('div', { class: 'pa-form' },
+        h('p', { class: 'pa-note' }, h('b', { text: 'Fiyat / performans: ' }), 'Fotoğrafsız işler ucuz modele, fotoğraflı işler fotoğraf okuyabilen modele gider. Eşik ve üstü fotoğrafta güçlü model kullanılır. Fiyatlar 1 milyon token içindir (giriş / çıkış).'),
+        row('Yalnız yazı', 'Fotoğrafsız analiz ve fotoğrafsız “Yeniden yaz”. Ucuz model yeterli.', fields.report_model_text),
+        row('Fotoğraflı', `1 ile ${Math.max(1, Number(s.report_complex_photos || 4) - 1)} fotoğraf arası analiz.`, fields.report_model),
+        row('Çok fotoğraflı', 'Eşik ve üstü fotoğraflı analiz (güçlü model).', fields.report_model_complex),
+        row('Çok fotoğraf eşiği', 'Bu sayıda ve üstü fotoğrafta “Çok fotoğraflı” model kullanılır. 0 = kapalı.', threshold),
+        row('Fotoğraflı yeniden yazma', '“Yeniden yaz / Ben söyleyeyim”, fotoğraflı bulguda.', fields.rewrite_model),
+        row('Yedek model', 'Teknik hatada bir kez denenir. Farklı sağlayıcıdan seçmek güvenlidir.', fields.report_fallback_model),
+        row('Yazım tarzı', 'Prompt’a tek satır eklenir; hukuki dil her tarzda korunur.', style)),
+      h('div', { class: 'pa-form-foot' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Değişiklikleri kaydet', onclick: save }))));
+}
+
+function frModels(cfg) {
+  const s = cfg.settings || {}, models = cfg.models || [];
+  const used = new Set(['report_model_text', 'report_model', 'report_model_complex', 'rewrite_model', 'report_fallback_model'].map(k => s[k]).filter(Boolean));
+  const btn = (text, onclick, cls = '') => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick });
+  return h('div', null,
+    h('div', { class: 'pa-tools' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: '+ Yeni model', onclick: () => frEditModel(null) })),
+    h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Model', 'Fotoğraf', 'Fiyat (1M token, giriş / çıkış)', 'Durum', ''].map(t => h('th', { text: t })))),
+      h('tbody', null, models.map(m => h('tr', { 'data-model': m.key },
+        h('td', null, who(m.label, m.key)),
+        h('td', { 'data-label': 'Fotoğraf', text: m.supports_vision ? 'Okur' : 'Okumaz' }),
+        h('td', { 'data-label': 'Fiyat', class: 'pa-num', text: modelPrice(m) }),
+        h('td', { 'data-label': 'Durum' }, h('span', { class: `pa-badge ${m.enabled ? 'is-active' : 'is-deleted'}`, text: m.enabled ? 'Açık' : 'Kapalı' }), used.has(m.key) ? h('span', { class: 'pa-badge is-pending', style: 'margin-left:6px', text: 'Seçili' }) : null),
+        h('td', null, h('div', { class: 'pa-actions' },
+          btn('Düzenle', () => frEditModel(m)),
+          btn(m.enabled ? 'Kapat' : 'Aç', () => frToggleModel(m, used.has(m.key)))))))))),
+    h('p', { class: 'pa-note pa-section-gap' }, 'Kapalı model hiçbir seçimde görünmez. Seçili bir model kapatılamaz; önce Model seçiminde başka model seçin. Fiyatlar yalnız maliyet raporu içindir; sağlayıcının fiyat sayfasından doğrulanmalı.'));
+}
+function frEditModel(m) {
+  const f = (name, label, attrs) => h('label', { class: 'pa-field' }, h('span', { text: label }), h('input', { name, ...attrs }));
+  const fields = h('div', { style: 'display:flex;flex-direction:column;gap:12px' },
+    m ? null : h('div', { class: 'pa-grid2' },
+      h('label', { class: 'pa-field' }, h('span', { text: 'Sağlayıcı' }), h('select', { name: 'provider' }, h('option', { value: 'anthropic', text: 'Claude (Anthropic)' }), h('option', { value: 'openai', text: 'ChatGPT (OpenAI)' }))),
+      f('model', 'Model adı (API’deki ad)', { maxlength: 50, required: true, placeholder: 'ör. gpt-4o' })),
+    f('label', 'Panelde ve listelerde görünen ad', { maxlength: 80, required: true, value: m?.label || '' }),
+    h('label', { class: 'pa-check' }, h('input', { type: 'checkbox', name: 'vision', checked: m ? m.supports_vision : true }), 'Fotoğraf okuyabilir'),
+    h('div', { class: 'pa-grid2' },
+      f('input', 'Giriş fiyatı (USD / 1M token)', { type: 'number', min: 0, max: 1000, step: '0.0001', required: true, value: m ? Number(m.input_usd_per_mtok) : '' }),
+      f('output', 'Çıkış fiyatı (USD / 1M token)', { type: 'number', min: 0, max: 1000, step: '0.0001', required: true, value: m ? Number(m.output_usd_per_mtok) : '' })),
+    m ? null : h('p', { class: 'pa-note', text: 'Model adı sağlayıcının API’deki adıyla birebir aynı olmalı. Yanlışsa analiz hata verir (yedek model varsa ona düşer). Eklendikten sonra Model seçiminden seçilebilir.' }));
+  confirmDialog({
+    title: m ? `${m.label} düzenle` : 'Yeni model', confirm: m ? 'Kaydet' : 'Ekle', reasonRequired: false, fields,
+    submit: async ({ reason, form }) => {
+      const el = form.elements, labelText = clean(el.label.value), inp = Number(el.input.value), out = Number(el.output.value);
+      if (!labelText) throw new AdminError('Görünen ad gerekli.', 'input');
+      if (!(el.input.value !== '' && inp >= 0 && inp <= 1000 && el.output.value !== '' && out >= 0 && out <= 1000)) throw new AdminError('Fiyatlar 0 ile 1000 arasında olmalı.', 'input');
+      const patch = { label: labelText, supports_vision: el.vision.checked, input_usd_per_mtok: inp, output_usd_per_mtok: out };
+      let key = m?.key;
+      if (!m) {
+        const model = clean(el.model.value);
+        if (!/^[A-Za-z0-9._-]{1,50}$/.test(model)) throw new AdminError('Model adı yalnız harf, rakam, nokta, tire ve alt çizgi içerebilir.', 'input');
+        key = `${el.provider.value}:${model}`;
+        if ((await rpc('admin_report_config', {}))?.models?.some(x => x.key === key)) throw new AdminError('Bu model zaten listede.', 'exists');
+      }
+      await rpc('admin_upsert_ai_model', { p_key: key, p_patch: patch, p_reason: reason || null });
+      toast(m ? 'Model kaydedildi.' : 'Model eklendi.'); renderFieldReports();
+    }
+  });
+}
+function frToggleModel(m, used) {
+  if (m.enabled && used) { toast('Bu model Model seçiminde kullanılıyor. Önce orada başka bir model seçin.', true); return; }
+  const on = !m.enabled;
+  confirmDialog({
+    title: `${m.label}: ${on ? 'açılsın mı?' : 'kapatılsın mı?'}`, confirm: on ? 'Aç' : 'Kapat', danger: !on, reasonRequired: false,
+    text: on ? 'Model, Model seçimindeki listelerde görünür.' : 'Model, Model seçimindeki listelerden çıkar. Kayıtlı kullanım verisi silinmez.',
+    submit: async ({ reason }) => {
+      await rpc('admin_upsert_ai_model', { p_key: m.key, p_patch: { enabled: on }, p_reason: reason || null });
+      toast(on ? 'Model açıldı.' : 'Model kapatıldı.'); renderFieldReports();
+    }
+  });
+}
+
+function frTargetLabel(target, models) {
+  if (target === 'default') return 'Varsayılan (tüm modeller)';
+  if (target === 'anthropic') return 'Tüm Claude modelleri';
+  if (target === 'openai') return 'Tüm ChatGPT modelleri';
+  return models.find(m => m.key === target)?.label || target;
+}
+function frPrompts(cfg) {
+  const v = view.fr, models = cfg.models || [], all = (cfg.prompts || []).filter(p => p.purpose === v.purpose);
+  const rows = all.slice().sort((a, b) => (a.target === 'default' ? -1 : b.target === 'default' ? 1 : a.target.localeCompare(b.target)));
+  const def = rows.find(p => p.target === 'default');
+  const btn = (text, onclick, cls = '') => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick });
+  return h('div', null,
+    h('div', { class: 'pa-tools' },
+      chips(Object.entries(FR_PURPOSE), v.purpose, x => { v.purpose = x; renderFieldReports(); }),
+      h('button', { type: 'button', class: 'pa-btn', text: '+ Modele özel prompt', onclick: () => frEditPrompt(null, cfg) })),
+    h('p', { class: 'pa-note', style: 'margin-bottom:14px' }, h('b', { text: 'Öncelik: ' }), 'modele özel › sağlayıcıya özel › varsayılan. Çıktı biçimi (JSON) kodda sabittir; burada yalnız içerik ve dil yönetilir. Rapor resmî belgedir: tespit nesnel yazılır, öneri “…sağlanmalıdır” diliyle; isteğe bağlı iyileştirme önerisi yazılmaz.'),
+    rows.length ? h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Hedef', 'Metin', 'Güncelleme', ''].map(t => h('th', { text: t })))),
+      h('tbody', null, rows.map(p => h('tr', { 'data-prompt': `${p.target}/${p.purpose}` },
+        h('td', null, h('b', { style: 'color:var(--ink)', text: frTargetLabel(p.target, models) }), p.target !== 'default' ? h('span', { class: 'pa-small', style: 'display:block', text: p.target }) : null),
+        h('td', { 'data-label': 'Metin' }, h('span', { class: 'pa-preview', text: p.prompt }), h('span', { class: 'pa-small', text: `${num(p.prompt.length)} karakter` })),
+        h('td', { 'data-label': 'Güncelleme', class: 'pa-num', text: fmtDate(p.updated_at) }),
+        h('td', null, h('div', { class: 'pa-actions' },
+          btn('Düzenle', () => frEditPrompt(p, cfg)),
+          p.target === 'default' ? null : btn('Kaldır', () => frRemovePrompt(p, models), ' pa-btn-danger')))))))) :
+      h('div', { class: 'pa-card pa-empty', text: def ? '' : 'Varsayılan prompt bulunamadı. Uygulama kod içindeki yedek metni kullanır.' }));
+}
+function frEditPrompt(p, cfg) {
+  const v = view.fr, models = cfg.models || [], have = new Set((cfg.prompts || []).filter(x => x.purpose === v.purpose).map(x => x.target));
+  const def = (cfg.prompts || []).find(x => x.purpose === v.purpose && x.target === 'default');
+  const targets = [['anthropic', 'Tüm Claude modelleri'], ['openai', 'Tüm ChatGPT modelleri'], ...models.map(m => [m.key, m.label])].filter(([t]) => !have.has(t));
+  if (!p && !targets.length) { toast('Her hedef için zaten özel prompt var; mevcut olanı düzenleyin.'); return; }
+  const area = h('textarea', { name: 'prompt', maxlength: 20000, required: true, spellcheck: 'false' });
+  area.value = p ? p.prompt : (def?.prompt || '');
+  const fields = h('div', { style: 'display:flex;flex-direction:column;gap:12px' },
+    p ? null : h('label', { class: 'pa-field' }, h('span', { text: 'Hedef' }), h('select', { name: 'target' }, targets.map(([t, l]) => h('option', { value: t, text: l })))),
+    h('label', { class: 'pa-field' }, h('span', { text: `${FR_PURPOSE[v.purpose]} prompt’u${p ? '' : ' (varsayılandan kopyalandı)'}` }), area));
+  confirmDialog({
+    title: p ? `${FR_PURPOSE[p.purpose]} · ${frTargetLabel(p.target, models)}` : `Yeni özel prompt · ${FR_PURPOSE[v.purpose]}`,
+    text: 'Kaydedince bir sonraki analizden itibaren kullanılır.', confirm: 'Kaydet', reasonRequired: false, wide: true, fields,
+    submit: async ({ reason, form }) => {
+      const text = clean(area.value), target = p ? p.target : form.elements.target.value;
+      if (text.length < 20) throw new AdminError('Prompt çok kısa.', 'input');
+      await rpc('admin_set_ai_prompt', { p_target: target, p_purpose: p ? p.purpose : v.purpose, p_prompt: text, p_reason: reason || null });
+      toast('Prompt kaydedildi.'); renderFieldReports();
+    }
+  });
+}
+function frRemovePrompt(p, models) {
+  confirmDialog({
+    title: `${frTargetLabel(p.target, models)}: özel prompt kaldırılsın mı?`, confirm: 'Kaldır', danger: true, reasonRequired: false,
+    text: 'Bu hedef bir üst seviyedeki prompt’u (sağlayıcı ya da varsayılan) kullanır. Metin denetim kaydında saklanır.',
+    submit: async ({ reason }) => {
+      await rpc('admin_set_ai_prompt', { p_target: p.target, p_purpose: p.purpose, p_prompt: '', p_reason: reason || null });
+      toast('Özel prompt kaldırıldı.'); renderFieldReports();
+    }
+  });
+}
+
+function frLimits(cfg) {
+  const lim = cfg.limits || {};
+  const inputs = Object.fromEntries(FR_LIMITS.map(([k, , , min, max]) => [k, h('input', { type: 'number', name: k, min, max, step: 1, value: lim[k] ?? '', 'aria-label': k })]));
+  const save = () => {
+    const changes = [];
+    for (const [k, title, , min, max] of FR_LIMITS) {
+      const n = Number(inputs[k].value);
+      if (!Number.isInteger(n) || n < min || n > max) { toast(`${title}: ${min} ile ${max} arasında bir tam sayı olmalı.`, true); inputs[k].focus(); return; }
+      if (String(n) !== String(lim[k] ?? '')) changes.push({ key: k, value: n, label: title, from: lim[k] ?? '—', to: String(n) });
+    }
+    frSaveChanges(changes, 'Limitler kaydedilsin mi?', (c, reason) => rpc('admin_set_report_limit', { p_key: c.key, p_value: c.value, p_reason: reason }));
+  };
+  return h('div', { class: 'pa-card' },
+    h('div', { class: 'pa-form' }, FR_LIMITS.map(([k, title, sub]) => h('div', { class: 'pa-form-row' }, h('div', null, h('b', { text: title }), h('span', { text: sub })), inputs[k]))),
+    h('div', { class: 'pa-form-foot' }, h('span', { class: 'pa-small', text: 'Hak kontrolü sunucuda hemen değişir; uygulamadaki gösterim en geç 1 saatte ya da uygulama yeniden açılınca güncellenir.' }), h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Değişiklikleri kaydet', onclick: save })));
+}
+
+function frChecklist(cfg) {
+  const rows = cfg.checklist || [];
+  const btn = (text, onclick, cls = '', attrs = {}) => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick, ...attrs });
+  const move = async (i, d) => {
+    const ids = rows.map(r => r.id); [ids[i], ids[i + d]] = [ids[i + d], ids[i]];
+    try { await rpc('admin_reorder_checklist', { p_ids: ids, p_reason: null }); toast('Sıra kaydedildi.'); renderFieldReports(); }
+    catch (e) { toast(e.message || 'Sıra kaydedilemedi.', true); }
+  };
+  return h('div', null,
+    h('div', { class: 'pa-tools' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: '+ Yeni madde', onclick: () => frEditItem(null) })),
+    h('p', { class: 'pa-note', style: 'margin-bottom:14px' }, 'Uzman maddeyi işaretlerse tespit ve öneri metni rapora eklenir; yalnız checklist ile oluşturulan rapor hak düşürmez. Başlık eksiklik diliyle yazılır (ör. “Uyarı levhaları eksik”) ve yapay zekâya yalnız başlık gider.'),
+    rows.length ? h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Sıra', 'Madde', 'Öncelik', 'Durum', ''].map(t => h('th', { text: t })))),
+      h('tbody', null, rows.map((r, i) => h('tr', { 'data-item': r.id },
+        h('td', { 'data-label': 'Sıra' }, h('div', { class: 'pa-actions' },
+          btn('↑', () => move(i, -1), '', { disabled: i === 0, 'aria-label': `${r.deficiency_title} yukarı` }),
+          btn('↓', () => move(i, 1), '', { disabled: i === rows.length - 1, 'aria-label': `${r.deficiency_title} aşağı` }))),
+        h('td', null, h('b', { style: 'color:var(--ink)', text: clean(r.deficiency_title) || clean(r.question) || '—' }),
+          h('span', { class: 'pa-preview', text: [r.finding_text, r.recommendation_text].filter(Boolean).join('\n') || 'Tespit / öneri metni yok' })),
+        h('td', { 'data-label': 'Öncelik' }, h('span', { class: `pa-badge ${(PRIORITY[r.default_priority] || PRIORITY.onemli)[1]}`, text: (PRIORITY[r.default_priority] || PRIORITY.onemli)[0] })),
+        h('td', { 'data-label': 'Durum' }, h('span', { class: `pa-badge ${r.is_active ? 'is-active' : 'is-deleted'}`, text: r.is_active ? 'Görünür' : 'Gizli' })),
+        h('td', null, h('div', { class: 'pa-actions' },
+          btn('Düzenle', () => frEditItem(r)),
+          btn(r.is_active ? 'Gizle' : 'Göster', () => frToggleItem(r)))))))))
+      : h('div', { class: 'pa-card pa-empty', text: 'Checklist maddesi yok.' }));
+}
+function frEditItem(r) {
+  const area = (name, label, value, rows = 3) => h('label', { class: 'pa-field' }, h('span', { text: label }), Object.assign(h('textarea', { name, maxlength: 2000, rows }), { value: value || '' }));
+  const pr = r?.default_priority === 'acil' ? 'acil' : 'onemli';
+  const fields = h('div', { style: 'display:flex;flex-direction:column;gap:12px' },
+    h('label', { class: 'pa-field' }, h('span', { text: 'Başlık (eksiklik dilinde, 3–160 karakter)' }), h('input', { name: 'title', maxlength: 160, required: true, value: r?.deficiency_title || '', placeholder: 'ör. Uyarı levhaları eksik' })),
+    area('finding', 'Tespit metni (rapora yazılır)', r?.finding_text),
+    area('rec', 'Öneri metni (“…sağlanmalıdır”)', r?.recommendation_text),
+    area('explanation', 'Açıklama (uygulamadaki ⓘ)', r?.explanation, 2),
+    h('div', { class: 'pa-radio', role: 'radiogroup', 'aria-label': 'Varsayılan öncelik' },
+      h('label', null, h('input', { type: 'radio', name: 'priority', value: 'onemli', checked: pr === 'onemli' }), 'Önemli'),
+      h('label', null, h('input', { type: 'radio', name: 'priority', value: 'acil', checked: pr === 'acil' }), 'Acil')),
+    r?.question && r.question !== r.deficiency_title ? h('p', { class: 'pa-small', text: `Eski uygulamadaki soru metni değişmez: “${r.question}”` }) : null);
+  confirmDialog({
+    title: r ? 'Checklist maddesi düzenle' : 'Yeni checklist maddesi', confirm: r ? 'Kaydet' : 'Ekle', reasonRequired: false, wide: true, fields,
+    submit: async ({ reason, form }) => {
+      const el = form.elements, title = clean(el.title.value);
+      if (title.length < 3) throw new AdminError('Başlık en az 3 karakter olmalı.', 'input');
+      const patch = { deficiency_title: title, finding_text: clean(el.finding.value), recommendation_text: clean(el.rec.value), explanation: clean(el.explanation.value), default_priority: el.priority.value };
+      await rpc('admin_upsert_checklist_item', { p_id: r?.id || null, p_patch: patch, p_reason: reason || null });
+      toast(r ? 'Madde kaydedildi.' : 'Madde eklendi.'); renderFieldReports();
+    }
+  });
+}
+function frToggleItem(r) {
+  const on = !r.is_active;
+  confirmDialog({
+    title: `${clean(r.deficiency_title) || 'Madde'}: ${on ? 'gösterilsin mi?' : 'gizlensin mi?'}`, confirm: on ? 'Göster' : 'Gizle', danger: !on, reasonRequired: false,
+    text: on ? 'Madde uygulamadaki checklist’te yeniden görünür.' : 'Madde uygulamadaki checklist’te görünmez. Daha önce kaydedilmiş raporlar değişmez.',
+    submit: async ({ reason }) => {
+      await rpc('admin_upsert_checklist_item', { p_id: r.id, p_patch: { is_active: on }, p_reason: reason || null });
+      toast(on ? 'Madde gösteriliyor.' : 'Madde gizlendi.'); renderFieldReports();
+    }
+  });
+}
+
+function frUsage(u) {
+  const v = view.fr, t = u?.totals || {};
+  const s = (label, value, sub, alert) => h('div', { class: `pa-stat${alert ? ' is-alert' : ''}` }, h('span', { text: label }), h('b', { text: value }), sub ? h('small', { text: sub }) : null);
+  const table = (cols, rows, cells) => rows.length ? h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
+    h('thead', null, h('tr', null, cols.map(c => h('th', { text: c })))), h('tbody', null, rows.map(r => h('tr', null, cells(r).map((c, i) => h('td', { 'data-label': i ? cols[i] : null, class: i ? 'pa-num' : null }, c)))))))
+    : h('div', { class: 'pa-card pa-empty', text: 'Bu dönemde kayıt yok.' });
+  const errRate = Number(t.calls) ? Number(t.errors) / Number(t.calls) : 0;
+  return h('div', null,
+    h('div', { class: 'pa-tools' }, chips([[7, 'Son 7 gün'], [30, 'Son 30 gün'], [90, 'Son 90 gün']], v.days, x => { v.days = x; renderFieldReports(); })),
+    h('div', { class: 'pa-stats' },
+      s('Toplam maliyet', usd.format(t.cost_usd || 0), `Yapay zekâ sağlayıcılarına (${num(u?.days)} gün)`),
+      s('Analiz', num(t.analyze), `Hak düşen: ${num(t.charged)}`),
+      s('Yeniden yazma', num(t.rewrite), 'Hak düşürmez'),
+      s('Hata oranı', pct(t.errors, t.calls), `${num(t.errors)} hata · hak düşmedi`, errRate > 0.05),
+      s('Yedek model', pct(t.fallback, t.calls), `${num(t.fallback)} çağrı`),
+      s('Kullanan uzman', num(t.users), `Ortalama süre ${nf.format(Math.round(Number(t.avg_ms || 0) / 100) / 10)} sn`)),
+    h('h2', { class: 'pa-subtitle', text: 'Model bazında' }),
+    table(['Model', 'Çağrı', 'Hata', 'Yedek', 'Token (giriş / çıkış)', 'Maliyet'], u?.by_model || [], r => [r.model, num(r.calls), num(r.errors), num(r.fallback), `${num(r.input_tokens)} / ${num(r.output_tokens)}`, usd.format(r.cost_usd)]),
+    h('h2', { class: 'pa-subtitle pa-section-gap', text: 'Gün bazında' }),
+    table(['Gün', 'Çağrı', 'Hata', 'Maliyet'], u?.by_day || [], r => [new Date(`${r.day}T12:00:00`).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }), num(r.calls), num(r.errors), usd.format(r.cost_usd)]),
+    h('h2', { class: 'pa-subtitle pa-section-gap', text: 'En çok kullanan uzmanlar' }),
+    table(['Uzman', 'Çağrı', 'Hak düşen', 'Maliyet'], u?.top_users || [], r => [who(r.full_name, r.email), num(r.calls), num(r.charged), usd.format(r.cost_usd)]),
+    h('p', { class: 'pa-note pa-section-gap', text: 'Maliyet, Modeller sekmesindeki fiyatlarla hesaplanır; sağlayıcı faturasıyla küçük farklar olabilir. Rapor içerikleri burada görünmez.' }));
 }
 
 /* ---------------------------------------------------------------------------

@@ -47,6 +47,27 @@ function server(ctx) {
     { user_id: M, full_name: 'Mehmet Öztürk', role: 'İSG Uzmanı', city: 'Kocaeli', status: 'pending', doc_path: `${M}/2.png`, verified_name: null, reason: null, submitted_at: iso(20), decided_at: null, is_pro: false, pro_until: null },
     { user_id: P, full_name: 'Can Demir', role: null, city: null, status: 'approved', doc_path: null, verified_name: 'Can Demir', reason: null, submitted_at: iso(900), decided_at: iso(800), is_pro: true, pro_until: null }];
   st.removed = [];
+  // v1.9.0 Saha Raporu: admin_report_config tek çağrıda ayarlar; yazma RPC'leri sunucu kurallarını taklit eder
+  const Q1 = 'a1a1a1a1-0000-4000-8000-000000000001', Q2 = 'a2a2a2a2-0000-4000-8000-000000000002';
+  st.fr = {
+    models: [
+      { key: 'anthropic:claude-haiku-5-5', provider: 'anthropic', model: 'claude-haiku-5-5', label: 'Claude Haiku 5.5', supports_vision: true, enabled: true, input_usd_per_mtok: '0.1000', output_usd_per_mtok: '0.5000', sort: 3 },
+      { key: 'anthropic:claude-sonnet-5-5', provider: 'anthropic', model: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5', supports_vision: true, enabled: true, input_usd_per_mtok: '2.0000', output_usd_per_mtok: '10.0000', sort: 2 },
+      { key: 'openai:gpt-4o', provider: 'openai', model: 'gpt-4o', label: 'ChatGPT · GPT-4o', supports_vision: true, enabled: true, input_usd_per_mtok: '2.5000', output_usd_per_mtok: '10.0000', sort: 10 },
+      { key: 'openai:gpt-6-luna', provider: 'openai', model: 'gpt-6-luna', label: 'ChatGPT · GPT-6 Luna', supports_vision: false, enabled: true, input_usd_per_mtok: '0.2000', output_usd_per_mtok: '1.2000', sort: 13 }],
+    settings: { report_model_text: 'anthropic:claude-haiku-5-5', report_model: 'anthropic:claude-sonnet-5-5', report_model_complex: 'anthropic:claude-sonnet-5-5', report_complex_photos: '4', report_fallback_model: '', rewrite_model: '', report_style: 'dengeli' },
+    prompts: [
+      { target: 'default', purpose: 'report_analyze', prompt: 'Sen deneyimli bir iş güvenliği uzmanısın. Tespitleri nesnel yaz; öneriler ...sağlanmalıdır diliyle.', updated_at: iso(600) },
+      { target: 'default', purpose: 'finding_rewrite', prompt: 'Bulguyu hukuki dille yeniden yaz; öneri ...sağlanmalıdır.', updated_at: iso(600) },
+      { target: 'openai', purpose: 'report_analyze', prompt: 'ChatGPT için özel analiz talimatı: kısa ve nesnel yaz.', updated_at: iso(100) }],
+    limits: { free_monthly_limit: '5', premium_daily_limit: '50', report_rewrite_daily_limit: '40', report_max_photos: '8', report_max_drafts: '5' },
+    checklist: [
+      { id: Q1, deficiency_title: 'Uyarı levhaları eksik', finding_text: 'Levha yok.', recommendation_text: 'Levha asılmalıdır.', default_priority: 'onemli', explanation: null, is_active: true, order_index: 1, question: 'Uyarı levhaları var mı?' },
+      { id: Q2, deficiency_title: 'Yangın tüpü dolum tarihi geçmiş', finding_text: null, recommendation_text: null, default_priority: 'iyilestirme', explanation: null, is_active: true, order_index: 2, question: 'Yangın tüpü kontrol edildi mi?' }]
+  };
+  st.Q = { Q1, Q2 };
+  const frUsed = () => ['report_model_text', 'report_model', 'report_model_complex', 'rewrite_model', 'report_fallback_model'].map(k => st.fr.settings[k]).filter(Boolean);
+  const bad = m => { throw { code: '22023', message: `KISG_ADMIN_INPUT: ${m}` }; };
   const withTotal = rows => rows.map(r => ({ ...r, total_count: rows.length }));
   const ADMIN_RPC = {
     admin_overview: () => ({ users_total: 1296, users_new_7d: 12, posts: { active: 14, hidden: 1, deleted: 3 }, comments: { active: 9, deleted: 3 }, services: { active: 3, archived: 1 }, reports: { pending: 2 }, active_suspensions: 1, active_bans: 0, warnings_30d: 2, admin_actions_7d: 4 }),
@@ -68,6 +89,36 @@ function server(ctx) {
     admin_decide_verification: a => { const v = st.verif.find(x => x.user_id === a.p_user); if (a.p_approve && !v.is_pro) throw { code: '55000', message: 'KISG_NOT_PRO: kullanicinin Pro uyeligi aktif degil' }; const d = v.doc_path; Object.assign(v, { status: a.p_approve ? 'approved' : 'rejected', reason: a.p_approve ? null : a.p_reason, doc_path: null, decided_at: iso(0), verified_name: a.p_approve ? v.full_name : v.verified_name }); return d; },
     admin_revoke_verification: a => { Object.assign(st.verif.find(x => x.user_id === a.p_user), { status: 'rejected', reason: a.p_reason }); return null; },
     admin_update_profile: a => ({ changed: Object.keys(a.p_patch) }),
+    admin_report_config: () => JSON.parse(JSON.stringify(st.fr)),
+    admin_report_usage: a => ({ days: a.p_days, totals: { calls: 40, analyze: 30, rewrite: 10, charged: 26, errors: 3, fallback: 2, cost_usd: 1.2345, users: 6, avg_ms: 5400 },
+      by_day: [{ day: '2026-10-18', calls: 12, errors: 1, cost_usd: 0.41 }, { day: '2026-10-17', calls: 28, errors: 2, cost_usd: 0.8245 }],
+      by_model: [{ model: 'anthropic:claude-sonnet-5-5', calls: 25, errors: 2, fallback: 0, input_tokens: 120000, output_tokens: 30000, cost_usd: 0.9 }, { model: 'anthropic:claude-haiku-5-5', calls: 15, errors: 1, fallback: 2, input_tokens: 40000, output_tokens: 9000, cost_usd: 0.3345 }],
+      top_users: [{ user_id: A, full_name: 'Ayşe Yılmaz', email: 'ayse@ornek.com', calls: 22, charged: 15, cost_usd: 0.7 }] }),
+    admin_set_ai_setting: a => {
+      const m = st.fr.models.find(x => x.key === a.p_value);
+      if (['report_model', 'report_model_complex', 'rewrite_model'].includes(a.p_key) && a.p_value && !m?.supports_vision) bad('model');
+      if (a.p_key === 'report_style' && !['sade', 'dengeli', 'ayrintili'].includes(a.p_value)) bad('value');
+      st.fr.settings[a.p_key] = a.p_value; return { key: a.p_key, value: a.p_value };
+    },
+    admin_upsert_ai_model: a => {
+      const m = st.fr.models.find(x => x.key === a.p_key);
+      if (!m) { if (!/^(anthropic|openai):[A-Za-z0-9._-]{1,50}$/.test(a.p_key)) bad('key'); const [provider, model] = a.p_key.split(':'); const n = { key: a.p_key, provider, model, enabled: true, sort: 50, ...a.p_patch }; st.fr.models.push(n); return n; }
+      if (a.p_patch.enabled === false && frUsed().includes(m.key)) throw { code: '23503', message: 'KISG_MODEL_IN_USE: önce model seçiminde başka model seçin' };
+      Object.assign(m, a.p_patch); return m;
+    },
+    admin_set_ai_prompt: a => {
+      const i = st.fr.prompts.findIndex(x => x.target === a.p_target && x.purpose === a.p_purpose);
+      if (!a.p_prompt) { if (a.p_target === 'default') bad('default'); if (i >= 0) st.fr.prompts.splice(i, 1); return { target: a.p_target, purpose: a.p_purpose, prompt: null }; }
+      if (i >= 0) Object.assign(st.fr.prompts[i], { prompt: a.p_prompt, updated_at: iso(0) }); else st.fr.prompts.push({ target: a.p_target, purpose: a.p_purpose, prompt: a.p_prompt, updated_at: iso(0) });
+      return { target: a.p_target, purpose: a.p_purpose, prompt: a.p_prompt };
+    },
+    admin_set_report_limit: a => { if (a.p_key === 'report_max_photos' && (a.p_value < 1 || a.p_value > 20)) bad('limit'); st.fr.limits[a.p_key] = String(a.p_value); return { key: a.p_key, value: a.p_value }; },
+    admin_upsert_checklist_item: a => {
+      if (a.p_patch.default_priority && !['acil', 'onemli'].includes(a.p_patch.default_priority)) bad('patch');
+      if (!a.p_id) { const n = { id: 'a3a3a3a3-0000-4000-8000-000000000003', question: a.p_patch.deficiency_title, is_active: true, order_index: st.fr.checklist.length + 1, ...a.p_patch }; st.fr.checklist.push(n); return n; }
+      const c = st.fr.checklist.find(x => x.id === a.p_id); if (!c) throw { code: 'P0002', message: 'KISG_ADMIN_NOT_FOUND' }; Object.assign(c, a.p_patch); return c;
+    },
+    admin_reorder_checklist: a => { if (a.p_ids.length !== st.fr.checklist.length) bad('ids'); st.fr.checklist = a.p_ids.map((id, i) => ({ ...st.fr.checklist.find(x => x.id === id), order_index: i + 1 })); return null; },
     admin_moderate_content: a => { if (a.p_id === 'fail') throw 0; const p = posts.find(x => x.id === a.p_id); if (a.p_action === 'hide') p.status = 'hidden'; if (a.p_action === 'restore') p.status = 'active'; if (a.p_action === 'delete') p.status = 'deleted'; return { status: p.status }; },
     admin_sanction_user: () => 'ffffffff-0000-4000-8000-000000000001',
     admin_revoke_sanction: () => ({ revoked_at: iso(0) }),
@@ -147,7 +198,8 @@ async function open(browser, { uid = null, width = 1280, height = 900, qs = '' }
 const until = async (fn, ms = 5000) => { const t = Date.now(); while (Date.now() - t < ms) { if (await fn()) return true; await new Promise(r => setTimeout(r, 50)); } return false; };
 const visible = (f, sel) => f.locator(sel).first().isVisible().catch(() => false);
 const lastRpc = (st, name) => [...st.rpc].reverse().find(x => x.name === name);
-const ALLOWED = new Set(['kisg_is_admin', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification']);
+const ALLOWED = new Set(['kisg_is_admin', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification',
+  'admin_report_config', 'admin_report_usage', 'admin_set_ai_setting', 'admin_upsert_ai_model', 'admin_set_ai_prompt', 'admin_set_report_limit', 'admin_upsert_checklist_item', 'admin_reorder_checklist']);
 
 // ---------------- statik ----------------
 check(!/service_role|service-role|serviceRole/i.test(ADMIN_HTML.replace(/service_role YOKTUR|service_role YOK/g, '')), 'admin HTML\'de service role anahtarı/kullanımı yok');
@@ -491,6 +543,122 @@ try {
     const ov = await f.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     check(ov <= 1 && !errs.length && !st.table.length && st.rpc.every(x => ALLOWED.has(x.name)), `${vp.n}: taşma, hata, tablo isteği yok; yalnız izinli RPC ${errs.join(' ')}`);
     await page.screenshot({ path: path.join(OUT, `pro-admin-verify-${vp.width}.png`), fullPage: true });
+    await ctx.close();
+  }
+  // ---------------- 4f) Saha Raporu (v1.9.0) ----------------
+  for (const vp of [{ n: 'masaüstü', width: 1280, height: 900 }, { n: 'mobil', width: 390, height: 844 }]) {
+    const { ctx, page, f, st, errs } = await open(browser, { uid: X, width: vp.width, height: vp.height, qs: '?b=fieldreports' });
+    const dialog = async () => f.waitForSelector('.pa-dialog');
+    // Uzun pencere mobilde iframe görünür alanının altına taşabilir (kullanıcı sayfayı kaydırır); form doğrudan gönderilir.
+    const submit = async () => f.evaluate(() => document.querySelector('.pa-dialog').requestSubmit(document.querySelector('.pa-dialog button[type="submit"]')));
+    const tab = async name => { await f.click(`.pa-tools .pa-chips button:text-is("${name}")`); };
+    // Model seçimi
+    check(await until(() => visible(f, 'select[name="report_model_text"]')), `${vp.n}: Saha Raporu açıldı (?b=fieldreports), Model seçimi`);
+    await page.screenshot({ path: path.join(OUT, `pro-admin-fieldreports-routing-${vp.width}.png`), fullPage: true });
+    const visionOnly = await f.evaluate(() => [...document.querySelectorAll('select[name="report_model"] option')].map(o => o.value));
+    check(visionOnly.includes('openai:gpt-4o') && !visionOnly.includes('openai:gpt-6-luna'), `${vp.n}: fotoğraflı modelde yalnız fotoğraf okuyan modeller (${visionOnly.join(', ')})`);
+    const textAll = await f.evaluate(() => [...document.querySelectorAll('select[name="report_model_text"] option')].map(o => o.value));
+    check(textAll.includes('openai:gpt-6-luna'), `${vp.n}: yazı modelinde fotoğraf okumayan model de seçilebilir`);
+    await f.selectOption('select[name="report_model"]', 'openai:gpt-4o');
+    await f.fill('input[name="report_complex_photos"]', '6');
+    await f.check('input[name="report_style"][value="sade"]');
+    await f.click('button:text-is("Değişiklikleri kaydet")'); await dialog();
+    const list = await f.textContent('.pa-dialog');
+    check(/Fotoğraflı/.test(list) && /Claude Sonnet 5\.5 → ChatGPT · GPT-4o/.test(list) && /4 fotoğraf → 6 fotoğraf/.test(list) && /Dengeli → Sade/.test(list), `${vp.n}: onayda yalnız değişen 3 alan, eski → yeni`);
+    await submit();
+    check(await until(() => st.rpc.filter(x => x.name === 'admin_set_ai_setting').length === 3) && st.fr.settings.report_model === 'openai:gpt-4o' && st.fr.settings.report_complex_photos === '6' && st.fr.settings.report_style === 'sade', `${vp.n}: 3 ayar ayrı RPC ile kaydedildi`);
+    await f.click('button:text-is("Değişiklikleri kaydet")');
+    check(await until(async () => /Değişiklik yok/.test(await f.textContent('[data-toast]'))), `${vp.n}: değişiklik yoksa RPC yok`);
+    await f.fill('input[name="report_complex_photos"]', '25'); await f.click('button:text-is("Değişiklikleri kaydet")');
+    check(await until(async () => /Eşik 0 ile 20/.test(await f.textContent('[data-toast]'))) && !await f.locator('.pa-dialog').count(), `${vp.n}: geçersiz eşik engellenir`);
+    // Modeller
+    await tab('Modeller');
+    check(await until(() => f.locator('[data-model]').count().then(n => n === 4)), `${vp.n}: Modeller: 4 model`);
+    check(/Seçili/.test(await f.textContent('[data-model="openai:gpt-4o"]')) && /Okumaz/.test(await f.textContent('[data-model="openai:gpt-6-luna"]')), `${vp.n}: seçili ve fotoğraf okumayan model işaretli`);
+    await f.click('[data-model="openai:gpt-4o"] button:text-is("Kapat")');
+    check(await until(async () => /Model seçiminde kullanılıyor/.test(await f.textContent('[data-toast]'))) && !await f.locator('.pa-dialog').count(), `${vp.n}: seçili model kapatılamaz (sunucuya gitmeden)`);
+    await f.click('[data-model="openai:gpt-6-luna"] button:text-is("Kapat")'); await dialog(); await submit();
+    check(await until(() => st.fr.models.find(x => x.key === 'openai:gpt-6-luna').enabled === false), `${vp.n}: model kapatıldı`);
+    await until(() => f.locator('[data-model="openai:gpt-6-luna"] button:text-is("Aç")').count().then(n => n === 1));
+    await f.click('button:text-is("+ Yeni model")'); await dialog();
+    await f.selectOption('.pa-dialog select[name="provider"]', 'openai');
+    await f.fill('.pa-dialog input[name="model"]', 'gpt 5 kötü'); await f.fill('.pa-dialog input[name="label"]', 'Test'); await f.fill('.pa-dialog input[name="input"]', '1'); await f.fill('.pa-dialog input[name="output"]', '2');
+    await submit();
+    check(await until(async () => /yalnız harf, rakam/.test(await f.textContent('.pa-dialog .pa-error'))), `${vp.n}: geçersiz model adı formda yakalanır`);
+    await f.fill('.pa-dialog input[name="model"]', 'gpt-6.2-nova'); await submit();
+    check(await until(() => st.fr.models.some(x => x.key === 'openai:gpt-6.2-nova' && x.input_usd_per_mtok === 1 && x.output_usd_per_mtok === 2 && x.supports_vision === true && x.label === 'Test')), `${vp.n}: yeni model eklendi (anahtar, fiyat, görsel)`);
+    await until(() => f.locator('[data-model]').count().then(n => n === 5));
+    await f.click('[data-model="anthropic:claude-haiku-5-5"] button:text-is("Düzenle")'); await dialog();
+    await f.fill('.pa-dialog input[name="output"]', '0.6'); await submit();
+    check(await until(() => st.fr.models.find(x => x.key === 'anthropic:claude-haiku-5-5').output_usd_per_mtok === 0.6), `${vp.n}: model fiyatı düzenlendi`);
+    // Prompt'lar
+    await tab('Prompt’lar');
+    check(await until(() => f.locator('[data-prompt]').count().then(n => n === 2)), `${vp.n}: Analiz: varsayılan + ChatGPT özel prompt`);
+    check(!await f.locator('[data-prompt="default/report_analyze"] button:text-is("Kaldır")').count(), `${vp.n}: varsayılan prompt kaldırılamaz`);
+    await f.click('[data-prompt="default/report_analyze"] button:text-is("Düzenle")'); await dialog();
+    check(await f.evaluate(() => document.querySelector('.pa-dialog').classList.contains('is-wide')), `${vp.n}: prompt geniş pencerede`);
+    await f.fill('.pa-dialog textarea[name="prompt"]', 'kısa'); await submit();
+    check(await until(async () => /çok kısa/.test(await f.textContent('.pa-dialog .pa-error'))), `${vp.n}: çok kısa prompt engellenir`);
+    await f.fill('.pa-dialog textarea[name="prompt"]', 'Yeni varsayılan analiz talimatı: tespit nesnel, öneri ...sağlanmalıdır.'); await submit();
+    check(await until(() => /^Yeni varsayılan/.test(st.fr.prompts.find(x => x.target === 'default' && x.purpose === 'report_analyze').prompt)), `${vp.n}: varsayılan prompt kaydedildi`);
+    await until(() => f.locator('[data-prompt]').count().then(n => n === 2));
+    await f.click('button:text-is("+ Modele özel prompt")'); await dialog();
+    const targets = await f.evaluate(() => [...document.querySelectorAll('.pa-dialog select[name="target"] option')].map(o => o.value));
+    const prefill = await f.inputValue('.pa-dialog textarea[name="prompt"]');
+    check(!targets.includes('openai') && targets.includes('anthropic') && targets.includes('openai:gpt-4o') && /^Yeni varsayılan/.test(prefill), `${vp.n}: yeni özel prompt: dolu hedefler listede yok, metin varsayılandan`);
+    await f.selectOption('.pa-dialog select[name="target"]', 'openai:gpt-4o'); await submit();
+    check(await until(() => st.fr.prompts.some(x => x.target === 'openai:gpt-4o' && x.purpose === 'report_analyze')), `${vp.n}: modele özel prompt eklendi`);
+    await until(() => f.locator('[data-prompt]').count().then(n => n === 3));
+    await f.click('[data-prompt="openai/report_analyze"] button:text-is("Kaldır")'); await dialog(); await submit();
+    check(await until(() => !st.fr.prompts.some(x => x.target === 'openai' && x.purpose === 'report_analyze')) && lastRpc(st, 'admin_set_ai_prompt').args.p_prompt === '', `${vp.n}: özel prompt kaldırıldı (boş metin)`);
+    await f.click('.pa-tools .pa-chips button:text-is("Yeniden yazma")');
+    check(await until(() => f.locator('[data-prompt]').count().then(n => n === 1)), `${vp.n}: Yeniden yazma prompt'ları ayrı`);
+    // Limitler
+    await tab('Limitler');
+    check(await until(() => visible(f, 'input[name="premium_daily_limit"]')) && await f.inputValue('input[name="premium_daily_limit"]') === '50', `${vp.n}: Limitler mevcut değerlerle`);
+    await f.fill('input[name="report_max_photos"]', '30'); await f.click('button:text-is("Değişiklikleri kaydet")');
+    check(await until(async () => /en çok fotoğraf: 1 ile 20/.test(await f.textContent('[data-toast]'))), `${vp.n}: aralık dışı limit engellenir`);
+    await f.fill('input[name="report_max_photos"]', '10'); await f.fill('input[name="premium_daily_limit"]', '60');
+    await f.click('button:text-is("Değişiklikleri kaydet")'); await dialog(); await submit();
+    check(await until(() => st.fr.limits.report_max_photos === '10' && st.fr.limits.premium_daily_limit === '60') && st.rpc.some(x => x.name === 'admin_set_report_limit' && x.args.p_key === 'premium_daily_limit' && x.args.p_value === 60), `${vp.n}: limitler tam sayı olarak kaydedildi`);
+    // Checklist
+    await tab('Checklist');
+    check(await until(() => f.locator('[data-item]').count().then(n => n === 2)), `${vp.n}: Checklist: 2 madde`);
+    check(/İşaretsiz \(eski\)/.test(await f.textContent(`[data-item="${st.Q.Q2}"]`)), `${vp.n}: eski "iyileştirme" önceliği işaretsiz görünür`);
+    await f.click(`[data-item="${st.Q.Q2}"] button:text-is("Düzenle")`); await dialog();
+    check(/Eski uygulamadaki soru metni değişmez/.test(await f.textContent('.pa-dialog')), `${vp.n}: eski soru metni bilgisi`);
+    await f.check('.pa-dialog input[name="priority"][value="acil"]'); await f.fill('.pa-dialog textarea[name="rec"]', 'Dolum yaptırılmalıdır.'); await submit();
+    check(await until(() => { const c = st.fr.checklist.find(x => x.id === st.Q.Q2); return c.default_priority === 'acil' && c.recommendation_text === 'Dolum yaptırılmalıdır.'; }), `${vp.n}: madde düzenlendi (acil, öneri)`);
+    await until(() => f.locator(`[data-item="${st.Q.Q2}"] button:text-is("↑")`).isEnabled());
+    await f.click(`[data-item="${st.Q.Q2}"] button:text-is("↑")`);
+    check(await until(() => st.fr.checklist[0].id === st.Q.Q2) && lastRpc(st, 'admin_reorder_checklist').args.p_ids.length === 2, `${vp.n}: sıra değişti`);
+    await until(() => f.locator(`[data-item="${st.Q.Q1}"] button:text-is("Gizle")`).count().then(n => n === 1));
+    await f.click(`[data-item="${st.Q.Q1}"] button:text-is("Gizle")`); await dialog(); await submit();
+    check(await until(() => st.fr.checklist.find(x => x.id === st.Q.Q1).is_active === false), `${vp.n}: madde gizlendi`);
+    await until(() => f.locator('button:text-is("+ Yeni madde")').count().then(n => n === 1));
+    await f.click('button:text-is("+ Yeni madde")'); await dialog();
+    await f.fill('.pa-dialog input[name="title"]', 'Acil çıkış yolu kapalı'); await submit();
+    check(await until(() => st.fr.checklist.some(x => x.deficiency_title === 'Acil çıkış yolu kapalı' && x.default_priority === 'onemli')), `${vp.n}: yeni madde eklendi (varsayılan Önemli)`);
+    // Kullanım
+    await tab('Kullanım ve maliyet');
+    check(await until(() => visible(f, '.pa-stats')), `${vp.n}: Kullanım açıldı`);
+    const ustat = await f.textContent('[data-main]');
+    check(/\$1\.2345/.test(ustat) && /%7,5/.test(ustat) && /Ayşe Yılmaz/.test(ustat) && /claude-sonnet-5-5/.test(ustat) && lastRpc(st, 'admin_report_usage').args.p_days === 30, `${vp.n}: maliyet, hata oranı, model ve uzman tablosu`);
+    await f.click('.pa-tools .pa-chips button:text-is("Son 7 gün")');
+    check(await until(() => lastRpc(st, 'admin_report_usage').args.p_days === 7), `${vp.n}: dönem değişir (7 gün)`);
+    const ov = await f.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    check(ov <= 1 && !errs.length && !st.table.length && st.rpc.every(x => ALLOWED.has(x.name)), `${vp.n}: taşma, hata, tablo isteği yok; yalnız izinli RPC ${errs.join(' ')}`);
+    await page.screenshot({ path: path.join(OUT, `pro-admin-fieldreports-${vp.width}.png`), fullPage: true });
+    await ctx.close();
+  }
+  // Veritabanı güncellemesi yoksa (canlıda migration öncesi): bölüm bunu söyler, panel bozulmaz
+  {
+    const { ctx, f, st, errs } = await open(browser, { uid: X, qs: '?b=fieldreports' });
+    st.fail.admin_report_config = { code: 'PGRST202', message: 'Could not find the function public.admin_report_config' };
+    await f.click('.pa-nav [data-sec="fieldreports"]');
+    check(await until(async () => /veritabanı güncellemesi henüz uygulanmamış/.test(await f.textContent('[data-main]'))), 'Saha Raporu: veritabanı yoksa açıklama');
+    await f.click('.pa-nav [data-sec="categories"]');
+    check(await until(() => f.locator('[data-category]').count().then(n => n === 3)) && !errs.length, 'Saha Raporu: diğer bölümler etkilenmez');
     await ctx.close();
   }
   // ---------------- 5) mobil ----------------

@@ -1,0 +1,1534 @@
+<!--
+TEST KOPYASI (STAGING) — canlı /pro-admin sayfasına YAPIŞTIRMAYIN.
+KIRMIZI İSG — PROFESSIONAL ADMIN v1.9.0
+
+KURULUM: Bu dosyanın TAMAMI Hostinger'da /pro-admin sayfasının Custom HTML/Embed içeriği olarak kullanılır.
+Ana uygulama (kisg-professional-app.html) ile aynı Supabase projesi ve aynı oturum (tarayıcı depolaması) kullanılır;
+ana sitede giriş yapmış yönetici bu sayfada doğrudan açılır.
+
+GÜVENLİK
+ - Tarayıcıda yalnız publishable (anon) anahtar vardır; service_role YOKTUR.
+ - Tüm veri okuma ve değişiklikleri Admin V1 / Migration B RPC'leri ile yapılır (admin_*). Doğrudan tablo
+   okuma/yazma yoktur. Her RPC sunucuda gerçek admin rolünü (user_roles) doğrular ve audit log'a yazar.
+ - Arayüzdeki "yönetici" kontrolü (kisg_is_admin) yalnız ekranı göstermek içindir; yetki sunucudadır.
+ - v1.2.0 Destek sekmesi: public.support_requests için RPC yoktur; liste ve durum (open/resolved) değişikliği
+   doğrudan tablodan, Supabase'de hazır olan RLS ile yapılır (bu dosya DB değiştirmez).
+ - v1.3.0 Etiketler sekmesi: db/migrations/20261006_tags_admin_v2.sql gerekir (admin_list_tags, admin_update_tag,
+   admin_merge_tags). Uygulanmamışsa sekme bunu söyler; diğer bölümler etkilenmez.
+ - v1.4.0 Sabit konu açıklaması (20261008_tags_pinned_note.sql): sitede sabit konunun altında görünür; boşsa hiçbir şey çıkmaz.
+
+BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler · Hizmet Kategorileri · Alanlar · Şikâyetler · Destek · Onaylar · Saha Raporu
+ - v1.8.0 Onaylar (20261013_verified_accounts.sql): onaylı hesap başvuruları. Belge gizli depodan (kisg-verifications)
+   10 dakikalık imzalı bağlantıyla görülür; onay/ret kararıyla birlikte depodan silinir.
+ - v1.9.0 Saha Raporu (mobil uygulamanın AI destekli saha raporu; kirmizi-isg-mobile
+   supabase/migrations/20261019220000_admin_report_rpcs.sql ve rapor şeması): model seçimi, modeller, prompt'lar,
+   limitler, checklist ve kullanım/maliyet. Yalnız ayarlar ve toplu sayılar; uzmanların rapor içerikleri görünmez.
+   Veritabanında yoksa sekme bunu söyler; diğer bölümler etkilenmez.
+   Test kopyası (staging): tools/build-admin-staging.mjs → dist-admin/kisg-pro-admin-staging-v{sürüm}.html
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<div id="kisgAdmin" lang="tr">
+  <header class="pa-top">
+    <a class="pa-brand" href="https://isgcalisanplatformu.com/" target="_top" aria-label="Kırmızı İSG Professional ana sayfa">
+      <img src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/logo.jpg" alt="" width="32" height="32" decoding="async">
+      <span class="pa-brand-text"><b>Kırmızı İSG</b><i>Professional</i></span>
+      <span class="pa-pill" style="background:#e30a17">TEST · staging</span>
+    </a>
+    <div class="pa-me" data-me hidden>
+      <span class="pa-me-mail" data-me-mail></span>
+      <button type="button" class="pa-btn pa-btn-ghost" data-action="logout">Çıkış</button>
+    </div>
+  </header>
+
+  <section class="pa-gate" data-gate="loading" aria-live="polite">
+    <div class="pa-gate-card" data-gate-pane="loading"><span class="pa-spin" aria-hidden="true"></span><p>Yükleniyor…</p></div>
+    <form class="pa-gate-card" data-gate-pane="login" novalidate hidden>
+      <h1>Yönetici girişi</h1>
+      <p class="pa-muted">Kırmızı İSG hesabınızla giriş yapın.</p>
+      <label class="pa-field"><span>E-posta</span><input type="email" name="email" autocomplete="username" required></label>
+      <label class="pa-field"><span>Şifre</span><input type="password" name="password" autocomplete="current-password" required></label>
+      <p class="pa-error" data-login-error hidden></p>
+      <button type="submit" class="pa-btn pa-btn-primary pa-btn-block">Giriş Yap</button>
+      <a class="pa-link" href="https://isgcalisanplatformu.com/" target="_top">Şifremi unuttum / siteye dön</a>
+    </form>
+    <div class="pa-gate-card" data-gate-pane="denied" hidden>
+      <h1>Yetkiniz yok</h1>
+      <p class="pa-muted">Bu sayfa yalnız Kırmızı İSG Professional yöneticileri içindir.</p>
+      <a class="pa-btn pa-btn-primary" href="https://isgcalisanplatformu.com/" target="_top">Siteye dön</a>
+    </div>
+    <div class="pa-gate-card" data-gate-pane="error" hidden>
+      <h1>Bağlantı kurulamadı</h1>
+      <p class="pa-muted" data-gate-error>Lütfen tekrar deneyin.</p>
+      <button type="button" class="pa-btn pa-btn-primary" data-action="retry">Tekrar dene</button>
+    </div>
+  </section>
+
+  <div class="pa-shell" hidden>
+    <nav class="pa-nav" aria-label="Yönetim bölümleri">
+      <button type="button" data-sec="overview">Genel Bakış</button>
+      <button type="button" data-sec="users">Kullanıcılar</button>
+      <button type="button" data-sec="posts">Postlar</button>
+      <button type="button" data-sec="comments">Yorumlar</button>
+      <button type="button" data-sec="services">Hizmetler</button>
+      <button type="button" data-sec="categories">Hizmet Kategorileri</button>
+      <button type="button" data-sec="tags">Alanlar</button>
+      <button type="button" data-sec="reports">Şikâyetler <span class="pa-count" data-pending hidden></span></button>
+      <button type="button" data-sec="support">Destek</button>
+      <button type="button" data-sec="verify">Onaylar <span class="pa-count" data-verify-count hidden></span></button>
+      <button type="button" data-sec="fieldreports">Saha Raporu</button>
+    </nav>
+    <main class="pa-main" data-main tabindex="-1"></main>
+  </div>
+
+  <div class="pa-layer" data-layer hidden></div>
+  <div class="pa-toast" data-toast role="status" aria-live="polite" hidden></div>
+</div>
+
+<style>
+#kisgAdmin{
+  --red:#e30a17; --red-hover:#c70813; --red-text:#c7101b; --red-line:rgba(227,10,23,.3); --red-tint:#fff4f4;
+  --ink:#141a24; --text:#262d38; --muted:#5d6878; --faint:#8791a0;
+  --line:#e6e9ee; --line-soft:#eef0f3; --line-strong:#d3d8df;
+  --surface:#fff; --surface-2:#f6f7f9;
+  --ok:#137a3d; --ok-tint:#eaf7ef; --warn:#9a5b00; --warn-tint:#fff6e5;
+  --shadow-pop:0 12px 32px rgba(20,26,36,.14),0 2px 6px rgba(20,26,36,.06);
+  --r-sm:8px; --r-md:10px; --r-lg:16px; --r-pill:999px; --ease:cubic-bezier(.2,.7,.2,1);
+  display:flex;flex-direction:column;min-height:var(--pa-min,100svh);background:var(--surface-2);color:var(--text);
+  font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+#kisgAdmin *,#kisgAdmin *::before,#kisgAdmin *::after{box-sizing:border-box}
+#kisgAdmin [hidden]{display:none!important}
+#kisgAdmin a{color:inherit;text-decoration:none}
+#kisgAdmin :is(button,input,select,textarea){font:inherit;color:inherit}
+#kisgAdmin button{cursor:pointer}
+#kisgAdmin button:disabled{cursor:progress;opacity:.55}
+#kisgAdmin :is(a,button,input,select,textarea):focus-visible{outline:2px solid var(--red);outline-offset:2px}
+#kisgAdmin :is(h1,h2,h3,p){margin:0}
+#kisgAdmin .pa-muted{color:var(--muted)}
+#kisgAdmin .pa-small{font-size:12.5px;color:var(--faint)}
+
+/* Üst bar */
+#kisgAdmin .pa-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px;padding:10px 24px;background:#fff;border-bottom:1px solid var(--line)}
+#kisgAdmin .pa-brand{display:flex;align-items:center;gap:10px;min-width:0}
+#kisgAdmin .pa-brand img{width:32px;height:32px;border-radius:8px}
+#kisgAdmin .pa-brand-text{display:flex;flex-direction:column;line-height:1.1}
+#kisgAdmin .pa-brand-text b{color:var(--ink);font-size:15px}
+#kisgAdmin .pa-brand-text i{color:var(--red-text);font-size:12px;font-style:normal;font-weight:700;letter-spacing:.02em}
+#kisgAdmin .pa-pill{padding:3px 10px;border-radius:var(--r-pill);background:var(--ink);color:#fff;font-size:11.5px;font-weight:700;letter-spacing:.04em}
+#kisgAdmin .pa-me{display:flex;align-items:center;gap:10px;min-width:0}
+#kisgAdmin .pa-me-mail{overflow:hidden;color:var(--muted);font-size:13.5px;text-overflow:ellipsis;white-space:nowrap}
+
+/* Butonlar ve alanlar */
+#kisgAdmin .pa-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:6px 14px;border:1px solid var(--line-strong);border-radius:var(--r-pill);background:#fff;color:var(--ink);font-size:13.5px;font-weight:650;white-space:nowrap}
+#kisgAdmin .pa-btn:hover:not(:disabled){border-color:var(--ink)}
+#kisgAdmin .pa-btn-primary{border-color:var(--red);background:var(--red);color:#fff}
+#kisgAdmin .pa-btn-primary:hover:not(:disabled){border-color:var(--red-hover);background:var(--red-hover)}
+#kisgAdmin .pa-btn-danger{border-color:var(--ink);background:var(--ink);color:#fff}
+#kisgAdmin .pa-btn-ghost{border-color:transparent;background:transparent;color:var(--muted)}
+#kisgAdmin .pa-btn-sm{min-height:30px;padding:4px 11px;font-size:12.5px}
+#kisgAdmin .pa-btn-block{display:flex;width:100%}
+#kisgAdmin .pa-link{color:var(--muted);font-size:13px;text-align:center;text-decoration:underline}
+#kisgAdmin .pa-field{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:650;color:var(--ink)}
+#kisgAdmin .pa-field :is(input,select,textarea){width:100%;min-height:40px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;font-size:14px;font-weight:450}
+#kisgAdmin .pa-field textarea{min-height:88px;resize:vertical}
+#kisgAdmin .pa-check{display:flex;align-items:center;gap:8px;font-size:14px}
+#kisgAdmin .pa-error{padding:10px 12px;border-radius:var(--r-md);background:var(--red-tint);color:var(--red-text);font-size:13.5px}
+
+/* Giriş / yetki ekranı */
+#kisgAdmin .pa-gate{display:grid;flex:1;place-items:center;padding:48px 16px}
+#kisgAdmin .pa-gate[data-gate="ready"]{display:none}
+#kisgAdmin .pa-gate-card{display:flex;flex-direction:column;align-items:stretch;gap:14px;width:min(400px,100%);padding:28px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;text-align:left}
+#kisgAdmin .pa-gate-card h1{color:var(--ink);font-size:20px}
+#kisgAdmin .pa-gate-card[data-gate-pane="loading"]{align-items:center;text-align:center}
+#kisgAdmin .pa-spin{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--red);border-radius:50%;animation:pa-spin .8s linear infinite}
+@keyframes pa-spin{to{transform:rotate(360deg)}}
+
+/* Yerleşim: masaüstü sol menü, mobil yatay sekmeler */
+#kisgAdmin .pa-shell{display:grid;flex:1;align-content:start;grid-template-columns:220px minmax(0,1fr);gap:24px;width:min(1400px,100%);margin:0 auto;padding:24px}
+#kisgAdmin .pa-nav{position:sticky;top:84px;align-self:start;display:flex;flex-direction:column;gap:2px;padding:8px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff}
+#kisgAdmin .pa-nav button{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:42px;padding:8px 12px;border:0;border-radius:var(--r-md);background:transparent;color:var(--text);font-size:14px;font-weight:600;text-align:left}
+#kisgAdmin .pa-nav button:hover{background:var(--surface-2)}
+#kisgAdmin .pa-nav button[aria-current="page"]{background:var(--red-tint);color:var(--red-text)}
+#kisgAdmin .pa-count{min-width:22px;padding:1px 7px;border-radius:var(--r-pill);background:var(--red);color:#fff;font-size:11.5px;font-weight:800;text-align:center}
+#kisgAdmin .pa-main{min-width:0;outline:none}
+
+/* Bölüm başlığı, araç çubuğu */
+#kisgAdmin .pa-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:16px}
+#kisgAdmin .pa-head h1{color:var(--ink);font-size:22px;letter-spacing:-.01em}
+#kisgAdmin .pa-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:14px}
+#kisgAdmin .pa-search{flex:1 1 240px;min-width:0;min-height:38px;padding:7px 12px;border:1px solid var(--line-strong);border-radius:var(--r-pill);background:#fff;font-size:14px}
+#kisgAdmin .pa-chips{display:flex;flex-wrap:wrap;gap:6px}
+#kisgAdmin .pa-chip{min-height:32px;padding:4px 12px;border:1px solid var(--line-strong);border-radius:var(--r-pill);background:#fff;font-size:13px;font-weight:600;color:var(--muted)}
+#kisgAdmin .pa-chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:#fff}
+#kisgAdmin .pa-card{border:1px solid var(--line);border-radius:var(--r-lg);background:#fff}
+
+/* Genel bakış */
+#kisgAdmin .pa-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+#kisgAdmin .pa-stat{display:flex;flex-direction:column;gap:4px;padding:16px;border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;text-align:left}
+#kisgAdmin button.pa-stat:hover{border-color:var(--line-strong)}
+#kisgAdmin .pa-stat b{color:var(--ink);font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+#kisgAdmin .pa-stat span{color:var(--muted);font-size:13px;font-weight:600}
+#kisgAdmin .pa-stat small{color:var(--faint);font-size:12px}
+#kisgAdmin .pa-stat.is-alert{border-color:var(--red-line);background:var(--red-tint)}
+#kisgAdmin .pa-stat.is-alert b{color:var(--red-text)}
+#kisgAdmin .pa-subtitle{margin:4px 0 10px;color:var(--ink);font-size:15px;font-weight:700}
+
+/* Tablo (mobilde karta dönüşür) */
+#kisgAdmin .pa-table{width:100%;border-collapse:collapse;font-size:13.5px}
+#kisgAdmin .pa-table th{padding:10px 12px;border-bottom:1px solid var(--line);color:var(--faint);font-size:11.5px;font-weight:700;letter-spacing:.05em;text-align:left;text-transform:uppercase;white-space:nowrap}
+#kisgAdmin .pa-table td{padding:12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+#kisgAdmin .pa-table tr:last-child td{border-bottom:0}
+#kisgAdmin .pa-table tr.is-click{cursor:pointer}
+#kisgAdmin .pa-table tr.is-click:hover td{background:var(--surface-2)}
+#kisgAdmin .pa-who{display:flex;flex-direction:column;min-width:0}
+#kisgAdmin .pa-who b{color:var(--ink);font-weight:650}
+#kisgAdmin .pa-body{display:-webkit-box;max-width:560px;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:3;white-space:pre-wrap;word-break:break-word}
+#kisgAdmin .pa-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+#kisgAdmin .pa-vlist{display:grid;gap:12px}
+#kisgAdmin .pa-vrow{display:flex;gap:16px;padding:14px}
+#kisgAdmin .pa-vdoc{flex:none;display:grid;place-items:center;width:220px;height:150px;border-radius:10px;background:var(--surface-2,#f6f7f9);overflow:hidden;color:var(--faint);font-size:12.5px}
+#kisgAdmin .pa-vdoc img{width:100%;height:100%;object-fit:contain}
+#kisgAdmin .pa-vinfo{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+#kisgAdmin .pa-vinfo b{color:var(--ink);font-size:15px}
+#kisgAdmin .pa-vinfo .pa-actions{justify-content:flex-start;margin-top:6px}
+@media (max-width:640px){#kisgAdmin .pa-vrow{flex-direction:column}#kisgAdmin .pa-vdoc{width:100%;height:200px}}
+#kisgAdmin .pa-num{font-variant-numeric:tabular-nums;white-space:nowrap}
+#kisgAdmin .pa-empty{padding:40px 16px;color:var(--muted);text-align:center}
+#kisgAdmin .pa-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border-top:1px solid var(--line-soft);color:var(--muted);font-size:13px}
+
+/* Durum rozetleri */
+#kisgAdmin .pa-badge{display:inline-flex;align-items:center;min-height:22px;padding:2px 9px;border-radius:var(--r-pill);background:var(--surface-2);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap}
+#kisgAdmin .pa-badge.is-active,#kisgAdmin .pa-badge.is-resolved{background:var(--ok-tint);color:var(--ok)}
+#kisgAdmin .pa-badge.is-hidden,#kisgAdmin .pa-badge.is-pending,#kisgAdmin .pa-badge.is-warning,#kisgAdmin .pa-badge.is-reviewed,#kisgAdmin .pa-badge.is-open{background:var(--warn-tint);color:var(--warn)}
+#kisgAdmin .pa-badge.is-deleted,#kisgAdmin .pa-badge.is-ban,#kisgAdmin .pa-badge.is-suspension{background:var(--red-tint);color:var(--red-text)}
+
+/* Şikâyet kartları */
+#kisgAdmin .pa-reports{display:flex;flex-direction:column;gap:12px}
+#kisgAdmin .pa-report{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px;padding:16px}
+#kisgAdmin .pa-report-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+#kisgAdmin .pa-report-target{grid-column:1/-1;padding:10px 12px;border-radius:var(--r-md);background:var(--surface-2);font-size:13.5px}
+#kisgAdmin .pa-report .pa-actions{align-self:start}
+
+/* Katman: dialog + çekmece */
+#kisgAdmin .pa-layer{position:fixed;inset:0;z-index:50;display:flex;justify-content:center;align-items:center;padding:16px;background:rgba(20,26,36,.42)}
+#kisgAdmin .pa-dialog{display:flex;flex-direction:column;gap:14px;width:min(520px,100%);max-height:calc(100% - 32px);overflow:auto;padding:22px;border-radius:var(--r-lg);background:#fff;box-shadow:var(--shadow-pop)}
+#kisgAdmin .pa-dialog h2{color:var(--ink);font-size:18px}
+#kisgAdmin .pa-dialog.is-wide{width:min(880px,100%)}
+#kisgAdmin .pa-dialog.is-wide textarea[name="prompt"]{min-height:min(52vh,460px);font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#kisgAdmin .pa-dialog-foot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+#kisgAdmin .pa-layer.is-drawer{justify-content:flex-end;align-items:stretch;padding:0}
+#kisgAdmin .pa-drawer{display:flex;flex-direction:column;width:min(640px,100%);height:100%;overflow:auto;background:#fff;box-shadow:var(--shadow-pop)}
+#kisgAdmin .pa-drawer-head{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);background:#fff}
+#kisgAdmin .pa-drawer-body{display:flex;flex-direction:column;gap:18px;padding:20px}
+#kisgAdmin .pa-kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:6px 12px;font-size:13.5px}
+#kisgAdmin .pa-kv dt{color:var(--faint);font-weight:600}
+#kisgAdmin .pa-kv dd{margin:0;overflow-wrap:anywhere}
+#kisgAdmin .pa-list{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+#kisgAdmin .pa-list li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border:1px solid var(--line-soft);border-radius:var(--r-md);font-size:13.5px}
+#kisgAdmin .pa-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#kisgAdmin .pa-radio{display:flex;flex-wrap:wrap;gap:8px}
+#kisgAdmin .pa-radio label{display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:var(--r-pill);font-size:13.5px;font-weight:600}
+
+/* Saha Raporu */
+#kisgAdmin .pa-form{display:grid;gap:16px;padding:18px}
+#kisgAdmin .pa-form-row{display:grid;grid-template-columns:260px minmax(0,1fr);gap:6px 16px;align-items:start}
+#kisgAdmin .pa-form-row>div:first-child b{display:block;color:var(--ink);font-size:14px}
+#kisgAdmin .pa-form-row>div:first-child span{color:var(--muted);font-size:12.5px}
+#kisgAdmin .pa-form-row :is(select,input[type="number"]){width:100%;max-width:420px;min-height:40px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;font-size:14px}
+#kisgAdmin .pa-form-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px;padding:14px 18px;border-top:1px solid var(--line-soft)}
+#kisgAdmin .pa-note{padding:12px 14px;border-radius:var(--r-md);background:var(--surface-2);color:var(--muted);font-size:13px}
+#kisgAdmin .pa-note b{color:var(--ink)}
+#kisgAdmin .pa-preview{display:-webkit-box;max-width:640px;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:3;color:var(--muted);font-size:12.5px;white-space:pre-wrap;word-break:break-word}
+#kisgAdmin .pa-section-gap{margin-top:20px}
+
+#kisgAdmin .pa-toast{position:fixed;left:50%;bottom:24px;z-index:60;max-width:min(520px,calc(100% - 32px));padding:12px 18px;border-radius:var(--r-md);background:var(--ink);color:#fff;font-size:14px;transform:translateX(-50%);box-shadow:var(--shadow-pop)}
+#kisgAdmin .pa-toast.is-error{background:var(--red-text)}
+
+@media (max-width:900px){
+  #kisgAdmin .pa-top{padding:10px 16px}
+  #kisgAdmin .pa-shell{grid-template-columns:minmax(0,1fr);gap:12px;padding:12px 16px 24px}
+  #kisgAdmin .pa-nav{position:sticky;top:60px;z-index:10;flex-direction:row;overflow-x:auto;padding:6px;scrollbar-width:none}
+  #kisgAdmin .pa-nav button{flex:none;min-height:38px;white-space:nowrap}
+  #kisgAdmin .pa-table thead{display:none}
+  #kisgAdmin .pa-table,#kisgAdmin .pa-table tbody,#kisgAdmin .pa-table tr,#kisgAdmin .pa-table td{display:block;width:100%}
+  #kisgAdmin .pa-table tr{padding:12px;border-bottom:1px solid var(--line-soft)}
+  #kisgAdmin .pa-table td{padding:3px 0;border:0}
+  #kisgAdmin .pa-table td[data-label]::before{content:attr(data-label) ": ";color:var(--faint);font-size:12px;font-weight:600}
+  #kisgAdmin .pa-actions{justify-content:flex-start;padding-top:6px}
+  #kisgAdmin .pa-report{grid-template-columns:minmax(0,1fr)}
+  #kisgAdmin .pa-kv{grid-template-columns:minmax(0,1fr)}
+  #kisgAdmin .pa-grid2{grid-template-columns:minmax(0,1fr)}
+  #kisgAdmin .pa-form-row{grid-template-columns:minmax(0,1fr)}
+  #kisgAdmin .pa-me-mail{display:none}
+}
+</style>
+
+<script>
+(() => {
+'use strict';
+const root = document.getElementById('kisgAdmin');
+if (!root || root.dataset.ready) return;
+root.dataset.ready = 'true';
+
+const CONFIG = Object.freeze({
+  supabaseUrl: 'https://wztoupambatmvhwdhjmy.supabase.co',
+  supabaseKey: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH',
+  sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
+  siteUrl: 'https://isgcalisanplatformu.com',
+  version: '1.9.0',
+  pageSize: 25,
+  hostWidthDesktopMax: 1480
+});
+
+/* ---------------------------------------------------------------------------
+   Hostinger iframe entegrasyonu (ana uygulamayla aynı yöntem): genişlik + yükseklik
+   --------------------------------------------------------------------------- */
+const host = (() => {
+  const framed = window.parent !== window;
+  let win = null, frame = null;
+  if (framed) { try { const p = window.parent; if (p.document && typeof p.location.href === 'string') { win = p; frame = window.frameElement || null; } } catch {} }
+  else win = window;
+  if (framed) {
+    try { [document.documentElement, document.body].forEach(n => { n.style.setProperty('margin', '0', 'important'); n.style.setProperty('padding', '0', 'important'); n.style.setProperty('height', 'auto', 'important'); }); } catch {}
+  }
+  try {
+    if (framed && win && frame) {
+      const doc = win.document, A = 'data-kisg-professional-width', id = 'kisg-professional-width-v2';
+      if (!doc.getElementById(id)) {
+        const s = doc.createElement('style'); s.id = id;
+        s.textContent = `[${A}="section"],[${A}="desktop-layout"],[${A}="layout"]{min-height:0!important;height:auto!important}`
+          + `[${A}="desktop-layout"],[${A}="layout"]{grid-template-rows:auto!important;grid-auto-rows:auto!important;row-gap:0!important;align-content:start!important}`
+          + `[${A}="element"],[${A}="wrapper"]{margin-top:0!important;margin-bottom:0!important;height:auto!important;min-height:0!important}`
+          + `@media (max-width:920px){[${A}]{box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:none!important;margin-left:0!important;margin-right:0!important;padding-left:0!important;padding-right:0!important}[${A}="layout"],[${A}="desktop-layout"]{grid-template-columns:minmax(0,1fr)!important}iframe[${A}="frame"]{display:block!important;border:0!important}}`
+          + `@media (min-width:921px){[${A}="desktop-layout"]{box-sizing:border-box!important;width:min(${CONFIG.hostWidthDesktopMax}px,calc(100vw - 32px))!important;max-width:none!important;margin-left:auto!important;margin-right:auto!important;grid-template-columns:minmax(0,1fr)!important}`
+          + `[${A}="desktop-layout"]>[${A}],[${A}="layout"]>[${A}]{grid-column:1/-1!important;justify-self:stretch!important}`
+          + `iframe[${A}="frame"]{box-sizing:border-box!important;width:100%!important;max-width:none!important;border:0!important}}`;
+        doc.head.appendChild(s);
+      }
+      frame.setAttribute(A, 'frame');
+      let node = frame.parentElement, depth = 0;
+      while (node && node !== doc.body && depth < 8) {
+        const isSection = node.tagName === 'SECTION', isLayout = node.classList?.contains('block-layout');
+        node.setAttribute(A, isSection ? 'section' : isLayout ? 'desktop-layout' : (win.getComputedStyle(node).display === 'grid' ? 'layout' : depth === 0 ? 'element' : 'wrapper'));
+        depth++; if (isSection) break; node = node.parentElement;
+      }
+    }
+  } catch {}
+  // iframe içinde 100svh iframe'in kendi yüksekliğidir (içerik kısalınca iframe küçülemez); en küçük yükseklik
+  // üst sayfanın görünür alanından bir kez hesaplanır.
+  if (framed) { try { root.style.setProperty('--pa-min', Math.max(480, Math.round((win || window).innerHeight * 0.75)) + 'px'); } catch { root.style.setProperty('--pa-min', '600px'); } }
+  let last = 0;
+  const sync = () => {
+    if (!framed) return;
+    const h = Math.ceil(root.getBoundingClientRect().height);
+    if (h && h !== last) {
+      last = h;
+      try { frame?.style.setProperty('height', h + 'px', 'important'); } catch {}
+      try { window.parent.postMessage({ type: 'KISG_EMBED_HEIGHT', source: 'kisg-pro-admin', height: h }, CONFIG.siteUrl); } catch {}
+    }
+  };
+  try { new ResizeObserver(sync).observe(root); } catch { setInterval(sync, 500); }
+  const viewportH = () => { try { return (win || window).innerHeight; } catch { return window.innerHeight; } };
+  const url = () => { try { return new URL((win || window).location.href); } catch { return new URL(CONFIG.siteUrl + '/pro-admin'); } };
+  const setParam = (k, v) => {
+    try {
+      const w = win || window, u = new URL(w.location.href);
+      if (v) u.searchParams.set(k, v); else u.searchParams.delete(k);
+      w.history.replaceState(w.history.state, '', u.pathname + u.search + u.hash);
+    } catch {}
+  };
+  const scrollTop = () => { try { if (framed && frame && win) win.scrollTo({ top: Math.max(0, frame.getBoundingClientRect().top + win.scrollY - 8) }); else window.scrollTo({ top: 0 }); } catch {} };
+  return { framed, sync, url, setParam, viewportH, scrollTop };
+})();
+
+/* ---------------------------------------------------------------------------
+   Yardımcılar
+   --------------------------------------------------------------------------- */
+const $ = (sel, el = root) => el.querySelector(sel);
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'text') el.textContent = v;
+    else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? '' : String(v));
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  return el;
+}
+const clean = s => (s == null ? '' : String(s)).trim();
+const dfmt = new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const fmtDate = s => { if (!s) return '—'; const d = new Date(s); return isNaN(d) ? '—' : dfmt.format(d); };
+const nf = new Intl.NumberFormat('tr-TR');
+const num = n => nf.format(Number(n) || 0);
+const LABEL = {
+  status: { active: 'Aktif', hidden: 'Gizli', deleted: 'Silindi', archived: 'Arşivde', pending: 'Bekliyor', reviewed: 'İncelendi', resolved: 'Sonuçlandı', dismissed: 'Reddedildi' },
+  sanction: { warning: 'Uyarı', suspension: 'Askı', ban: 'Ban' },
+  support: { open: 'Açık', resolved: 'Çözüldü' },
+  supportCategory: { technical: 'Teknik sorun', account: 'Hesap / profil sorunu', suggestion: 'Öneri / geri bildirim', other: 'Diğer' },
+  target: { post: 'Post', comment: 'Yorum', profile: 'Profil', service: 'Hizmet', tag: 'Alan', service_category: 'Hizmet kategorisi',
+    ai_model: 'AI modeli', ai_setting: 'Model seçimi', ai_prompt: 'Prompt', app_setting: 'Rapor limiti', checklist_question: 'Checklist' },
+  reason: { spam: 'Spam', inappropriate: 'Uygunsuz içerik', misleading: 'Yanıltıcı', harassment: 'Taciz / hakaret', fake_profile: 'Sahte profil', other: 'Diğer' },
+  action_taken: { none: 'İşlem yok', content_hidden: 'İçerik gizlendi', content_deleted: 'İçerik silindi', user_warned: 'Uyarıldı', user_suspended: 'Askıya alındı', user_banned: 'Banlandı', other: 'Diğer' },
+  audit: { 'profile.update': 'Profil düzenlendi', 'post.hide': 'Post gizlendi', 'post.restore': 'Post geri açıldı', 'post.delete': 'Post silindi',
+    'comment.hide': 'Yorum gizlendi', 'comment.restore': 'Yorum geri açıldı', 'comment.delete': 'Yorum silindi',
+    'service.hide': 'Hizmet gizlendi', 'service.restore': 'Hizmet geri açıldı', 'sanction.create': 'Yaptırım uygulandı',
+    'sanction.revoke': 'Yaptırım kaldırıldı', 'report.resolve': 'Şikâyet sonuçlandırıldı',
+    'tag.update': 'Alan düzenlendi', 'tag.merge': 'Alanlar birleştirildi',
+    'ai_model.create': 'AI modeli eklendi', 'ai_model.update': 'AI modeli düzenlendi', 'ai_setting.update': 'Model seçimi değişti',
+    'ai_prompt.update': 'Prompt düzenlendi', 'ai_prompt.delete': 'Özel prompt kaldırıldı', 'report_limit.update': 'Rapor limiti değişti',
+    'checklist.create': 'Checklist maddesi eklendi', 'checklist.update': 'Checklist maddesi düzenlendi', 'checklist.reorder': 'Checklist sırası değişti' }
+};
+const badge = (kind, value) => h('span', { class: `pa-badge is-${value}` , text: LABEL[kind]?.[value] || value || '—' });
+const who = (name, sub) => h('span', { class: 'pa-who' }, h('b', { text: clean(name) || 'İsimsiz kullanıcı' }), sub ? h('span', { class: 'pa-small', text: sub }) : null);
+
+let toastTimer = 0;
+function toast(msg, error) {
+  const t = $('[data-toast]');
+  t.textContent = msg; t.classList.toggle('is-error', !!error); t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, error ? 6000 : 3200);
+}
+
+/* ---------------------------------------------------------------------------
+   Supabase: tek client, yalnız RPC
+   --------------------------------------------------------------------------- */
+let db = null;
+async function client() {
+  if (db) return db;
+  let c = window.kisgProfessionalSupabaseClient;
+  if (!c) {
+    if (!window.supabase?.createClient) {
+      window.kisgProfessionalSdkReady ||= new Promise((resolve, reject) => {
+        const s = document.createElement('script'); s.src = CONFIG.sdkUrl; s.async = true; s.onload = resolve; s.onerror = reject; document.head.append(s);
+      });
+      try { await window.kisgProfessionalSdkReady; } catch (e) { window.kisgProfessionalSdkReady = null; throw e; }
+    }
+    c = window.kisgProfessionalSupabaseClient ||= window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+  }
+  db = c;
+  return c;
+}
+
+class AdminError extends Error {
+  constructor(message, code, auth) { super(message); this.code = code; this.auth = auth; }
+}
+function explain(err) {
+  const raw = `${err?.code || ''} ${err?.message || ''} ${err?.details || ''}`;
+  const tail = (/KISG_[A-Z_]+:\s*(.+)$/.exec(err?.message || '') || [])[1] || '';
+  if (/KISG_ADMIN_ONLY/.test(raw)) return new AdminError('Bu işlem için yönetici yetkisi gerekiyor.', 'admin_only', true);
+  if (/PGRST301|JWT|401/.test(raw) && !/KISG/.test(raw)) return new AdminError('Oturumunuz sona erdi. Lütfen tekrar giriş yapın.', 'session', true);
+  if (/KISG_ADMIN_FIELD/.test(raw)) return new AdminError(`Bu alan buradan düzenlenemez: ${tail}`, 'field');
+  if (/KISG_ADMIN_TARGET/.test(raw)) return new AdminError('Yönetici hesabına yaptırım uygulanamaz.', 'target');
+  if (/KISG_CATEGORY_EXISTS/.test(raw)) return new AdminError('Bu adda bir kategori zaten var.', 'exists');
+  if (/KISG_CATEGORY_IN_USE/.test(raw)) return new AdminError('Bu kategoride hizmet var; silinemez. Sitede görünmesin istiyorsanız "Gizle"yi kullanın.', 'in_use');
+  if (/KISG_TAG_EXISTS/.test(raw)) return new AdminError('Bu adda bir alan zaten var. İkisini birleştirmek için "Birleştir"i kullanın.', 'exists');
+  if (/KISG_NOT_PRO/.test(raw)) return new AdminError('Kullanıcının Pro üyeliği aktif değil; onaylanamaz. "Pro üyelik aktif değil" sebebiyle reddedin.', 'state');
+  if (/KISG_MODEL_IN_USE/.test(raw)) return new AdminError('Bu model Model seçiminde kullanılıyor. Önce orada başka bir model seçin.', 'in_use');
+  if (/KISG_VERIFY_STATE/.test(raw)) return new AdminError('Bu başvuruya zaten karar verilmiş. Listeyi yenileyin.', 'state');
+  if (/PGRST202/.test(raw)) return new AdminError('Bu bölüm için veritabanı güncellemesi henüz uygulanmamış.', 'missing');
+  if (/KISG_ADMIN_NOT_FOUND/.test(raw)) return new AdminError('Kayıt bulunamadı. Liste yenilendi.', 'not_found');
+  if (/KISG_ADMIN_STATE/.test(raw)) return new AdminError(`İşlem yapılamadı: ${tail || 'kayıt durumu uygun değil'}`, 'state');
+  if (/KISG_ADMIN_INPUT/.test(raw)) {
+    if (/reason/.test(tail)) return new AdminError('Gerekçe zorunlu.', 'input');
+    return new AdminError(`Geçersiz giriş: ${tail}`, 'input');
+  }
+  if (/KISG_USER_(SUSPENDED|BANNED)/.test(raw)) return new AdminError('Kullanıcının yaptırımı var.', 'sanction');
+  if (/violates check constraint|23514/.test(raw)) return new AdminError('Girilen değer geçerli değil.', 'check');
+  if (/Failed to fetch|NetworkError|network/i.test(raw)) return new AdminError('Bağlantı hatası. Lütfen tekrar deneyin.', 'network');
+  return new AdminError('İşlem tamamlanamadı. Lütfen tekrar deneyin.', 'unknown');
+}
+async function rpc(name, args) {
+  const c = await client();
+  const { data, error } = await c.rpc(name, args || {});
+  if (error) { const e = explain(error); if (e.auth) onAuthLost(e); throw e; }
+  return data;
+}
+
+/* ---------------------------------------------------------------------------
+   Giriş ve yönetici kapısı
+   --------------------------------------------------------------------------- */
+const state = { user: null, section: 'overview', pending: 0 };
+function gate(pane, message) {
+  const g = $('.pa-gate');
+  g.dataset.gate = pane === 'ready' ? 'ready' : pane;
+  root.querySelectorAll('[data-gate-pane]').forEach(p => { p.hidden = p.dataset.gatePane !== pane; });
+  $('.pa-shell').hidden = pane !== 'ready';
+  $('[data-me]').hidden = !state.user;
+  if (pane === 'error' && message) $('[data-gate-error]').textContent = message;
+  host.sync();
+}
+function onAuthLost(err) {
+  if (err.code === 'session') { state.user = null; gate('login'); }
+  else if (err.code === 'admin_only') gate('denied');
+}
+async function boot() {
+  gate('loading');
+  let c;
+  try { c = await client(); } catch { return gate('error', 'Supabase kitaplığı yüklenemedi.'); }
+  const { data } = await c.auth.getSession();
+  state.user = data?.session?.user || null;
+  if (!state.user) return gate('login');
+  $('[data-me-mail]').textContent = state.user.email || '';
+  let isAdmin = false;
+  try { isAdmin = (await rpc('kisg_is_admin')) === true; }
+  catch (e) { if (e.code === 'session') return; return gate('error', e.message); }
+  if (!isAdmin) return gate('denied');
+  gate('ready');
+  const initial = host.url().searchParams.get('b');
+  show(SECTIONS[initial] ? initial : 'overview', { keepScroll: true });
+}
+$('[data-gate-pane="login"]').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const f = ev.currentTarget, err = $('[data-login-error]'), btn = f.querySelector('button[type="submit"]');
+  const email = clean(f.email.value), password = f.password.value;
+  err.hidden = true;
+  if (!email || !password) { err.textContent = 'E-posta ve şifre gerekli.'; err.hidden = false; return; }
+  btn.disabled = true;
+  try {
+    const c = await client();
+    const { error } = await c.auth.signInWithPassword({ email, password });
+    if (error) { err.textContent = /invalid/i.test(error.message || '') ? 'E-posta veya şifre hatalı.' : 'Giriş yapılamadı. Lütfen tekrar deneyin.'; err.hidden = false; return; }
+    f.reset();
+    await boot();
+  } catch { err.textContent = 'Bağlantı hatası. Lütfen tekrar deneyin.'; err.hidden = false; }
+  finally { btn.disabled = false; }
+});
+root.addEventListener('click', async ev => {
+  const a = ev.target.closest('[data-action]');
+  if (!a) return;
+  if (a.dataset.action === 'retry') boot();
+  if (a.dataset.action === 'logout') { try { await (await client()).auth.signOut(); } catch {} state.user = null; closeLayer(); gate('login'); }
+});
+
+/* ---------------------------------------------------------------------------
+   Katman: dialog / çekmece
+   --------------------------------------------------------------------------- */
+let layerReturn = null;
+function openLayer(node, drawer) {
+  const layer = $('[data-layer]');
+  layerReturn = document.activeElement;
+  layer.replaceChildren(node); layer.classList.toggle('is-drawer', !!drawer); layer.hidden = false;
+  (node.querySelector('textarea,input,select,button') || node).focus?.();
+}
+function closeLayer() {
+  const layer = $('[data-layer]');
+  if (layer.hidden) return;
+  layer.hidden = true; layer.replaceChildren();
+  try { layerReturn?.focus?.(); } catch {}
+}
+$('[data-layer]').addEventListener('click', ev => { if (ev.target === ev.currentTarget) closeLayer(); });
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape') closeLayer(); });
+
+// Gerekçe isteyen onay penceresi. fields: ek form alanları (Node). submit(values) → Promise
+function confirmDialog({ title, text, confirm = 'Onayla', danger = false, reason = true, reasonLabel = 'Gerekçe', reasonRequired = true, fields = null, wide = false, submit }) {
+  const err = h('p', { class: 'pa-error', hidden: true });
+  const reasonEl = reason ? h('textarea', { name: 'reason', maxlength: 1000, required: reasonRequired }) : null;
+  const btn = h('button', { type: 'submit', class: `pa-btn ${danger ? 'pa-btn-danger' : 'pa-btn-primary'}`, text: confirm });
+  const form = h('form', { class: `pa-dialog${wide ? ' is-wide' : ''}`, role: 'dialog', 'aria-modal': 'true', 'aria-label': title, novalidate: true },
+    h('h2', { text: title }), text ? h('p', { class: 'pa-muted', text }) : null, fields,
+    reason ? h('label', { class: 'pa-field' }, h('span', { text: reasonLabel + (reasonRequired ? '' : ' (isteğe bağlı)') }), reasonEl) : null,
+    err, h('div', { class: 'pa-dialog-foot' }, h('button', { type: 'button', class: 'pa-btn', text: 'Vazgeç', onclick: closeLayer }), btn));
+  form.addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const reasonText = reasonEl ? clean(reasonEl.value) : '';
+    if (reasonEl && reasonRequired && !reasonText) { err.textContent = 'Gerekçe zorunlu.'; err.hidden = false; reasonEl.focus(); return; }
+    btn.disabled = true; err.hidden = true;
+    // submit yeni bir panel açtıysa (ör. kullanıcı ayrıntısı) bu form katmandan çıkmıştır; yalnız kendimizi kapatırız.
+    try { await submit({ reason: reasonText, form }); if (form.isConnected) closeLayer(); }
+    catch (e) { err.textContent = e.message || 'İşlem tamamlanamadı.'; err.hidden = false; }
+    finally { btn.disabled = false; }
+  });
+  openLayer(form);
+}
+
+/* ---------------------------------------------------------------------------
+   Bölümler
+   --------------------------------------------------------------------------- */
+const main = $('[data-main]');
+let renderSeq = 0;
+function head(title, sub, ...tools) {
+  return h('div', { class: 'pa-head' }, h('div', null, h('h1', { text: title }), sub ? h('p', { class: 'pa-muted', text: sub }) : null), tools.length ? h('div', { class: 'pa-tools' }, tools) : null);
+}
+function loading() { return h('div', { class: 'pa-card pa-empty' }, h('span', { class: 'pa-spin', 'aria-hidden': 'true', style: 'display:inline-block' }), h('p', { text: 'Yükleniyor…' })); }
+function failed(e, retry) {
+  return h('div', { class: 'pa-card pa-empty' }, h('p', { text: e.message || 'Yüklenemedi.' }), h('button', { type: 'button', class: 'pa-btn', text: 'Tekrar dene', onclick: retry, style: 'margin-top:10px' }));
+}
+function pager(total, offset, onPage) {
+  const size = CONFIG.pageSize, from = total ? offset + 1 : 0, to = Math.min(total, offset + size);
+  return h('div', { class: 'pa-pager' },
+    h('span', { text: `${num(from)}–${num(to)} / ${num(total)}` }),
+    h('span', { class: 'pa-actions' },
+      h('button', { type: 'button', class: 'pa-btn pa-btn-sm', text: '← Önceki', disabled: offset <= 0, onclick: () => onPage(Math.max(0, offset - size)) }),
+      h('button', { type: 'button', class: 'pa-btn pa-btn-sm', text: 'Sonraki →', disabled: to >= total, onclick: () => onPage(offset + size) })));
+}
+function chips(options, value, onPick) {
+  return h('div', { class: 'pa-chips', role: 'group' }, options.map(([v, label]) =>
+    h('button', { type: 'button', class: 'pa-chip', 'aria-pressed': String(v === value), text: label, onclick: () => onPick(v) })));
+}
+function searchBox(value, placeholder, onSearch) {
+  let t = 0;
+  const input = h('input', { type: 'search', class: 'pa-search', placeholder, value: value || '', 'aria-label': placeholder });
+  input.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => onSearch(clean(input.value)), 350); });
+  return input;
+}
+
+const SECTIONS = {
+  overview: { title: 'Genel Bakış', render: renderOverview },
+  users: { title: 'Kullanıcılar', render: renderUsers },
+  posts: { title: 'Postlar', render: () => renderContent('post') },
+  comments: { title: 'Yorumlar', render: () => renderContent('comment') },
+  services: { title: 'Hizmetler', render: () => renderContent('service') },
+  categories: { title: 'Hizmet Kategorileri', render: renderCategories },
+  tags: { title: 'Alanlar', render: renderTags },
+  reports: { title: 'Şikâyetler', render: renderReports },
+  support: { title: 'Destek', render: renderSupport },
+  verify: { title: 'Onaylar', render: renderVerifications },
+  fieldreports: { title: 'Saha Raporu', render: renderFieldReports }
+};
+const view = { users: { q: '', filter: 'all', offset: 0 }, post: { status: 'active', q: '', offset: 0 }, comment: { status: 'active', q: '', offset: 0 }, service: { status: 'active', q: '', offset: 0 }, reports: { status: 'pending', type: null, offset: 0 }, support: { status: 'open', category: null, offset: 0 }, tags: { q: '', sort: 'posts', filter: null, offset: 0 }, verify: { status: 'pending' }, fr: { tab: 'routing', purpose: 'report_analyze', days: 30 } };
+
+function show(section, opts = {}) {
+  state.section = section;
+  root.querySelectorAll('.pa-nav [data-sec]').forEach(b => { if (b.dataset.sec === section) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  host.setParam('b', section === 'overview' ? '' : section);
+  closeLayer();
+  SECTIONS[section].render();
+  if (!opts.keepScroll) host.scrollTop();
+}
+$('.pa-nav').addEventListener('click', ev => { const b = ev.target.closest('[data-sec]'); if (b) show(b.dataset.sec); });
+function setPending(n) {
+  state.pending = Number(n) || 0;
+  const el = $('[data-pending]'); el.textContent = state.pending > 99 ? '99+' : String(state.pending); el.hidden = !state.pending;
+}
+async function refreshPending() { try { const o = await rpc('admin_overview'); setPending(o?.reports?.pending); } catch {} }
+
+/* ----- Genel Bakış ----- */
+async function renderOverview() {
+  const seq = ++renderSeq;
+  main.replaceChildren(head('Genel Bakış', 'Kırmızı İSG Professional yönetim özeti'), loading());
+  let o, audit;
+  try { [o, audit] = await Promise.all([rpc('admin_overview'), rpc('admin_list_audit_log', { p_limit: 8 })]); }
+  catch (e) { if (seq === renderSeq) main.replaceChildren(head('Genel Bakış'), failed(e, renderOverview)); return; }
+  if (seq !== renderSeq) return;
+  setPending(o?.reports?.pending);
+  rpc('admin_list_verifications', { p_status: 'pending' }).then(r => setVerifyCount(r?.length), () => {});
+  const s = (label, value, sub, go, alert) => h(go ? 'button' : 'div', { class: `pa-stat${alert ? ' is-alert' : ''}`, type: go ? 'button' : null, onclick: go ? () => show(go) : null },
+    h('span', { text: label }), h('b', { text: num(value) }), sub ? h('small', { text: sub }) : null);
+  const st = (obj, k) => Number(obj?.[k] || 0);
+  main.replaceChildren(
+    head('Genel Bakış', 'Kırmızı İSG Professional yönetim özeti'),
+    h('div', { class: 'pa-stats' },
+      s('Bekleyen şikâyet', st(o.reports, 'pending'), 'İnceleme bekliyor', 'reports', st(o.reports, 'pending') > 0),
+      s('Kullanıcı', o.users_total, `Son 7 gün: +${num(o.users_new_7d)}`, 'users'),
+      s('Aktif post', st(o.posts, 'active'), `Gizli ${num(st(o.posts, 'hidden'))} · Silinen ${num(st(o.posts, 'deleted'))}`, 'posts'),
+      s('Aktif yorum', st(o.comments, 'active'), `Gizli ${num(st(o.comments, 'hidden'))} · Silinen ${num(st(o.comments, 'deleted'))}`, 'comments'),
+      s('Aktif hizmet', st(o.services, 'active'), `Gizli ${num(st(o.services, 'hidden'))} · Arşiv ${num(st(o.services, 'archived'))}`, 'services'),
+      s('Aktif askı / ban', Number(o.active_suspensions || 0) + Number(o.active_bans || 0), `Askı ${num(o.active_suspensions)} · Ban ${num(o.active_bans)} · Uyarı (30 gün) ${num(o.warnings_30d)}`),
+      s('Yönetici işlemi', o.admin_actions_7d, 'Son 7 gün')),
+    h('h2', { class: 'pa-subtitle', text: 'Son yönetici işlemleri' }),
+    auditList(audit || []));
+  host.sync();
+}
+function auditList(rows) {
+  if (!rows.length) return h('div', { class: 'pa-card pa-empty', text: 'Henüz yönetici işlemi yok.' });
+  return h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
+    h('thead', null, h('tr', null, h('th', { text: 'İşlem' }), h('th', { text: 'Hedef' }), h('th', { text: 'Gerekçe' }), h('th', { text: 'Yönetici' }), h('th', { text: 'Tarih' }))),
+    h('tbody', null, rows.map(r => h('tr', null,
+      h('td', { 'data-label': 'İşlem', text: LABEL.audit[r.action] || r.action }),
+      h('td', { 'data-label': 'Hedef', text: `${LABEL.target[r.target_type] || r.target_type} · ${String(r.target_id).slice(0, 8)}` }),
+      h('td', { 'data-label': 'Gerekçe', text: clean(r.reason) || '—' }),
+      h('td', { 'data-label': 'Yönetici', text: clean(r.admin_name) || '—' }),
+      h('td', { 'data-label': 'Tarih', class: 'pa-num', text: fmtDate(r.created_at) }))))));
+}
+
+/* ----- Kullanıcılar ----- */
+async function renderUsers() {
+  const seq = ++renderSeq, v = view.users;
+  const tools = [searchBox(v.q, 'Ad, e-posta veya kullanıcı kimliği ara', q => { v.q = q; v.offset = 0; renderUsers(); }),
+    chips([['all', 'Tümü'], ['reported', 'Şikâyetli'], ['sanctioned', 'Yaptırımlı'], ['discoverable', 'Uzmanlarda görünen']], v.filter, f => { v.filter = f; v.offset = 0; renderUsers(); })];
+  const top = head('Kullanıcılar', 'Profil inceleme, düzenleme ve yaptırımlar');
+  const toolbar = h('div', { class: 'pa-tools' }, tools);
+  if (!main.querySelector('[data-users-body]')) main.replaceChildren(top, toolbar, h('div', { 'data-users-body': true }, loading()));
+  else main.replaceChildren(top, toolbar, main.querySelector('[data-users-body]'));
+  const body = main.querySelector('[data-users-body]');
+  let rows;
+  try { rows = await rpc('admin_list_users', { p_q: v.q || null, p_filter: v.filter, p_limit: CONFIG.pageSize, p_offset: v.offset }); }
+  catch (e) { if (seq === renderSeq) body.replaceChildren(failed(e, renderUsers)); return; }
+  if (seq !== renderSeq) return;
+  rows ||= [];
+  const total = Number(rows[0]?.total_count || 0);
+  if (!rows.length) { body.replaceChildren(h('div', { class: 'pa-card pa-empty', text: 'Kullanıcı bulunamadı.' })); host.sync(); return; }
+  body.replaceChildren(h('div', { class: 'pa-card' },
+    h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Kullanıcı', 'Şehir', 'Post', 'Hizmet', 'Açık şikâyet', 'Durum', 'Kayıt'].map(t => h('th', { text: t })))),
+      h('tbody', null, rows.map(u => h('tr', { class: 'is-click', tabindex: 0, 'data-user': u.id, onclick: () => openUser(u.id), onkeydown: e => { if (e.key === 'Enter') openUser(u.id); } },
+        h('td', null, who(u.full_name, u.email)),
+        h('td', { 'data-label': 'Şehir', text: clean(u.city) || '—' }),
+        h('td', { 'data-label': 'Post', class: 'pa-num', text: num(u.post_count) }),
+        h('td', { 'data-label': 'Hizmet', class: 'pa-num', text: num(u.service_count) }),
+        h('td', { 'data-label': 'Açık şikâyet', class: 'pa-num', text: num(u.open_report_count) }),
+        h('td', { 'data-label': 'Durum' }, u.active_sanction ? badge('sanction', u.active_sanction) : h('span', { class: 'pa-small', text: u.is_premium ? 'Premium' : '—' })),
+        h('td', { 'data-label': 'Kayıt', class: 'pa-num', text: fmtDate(u.created_at) }))))),
+    pager(total, v.offset, off => { v.offset = off; renderUsers(); })));
+  host.sync();
+}
+
+// App Shell ile aynı değerler: şehir profiles.city (81 il), statü profiles.certificate_class (A/B/C tek harf yazılır).
+const CITIES = ['Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Amasya', 'Ankara', 'Antalya', 'Ardahan', 'Artvin', 'Aydın', 'Balıkesir', 'Bartın', 'Batman', 'Bayburt', 'Bilecik', 'Bingöl', 'Bitlis', 'Bolu', 'Burdur', 'Bursa', 'Çanakkale', 'Çankırı', 'Çorum', 'Denizli', 'Diyarbakır', 'Düzce', 'Edirne', 'Elazığ', 'Erzincan', 'Erzurum', 'Eskişehir', 'Gaziantep', 'Giresun', 'Gümüşhane', 'Hakkari', 'Hatay', 'Iğdır', 'Isparta', 'İstanbul', 'İzmir', 'Kahramanmaraş', 'Karabük', 'Karaman', 'Kars', 'Kastamonu', 'Kayseri', 'Kilis', 'Kırıkkale', 'Kırklareli', 'Kırşehir', 'Kocaeli', 'Konya', 'Kütahya', 'Malatya', 'Manisa', 'Mardin', 'Mersin', 'Muğla', 'Muş', 'Nevşehir', 'Niğde', 'Ordu', 'Osmaniye', 'Rize', 'Sakarya', 'Samsun', 'Şanlıurfa', 'Siirt', 'Sinop', 'Şırnak', 'Sivas', 'Tekirdağ', 'Tokat', 'Trabzon', 'Tunceli', 'Uşak', 'Van', 'Yalova', 'Yozgat', 'Zonguldak'];
+const CERTS = [['A', 'A Sınıfı'], ['B', 'B Sınıfı'], ['C', 'C Sınıfı'], ['İşyeri Hekimi', 'İşyeri Hekimi'], ['DSP', 'DSP']];
+const trLower = v => clean(v).toLocaleLowerCase('tr-TR');
+// Mevcut değeri seçeneğe eşler: yazım farkı (istanbul / A Sınıfı) → kanonik değer; eşleşmeyen dolu değer korunur.
+const cityValue = v => CITIES.find(c => trLower(c) === trLower(v)) || clean(v);
+const certValue = v => { const x = clean(v); if (/^[ABC](\s|$)/i.test(x)) return x[0].toUpperCase(); return CERTS.find(([k]) => trLower(k) === trLower(x))?.[0] || x; };
+function pickSelect(name, options, current) {
+  const known = options.some(([v]) => v === current);
+  const el = h('select', { name }, h('option', { value: '', text: '—' }),
+    current && !known ? h('option', { value: current, text: `(mevcut) ${current}` }) : null,
+    options.map(([v, l]) => h('option', { value: v, text: l })));
+  el.value = current || '';
+  el.dataset.initial = el.value;   // değişiklik bu değere göre ölçülür (yazım eşlemesi tek başına kayıt sayılmaz)
+  return el;
+}
+const EXPERIENCE = ['1 yıldan az', '1-3 yıl', '3-5 yıl', '5-10 yıl', '10-15 yıl', '15+ yıl'];
+const PROFILE_FIELDS = [
+  ['full_name', 'Ad soyad', 'text'], ['title', 'Unvan', 'text'], ['profession', 'Meslek', 'text'], ['certificate_class', 'Mesleki Belge / Statü', 'cert'],
+  ['city', 'Şehir', 'city'], ['current_company', 'Kurum', 'text'], ['experience_range', 'Deneyim', 'experience'], ['about', 'Hakkında', 'textarea'],
+  ['avatar_url', 'Avatar adresi', 'text'], ['linkedin_url', 'LinkedIn', 'text'], ['instagram_url', 'Instagram', 'text'], ['website_url', 'Web sitesi', 'text'],
+  ['is_discoverable', 'Uzmanlarda görünsün', 'bool'], ['show_phone_publicly', 'Telefon herkese açık', 'bool']];
+
+async function openUser(id) {
+  const body = h('div', { class: 'pa-drawer-body' }, loading());
+  const panel = h('div', { class: 'pa-drawer', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Kullanıcı ayrıntısı' },
+    h('div', { class: 'pa-drawer-head' }, h('strong', { text: 'Kullanıcı' }), h('button', { type: 'button', class: 'pa-btn pa-btn-ghost', text: 'Kapat', onclick: closeLayer })), body);
+  openLayer(panel, true);
+  let u;
+  try { u = await rpc('admin_get_user', { p_user_id: id }); }
+  catch (e) { body.replaceChildren(failed(e, () => openUser(id))); return; }
+  const p = u.profile || {}, sanctions = u.sanctions || [], reports = u.reports_against || [], counts = u.counts || {};
+  const cnt = o => Object.entries(o || {}).map(([k, n]) => `${LABEL.status[k] || k} ${num(n)}`).join(' · ') || '0';
+  const active = sanctions.find(s => !s.revoked_at && s.type !== 'warning' && new Date(s.starts_at) <= new Date() && (!s.ends_at || new Date(s.ends_at) > new Date()));
+  body.replaceChildren(
+    h('div', { class: 'pa-head' }, h('div', null, h('h1', { text: clean(p.full_name) || 'İsimsiz kullanıcı' }), h('p', { class: 'pa-muted', text: [p.title, p.city].filter(Boolean).join(' · ') })),
+      h('div', { class: 'pa-actions' },
+        u.is_admin ? h('span', { class: 'pa-badge', text: 'Yönetici' }) : null,
+        active ? badge('sanction', active.type) : null,
+        h('a', { class: 'pa-btn pa-btn-sm', href: `${CONFIG.siteUrl}/profil?id=${encodeURIComponent(p.id)}`, target: '_blank', rel: 'noopener', text: 'Profili aç' }),
+        h('button', { type: 'button', class: 'pa-btn pa-btn-sm', text: 'Profili düzenle', onclick: () => editProfile(p) }),
+        u.is_admin ? null : h('button', { type: 'button', class: 'pa-btn pa-btn-sm pa-btn-primary', text: 'Yaptırım uygula', onclick: () => sanctionUser(p) }))),
+    h('dl', { class: 'pa-kv' },
+      ...[['E-posta', p.email], ['Telefon', p.phone ? `${p.phone}${p.show_phone_publicly ? ' (herkese açık)' : ' (gizli)'}` : null], ['Meslek', p.profession], ['Kurum', p.current_company],
+        ['Deneyim', p.experience_range], ['Uzmanlarda', p.is_discoverable ? 'Görünüyor' : 'Görünmüyor'], ['Premium', p.is_premium ? 'Evet' : 'Hayır'], ['Kayıt', fmtDate(p.created_at)],
+        ['Postlar', cnt(counts.posts)], ['Yorumlar', cnt(counts.comments)], ['Hizmetler', cnt(counts.services)], ['Yaptığı şikâyet', num(counts.reports_made)], ['Kullanıcı kimliği', p.id]]
+        .flatMap(([k, val]) => [h('dt', { text: k }), h('dd', { text: clean(val) || '—' })])),
+    p.about ? h('div', null, h('h2', { class: 'pa-subtitle', text: 'Hakkında' }), h('p', { class: 'pa-body', text: p.about })) : null,
+    h('div', null, h('h2', { class: 'pa-subtitle', text: `Yaptırımlar (${sanctions.length})` }),
+      sanctions.length ? h('ul', { class: 'pa-list' }, sanctions.map(s => h('li', null,
+        h('span', null, badge('sanction', s.type), ' ', h('span', { text: s.reason }), h('br'),
+          h('span', { class: 'pa-small', text: `${fmtDate(s.starts_at)} → ${s.ends_at ? fmtDate(s.ends_at) : (s.type === 'warning' ? '—' : 'süresiz')}${s.revoked_at ? ` · kaldırıldı ${fmtDate(s.revoked_at)}` : ''}` })),
+        !s.revoked_at && s.type !== 'warning' && (!s.ends_at || new Date(s.ends_at) > new Date())
+          ? h('button', { type: 'button', class: 'pa-btn pa-btn-sm', text: 'Kaldır', onclick: () => revokeSanction(s, p.id) }) : null)))
+        : h('p', { class: 'pa-small', text: 'Yaptırım yok.' })),
+    h('div', null, h('h2', { class: 'pa-subtitle', text: `Hakkındaki şikâyetler (${reports.length})` }),
+      reports.length ? h('ul', { class: 'pa-list' }, reports.map(r => h('li', null,
+        h('span', { text: `${LABEL.target[r.target_type] || r.target_type} · ${LABEL.reason[r.reason] || r.reason}` }),
+        h('span', null, badge('status', r.status), ' ', h('span', { class: 'pa-small', text: fmtDate(r.created_at) })))))
+        : h('p', { class: 'pa-small', text: 'Şikâyet yok.' })),
+    h('div', null, h('h2', { class: 'pa-subtitle', text: 'Son yönetici işlemleri' }), auditList(u.recent_admin_actions || [])));
+}
+
+function editProfile(p) {
+  const inputs = {};
+  const fields = h('div', { class: 'pa-grid2' }, PROFILE_FIELDS.map(([k, label, type]) => {
+    let el;
+    if (type === 'bool') { el = h('input', { type: 'checkbox', name: k }); el.checked = !!p[k]; return h('label', { class: 'pa-check' }, el, h('span', { text: label })); }
+    if (type === 'textarea') { el = h('textarea', { name: k, maxlength: 2000 }); el.value = p[k] || ''; }
+    else if (type === 'city') el = pickSelect(k, CITIES.map(c => [c, c]), cityValue(p[k]));
+    else if (type === 'cert') el = pickSelect(k, CERTS, certValue(p[k]));
+    else if (type === 'experience') { el = h('select', { name: k }, h('option', { value: '', text: '—' }), EXPERIENCE.map(x => h('option', { value: x, text: x }))); el.value = p[k] || ''; }
+    else { el = h('input', { type: 'text', name: k }); el.value = p[k] || ''; }
+    inputs[k] = el;
+    return h('label', { class: 'pa-field', style: type === 'textarea' ? 'grid-column:1/-1' : null }, h('span', { text: label }), el);
+  }));
+  confirmDialog({
+    title: 'Profili düzenle', text: 'Yalnız değiştirdiğiniz alanlar kaydedilir. E-posta, telefon ve premium buradan değiştirilemez.',
+    confirm: 'Kaydet', fields,
+    submit: async ({ reason, form }) => {
+      const patch = {};
+      for (const [k, , type] of PROFILE_FIELDS) {
+        const el = form.elements[k];
+        if (type === 'bool') { if (el.checked !== !!p[k]) patch[k] = el.checked; continue; }
+        const val = clean(el.value), old = 'initial' in el.dataset ? el.dataset.initial : clean(p[k]);
+        if (val !== old) patch[k] = val || null;
+      }
+      if (!Object.keys(patch).length) throw new AdminError('Değişiklik yok.', 'input');
+      await rpc('admin_update_profile', { p_user_id: p.id, p_patch: patch, p_reason: reason });
+      toast('Profil güncellendi.');
+      openUser(p.id);
+      if (state.section === 'users') renderUsers();
+    }
+  });
+}
+
+function sanctionUser(p) {
+  const typeWrap = h('div', { class: 'pa-radio', role: 'radiogroup', 'aria-label': 'Yaptırım türü' },
+    [['warning', 'Uyarı'], ['suspension', 'Askı'], ['ban', 'Ban']].map(([v, l], i) => h('label', null, h('input', { type: 'radio', name: 'type', value: v, checked: i === 0 }), h('span', { text: l }))));
+  const dur = h('select', { name: 'duration' });
+  const hide = h('input', { type: 'checkbox', name: 'hide' });
+  const durField = h('label', { class: 'pa-field', hidden: true }, h('span', { text: 'Süre' }), dur);
+  const hideField = h('label', { class: 'pa-check', hidden: true }, hide, h('span', { text: 'Kullanıcının aktif post, yorum ve hizmetlerini gizle' }));
+  const help = h('p', { class: 'pa-small', text: 'Uyarı kullanıcının işlemlerini engellemez; kullanıcı gerekçeyi görür.' });
+  const sync = () => {
+    const t = typeWrap.querySelector('input:checked').value;
+    durField.hidden = t === 'warning'; hideField.hidden = t === 'warning';
+    const opts = t === 'suspension' ? [['1', '1 gün'], ['3', '3 gün'], ['7', '7 gün'], ['14', '14 gün'], ['30', '30 gün']] : [['', 'Süresiz'], ['30', '30 gün'], ['90', '90 gün'], ['365', '1 yıl']];
+    dur.replaceChildren(...opts.map(([v, l]) => h('option', { value: v, text: l })));
+    if (t === 'suspension') dur.value = '7';
+    help.textContent = t === 'warning' ? 'Uyarı kullanıcının işlemlerini engellemez; kullanıcı gerekçeyi görür.'
+      : t === 'suspension' ? 'Askı süresince kullanıcı Professional\'da paylaşım, yorum, beğeni, hizmet ve şikâyet yapamaz. Süre dolunca kendiliğinden kalkar.'
+      : 'Ban süresince kullanıcı Professional\'da paylaşım, yorum, beğeni, hizmet ve şikâyet yapamaz. Kullanıcı gerekçeyi görür.';
+  };
+  typeWrap.addEventListener('change', sync); sync();
+  confirmDialog({
+    title: `Yaptırım: ${clean(p.full_name) || 'kullanıcı'}`, confirm: 'Uygula', danger: true,
+    fields: h('div', { style: 'display:flex;flex-direction:column;gap:12px' }, typeWrap, durField, hideField, help),
+    reasonLabel: 'Gerekçe (kullanıcı görür)',
+    submit: async ({ reason, form }) => {
+      const type = form.elements.type.value, days = Number(form.elements.duration?.value || 0);
+      const ends = type !== 'warning' && days ? new Date(Date.now() + days * 86400000).toISOString() : null;
+      await rpc('admin_sanction_user', { p_user_id: p.id, p_type: type, p_reason: reason, p_ends_at: ends, p_hide_content: type !== 'warning' && form.elements.hide.checked });
+      toast(`${LABEL.sanction[type]} uygulandı.`);
+      openUser(p.id);
+      if (state.section === 'users') renderUsers();
+    }
+  });
+}
+function revokeSanction(s, userId) {
+  confirmDialog({
+    title: 'Yaptırımı kaldır', text: 'Yaptırımla gizlenen içerikler otomatik geri açılmaz; gerekirse ilgili bölümden geri açın.', confirm: 'Kaldır',
+    submit: async ({ reason }) => { await rpc('admin_revoke_sanction', { p_sanction_id: s.id, p_reason: reason }); toast('Yaptırım kaldırıldı.'); openUser(userId); }
+  });
+}
+
+/* ----- Postlar / Yorumlar / Hizmetler ----- */
+const KIND = {
+  post: { title: 'Postlar', sub: 'Akış paylaşımlarının moderasyonu', statuses: [['active', 'Aktif'], ['hidden', 'Gizli'], ['deleted', 'Silinen'], [null, 'Tümü']], del: true },
+  comment: { title: 'Yorumlar', sub: 'Post yorumlarının moderasyonu', statuses: [['active', 'Aktif'], ['hidden', 'Gizli'], ['deleted', 'Silinen'], [null, 'Tümü']], del: true },
+  service: { title: 'Hizmetler', sub: 'Hizmet ilanlarının moderasyonu', statuses: [['active', 'Aktif'], ['hidden', 'Gizli'], ['archived', 'Arşiv'], [null, 'Tümü']], del: false }
+};
+function contentLink(kind, row) {
+  if (kind === 'post') return `${CONFIG.siteUrl}/calisma-detay?id=${encodeURIComponent(row.id)}`;
+  if (kind === 'comment') return `${CONFIG.siteUrl}/calisma-detay?id=${encodeURIComponent(row.parent_id)}`;
+  return `${CONFIG.siteUrl}/hizmet-detay?id=${encodeURIComponent(row.id)}`;
+}
+async function renderContent(kind) {
+  const seq = ++renderSeq, v = view[kind], K = KIND[kind];
+  const again = () => renderContent(kind);
+  const bodyBox = h('div', null, loading());
+  main.replaceChildren(head(K.title, K.sub),
+    h('div', { class: 'pa-tools' }, searchBox(v.q, kind === 'service' ? 'Başlık, açıklama veya kişi ara' : 'İçerik veya kişi ara', q => { v.q = q; v.offset = 0; again(); }),
+      chips(K.statuses, v.status, s => { v.status = s; v.offset = 0; again(); })), bodyBox);
+  let rows;
+  try { rows = await rpc('admin_list_content', { p_kind: kind, p_status: v.status, p_q: v.q || null, p_limit: CONFIG.pageSize, p_offset: v.offset }); }
+  catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, again)); return; }
+  if (seq !== renderSeq) return;
+  rows ||= [];
+  const total = Number(rows[0]?.total_count || 0);
+  if (!rows.length) { bodyBox.replaceChildren(h('div', { class: 'pa-card pa-empty', text: 'Kayıt yok.' })); host.sync(); return; }
+  bodyBox.replaceChildren(h('div', { class: 'pa-card' },
+    h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Yazar', kind === 'service' ? 'Hizmet' : 'İçerik', 'Durum', 'Şikâyet', 'Tarih', ''].map(t => h('th', { text: t })))),
+      h('tbody', null, rows.map(r => h('tr', { 'data-row': r.id },
+        h('td', null, h('button', { type: 'button', class: 'pa-btn pa-btn-ghost pa-btn-sm', style: 'padding-left:0', text: clean(r.author_name) || 'İsimsiz', onclick: () => openUser(r.user_id) })),
+        h('td', { 'data-label': kind === 'service' ? 'Hizmet' : 'İçerik' },
+          r.title ? h('b', { text: r.title, style: 'display:block;color:var(--ink)' }) : null, h('span', { class: 'pa-body', text: clean(r.body) || '—' }),
+          r.moderation_reason ? h('span', { class: 'pa-small', style: 'display:block', text: `Moderasyon: ${r.moderation_reason}` }) : null),
+        h('td', { 'data-label': 'Durum' }, badge('status', r.status)),
+        h('td', { 'data-label': 'Şikâyet', class: 'pa-num', text: num(r.open_report_count) }),
+        h('td', { 'data-label': 'Tarih', class: 'pa-num', text: fmtDate(r.created_at) }),
+        h('td', null, h('div', { class: 'pa-actions' },
+          r.status !== 'deleted' ? h('a', { class: 'pa-btn pa-btn-sm', href: contentLink(kind, r), target: '_blank', rel: 'noopener', text: 'Aç' }) : null,
+          r.status === 'active' ? h('button', { type: 'button', class: 'pa-btn pa-btn-sm', text: 'Gizle', onclick: () => moderate(kind, r, 'hide', again) }) : null,
+          r.status === 'hidden' ? h('button', { type: 'button', class: 'pa-btn pa-btn-sm', text: 'Geri aç', onclick: () => moderate(kind, r, 'restore', again) }) : null,
+          K.del && (r.status === 'active' || r.status === 'hidden') ? h('button', { type: 'button', class: 'pa-btn pa-btn-sm pa-btn-danger', text: 'Sil', onclick: () => moderate(kind, r, 'delete', again) }) : null)))))),
+    pager(total, v.offset, off => { v.offset = off; again(); })));
+  host.sync();
+}
+function moderate(kind, row, action, after) {
+  const noun = LABEL.target[kind];
+  const t = { hide: [`${noun} gizlensin mi?`, 'İçerik kullanıcılardan gizlenir; sahibi geri açamaz. İstediğinizde geri açabilirsiniz.', 'Gizle'],
+    restore: [`${noun} geri açılsın mı?`, 'İçerik yeniden yayına alınır.', 'Geri aç'],
+    delete: [`${noun} silinsin mi?`, 'İçerik silinmiş olarak işaretlenir ve geri açılamaz (veri tabanından kaldırılmaz).', 'Sil'] }[action];
+  confirmDialog({
+    title: t[0], text: t[1], confirm: t[2], danger: action === 'delete', reasonRequired: action !== 'restore',
+    submit: async ({ reason }) => {
+      await rpc('admin_moderate_content', { p_kind: kind, p_id: row.id, p_action: action, p_reason: reason || null });
+      toast(`${noun}: ${t[2].toLowerCase()} işlemi tamamlandı.`);
+      after?.();
+    }
+  });
+}
+
+/* ----- Şikâyetler ----- */
+async function renderReports() {
+  const seq = ++renderSeq, v = view.reports;
+  const bodyBox = h('div', null, loading());
+  main.replaceChildren(head('Şikâyetler', 'Kullanıcı bildirimlerinin incelenmesi ve sonuçlandırılması'),
+    h('div', { class: 'pa-tools' },
+      chips([['pending', 'Bekleyen'], ['reviewed', 'İncelenen'], ['resolved', 'Sonuçlanan'], ['dismissed', 'Reddedilen'], [null, 'Tümü']], v.status, s => { v.status = s; v.offset = 0; renderReports(); }),
+      chips([[null, 'Tüm hedefler'], ['post', 'Post'], ['comment', 'Yorum'], ['service', 'Hizmet'], ['profile', 'Profil']], v.type, t => { v.type = t; v.offset = 0; renderReports(); })),
+    bodyBox);
+  let rows;
+  try { rows = await rpc('admin_list_reports', { p_status: v.status, p_target_type: v.type, p_limit: CONFIG.pageSize, p_offset: v.offset }); }
+  catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, renderReports)); return; }
+  if (seq !== renderSeq) return;
+  rows ||= [];
+  if (v.status === 'pending' && !v.type && !v.offset) setPending(rows[0]?.total_count || 0);
+  const total = Number(rows[0]?.total_count || 0);
+  if (!rows.length) { bodyBox.replaceChildren(h('div', { class: 'pa-card pa-empty', text: v.status === 'pending' ? 'Bekleyen şikâyet yok.' : 'Kayıt yok.' })); host.sync(); return; }
+  bodyBox.replaceChildren(h('div', { class: 'pa-reports' }, rows.map(r => h('article', { class: 'pa-card pa-report', 'data-report': r.id },
+    h('div', null,
+      h('div', { class: 'pa-report-meta' }, badge('status', r.status), h('b', { style: 'color:var(--ink)', text: `${LABEL.target[r.target_type] || r.target_type} · ${LABEL.reason[r.reason] || r.reason}` }),
+        Number(r.same_target_pending) > 1 ? h('span', { class: 'pa-badge is-pending', text: `${num(r.same_target_pending)} bekleyen şikâyet` }) : null),
+      h('p', { class: 'pa-small', text: `Bildiren: ${clean(r.reporter_name) || 'İsimsiz'} · ${fmtDate(r.created_at)}` }),
+      r.details ? h('p', { style: 'margin-top:6px', text: `“${r.details}”` }) : null,
+      r.status !== 'pending' ? h('p', { class: 'pa-small', style: 'margin-top:6px', text: `Sonuç: ${LABEL.action_taken[r.action_taken] || '—'}${r.resolution_note ? ` · ${r.resolution_note}` : ''} · ${fmtDate(r.reviewed_at)}` }) : null),
+    h('div', { class: 'pa-actions' },
+      r.target_owner_id ? h('button', { type: 'button', class: 'pa-btn pa-btn-sm', text: 'Kullanıcı', onclick: () => openUser(r.target_owner_id) }) : null,
+      r.status === 'pending' ? h('button', { type: 'button', class: 'pa-btn pa-btn-sm pa-btn-primary', text: 'Sonuçlandır', onclick: () => resolveReport(r) }) : null),
+    h('div', { class: 'pa-report-target' },
+      h('span', { class: 'pa-small', text: `Hedef (${clean(r.target_owner_name) || 'bilinmiyor'})${r.target_status ? ' · ' : ''}` }), r.target_status ? badge('status', r.target_status) : null,
+      h('p', { class: 'pa-body', style: 'margin-top:4px', text: clean(r.target_preview) || 'Hedef bulunamadı (silinmiş olabilir).' }))))),
+    h('div', { class: 'pa-card', style: 'margin-top:12px' }, pager(total, v.offset, off => { v.offset = off; renderReports(); })));
+  host.sync();
+}
+function resolveReport(r) {
+  const isProfile = r.target_type === 'profile', canAct = !isProfile && r.target_status && !['deleted'].includes(r.target_status);
+  const options = [
+    ['resolved|none', isProfile ? 'Haklı – işlem yok (gerekirse kullanıcıya yaptırım uygulayın)' : 'Haklı – içerik olduğu gibi kalsın'],
+    canAct && r.target_status === 'active' ? ['resolved|hide', 'Haklı – içeriği gizle'] : null,
+    canAct && r.target_type !== 'service' ? ['resolved|delete', 'Haklı – içeriği sil'] : null,
+    ['reviewed|none', 'İncelendi (takipte)'],
+    ['dismissed|none', 'Reddet – ihlal yok']].filter(Boolean);
+  const group = h('div', { class: 'pa-radio', style: 'flex-direction:column', role: 'radiogroup', 'aria-label': 'Sonuç' },
+    options.map(([v, l], i) => h('label', null, h('input', { type: 'radio', name: 'outcome', value: v, checked: i === (options.length > 3 ? 1 : 0) }), h('span', { text: l }))));
+  confirmDialog({
+    title: 'Şikâyeti sonuçlandır',
+    text: Number(r.same_target_pending) > 1 ? `Aynı hedefe ait ${num(r.same_target_pending)} bekleyen şikâyetin tümü aynı sonuçla kapatılır.` : null,
+    confirm: 'Kaydet', fields: group, reasonLabel: 'Not', reasonRequired: false,
+    submit: async ({ reason, form }) => {
+      const [status, action] = form.elements.outcome.value.split('|');
+      await rpc('admin_resolve_report', { p_report_id: r.id, p_status: status, p_note: reason || null, p_content_action: action });
+      toast('Şikâyet sonuçlandırıldı.');
+      renderReports();
+    }
+  });
+}
+
+/* ----- Destek (support_requests; RPC yok, doğrudan tablo + RLS) ----- */
+async function renderSupport() {
+  const seq = ++renderSeq, v = view.support;
+  const bodyBox = h('div', null, loading());
+  main.replaceChildren(head('Destek', 'Kullanıcıların Destek & Geri Bildirim mesajları'),
+    h('div', { class: 'pa-tools' },
+      chips([['open', 'Açık'], ['resolved', 'Çözüldü'], [null, 'Tümü']], v.status, x => { v.status = x; v.offset = 0; renderSupport(); }),
+      chips([[null, 'Tüm konular'], ...Object.entries(LABEL.supportCategory)], v.category, x => { v.category = x; v.offset = 0; renderSupport(); })),
+    bodyBox);
+  let rows, total, names = {};
+  try {
+    const c = await client();
+    let q = c.from('support_requests').select('id,user_id,category,message,status,created_at,updated_at', { count: 'exact' })
+      .order('created_at', { ascending: false }).order('id', { ascending: false }).range(v.offset, v.offset + CONFIG.pageSize - 1);
+    if (v.status) q = q.eq('status', v.status);
+    if (v.category) q = q.eq('category', v.category);
+    const { data, error, count } = await q;
+    if (error) { const e = explain(error); if (e.auth) onAuthLost(e); throw e; }
+    rows = data || []; total = Number(count) || rows.length;
+    const ids = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+    if (ids.length) { const p = await c.from('profiles').select('id,full_name').in('id', ids); (p.data || []).forEach(x => { names[x.id] = x.full_name; }); }
+  } catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, renderSupport)); return; }
+  if (seq !== renderSeq) return;
+  if (!rows.length) { bodyBox.replaceChildren(h('div', { class: 'pa-card pa-empty', text: v.status === 'open' ? 'Açık destek talebi yok.' : 'Kayıt yok.' })); host.sync(); return; }
+  bodyBox.replaceChildren(h('div', { class: 'pa-reports' }, rows.map(r => h('article', { class: 'pa-card pa-report', 'data-support': r.id },
+    h('div', null,
+      h('div', { class: 'pa-report-meta' }, badge('support', r.status), h('b', { style: 'color:var(--ink)', text: LABEL.supportCategory[r.category] || r.category || '—' })),
+      h('p', { class: 'pa-small', text: `${clean(names[r.user_id]) || 'İsimsiz kullanıcı'} · ${fmtDate(r.created_at)}` }),
+      h('p', { class: 'pa-body', style: 'margin-top:6px;white-space:pre-wrap', text: clean(r.message) || '—' })),
+    h('div', { class: 'pa-actions' },
+      r.user_id ? h('button', { type: 'button', class: 'pa-btn pa-btn-sm', text: 'Kullanıcı', onclick: () => openUser(r.user_id) }) : null,
+      h('button', { type: 'button', class: `pa-btn pa-btn-sm${r.status === 'open' ? ' pa-btn-primary' : ''}`, text: r.status === 'open' ? 'Çözüldü yap' : 'Yeniden aç', onclick: ev => setSupportStatus(r, r.status === 'open' ? 'resolved' : 'open', ev.currentTarget) }))))),
+    h('div', { class: 'pa-card', style: 'margin-top:12px' }, pager(total, v.offset, off => { v.offset = off; renderSupport(); })));
+  host.sync();
+}
+async function setSupportStatus(r, status, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    const c = await client();
+    const { data, error } = await c.from('support_requests').update({ status }).eq('id', r.id).select('id,status').maybeSingle();
+    if (error) { const e = explain(error); if (e.auth) onAuthLost(e); throw e; }
+    if (!data || data.status !== status) throw new AdminError('Durum değiştirilemedi (yetki veya kayıt bulunamadı).', 'state');
+    toast(status === 'resolved' ? 'Talep çözüldü olarak işaretlendi.' : 'Talep yeniden açıldı.');
+    renderSupport();
+  } catch (e) { toast(e.message || 'İşlem tamamlanamadı.', true); if (btn) btn.disabled = false; }
+}
+
+/* ----- Hizmet Kategorileri (Hizmet Bul çipleri + Hizmet Yayınla formu aynı listeyi, bu sırayla okur) ----- */
+async function renderCategories() {
+  const seq = ++renderSeq;
+  const bodyBox = h('div', null, loading());
+  main.replaceChildren(head('Hizmet Kategorileri', 'Hizmet Bul ve Hizmet Yayınla’daki kategoriler: ekle, yeniden adlandır, sırala, gizle'),
+    h('div', { class: 'pa-tools' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: '+ Yeni kategori', onclick: () => editCategory(null) })),
+    bodyBox);
+  let rows;
+  try { rows = await rpc('admin_list_service_categories', {}); }
+  catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, renderCategories)); return; }
+  if (seq !== renderSeq) return;
+  rows ||= [];
+  if (!rows.length) { bodyBox.replaceChildren(h('div', { class: 'pa-card pa-empty', text: 'Kategori yok.' })); host.sync(); return; }
+  const btn = (text, onclick, cls = '', attrs = {}) => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick, ...attrs });
+  const move = async (i, d) => {
+    const ids = rows.map(r => r.id); [ids[i], ids[i + d]] = [ids[i + d], ids[i]];
+    try { await rpc('admin_reorder_service_categories', { p_ids: ids, p_reason: null }); toast('Sıra kaydedildi.'); renderCategories(); }
+    catch (e) { toast(e.message || 'Sıra kaydedilemedi.', true); }
+  };
+  bodyBox.replaceChildren(h('div', { class: 'pa-card' },
+    h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Sıra', 'Kategori', 'Aktif hizmet', 'Durum', ''].map(t => h('th', { text: t })))),
+      h('tbody', null, rows.map((r, i) => h('tr', { 'data-category': r.id },
+        h('td', { 'data-label': 'Sıra' }, h('div', { class: 'pa-actions' },
+          btn('↑', () => move(i, -1), '', { disabled: i === 0, 'aria-label': `${r.name} yukarı` }),
+          btn('↓', () => move(i, 1), '', { disabled: i === rows.length - 1, 'aria-label': `${r.name} aşağı` }))),
+        h('td', null, h('b', { style: 'color:var(--ink)', text: r.name }), h('span', { class: 'pa-small', style: 'display:block', text: r.slug })),
+        h('td', { 'data-label': 'Aktif hizmet', class: 'pa-num', text: num(r.services) }),
+        h('td', { 'data-label': 'Durum' }, h('span', { class: `pa-badge ${r.is_active ? 'is-active' : 'is-deleted'}`, text: r.is_active ? 'Görünür' : 'Gizli' })),
+        h('td', null, h('div', { class: 'pa-actions' },
+          btn('Yeniden adlandır', () => editCategory(r)),
+          btn(r.is_active ? 'Gizle' : 'Göster', () => toggleCategory(r)),
+          Number(r.all_services) ? null : btn('Sil', () => deleteCategory(r), ' pa-btn-danger')))))))));
+  host.sync();
+}
+function editCategory(r) {
+  confirmDialog({
+    title: r ? `${r.name} yeniden adlandır` : 'Yeni kategori', confirm: r ? 'Kaydet' : 'Ekle', reasonRequired: false,
+    text: r ? 'Yeni ad Hizmet Bul’da ve bu kategorideki tüm hizmetlerde görünür.' : 'Listenin sonuna eklenir ve hemen Hizmet Bul ile Hizmet Yayınla’da görünür.',
+    fields: h('label', { class: 'pa-field' }, h('span', { text: 'Kategori adı (2–60 karakter)' }), h('input', { name: 'name', maxlength: 60, required: true, value: r?.name || '' })),
+    submit: async ({ reason, form }) => {
+      const name = clean(form.elements.name.value);
+      if (name.length < 2) throw new AdminError('Ad en az 2 karakter olmalı.', 'input');
+      if (r) await rpc('admin_update_service_category', { p_id: r.id, p_patch: { name }, p_reason: reason || null });
+      else await rpc('admin_create_service_category', { p_name: name, p_reason: reason || null });
+      toast(r ? 'Kategori yeniden adlandırıldı.' : 'Kategori eklendi.'); renderCategories();
+    }
+  });
+}
+function toggleCategory(r) {
+  const on = !r.is_active;
+  confirmDialog({
+    title: `${r.name}: ${on ? 'gösterilsin mi?' : 'gizlensin mi?'}`, confirm: on ? 'Göster' : 'Gizle', danger: !on, reasonRequired: false,
+    text: on ? 'Kategori Hizmet Bul’da ve Hizmet Yayınla formunda yeniden görünür.' : `Hizmet Bul’da ve Hizmet Yayınla formunda görünmez. Bu kategorideki ${num(r.services)} aktif hizmet silinmez, yayında kalır.`,
+    submit: async ({ reason }) => {
+      await rpc('admin_update_service_category', { p_id: r.id, p_patch: { is_active: on }, p_reason: reason || null });
+      toast(on ? 'Kategori gösteriliyor.' : 'Kategori gizlendi.'); renderCategories();
+    }
+  });
+}
+function deleteCategory(r) {
+  confirmDialog({
+    title: `${r.name} silinsin mi?`, text: 'Bu kategoride hiç hizmet yok. Silme geri alınamaz.', confirm: 'Sil', danger: true, reasonRequired: false,
+    submit: async ({ reason }) => {
+      await rpc('admin_delete_service_category', { p_id: r.id, p_reason: reason || null });
+      toast('Kategori silindi.'); renderCategories();
+    }
+  });
+}
+
+/* ----- Onaylar (onaylı hesap rozeti; 20261013_verified_accounts.sql). Rozet = aktif Pro + onaylı belge + aynı ad.
+   Belge gizli depodadır; 10 dakikalık imzalı bağlantıyla görülür ve karar verildiği anda depodan silinir. ----- */
+const VERIFY_BUCKET = 'kisg-verifications';
+const VERIFY_REJECT = ['Ad okunmuyor', 'Ad uyuşmuyor', 'Belge uygun değil', 'Pro üyelik aktif değil'];
+function setVerifyCount(n) { const el = $('[data-verify-count]'); n = Number(n) || 0; el.textContent = n > 99 ? '99+' : String(n); el.hidden = !n; }
+async function renderVerifications() {
+  const seq = ++renderSeq, v = view.verify;
+  const bodyBox = h('div', null, loading());
+  main.replaceChildren(head('Onaylar', 'Onaylı hesap başvuruları: belgedeki ad, profildeki adla aynı kişiyse onaylayın. Belge karar verilince silinir.'),
+    h('div', { class: 'pa-tools' }, chips([['pending', 'Bekleyen'], ['approved', 'Onaylı'], ['rejected', 'Reddedilen']], v.status, x => { v.status = x; renderVerifications(); })),
+    bodyBox);
+  let rows, urls;
+  try {
+    rows = (await rpc('admin_list_verifications', { p_status: v.status })) || [];
+    const st = (await client()).storage.from(VERIFY_BUCKET);
+    urls = await Promise.all(rows.map(r => (r.doc_path ? st.createSignedUrl(r.doc_path, 600).then(x => x.data?.signedUrl || '', () => '') : '')));
+  } catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, renderVerifications)); return; }
+  if (seq !== renderSeq) return;
+  if (v.status === 'pending') setVerifyCount(rows.length);
+  if (!rows.length) { bodyBox.replaceChildren(h('div', { class: 'pa-card pa-empty', text: v.status === 'pending' ? 'Bekleyen başvuru yok.' : 'Kayıt yok.' })); host.sync(); return; }
+  const btn = (text, onclick, cls = '', attrs = {}) => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick, ...attrs });
+  const pro = r => (r.is_pro ? `Pro: aktif${r.pro_until ? ` (${fmtDate(r.pro_until)} tarihine kadar)` : ''}` : 'Pro: aktif değil');
+  bodyBox.replaceChildren(h('div', { class: 'pa-vlist' }, rows.map((r, i) => h('div', { class: 'pa-card pa-vrow', 'data-verify': r.user_id },
+    r.status === 'pending' ? (urls[i] ? h('a', { class: 'pa-vdoc', href: urls[i], target: '_blank', rel: 'noopener', title: 'Belgeyi büyük aç' }, h('img', { src: urls[i], alt: `${r.full_name || 'Kullanıcı'} belgesi` })) : h('div', { class: 'pa-vdoc', text: 'Belge açılamadı' })) : null,
+    h('div', { class: 'pa-vinfo' },
+      h('b', { text: r.full_name || '—' }), h('span', { class: 'pa-small', text: [r.role, r.city].filter(Boolean).join(' · ') }),
+      h('p', { class: 'pa-small', text: `${pro(r)} · ${r.status === 'pending' ? 'Gönderim' : 'Karar'}: ${fmtDate(r.status === 'pending' ? r.submitted_at : r.decided_at)}` }),
+      r.status === 'pending' ? h('p', { text: `Profildeki ad: ${r.full_name || '—'} → belgedeki adla karşılaştırın.` }) : null,
+      r.status === 'approved' && r.verified_name !== r.full_name ? h('p', { class: 'pa-small', text: `Onaydaki ad: ${r.verified_name} (ad değiştiği için rozet görünmüyor)` }) : null,
+      r.reason ? h('p', { class: 'pa-small', text: `Sebep: ${r.reason}` }) : null,
+      h('div', { class: 'pa-actions' },
+        r.status === 'pending' ? [btn('Onayla', () => approveVerification(r), ' pa-btn-primary', { disabled: !r.is_pro, title: r.is_pro ? '' : 'Pro aktif değil' }), btn('Reddet', () => rejectVerification(r))] : null,
+        r.status === 'approved' ? btn('Onayı geri al', () => revokeVerification(r), ' pa-btn-danger') : null))))));
+  host.sync();
+}
+async function decideVerification(r, approve, reason) {
+  const path = await rpc('admin_decide_verification', { p_user: r.user_id, p_approve: approve, p_reason: reason || null });
+  const gone = !path || !(await (await client()).storage.from(VERIFY_BUCKET).remove([path])).error;
+  toast(gone ? `${approve ? 'Hesap onaylandı' : 'Başvuru reddedildi'}; belge silindi.` : `Karar kaydedildi ama belge silinemedi. Supabase > Storage > ${VERIFY_BUCKET} altından silin: ${path}`, !gone);
+  renderVerifications();
+}
+function approveVerification(r) {
+  confirmDialog({
+    title: `${r.full_name} onaylansın mı?`, confirm: 'Onayla', reason: false,
+    text: 'Belgedeki ad profildeki adla aynı kişiyi gösteriyorsa onaylayın. Pro sürdükçe adın yanında kırmızı rozet görünür; belge depodan silinir.',
+    submit: () => decideVerification(r, true)
+  });
+}
+function rejectVerification(r) {
+  confirmDialog({
+    title: `${r.full_name}: reddet`, confirm: 'Reddet', danger: true, reasonLabel: 'Ek not (kullanıcı görür)', reasonRequired: false,
+    text: 'Kullanıcı sebebi görür ve yeni belgeyle tekrar başvurabilir. Belge depodan silinir.',
+    fields: h('label', { class: 'pa-field' }, h('span', { text: 'Sebep' }), h('select', { name: 'why' }, VERIFY_REJECT.map(t => h('option', { value: t, text: t })))),
+    submit: ({ reason, form }) => decideVerification(r, false, [form.elements.why.value, reason].filter(Boolean).join(' — '))
+  });
+}
+function revokeVerification(r) {
+  confirmDialog({
+    title: `${r.full_name}: onay geri alınsın mı?`, confirm: 'Geri al', danger: true,
+    text: 'Rozet hemen kalkar. Kullanıcı sebebi görür ve yeni belgeyle tekrar başvurabilir.',
+    submit: async ({ reason }) => { await rpc('admin_revoke_verification', { p_user: r.user_id, p_reason: reason }); toast('Onay geri alındı.'); renderVerifications(); }
+  });
+}
+
+/* ----- Alanlar (sitede Konular → Alanlar, v4.39.0; veride professional_tags) ----- */
+async function renderTags() {
+  const seq = ++renderSeq, v = view.tags;
+  const bodyBox = h('div', null, loading());
+  main.replaceChildren(head('Alanlar', 'Sitedeki konuşma alanları: yeniden adlandırma, sabitleme, engelleme ve birleştirme'),
+    h('div', { class: 'pa-tools' }, searchBox(v.q, 'Alan ara', q => { v.q = q; v.offset = 0; renderTags(); }),
+      chips([['posts', 'En çok post'], ['new', 'En yeni'], ['az', 'A–Z']], v.sort, x => { v.sort = x; v.offset = 0; renderTags(); }),
+      chips([[null, 'Tümü'], ['pinned', 'Sabit'], ['blocked', 'Engelli']], v.filter, x => { v.filter = x; v.offset = 0; renderTags(); })),
+    bodyBox);
+  let rows;
+  try { rows = await rpc('admin_list_tags', { p_q: v.q || null, p_sort: v.sort, p_filter: v.filter, p_limit: CONFIG.pageSize, p_offset: v.offset }); }
+  catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, renderTags)); return; }
+  if (seq !== renderSeq) return;
+  rows ||= [];
+  const total = Number(rows[0]?.total_count || 0);
+  if (!rows.length) { bodyBox.replaceChildren(h('div', { class: 'pa-card pa-empty', text: 'Alan yok.' })); host.sync(); return; }
+  const btn = (text, onclick, cls = '') => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick });
+  bodyBox.replaceChildren(h('div', { class: 'pa-card' },
+    h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Alan', 'Post', 'Oluşturma', 'Son aktivite', ''].map(t => h('th', { text: t })))),
+      h('tbody', null, rows.map(r => h('tr', { 'data-tag': r.id },
+        h('td', null, h('b', { style: 'color:var(--ink)', text: r.name }),
+          r.pinned ? h('span', { class: 'pa-badge is-pending', style: 'margin-left:6px', text: 'Sabit' }) : null,
+          r.blocked ? h('span', { class: 'pa-badge is-deleted', style: 'margin-left:6px', text: 'Engelli' }) : null,
+          r.note ? h('span', { class: 'pa-small', style: 'display:block;margin-top:4px', text: r.note }) : null),
+        h('td', { 'data-label': 'Post', class: 'pa-num', text: num(r.post_count) }),
+        h('td', { 'data-label': 'Oluşturma', class: 'pa-num', text: fmtDate(r.created_at) }),
+        h('td', { 'data-label': 'Son aktivite', class: 'pa-num', text: fmtDate(r.last_post_at) }),
+        h('td', null, h('div', { class: 'pa-actions' },
+          btn('Yeniden adlandır', () => renameTag(r)),
+          btn(r.pinned ? 'Sabitten kaldır' : 'Sabitle', () => toggleTag(r, 'pinned')),
+          btn('Açıklama', () => noteTag(r)),
+          btn(r.blocked ? 'Engeli kaldır' : 'Engelle', () => toggleTag(r, 'blocked'), r.blocked ? '' : ' pa-btn-danger'),
+          btn('Birleştir', () => mergeTag(r)))))))),
+    pager(total, v.offset, off => { v.offset = off; renderTags(); })));
+  host.sync();
+}
+function renameTag(r) {
+  confirmDialog({
+    title: `${r.name} yeniden adlandır`, text: 'Postlar alana kimlikle bağlıdır; yeni ad tüm postlarda ve paylaşılmış bağlantılarda görünür.', confirm: 'Kaydet', reasonRequired: false,
+    fields: h('label', { class: 'pa-field' }, h('span', { text: 'Yeni ad (en fazla 20 karakter)' }), h('input', { name: 'name', maxlength: 20, required: true, value: r.name })),
+    submit: async ({ reason, form }) => {
+      const name = clean(form.elements.name.value);
+      if (!name) throw new AdminError('Ad boş olamaz.', 'input');
+      await rpc('admin_update_tag', { p_id: r.id, p_patch: { name }, p_reason: reason || null });
+      toast('Alan yeniden adlandırıldı.'); renderTags();
+    }
+  });
+}
+const noteField = v => h('label', { class: 'pa-field' }, h('span', { text: 'Sitede görünen açıklama (isteğe bağlı, en fazla 160 karakter)' }),
+  h('textarea', { name: 'note', maxlength: 160, placeholder: 'Örn. Sahada yaşadığın mevzuat ve denetim sorunlarını burada paylaş.', text: v || '' }));
+function noteTag(r) {
+  confirmDialog({
+    title: `${r.name} açıklaması`, text: 'Sitede alanın başlığında herkese gösterilir; yalnız yönetim yazar. Boş bırakırsanız açıklama görünmez.', confirm: 'Kaydet', reasonRequired: false,
+    fields: noteField(r.note),
+    submit: async ({ reason, form }) => {
+      await rpc('admin_update_tag', { p_id: r.id, p_patch: { note: clean(form.elements.note.value) || null }, p_reason: reason || null });
+      toast('Açıklama kaydedildi.'); renderTags();
+    }
+  });
+}
+function toggleTag(r, key) {
+  const on = !r[key];
+  const t = key === 'pinned'
+    ? [on ? 'Sabitlensin mi?' : 'Sabitten kaldırılsın mı?', on ? 'Alan, Alanlar sayfasında ve Akış şeridinin başında, skordan bağımsız "Sabit" olarak görünür.' : 'Alan yalnız gündem skoruna göre görünür.', on ? 'Sabitle' : 'Kaldır']
+    : [on ? 'Engellensin mi?' : 'Engel kaldırılsın mı?', on ? 'Bu alanda yeni post paylaşılamaz; mevcut postlar görünmeye devam eder.' : 'Alan yeniden kullanılabilir.', on ? 'Engelle' : 'Engeli kaldır'];
+  confirmDialog({
+    title: `${r.name}: ${t[0]}`, text: t[1], confirm: t[2], danger: key === 'blocked' && on, reasonRequired: key === 'blocked' && on,
+    fields: key === 'pinned' && on ? noteField(r.note) : null,
+    submit: async ({ reason, form }) => {
+      const v = form.elements.note ? clean(form.elements.note.value) : '', note = v || r.note ? { note: v || null } : {};
+      await rpc('admin_update_tag', { p_id: r.id, p_patch: { [key]: on, ...note }, p_reason: reason || null });
+      toast('Alan güncellendi.'); renderTags();
+    }
+  });
+}
+function mergeTag(r) {
+  const sel = h('select', { name: 'target', required: true }, h('option', { value: '', text: 'Önce arayın…' }));
+  const find = async q => {
+    try {
+      const list = (await rpc('admin_list_tags', { p_q: q || null, p_limit: 20 }) || []).filter(x => x.id !== r.id);
+      sel.replaceChildren(...(list.length ? list.map(x => h('option', { value: x.id, text: `${x.name} (${num(x.post_count)} post)` })) : [h('option', { value: '', text: 'Sonuç yok' })]));
+    } catch (e) { toast(e.message, true); }
+  };
+  find('');
+  confirmDialog({
+    title: `${r.name} birleştir`, text: `${r.name} alanının ${num(r.post_count)} postu hedef alana taşınır ve ${r.name} silinir. Geri alınamaz.`, confirm: 'Birleştir', danger: true,
+    fields: h('div', { style: 'display:flex;flex-direction:column;gap:8px' }, searchBox('', 'Hedef alan ara', find), h('label', { class: 'pa-field' }, h('span', { text: 'Hedef alan' }), sel)),
+    submit: async ({ reason }) => {
+      if (!sel.value) throw new AdminError('Hedef alan seçin.', 'input');
+      const res = await rpc('admin_merge_tags', { p_source: r.id, p_target: sel.value, p_reason: reason });
+      toast(`Birleştirildi: ${num(res?.moved_posts)} post taşındı.`); renderTags();
+    }
+  });
+}
+
+/* ----- Saha Raporu (v1.9.0): mobil uygulamanın yapay zekâ destekli saha raporu ayarları. Yalnız ayarlar ve toplu
+   kullanım sayıları; uzmanların rapor içerikleri burada görünmez. RPC'ler: admin_report_config, admin_set_ai_setting,
+   admin_upsert_ai_model, admin_set_ai_prompt, admin_set_report_limit, admin_upsert_checklist_item,
+   admin_reorder_checklist, admin_report_usage. ----- */
+const FR_TABS = [['routing', 'Model seçimi'], ['models', 'Modeller'], ['prompts', 'Prompt’lar'], ['limits', 'Limitler'], ['checklist', 'Checklist'], ['usage', 'Kullanım ve maliyet']];
+const FR_STYLE = [['sade', 'Sade', 'Kısa, yalın cümleler'], ['dengeli', 'Dengeli', 'Önerilen'], ['ayrintili', 'Ayrıntılı', 'Daha açıklayıcı öneriler']];
+const FR_PURPOSE = { report_analyze: 'Analiz', finding_rewrite: 'Yeniden yazma' };
+const FR_LIMITS = [
+  ['free_monthly_limit', 'Ücretsiz: aylık analiz hakkı', 'Bulgu çıkan analizde düşer. Bulgu çıkmazsa, hata olursa ya da yalnız checklist kullanılırsa düşmez.', 0, 1000],
+  ['premium_daily_limit', 'PRO: günlük analiz hakkı', 'Aynı kural; gün Türkiye saatine göre döner.', 0, 1000],
+  ['report_rewrite_daily_limit', 'Günlük "Yeniden yaz" sınırı', '“Yeniden yaz / Ben söyleyeyim” üst sınırı; analiz hakkından düşmez.', 0, 1000],
+  ['report_max_photos', 'Rapor başına en çok fotoğraf', 'Fazlası maliyeti ve analiz süresini artırır.', 1, 20],
+  ['report_max_drafts', 'Telefonda en çok yarım rapor', 'Dolunca uzman yeni rapora başlamadan önce bir taslağı bitirir ya da siler.', 1, 20]];
+const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 4 });
+const pct = (a, b) => (Number(b) ? `%${nf.format(Math.round((Number(a) / Number(b)) * 1000) / 10)}` : '—');
+const modelPrice = m => `${usd.format(m.input_usd_per_mtok)} / ${usd.format(m.output_usd_per_mtok)}`;
+const PRIORITY = { acil: ['Acil', 'is-deleted'], onemli: ['Önemli', 'is-active'], iyilestirme: ['İşaretsiz (eski)', 'is-pending'] };
+
+async function renderFieldReports() {
+  const seq = ++renderSeq, v = view.fr;
+  const bodyBox = h('div', null, loading());
+  main.replaceChildren(head('Saha Raporu', 'Mobil uygulamadaki yapay zekâ destekli saha raporu: model, prompt, limit ve checklist ayarları; kullanım ve maliyet. Değişiklikler hemen geçerli olur.'),
+    h('div', { class: 'pa-tools' }, chips(FR_TABS, v.tab, x => { v.tab = x; renderFieldReports(); })),
+    bodyBox);
+  let cfg, usage;
+  try {
+    if (v.tab === 'usage') usage = await rpc('admin_report_usage', { p_days: v.days });
+    else cfg = await rpc('admin_report_config', {});
+  } catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, renderFieldReports)); return; }
+  if (seq !== renderSeq) return;
+  const render = { routing: frRouting, models: frModels, prompts: frPrompts, limits: frLimits, checklist: frChecklist, usage: frUsage }[v.tab];
+  bodyBox.replaceChildren(render(v.tab === 'usage' ? usage : cfg));
+  host.sync();
+}
+
+// Değişen alanları listeleyip tek onayla sırayla kaydeder (her biri sunucuda ayrı denetim kaydı).
+function frSaveChanges(changes, title, apply) {
+  if (!changes.length) { toast('Değişiklik yok.'); return; }
+  confirmDialog({
+    title, confirm: 'Kaydet', reasonRequired: false,
+    fields: h('ul', { class: 'pa-list' }, changes.map(c => h('li', null, h('b', { style: 'color:var(--ink)', text: c.label }), h('span', { class: 'pa-muted', text: `${c.from} → ${c.to}` })))),
+    submit: async ({ reason }) => {
+      for (const c of changes) await apply(c, reason || null);
+      toast('Kaydedildi.'); renderFieldReports();
+    }
+  });
+}
+
+function frRouting(cfg) {
+  const s = cfg.settings || {}, models = cfg.models || [];
+  const label = key => key ? (models.find(m => m.key === key)?.label || key) : null;
+  const opts = (vision, empty) => [
+    ...(empty ? [h('option', { value: '', text: empty })] : []),
+    ...models.filter(m => (m.enabled || false) && (!vision || m.supports_vision)).map(m => h('option', { value: m.key, text: `${m.label} — ${modelPrice(m)}` }))];
+  const sel = (key, vision, empty) => {
+    const el = h('select', { name: key, 'aria-label': key }, opts(vision, empty));
+    el.value = s[key] || '';
+    if (el.value !== (s[key] || '')) { el.prepend(h('option', { value: s[key], text: `${label(s[key])} (kapalı ya da fotoğraf okuyamıyor)` })); el.value = s[key]; }
+    return el;
+  };
+  const threshold = h('input', { type: 'number', name: 'report_complex_photos', min: 0, max: 20, step: 1, value: s.report_complex_photos ?? '4', 'aria-label': 'Eşik' });
+  const style = h('div', { class: 'pa-radio', role: 'radiogroup', 'aria-label': 'Yazım tarzı' }, FR_STYLE.map(([val, text, sub]) =>
+    h('label', null, h('input', { type: 'radio', name: 'report_style', value: val, checked: (s.report_style || 'dengeli') === val }), `${text} `, h('span', { class: 'pa-small', text: sub }))));
+  const fields = {
+    report_model_text: sel('report_model_text', false),
+    report_model: sel('report_model', true),
+    report_model_complex: sel('report_model_complex', true),
+    rewrite_model: sel('rewrite_model', true, 'Fotoğraflı analiz modeliyle aynı'),
+    report_fallback_model: sel('report_fallback_model', false, 'Yok')
+  };
+  const row = (title, sub, control) => h('div', { class: 'pa-form-row' }, h('div', null, h('b', { text: title }), h('span', { text: sub })), control);
+  const save = () => {
+    const n = Number(threshold.value);
+    if (!Number.isInteger(n) || n < 0 || n > 20) { toast('Eşik 0 ile 20 arasında bir tam sayı olmalı.', true); return; }
+    const next = Object.fromEntries(Object.entries(fields).map(([k, el]) => [k, el.value]));
+    next.report_complex_photos = String(n);
+    next.report_style = style.querySelector('input:checked')?.value || 'dengeli';
+    const names = { report_model_text: 'Yalnız yazı', report_model: 'Fotoğraflı', report_model_complex: 'Çok fotoğraflı', rewrite_model: 'Fotoğraflı yeniden yazma', report_fallback_model: 'Yedek model', report_complex_photos: 'Çok fotoğraf eşiği', report_style: 'Yazım tarzı' };
+    const fmt = (k, val) => k === 'report_style' ? (FR_STYLE.find(x => x[0] === val)?.[1] || val) : k === 'report_complex_photos' ? (val === '0' ? 'kapalı' : `${val} fotoğraf`) : (label(val) || (k === 'rewrite_model' ? 'fotoğraflı modelle aynı' : 'yok'));
+    const changes = Object.keys(next).filter(k => (s[k] || '') !== next[k]).map(k => ({ key: k, value: next[k], label: names[k], from: fmt(k, s[k] || ''), to: fmt(k, next[k]) }));
+    frSaveChanges(changes, 'Model seçimi kaydedilsin mi?', (c, reason) => rpc('admin_set_ai_setting', { p_key: c.key, p_value: c.value, p_reason: reason }));
+  };
+  return h('div', null,
+    h('div', { class: 'pa-card' },
+      h('div', { class: 'pa-form' },
+        h('p', { class: 'pa-note' }, h('b', { text: 'Fiyat / performans: ' }), 'Fotoğrafsız işler ucuz modele, fotoğraflı işler fotoğraf okuyabilen modele gider. Eşik ve üstü fotoğrafta güçlü model kullanılır. Fiyatlar 1 milyon token içindir (giriş / çıkış).'),
+        row('Yalnız yazı', 'Fotoğrafsız analiz ve fotoğrafsız “Yeniden yaz”. Ucuz model yeterli.', fields.report_model_text),
+        row('Fotoğraflı', `1 ile ${Math.max(1, Number(s.report_complex_photos || 4) - 1)} fotoğraf arası analiz.`, fields.report_model),
+        row('Çok fotoğraflı', 'Eşik ve üstü fotoğraflı analiz (güçlü model).', fields.report_model_complex),
+        row('Çok fotoğraf eşiği', 'Bu sayıda ve üstü fotoğrafta “Çok fotoğraflı” model kullanılır. 0 = kapalı.', threshold),
+        row('Fotoğraflı yeniden yazma', '“Yeniden yaz / Ben söyleyeyim”, fotoğraflı bulguda.', fields.rewrite_model),
+        row('Yedek model', 'Teknik hatada bir kez denenir. Farklı sağlayıcıdan seçmek güvenlidir.', fields.report_fallback_model),
+        row('Yazım tarzı', 'Prompt’a tek satır eklenir; hukuki dil her tarzda korunur.', style)),
+      h('div', { class: 'pa-form-foot' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Değişiklikleri kaydet', onclick: save }))));
+}
+
+function frModels(cfg) {
+  const s = cfg.settings || {}, models = cfg.models || [];
+  const used = new Set(['report_model_text', 'report_model', 'report_model_complex', 'rewrite_model', 'report_fallback_model'].map(k => s[k]).filter(Boolean));
+  const btn = (text, onclick, cls = '') => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick });
+  return h('div', null,
+    h('div', { class: 'pa-tools' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: '+ Yeni model', onclick: () => frEditModel(null) })),
+    h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Model', 'Fotoğraf', 'Fiyat (1M token, giriş / çıkış)', 'Durum', ''].map(t => h('th', { text: t })))),
+      h('tbody', null, models.map(m => h('tr', { 'data-model': m.key },
+        h('td', null, who(m.label, m.key)),
+        h('td', { 'data-label': 'Fotoğraf', text: m.supports_vision ? 'Okur' : 'Okumaz' }),
+        h('td', { 'data-label': 'Fiyat', class: 'pa-num', text: modelPrice(m) }),
+        h('td', { 'data-label': 'Durum' }, h('span', { class: `pa-badge ${m.enabled ? 'is-active' : 'is-deleted'}`, text: m.enabled ? 'Açık' : 'Kapalı' }), used.has(m.key) ? h('span', { class: 'pa-badge is-pending', style: 'margin-left:6px', text: 'Seçili' }) : null),
+        h('td', null, h('div', { class: 'pa-actions' },
+          btn('Düzenle', () => frEditModel(m)),
+          btn(m.enabled ? 'Kapat' : 'Aç', () => frToggleModel(m, used.has(m.key)))))))))),
+    h('p', { class: 'pa-note pa-section-gap' }, 'Kapalı model hiçbir seçimde görünmez. Seçili bir model kapatılamaz; önce Model seçiminde başka model seçin. Fiyatlar yalnız maliyet raporu içindir; sağlayıcının fiyat sayfasından doğrulanmalı.'));
+}
+function frEditModel(m) {
+  const f = (name, label, attrs) => h('label', { class: 'pa-field' }, h('span', { text: label }), h('input', { name, ...attrs }));
+  const fields = h('div', { style: 'display:flex;flex-direction:column;gap:12px' },
+    m ? null : h('div', { class: 'pa-grid2' },
+      h('label', { class: 'pa-field' }, h('span', { text: 'Sağlayıcı' }), h('select', { name: 'provider' }, h('option', { value: 'anthropic', text: 'Claude (Anthropic)' }), h('option', { value: 'openai', text: 'ChatGPT (OpenAI)' }))),
+      f('model', 'Model adı (API’deki ad)', { maxlength: 50, required: true, placeholder: 'ör. gpt-4o' })),
+    f('label', 'Panelde ve listelerde görünen ad', { maxlength: 80, required: true, value: m?.label || '' }),
+    h('label', { class: 'pa-check' }, h('input', { type: 'checkbox', name: 'vision', checked: m ? m.supports_vision : true }), 'Fotoğraf okuyabilir'),
+    h('div', { class: 'pa-grid2' },
+      f('input', 'Giriş fiyatı (USD / 1M token)', { type: 'number', min: 0, max: 1000, step: '0.0001', required: true, value: m ? Number(m.input_usd_per_mtok) : '' }),
+      f('output', 'Çıkış fiyatı (USD / 1M token)', { type: 'number', min: 0, max: 1000, step: '0.0001', required: true, value: m ? Number(m.output_usd_per_mtok) : '' })),
+    m ? null : h('p', { class: 'pa-note', text: 'Model adı sağlayıcının API’deki adıyla birebir aynı olmalı. Yanlışsa analiz hata verir (yedek model varsa ona düşer). Eklendikten sonra Model seçiminden seçilebilir.' }));
+  confirmDialog({
+    title: m ? `${m.label} düzenle` : 'Yeni model', confirm: m ? 'Kaydet' : 'Ekle', reasonRequired: false, fields,
+    submit: async ({ reason, form }) => {
+      const el = form.elements, labelText = clean(el.label.value), inp = Number(el.input.value), out = Number(el.output.value);
+      if (!labelText) throw new AdminError('Görünen ad gerekli.', 'input');
+      if (!(el.input.value !== '' && inp >= 0 && inp <= 1000 && el.output.value !== '' && out >= 0 && out <= 1000)) throw new AdminError('Fiyatlar 0 ile 1000 arasında olmalı.', 'input');
+      const patch = { label: labelText, supports_vision: el.vision.checked, input_usd_per_mtok: inp, output_usd_per_mtok: out };
+      let key = m?.key;
+      if (!m) {
+        const model = clean(el.model.value);
+        if (!/^[A-Za-z0-9._-]{1,50}$/.test(model)) throw new AdminError('Model adı yalnız harf, rakam, nokta, tire ve alt çizgi içerebilir.', 'input');
+        key = `${el.provider.value}:${model}`;
+        if ((await rpc('admin_report_config', {}))?.models?.some(x => x.key === key)) throw new AdminError('Bu model zaten listede.', 'exists');
+      }
+      await rpc('admin_upsert_ai_model', { p_key: key, p_patch: patch, p_reason: reason || null });
+      toast(m ? 'Model kaydedildi.' : 'Model eklendi.'); renderFieldReports();
+    }
+  });
+}
+function frToggleModel(m, used) {
+  if (m.enabled && used) { toast('Bu model Model seçiminde kullanılıyor. Önce orada başka bir model seçin.', true); return; }
+  const on = !m.enabled;
+  confirmDialog({
+    title: `${m.label}: ${on ? 'açılsın mı?' : 'kapatılsın mı?'}`, confirm: on ? 'Aç' : 'Kapat', danger: !on, reasonRequired: false,
+    text: on ? 'Model, Model seçimindeki listelerde görünür.' : 'Model, Model seçimindeki listelerden çıkar. Kayıtlı kullanım verisi silinmez.',
+    submit: async ({ reason }) => {
+      await rpc('admin_upsert_ai_model', { p_key: m.key, p_patch: { enabled: on }, p_reason: reason || null });
+      toast(on ? 'Model açıldı.' : 'Model kapatıldı.'); renderFieldReports();
+    }
+  });
+}
+
+function frTargetLabel(target, models) {
+  if (target === 'default') return 'Varsayılan (tüm modeller)';
+  if (target === 'anthropic') return 'Tüm Claude modelleri';
+  if (target === 'openai') return 'Tüm ChatGPT modelleri';
+  return models.find(m => m.key === target)?.label || target;
+}
+function frPrompts(cfg) {
+  const v = view.fr, models = cfg.models || [], all = (cfg.prompts || []).filter(p => p.purpose === v.purpose);
+  const rows = all.slice().sort((a, b) => (a.target === 'default' ? -1 : b.target === 'default' ? 1 : a.target.localeCompare(b.target)));
+  const def = rows.find(p => p.target === 'default');
+  const btn = (text, onclick, cls = '') => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick });
+  return h('div', null,
+    h('div', { class: 'pa-tools' },
+      chips(Object.entries(FR_PURPOSE), v.purpose, x => { v.purpose = x; renderFieldReports(); }),
+      h('button', { type: 'button', class: 'pa-btn', text: '+ Modele özel prompt', onclick: () => frEditPrompt(null, cfg) })),
+    h('p', { class: 'pa-note', style: 'margin-bottom:14px' }, h('b', { text: 'Öncelik: ' }), 'modele özel › sağlayıcıya özel › varsayılan. Çıktı biçimi (JSON) kodda sabittir; burada yalnız içerik ve dil yönetilir. Rapor resmî belgedir: tespit nesnel yazılır, öneri “…sağlanmalıdır” diliyle; isteğe bağlı iyileştirme önerisi yazılmaz.'),
+    rows.length ? h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Hedef', 'Metin', 'Güncelleme', ''].map(t => h('th', { text: t })))),
+      h('tbody', null, rows.map(p => h('tr', { 'data-prompt': `${p.target}/${p.purpose}` },
+        h('td', null, h('b', { style: 'color:var(--ink)', text: frTargetLabel(p.target, models) }), p.target !== 'default' ? h('span', { class: 'pa-small', style: 'display:block', text: p.target }) : null),
+        h('td', { 'data-label': 'Metin' }, h('span', { class: 'pa-preview', text: p.prompt }), h('span', { class: 'pa-small', text: `${num(p.prompt.length)} karakter` })),
+        h('td', { 'data-label': 'Güncelleme', class: 'pa-num', text: fmtDate(p.updated_at) }),
+        h('td', null, h('div', { class: 'pa-actions' },
+          btn('Düzenle', () => frEditPrompt(p, cfg)),
+          p.target === 'default' ? null : btn('Kaldır', () => frRemovePrompt(p, models), ' pa-btn-danger')))))))) :
+      h('div', { class: 'pa-card pa-empty', text: def ? '' : 'Varsayılan prompt bulunamadı. Uygulama kod içindeki yedek metni kullanır.' }));
+}
+function frEditPrompt(p, cfg) {
+  const v = view.fr, models = cfg.models || [], have = new Set((cfg.prompts || []).filter(x => x.purpose === v.purpose).map(x => x.target));
+  const def = (cfg.prompts || []).find(x => x.purpose === v.purpose && x.target === 'default');
+  const targets = [['anthropic', 'Tüm Claude modelleri'], ['openai', 'Tüm ChatGPT modelleri'], ...models.map(m => [m.key, m.label])].filter(([t]) => !have.has(t));
+  if (!p && !targets.length) { toast('Her hedef için zaten özel prompt var; mevcut olanı düzenleyin.'); return; }
+  const area = h('textarea', { name: 'prompt', maxlength: 20000, required: true, spellcheck: 'false' });
+  area.value = p ? p.prompt : (def?.prompt || '');
+  const fields = h('div', { style: 'display:flex;flex-direction:column;gap:12px' },
+    p ? null : h('label', { class: 'pa-field' }, h('span', { text: 'Hedef' }), h('select', { name: 'target' }, targets.map(([t, l]) => h('option', { value: t, text: l })))),
+    h('label', { class: 'pa-field' }, h('span', { text: `${FR_PURPOSE[v.purpose]} prompt’u${p ? '' : ' (varsayılandan kopyalandı)'}` }), area));
+  confirmDialog({
+    title: p ? `${FR_PURPOSE[p.purpose]} · ${frTargetLabel(p.target, models)}` : `Yeni özel prompt · ${FR_PURPOSE[v.purpose]}`,
+    text: 'Kaydedince bir sonraki analizden itibaren kullanılır.', confirm: 'Kaydet', reasonRequired: false, wide: true, fields,
+    submit: async ({ reason, form }) => {
+      const text = clean(area.value), target = p ? p.target : form.elements.target.value;
+      if (text.length < 20) throw new AdminError('Prompt çok kısa.', 'input');
+      await rpc('admin_set_ai_prompt', { p_target: target, p_purpose: p ? p.purpose : v.purpose, p_prompt: text, p_reason: reason || null });
+      toast('Prompt kaydedildi.'); renderFieldReports();
+    }
+  });
+}
+function frRemovePrompt(p, models) {
+  confirmDialog({
+    title: `${frTargetLabel(p.target, models)}: özel prompt kaldırılsın mı?`, confirm: 'Kaldır', danger: true, reasonRequired: false,
+    text: 'Bu hedef bir üst seviyedeki prompt’u (sağlayıcı ya da varsayılan) kullanır. Metin denetim kaydında saklanır.',
+    submit: async ({ reason }) => {
+      await rpc('admin_set_ai_prompt', { p_target: p.target, p_purpose: p.purpose, p_prompt: '', p_reason: reason || null });
+      toast('Özel prompt kaldırıldı.'); renderFieldReports();
+    }
+  });
+}
+
+function frLimits(cfg) {
+  const lim = cfg.limits || {};
+  const inputs = Object.fromEntries(FR_LIMITS.map(([k, , , min, max]) => [k, h('input', { type: 'number', name: k, min, max, step: 1, value: lim[k] ?? '', 'aria-label': k })]));
+  const save = () => {
+    const changes = [];
+    for (const [k, title, , min, max] of FR_LIMITS) {
+      const n = Number(inputs[k].value);
+      if (!Number.isInteger(n) || n < min || n > max) { toast(`${title}: ${min} ile ${max} arasında bir tam sayı olmalı.`, true); inputs[k].focus(); return; }
+      if (String(n) !== String(lim[k] ?? '')) changes.push({ key: k, value: n, label: title, from: lim[k] ?? '—', to: String(n) });
+    }
+    frSaveChanges(changes, 'Limitler kaydedilsin mi?', (c, reason) => rpc('admin_set_report_limit', { p_key: c.key, p_value: c.value, p_reason: reason }));
+  };
+  return h('div', { class: 'pa-card' },
+    h('div', { class: 'pa-form' }, FR_LIMITS.map(([k, title, sub]) => h('div', { class: 'pa-form-row' }, h('div', null, h('b', { text: title }), h('span', { text: sub })), inputs[k]))),
+    h('div', { class: 'pa-form-foot' }, h('span', { class: 'pa-small', text: 'Hak kontrolü sunucuda hemen değişir; uygulamadaki gösterim en geç 1 saatte ya da uygulama yeniden açılınca güncellenir.' }), h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Değişiklikleri kaydet', onclick: save })));
+}
+
+function frChecklist(cfg) {
+  const rows = cfg.checklist || [];
+  const btn = (text, onclick, cls = '', attrs = {}) => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick, ...attrs });
+  const move = async (i, d) => {
+    const ids = rows.map(r => r.id); [ids[i], ids[i + d]] = [ids[i + d], ids[i]];
+    try { await rpc('admin_reorder_checklist', { p_ids: ids, p_reason: null }); toast('Sıra kaydedildi.'); renderFieldReports(); }
+    catch (e) { toast(e.message || 'Sıra kaydedilemedi.', true); }
+  };
+  return h('div', null,
+    h('div', { class: 'pa-tools' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: '+ Yeni madde', onclick: () => frEditItem(null) })),
+    h('p', { class: 'pa-note', style: 'margin-bottom:14px' }, 'Uzman maddeyi işaretlerse tespit ve öneri metni rapora eklenir; yalnız checklist ile oluşturulan rapor hak düşürmez. Başlık eksiklik diliyle yazılır (ör. “Uyarı levhaları eksik”) ve yapay zekâya yalnız başlık gider.'),
+    rows.length ? h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Sıra', 'Madde', 'Öncelik', 'Durum', ''].map(t => h('th', { text: t })))),
+      h('tbody', null, rows.map((r, i) => h('tr', { 'data-item': r.id },
+        h('td', { 'data-label': 'Sıra' }, h('div', { class: 'pa-actions' },
+          btn('↑', () => move(i, -1), '', { disabled: i === 0, 'aria-label': `${r.deficiency_title} yukarı` }),
+          btn('↓', () => move(i, 1), '', { disabled: i === rows.length - 1, 'aria-label': `${r.deficiency_title} aşağı` }))),
+        h('td', null, h('b', { style: 'color:var(--ink)', text: clean(r.deficiency_title) || clean(r.question) || '—' }),
+          h('span', { class: 'pa-preview', text: [r.finding_text, r.recommendation_text].filter(Boolean).join('\n') || 'Tespit / öneri metni yok' })),
+        h('td', { 'data-label': 'Öncelik' }, h('span', { class: `pa-badge ${(PRIORITY[r.default_priority] || PRIORITY.onemli)[1]}`, text: (PRIORITY[r.default_priority] || PRIORITY.onemli)[0] })),
+        h('td', { 'data-label': 'Durum' }, h('span', { class: `pa-badge ${r.is_active ? 'is-active' : 'is-deleted'}`, text: r.is_active ? 'Görünür' : 'Gizli' })),
+        h('td', null, h('div', { class: 'pa-actions' },
+          btn('Düzenle', () => frEditItem(r)),
+          btn(r.is_active ? 'Gizle' : 'Göster', () => frToggleItem(r)))))))))
+      : h('div', { class: 'pa-card pa-empty', text: 'Checklist maddesi yok.' }));
+}
+function frEditItem(r) {
+  const area = (name, label, value, rows = 3) => h('label', { class: 'pa-field' }, h('span', { text: label }), Object.assign(h('textarea', { name, maxlength: 2000, rows }), { value: value || '' }));
+  const pr = r?.default_priority === 'acil' ? 'acil' : 'onemli';
+  const fields = h('div', { style: 'display:flex;flex-direction:column;gap:12px' },
+    h('label', { class: 'pa-field' }, h('span', { text: 'Başlık (eksiklik dilinde, 3–160 karakter)' }), h('input', { name: 'title', maxlength: 160, required: true, value: r?.deficiency_title || '', placeholder: 'ör. Uyarı levhaları eksik' })),
+    area('finding', 'Tespit metni (rapora yazılır)', r?.finding_text),
+    area('rec', 'Öneri metni (“…sağlanmalıdır”)', r?.recommendation_text),
+    area('explanation', 'Açıklama (uygulamadaki ⓘ)', r?.explanation, 2),
+    h('div', { class: 'pa-radio', role: 'radiogroup', 'aria-label': 'Varsayılan öncelik' },
+      h('label', null, h('input', { type: 'radio', name: 'priority', value: 'onemli', checked: pr === 'onemli' }), 'Önemli'),
+      h('label', null, h('input', { type: 'radio', name: 'priority', value: 'acil', checked: pr === 'acil' }), 'Acil')),
+    r?.question && r.question !== r.deficiency_title ? h('p', { class: 'pa-small', text: `Eski uygulamadaki soru metni değişmez: “${r.question}”` }) : null);
+  confirmDialog({
+    title: r ? 'Checklist maddesi düzenle' : 'Yeni checklist maddesi', confirm: r ? 'Kaydet' : 'Ekle', reasonRequired: false, wide: true, fields,
+    submit: async ({ reason, form }) => {
+      const el = form.elements, title = clean(el.title.value);
+      if (title.length < 3) throw new AdminError('Başlık en az 3 karakter olmalı.', 'input');
+      const patch = { deficiency_title: title, finding_text: clean(el.finding.value), recommendation_text: clean(el.rec.value), explanation: clean(el.explanation.value), default_priority: el.priority.value };
+      await rpc('admin_upsert_checklist_item', { p_id: r?.id || null, p_patch: patch, p_reason: reason || null });
+      toast(r ? 'Madde kaydedildi.' : 'Madde eklendi.'); renderFieldReports();
+    }
+  });
+}
+function frToggleItem(r) {
+  const on = !r.is_active;
+  confirmDialog({
+    title: `${clean(r.deficiency_title) || 'Madde'}: ${on ? 'gösterilsin mi?' : 'gizlensin mi?'}`, confirm: on ? 'Göster' : 'Gizle', danger: !on, reasonRequired: false,
+    text: on ? 'Madde uygulamadaki checklist’te yeniden görünür.' : 'Madde uygulamadaki checklist’te görünmez. Daha önce kaydedilmiş raporlar değişmez.',
+    submit: async ({ reason }) => {
+      await rpc('admin_upsert_checklist_item', { p_id: r.id, p_patch: { is_active: on }, p_reason: reason || null });
+      toast(on ? 'Madde gösteriliyor.' : 'Madde gizlendi.'); renderFieldReports();
+    }
+  });
+}
+
+function frUsage(u) {
+  const v = view.fr, t = u?.totals || {};
+  const s = (label, value, sub, alert) => h('div', { class: `pa-stat${alert ? ' is-alert' : ''}` }, h('span', { text: label }), h('b', { text: value }), sub ? h('small', { text: sub }) : null);
+  const table = (cols, rows, cells) => rows.length ? h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
+    h('thead', null, h('tr', null, cols.map(c => h('th', { text: c })))), h('tbody', null, rows.map(r => h('tr', null, cells(r).map((c, i) => h('td', { 'data-label': i ? cols[i] : null, class: i ? 'pa-num' : null }, c)))))))
+    : h('div', { class: 'pa-card pa-empty', text: 'Bu dönemde kayıt yok.' });
+  const errRate = Number(t.calls) ? Number(t.errors) / Number(t.calls) : 0;
+  return h('div', null,
+    h('div', { class: 'pa-tools' }, chips([[7, 'Son 7 gün'], [30, 'Son 30 gün'], [90, 'Son 90 gün']], v.days, x => { v.days = x; renderFieldReports(); })),
+    h('div', { class: 'pa-stats' },
+      s('Toplam maliyet', usd.format(t.cost_usd || 0), `Yapay zekâ sağlayıcılarına (${num(u?.days)} gün)`),
+      s('Analiz', num(t.analyze), `Hak düşen: ${num(t.charged)}`),
+      s('Yeniden yazma', num(t.rewrite), 'Hak düşürmez'),
+      s('Hata oranı', pct(t.errors, t.calls), `${num(t.errors)} hata · hak düşmedi`, errRate > 0.05),
+      s('Yedek model', pct(t.fallback, t.calls), `${num(t.fallback)} çağrı`),
+      s('Kullanan uzman', num(t.users), `Ortalama süre ${nf.format(Math.round(Number(t.avg_ms || 0) / 100) / 10)} sn`)),
+    h('h2', { class: 'pa-subtitle', text: 'Model bazında' }),
+    table(['Model', 'Çağrı', 'Hata', 'Yedek', 'Token (giriş / çıkış)', 'Maliyet'], u?.by_model || [], r => [r.model, num(r.calls), num(r.errors), num(r.fallback), `${num(r.input_tokens)} / ${num(r.output_tokens)}`, usd.format(r.cost_usd)]),
+    h('h2', { class: 'pa-subtitle pa-section-gap', text: 'Gün bazında' }),
+    table(['Gün', 'Çağrı', 'Hata', 'Maliyet'], u?.by_day || [], r => [new Date(`${r.day}T12:00:00`).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }), num(r.calls), num(r.errors), usd.format(r.cost_usd)]),
+    h('h2', { class: 'pa-subtitle pa-section-gap', text: 'En çok kullanan uzmanlar' }),
+    table(['Uzman', 'Çağrı', 'Hak düşen', 'Maliyet'], u?.top_users || [], r => [who(r.full_name, r.email), num(r.calls), num(r.charged), usd.format(r.cost_usd)]),
+    h('p', { class: 'pa-note pa-section-gap', text: 'Maliyet, Modeller sekmesindeki fiyatlarla hesaplanır; sağlayıcı faturasıyla küçük farklar olabilir. Rapor içerikleri burada görünmez.' }));
+}
+
+/* ---------------------------------------------------------------------------
+   Başlat
+   --------------------------------------------------------------------------- */
+root.dataset.version = CONFIG.version;
+boot();
+client().then(c => c.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') { state.user = null; closeLayer(); gate('login'); } })).catch(() => {});
+})();
+</script>
