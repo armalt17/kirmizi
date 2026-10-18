@@ -282,7 +282,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.10.0',
+  version: '1.11.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -1297,12 +1297,23 @@ const FR_TABS = [['routing', 'Model seçimi'], ['models', 'Modeller'], ['prompts
 const FR_STYLE = [['sade', 'Sade', 'Kısa, yalın cümleler'], ['dengeli', 'Dengeli', 'Önerilen'], ['ayrintili', 'Ayrıntılı', 'Daha açıklayıcı öneriler']];
 const FR_PURPOSE = { report_analyze: 'Analiz', finding_rewrite: 'Yeniden yazma' };
 const FR_LIMITS = [
-  ['free_monthly_limit', 'Ücretsiz: aylık analiz hakkı', 'Bulgu çıkan analizde düşer. Bulgu çıkmazsa, hata olursa ya da yalnız checklist kullanılırsa düşmez.', 0, 1000],
-  ['premium_daily_limit', 'PRO: günlük analiz hakkı', 'Aynı kural; gün Türkiye saatine göre döner.', 0, 1000],
-  ['max_daily_limit', 'MAX: günlük analiz hakkı', 'Ayrı MAX aboneliği. Uygulamada sayı gösterilmez ("Yüksek limit"); yalnız son 3 hakta görünür.', 0, 1000],
+  ['free_monthly_limit', 'Ücretsiz: aylık rapor hakkı', 'Her yeni rapor bir hak düşürür (yapay zekâlı ya da yalnız checklist). Bulgu çıkmayan analiz ve hata hak düşürmez; aynı raporun yeniden analizi yeni hak düşürmez.', 0, 1000],
+  ['premium_daily_limit', 'PRO: günlük rapor hakkı', 'Aynı kural; gün Türkiye saatine göre döner.', 0, 1000],
+  ['max_daily_limit', 'MAX: günlük rapor hakkı', 'Ayrı MAX aboneliği. Uygulamada sayı gösterilmez ("Yüksek limit"); yalnız son 3 hakta görünür.', 0, 1000],
   ['report_rewrite_daily_limit', 'Günlük "Yeniden yaz" sınırı', '“Yeniden yaz / Ben söyleyeyim” üst sınırı; analiz hakkından düşmez.', 0, 1000],
   ['report_max_photos', 'Rapor başına en çok fotoğraf', 'Fazlası maliyeti ve analiz süresini artırır.', 1, 20],
-  ['report_max_drafts', 'Telefonda en çok yarım rapor', 'Dolunca uzman yeni rapora başlamadan önce bir taslağı bitirir ya da siler.', 1, 20]];
+  ['report_max_drafts', 'Telefonda en çok taslak', 'Dolunca uzman yeni rapora başlamadan önce bir taslağı bitirir ya da siler.', 1, 50]];
+// Spam koruması (v1.11.0; sunucuda kisg_spam_guard). Adminler bu sınırlardan muaftır.
+const SPAM_LIMITS = [
+  ['spam_posts_per_hour', 'Saatte en çok Post', 'Bir hesabın 1 saatte paylaşabileceği Post sayısı.', 1, 10000],
+  ['spam_posts_per_day', 'Günde en çok Post', 'Son 24 saat.', 1, 10000],
+  ['spam_comments_per_minute', 'Dakikada en çok yorum', 'Seri yorum (bot) engeli.', 1, 10000],
+  ['spam_comments_per_hour', 'Saatte en çok yorum', 'Son 1 saat.', 1, 10000],
+  ['spam_likes_per_hour', 'Saatte en çok beğeni', 'Post ve yorum beğenileri ayrı sayılır.', 1, 10000],
+  ['spam_services_per_day', 'Günde en çok yeni hizmet', 'Aktif hizmet sınırı (5) ayrıca geçerli.', 1, 10000],
+  ['spam_reports_per_day', 'Günde en çok şikâyet', 'Toplu şikâyetle içerik kapatma girişimine karşı.', 1, 10000],
+  ['spam_new_account_link_hours', 'Yeni hesapta bağlantı yasağı (saat)', 'Hesap açıldıktan sonra bu süre boyunca bağlantı (link) paylaşılamaz. 0: kapalı.', 0, 1000],
+  ['spam_max_links', 'Bir içerikte en çok bağlantı', 'Post, yorum ya da hizmet metninde. 0: hiç bağlantı yok.', 0, 1000]];
 const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const pct = (a, b) => (Number(b) ? `%${nf.format(Math.round((Number(a) / Number(b)) * 1000) / 10)}` : '—');
 const modelPrice = m => `${usd.format(m.input_usd_per_mtok)} / ${usd.format(m.output_usd_per_mtok)}`;
@@ -1509,19 +1520,26 @@ function frRemovePrompt(p, models) {
 
 function frLimits(cfg) {
   const lim = cfg.limits || {};
-  const inputs = Object.fromEntries(FR_LIMITS.map(([k, , , min, max]) => [k, h('input', { type: 'number', name: k, min, max, step: 1, value: lim[k] ?? '', 'aria-label': k })]));
+  return h('div', null,
+    frLimitCard(lim, FR_LIMITS, 'Limitler kaydedilsin mi?', 'Hak kontrolü sunucuda hemen değişir; uygulamadaki gösterim en geç 1 saatte ya da uygulama yeniden açılınca güncellenir.'),
+    h('h3', { text: 'Spam koruması (akış, yorum, beğeni, hizmet, şikâyet)', style: 'margin:22px 0 10px' }),
+    frLimitCard(lim, SPAM_LIMITS, 'Spam sınırları kaydedilsin mi?', 'Sınıra takılan kullanıcı kısa bir uyarı görür. Aynı metnin (en az 20 karakter) kısa sürede tekrar gönderilmesi de engellenir.'));
+}
+
+function frLimitCard(lim, list, confirmTitle, foot) {
+  const inputs = Object.fromEntries(list.map(([k, , , min, max]) => [k, h('input', { type: 'number', name: k, min, max, step: 1, value: lim[k] ?? '', 'aria-label': k })]));
   const save = () => {
     const changes = [];
-    for (const [k, title, , min, max] of FR_LIMITS) {
+    for (const [k, title, , min, max] of list) {
       const n = Number(inputs[k].value);
       if (!Number.isInteger(n) || n < min || n > max) { toast(`${title}: ${min} ile ${max} arasında bir tam sayı olmalı.`, true); inputs[k].focus(); return; }
       if (String(n) !== String(lim[k] ?? '')) changes.push({ key: k, value: n, label: title, from: lim[k] ?? '—', to: String(n) });
     }
-    frSaveChanges(changes, 'Limitler kaydedilsin mi?', (c, reason) => rpc('admin_set_report_limit', { p_key: c.key, p_value: c.value, p_reason: reason }));
+    frSaveChanges(changes, confirmTitle, (c, reason) => rpc('admin_set_report_limit', { p_key: c.key, p_value: c.value, p_reason: reason }));
   };
   return h('div', { class: 'pa-card' },
-    h('div', { class: 'pa-form' }, FR_LIMITS.map(([k, title, sub]) => h('div', { class: 'pa-form-row' }, h('div', null, h('b', { text: title }), h('span', { text: sub })), inputs[k]))),
-    h('div', { class: 'pa-form-foot' }, h('span', { class: 'pa-small', text: 'Hak kontrolü sunucuda hemen değişir; uygulamadaki gösterim en geç 1 saatte ya da uygulama yeniden açılınca güncellenir.' }), h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Değişiklikleri kaydet', onclick: save })));
+    h('div', { class: 'pa-form' }, list.map(([k, title, sub]) => h('div', { class: 'pa-form-row' }, h('div', null, h('b', { text: title }), h('span', { text: sub })), inputs[k]))),
+    h('div', { class: 'pa-form-foot' }, h('span', { class: 'pa-small', text: foot }), h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Değişiklikleri kaydet', onclick: save })));
 }
 
 function frChecklist(cfg) {
@@ -1534,7 +1552,7 @@ function frChecklist(cfg) {
   };
   return h('div', null,
     h('div', { class: 'pa-tools' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: '+ Yeni madde', onclick: () => frEditItem(null) })),
-    h('p', { class: 'pa-note', style: 'margin-bottom:14px' }, 'Uzman maddeyi işaretlerse tespit ve öneri metni rapora eklenir; yalnız checklist ile oluşturulan rapor hak düşürmez. Başlık eksiklik diliyle yazılır (ör. “Uyarı levhaları eksik”) ve yapay zekâya yalnız başlık gider.'),
+    h('p', { class: 'pa-note', style: 'margin-bottom:14px' }, 'Uzman maddeyi işaretlerse tespit ve öneri metni rapora eklenir; yalnız checklist ile oluşturulan rapor da bir rapor hakkı düşürür. Başlık eksiklik diliyle yazılır (ör. “Uyarı levhaları eksik”) ve yapay zekâya yalnız başlık gider.'),
     rows.length ? h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
       h('thead', null, h('tr', null, ['Sıra', 'Madde', 'Öncelik', 'Durum', ''].map(t => h('th', { text: t })))),
       h('tbody', null, rows.map((r, i) => h('tr', { 'data-item': r.id },

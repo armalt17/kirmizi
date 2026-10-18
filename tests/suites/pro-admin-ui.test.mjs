@@ -60,7 +60,9 @@ function server(ctx) {
       { target: 'default', purpose: 'report_analyze', prompt: 'Sen deneyimli bir iş güvenliği uzmanısın. Tespitleri nesnel yaz; öneriler ...sağlanmalıdır diliyle.', updated_at: iso(600) },
       { target: 'default', purpose: 'finding_rewrite', prompt: 'Bulguyu hukuki dille yeniden yaz; öneri ...sağlanmalıdır.', updated_at: iso(600) },
       { target: 'openai', purpose: 'report_analyze', prompt: 'ChatGPT için özel analiz talimatı: kısa ve nesnel yaz.', updated_at: iso(100) }],
-    limits: { free_monthly_limit: '5', premium_daily_limit: '50', max_daily_limit: '30', report_rewrite_daily_limit: '40', report_max_photos: '8', report_max_drafts: '5' },
+    limits: { free_monthly_limit: '5', premium_daily_limit: '50', max_daily_limit: '30', report_rewrite_daily_limit: '40', report_max_photos: '8', report_max_drafts: '5',
+      spam_posts_per_hour: '10', spam_posts_per_day: '30', spam_comments_per_minute: '5', spam_comments_per_hour: '60', spam_likes_per_hour: '200',
+      spam_services_per_day: '10', spam_reports_per_day: '20', spam_new_account_link_hours: '24', spam_max_links: '3' },
     checklist: [
       { id: Q1, deficiency_title: 'Uyarı levhaları eksik', finding_text: 'Levha yok.', recommendation_text: 'Levha asılmalıdır.', default_priority: 'onemli', explanation: null, is_active: true, order_index: 1, question: 'Uyarı levhaları var mı?' },
       { id: Q2, deficiency_title: 'Yangın tüpü dolum tarihi geçmiş', finding_text: null, recommendation_text: null, default_priority: 'iyilestirme', explanation: null, is_active: true, order_index: 2, question: 'Yangın tüpü kontrol edildi mi?' }]
@@ -627,6 +629,11 @@ try {
     await f.fill('input[name="report_max_photos"]', '10'); await f.fill('input[name="premium_daily_limit"]', '60');
     await f.click('button:text-is("Değişiklikleri kaydet")'); await dialog(); await submit();
     check(await until(() => st.fr.limits.report_max_photos === '10' && st.fr.limits.premium_daily_limit === '60') && st.rpc.some(x => x.name === 'admin_set_report_limit' && x.args.p_key === 'premium_daily_limit' && x.args.p_value === 60), `${vp.n}: limitler tam sayı olarak kaydedildi`);
+    // Spam koruması (v1.11.0): ayrı kart, kendi kaydet düğmesi
+    check(await f.inputValue('input[name="spam_comments_per_minute"]') === '5', `${vp.n}: spam sınırları mevcut değerlerle`);
+    await f.fill('input[name="spam_comments_per_minute"]', '3');
+    await f.locator('button:text-is("Değişiklikleri kaydet")').nth(1).click(); await dialog(); await submit();
+    check(await until(() => st.fr.limits.spam_comments_per_minute === '3') && st.rpc.some(x => x.name === 'admin_set_report_limit' && x.args.p_key === 'spam_comments_per_minute' && x.args.p_value === 3), `${vp.n}: spam sınırı kaydedildi`);
     // Checklist
     await tab('Checklist');
     check(await until(() => f.locator('[data-item]').count().then(n => n === 2)), `${vp.n}: Checklist: 2 madde`);
