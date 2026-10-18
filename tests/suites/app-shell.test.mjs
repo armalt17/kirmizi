@@ -711,8 +711,16 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await f.waitForSelector('#kaLoginDialog[open]'); await page.waitForTimeout(500);
   const geo = () => page.evaluate(() => { const fr = document.querySelector('iframe').getBoundingClientRect(), d = document.querySelector('iframe').contentDocument; const r = d.getElementById('kaLoginDialog').getBoundingClientRect(), b = d.getElementById('kaLoginSubmit').getBoundingClientRect(), e = d.getElementById('kaLoginEmail').getBoundingClientRect(); const nav = document.getElementById('kisg-pro-nav').getBoundingClientRect(); return { top: fr.top + r.top, bottom: fr.top + r.bottom, submitBottom: fr.top + b.bottom, emailTop: fr.top + e.top, navBottom: nav.bottom, scrollable: d.getElementById('kaLoginDialog').scrollHeight > d.getElementById('kaLoginDialog').clientHeight }; });
   let g = await geo();
-  check(g.bottom <= 701 && g.top >= g.navBottom - 1 && g.submitBottom <= 701, `mobil giriş: araç çubuğu üstünde, tamamı görünür ${JSON.stringify(g)}`);
+  // v4.43.0: açılışta e-posta kendiliğinden odaklanır (mobilde klavye açılır) → klavye modu: üst menü gizli, pencere görünen
+  // alanın üstüne yaslı; görünen alan küçülmediği için (iOS bildirmiyor) altın ~%45'i klavye sayılır, pencere kaydırılır.
+  // (auth ve mobile-keyboard-v1 paketleri aynı davranışı bekler.) Eski "menünün altında, tamamı görünür" düzeni klavye kapalıyken geçerli.
+  const kbOn = () => f.evaluate(() => 'kb' in document.getElementById('kaLoginDialog').dataset);
+  check(await kbOn() && g.top >= -1 && g.top <= 20 && g.bottom <= 700 * 0.55 + 1 && g.emailTop >= g.top && g.emailTop < g.bottom && g.scrollable, `mobil giriş: açılışta klavye modunda, görünen alanın üstünde ${JSON.stringify(g)}`);
+  await f.evaluate(() => document.activeElement.blur()); await page.waitForTimeout(1000);   // odak çıktı (klavye kapalı)
+  g = await geo();
+  check(!(await kbOn()) && g.bottom <= 701 && g.top >= g.navBottom - 1 && g.submitBottom <= 701, `mobil giriş: araç çubuğu üstünde, tamamı görünür ${JSON.stringify(g)}`);
   await page.screenshot({ path: `${OUT}/mobile-login.png` });
+  await f.focus('#kaLoginEmail');   // klavye yazı alanına dokununca açılır
   await setVV(420, 180);  // klavye açık, görsel viewport kaydırılmış
   await page.waitForTimeout(400);
   g = await geo();
