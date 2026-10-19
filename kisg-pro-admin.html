@@ -282,7 +282,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.11.0',
+  version: '1.12.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -1313,7 +1313,12 @@ const SPAM_LIMITS = [
   ['spam_services_per_day', 'Günde en çok yeni hizmet', 'Aktif hizmet sınırı (5) ayrıca geçerli.', 1, 10000],
   ['spam_reports_per_day', 'Günde en çok şikâyet', 'Toplu şikâyetle içerik kapatma girişimine karşı.', 1, 10000],
   ['spam_new_account_link_hours', 'Yeni hesapta bağlantı yasağı (saat)', 'Hesap açıldıktan sonra bu süre boyunca bağlantı (link) paylaşılamaz. 0: kapalı.', 0, 1000],
-  ['spam_max_links', 'Bir içerikte en çok bağlantı', 'Post, yorum ya da hizmet metninde. 0: hiç bağlantı yok.', 0, 1000]];
+  ['spam_max_links', 'Bir içerikte en çok bağlantı', 'Post, yorum ya da hizmet metninde. 0: hiç bağlantı yok.', 0, 1000],
+  // Yeni hesap kuralları (v1.12.0): ilk saatlerde daha sıkı sınır; hizmet bu süre dolunca yayına girer. Onaylı hesap muaf.
+  ['new_account_hours', 'Yeni hesap süresi (saat)', 'Bu sürede aşağıdaki sınırlar geçerli; hizmetler süre dolunca yayına girer ve sahibine bildirim gider. 0: kapalı.', 0, 720],
+  ['new_posts_per_day', 'Yeni hesap: günde en çok Post', 'Sınıra takılan "yeni topluluğumuzu korumak için…" uyarısı ve kalan saati görür.', 1, 10000],
+  ['new_comments_per_day', 'Yeni hesap: günde en çok yorum', 'Beğeni serbesttir.', 1, 10000],
+  ['new_chats_per_day', 'Yeni hesap: günde en çok yeni sohbet', 'Mesajla reklam yayılmasına karşı.', 1, 10000]];
 const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const pct = (a, b) => (Number(b) ? `%${nf.format(Math.round((Number(a) / Number(b)) * 1000) / 10)}` : '—');
 const modelPrice = m => `${usd.format(m.input_usd_per_mtok)} / ${usd.format(m.output_usd_per_mtok)}`;
@@ -1522,7 +1527,7 @@ function frLimits(cfg) {
   const lim = cfg.limits || {};
   return h('div', null,
     frLimitCard(lim, FR_LIMITS, 'Limitler kaydedilsin mi?', 'Hak kontrolü sunucuda hemen değişir; uygulamadaki gösterim en geç 1 saatte ya da uygulama yeniden açılınca güncellenir.'),
-    h('h3', { text: 'Spam koruması (akış, yorum, beğeni, hizmet, şikâyet)', style: 'margin:22px 0 10px' }),
+    h('h3', { text: 'Spam koruması ve yeni hesap kuralları', style: 'margin:22px 0 10px' }),
     frLimitCard(lim, SPAM_LIMITS, 'Spam sınırları kaydedilsin mi?', 'Sınıra takılan kullanıcı kısa bir uyarı görür. Aynı metnin (en az 20 karakter) kısa sürede tekrar gönderilmesi de engellenir.'));
 }
 
