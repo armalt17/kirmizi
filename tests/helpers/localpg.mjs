@@ -10,7 +10,7 @@ export function pgBin() {
   return process.env.PG_BIN || '';
 }
 
-export function startCluster() {
+export function startCluster({ utf8 = false } = {}) {
   const BIN = pgBin(); if (!BIN) return null;
   const asRoot = process.getuid?.() === 0;
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kisg-pg-')); fs.chmodSync(dir, 0o777);
@@ -20,7 +20,8 @@ export function startCluster() {
     return { code: r.status, out: (r.stdout || '').trim(), err: (r.stderr || '').trim() };
   };
   const port = String(56000 + Math.floor(Math.random() * 900)), data = path.join(dir, 'data');
-  let r = sh(`${BIN}/initdb`, ['-D', data, '-U', 'postgres', '-A', 'trust', '--no-sync']);
+  // utf8: production (Supabase) gibi UTF8 veritabanı — çok baytlı Türkçe karakter işlemleri (translate vb.) için
+  let r = sh(`${BIN}/initdb`, ['-D', data, '-U', 'postgres', '-A', 'trust', '--no-sync', ...(utf8 ? ['-E', 'UTF8', '--locale=C.UTF-8'] : [])]);
   if (r.code) throw new Error('initdb: ' + r.err);
   r = sh(`${BIN}/pg_ctl`, ['-D', data, '-o', `-k ${dir} -p ${port} -c listen_addresses=''`, '-l', path.join(dir, 'log'), '-w', 'start']);
   if (r.code) throw new Error('pg_ctl: ' + r.err);

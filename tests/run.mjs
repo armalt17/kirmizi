@@ -13,6 +13,7 @@ fs.mkdirSync(OUT, { recursive: true });
 
 // Sıra: temel App Shell → özellik paketleri. env: paket için ek ortam değişkenleri.
 const SUITES = [
+  { name: 'embed-build', file: 'embed-build.test.mjs', note: 'Hostinger yayın dosyası güncel ve boyut sınırında' },
   { name: 'app-shell', file: 'app-shell.test.mjs' },
   { name: 'app-shell-safari', file: 'app-shell.test.mjs', env: { SAFARI: '1' }, note: 'WebKit canvas WebP üretemez simülasyonu' },
   { name: 'comments', file: 'comments.test.mjs' },
@@ -37,7 +38,24 @@ const SUITES = [
   { name: 'legal-db', file: 'legal-db.test.mjs', note: 'yerel geçici PostgreSQL' },
   { name: 'legal-v1-web', file: 'legal-v1-web.test.mjs', note: '/yasal + App Shell' },
   { name: 'service-region-v11', file: 'service-region-v11.test.mjs' },
-  { name: 'links-v1', file: 'links-v1.test.mjs' }
+  { name: 'links-v1', file: 'links-v1.test.mjs' },
+  { name: 'small-fixes-pack', file: 'small-fixes-pack.test.mjs', note: 'ad normalizasyonu, placeholder, yasal bağlantılar' },
+  { name: 'v425-pack', file: 'v425-pack.test.mjs', note: 'Profil V2, Hizmet Bul V3, Uzmanlar V2, Akış vitrin' },
+  { name: 'report-fixes', file: 'report-fixes.test.mjs', note: 'dış test raporu F01–F08' },
+  { name: 'skeleton', file: 'skeleton.test.mjs', note: 'yükleme iskeletleri' },
+  { name: 'tags-db', file: 'tags-db.test.mjs', note: 'Konular V1 — yerel geçici PostgreSQL' },
+  { name: 'tags-admin-db', file: 'tags-admin-db.test.mjs', note: 'Konular V2 admin — yerel geçici PostgreSQL' },
+  { name: 'service-categories-admin-db', file: 'service-categories-admin-db.test.mjs', note: 'Hizmet kategorileri admin — yerel geçici PostgreSQL' },
+  { name: 'post-images-db', file: 'post-images-db.test.mjs', note: 'İkinci fotoğraf — yerel geçici PostgreSQL' },
+  { name: 'post-images-web', file: 'post-images-web.test.mjs', note: 'İkinci fotoğraf — düzenleyici, kart, görüntüleyici' },
+  { name: 'v436-pack', file: 'v436-pack.test.mjs', note: 'Sekme ikonları, Hizmet Alanı, Yurtdışı, yan kolon' },
+  { name: 'topics-web', file: 'topics-web.test.mjs', note: 'Konular sayfası' },
+  { name: 'saved-items-db', file: 'saved-items-db.test.mjs', note: 'Kaydedilenler — yerel geçici PostgreSQL' },
+  { name: 'saved-web', file: 'saved-web.test.mjs', note: 'Kaydedilenler — kartlar, sayfa, misafir' },
+  { name: 'tags-web', file: 'tags-web.test.mjs', note: 'Konular V1 — şerit, panel, composer' },
+  { name: 'code-health-pack', file: 'code-health-pack.test.mjs', note: 'Kod sağlığı raporu düzeltmeleri' },
+  { name: 'verified-accounts-db', file: 'verified-accounts-db.test.mjs', note: 'Onaylı hesap — yerel geçici PostgreSQL' },
+  { name: 'verified-web', file: 'verified-web.test.mjs', note: 'Onaylı hesap — rozet, filtre, başvuru' },
 ];
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx > -1 ? process.argv[onlyIdx + 1] : null;

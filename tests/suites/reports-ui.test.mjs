@@ -55,7 +55,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   check(await f.locator(`[data-view="works"] [data-post-id="${POST_U2}"] .kw-menu:not([hidden])`).count() === 1, `${N} Post üç nokta menüsü açıldı`);
   await f.evaluate(id => document.querySelector(`[data-view="works"] [data-post-id="${id}"] [data-post-action="report"]`).click(), POST_U2);
   await f.waitForSelector('#kaReportDialog[open]'); await settle(page, 450);
-  const dlg = await f.evaluate(() => { const d = document.getElementById('kaReportDialog'); const r = d.getBoundingClientRect(); const b = document.getElementById('kaReportSubmit').getBoundingClientRect(); return { fits: b.bottom <= r.bottom + 0.5 && d.scrollHeight <= d.clientHeight + 1, title: document.getElementById('kaReportTitle').textContent, place: d.dataset.place, bottom: Math.round(innerHeight - r.bottom), w: Math.round(r.width), vw: innerWidth }; });
+  const dlg = await f.evaluate(() => { const d = document.getElementById('kaReportDialog'); const r = d.getBoundingClientRect(); const b = document.getElementById('kaReportSubmit').getBoundingClientRect(); return { fits: b.bottom <= r.bottom + 0.5 && b.top >= r.top, title: document.getElementById('kaReportTitle').textContent, place: d.dataset.place, bottom: Math.round(innerHeight - r.bottom), w: Math.round(r.width), vw: innerWidth }; });
   check(dlg.title === 'Postu bildir', `${N} dialog başlığı: ${dlg.title}`);
   if (vp.isMobile) check(dlg.place === 'sheet' && dlg.w === dlg.vw && dlg.fits, `${N} mobilde alt sayfa (sheet), tam genişlik, Bildir butonu kaydırmadan görünür (${dlg.w}/${dlg.vw})`);
   else check(dlg.w < 640, `${N} masaüstünde ortalı dialog (${dlg.w}px)`);

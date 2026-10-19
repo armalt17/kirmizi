@@ -47,10 +47,8 @@ try {
       await page.evaluate(() => window.scrollTo(0, 0)); await settle(page, 300);
       await page.screenshot({ path: path.join(OUT, `experts-rail-${N}.png`) });
     } else {
-      await until(() => f.locator('.kw-rail-experts .kw-rail-expert').count().then(n => n > 0));
-      const n = await f.locator('.kw-rail-experts .kw-rail-expert').count();
-      check(n === 3, `${N}: akış içi şerit 3 uzman (mevcut sayı korundu: ${n})`);
-      await f.locator('.kw-rail-experts').scrollIntoViewIfNeeded();
+      await f.waitForSelector('[data-view="works"] [data-post-id]'); await settle(page, 800);
+      check(await f.locator('.kw-rail-experts').count() === 0, `${N}: akış içi uzman şeridi yok (v4.36.0)`);
       await page.screenshot({ path: path.join(OUT, `experts-rail-${N}.png`) });
     }
 

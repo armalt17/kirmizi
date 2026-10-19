@@ -8,7 +8,9 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await setup(ctx, true);
   const page = await ctx.newPage();
   page.on('pageerror', e => errors.push(`${vp.name} parent: ${e.message}`));
-  page.on('console', m => { if (m.type() === 'error') errors.push(`${vp.name} console: ${m.text()}`); });
+  // Sahte sunucuda tanımlı olmayan isteğe bağlı RPC'ler (migration öncesi durum) 404 döner; uygulama bunları sessizce yok sayar.
+  const OPTIONAL_404 = /\/rest\/v1\/rpc\/(kisg_tags_trending|kisg_verified_users)\b/;
+  page.on('console', m => { if (m.type() === 'error' && !(/status of 404/.test(m.text()) && OPTIONAL_404.test(m.location()?.url || ''))) errors.push(`${vp.name} console: ${m.text()}`); });
   await page.goto('https://isgcalisanplatformu.com/');
   await page.waitForTimeout(800);
   let f = frameOf(page);
@@ -249,7 +251,7 @@ function dims(b) {
   await f.setInputFiles('#kaPostImage', { name: 'IMG_0001.jpg', mimeType: 'image/jpeg', buffer: bigBuf });
   await f.fill('#kaPostContent', 'Boyut testi');
   await f.evaluate(() => document.getElementById('kaPostSubmit').click());
-  await page.waitForTimeout(4000);
+  for (let i = 0; i < 200 && !uploads.some(u => u.path.includes('/professional-posts/')); i++) await page.waitForTimeout(100);   // 4032×3024 sıkıştırma yavaş makinede uzayabilir
   const up = uploads.find(u => u.path.includes('/professional-posts/'));
   if (up) {
     const part = filePart(up.body, up.ct), d = dims(part.data);
@@ -270,10 +272,10 @@ function dims(b) {
   if (av) {
     const part = filePart(av.body, av.ct), d = dims(part.data);
     console.log(`INFO Avatar: ${av.path.split('/object/')[1]} ${part.ct} ${d?.join('x')} ${(part.data.length / 1024).toFixed(0)} KB, upsert=${av.headers['x-upsert']}`);
-    check(d?.[0] === 512 && d?.[1] === 512 && part.data.length <= 150 * 1024 && av.path.endsWith(`${U1}/avatar.webp`), 'Avatar 512×512, ≤150KB, tek canonical yol');
+    check(d?.[0] === 512 && d?.[1] === 512 && part.data.length <= 150 * 1024 && new RegExp(`${U1}/avatar-[a-z0-9]+\\.${part.ct === 'image/jpeg' ? 'jpg' : 'webp'}$`).test(av.path) && av.headers['x-upsert'] !== 'true', 'Avatar 512×512, ≤150KB, sürümlü yeni dosya (üzerine yazılmaz)');
   } else check(false, 'Avatar yüklemesi yakalanamadı');
   const avWrite = writes.find(w => w.table === 'profiles' && 'avatar_url' in (w.body || {}));
-  check(/avatar\.webp\?v=/.test(avWrite?.body?.avatar_url || ''), 'avatar_url sürüm parametreli (cache-bust yalnız URL ile)');
+  check(!!av && (avWrite?.body?.avatar_url || '').endsWith(`${U1}/${av.path.split('/').pop()}`), `avatar_url yeni dosyayı gösteriyor (${avWrite?.body?.avatar_url})`);
   // === Silinen Çalışmanın görseli Storage'dan kaldırılır ===
   await page.goto(`https://isgcalisanplatformu.com/profil?id=${U1}`); await page.waitForTimeout(500);   // v4.19.0: PDF yalnız kendi profilinde
   // === PDF mobil (dokunmatik) ===
@@ -427,7 +429,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   const mark = await page.evaluate(() => window.__bootMark);
   check(await f.locator('[data-view="services"] .ks-chip').count() === 5, `${vp.name} hizmetler: kategori şeridi (Tümü + 4)`);
   check(/aktif hizmet/.test(await f.textContent('[data-hero-count]')), `${vp.name} hizmetler: vitrin sayacı (${await f.textContent('[data-hero-count]')})`);
-  check(await f.locator('[data-view="services"] .ks-card .ks-pro').count() === await f.locator('[data-view="services"] .ks-card').count(), `${vp.name} hizmetler: her kartta sağlayıcı`);
+  check(await f.locator('[data-view="services"] .ks-card .ks-lead .k-avatar').count() === await f.locator('[data-view="services"] .ks-card').count(), `${vp.name} hizmetler: her kartta sağlayıcı`);
   await page.screenshot({ path: `${OUT}/${vp.name}-services-list.png`, fullPage: true });
   // kategori seç (Risk Değerlendirmesi = 3)
   reqs.length = 0;
@@ -538,9 +540,9 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await page.evaluate(() => scrollTo(0, 900)); await page.waitForTimeout(200);
   const yWorks = await page.evaluate(() => scrollY);
   await navClick(page, 'services'); await f.waitForSelector('[data-view="services"] .ks-card');
-  check(await visibleView(f) === 'services' && await f.locator('[data-view="services"] .ks-hero').count() === 1 && await f.locator('[data-view="services"] .ks-card .ks-pro').count() > 0, `${vp.name} QA akış: Çalışmalar → Hizmetler V2 (tek görünüm)`);
-  const heroH = await f.evaluate(() => document.querySelector('[data-view="services"] .ks-hero').getBoundingClientRect().height);
-  check(vp.name === 'desktop' ? heroH >= 220 && heroH <= 252 : heroH <= 240, `${vp.name} QA: hero yüksekliği ${Math.round(heroH)}px`);
+  check(await visibleView(f) === 'services' && await f.locator('[data-view="services"] .k-hero').count() === 1 && await f.locator('[data-view="services"] .ks-card .ks-lead .k-avatar').count() > 0, `${vp.name} QA akış: Çalışmalar → Hizmetler V2 (tek görünüm)`);
+  const heroH = await f.evaluate(() => document.querySelector('[data-view="services"] .k-hero').getBoundingClientRect().height);
+  check(vp.name === 'desktop' ? heroH >= 60 && heroH <= 120 : heroH <= 90, `${vp.name} QA: hero yüksekliği ${Math.round(heroH)}px`);
   await f.fill('#ksSearch', 'Ölçüm'); await page.waitForTimeout(900);
   const nSearch = await f.locator('[data-view="services"] .ks-card').count();
   await f.evaluate(() => document.querySelector('[data-view="services"] [data-service-id]').scrollIntoView({ block: 'center' })); await page.waitForTimeout(150);
@@ -553,7 +555,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await page.goBack(); await page.waitForTimeout(500);
   check(page.url().endsWith('isgcalisanplatformu.com/') && await visibleView(f) === 'works' && Math.abs(await page.evaluate(() => scrollY) - yWorks) < 4, `${vp.name} QA akış: geri → Çalışmalar scroll korundu`);
   await navClick(page, 'services'); await page.waitForTimeout(500);
-  check(await visibleView(f) === 'services' && await f.locator('[data-view="services"] .ks-hero').count() === 1 && await f.inputValue('#ksSearch') === 'Ölçüm', `${vp.name} QA akış: Çalışmalar → Hizmetler yine V2, state korundu`);
+  check(await visibleView(f) === 'services' && await f.locator('[data-view="services"] .k-hero').count() === 1 && await f.inputValue('#ksSearch') === 'Ölçüm', `${vp.name} QA akış: Çalışmalar → Hizmetler yine V2, state korundu`);
   // ileri/geri
   await page.goBack(); await page.waitForTimeout(400);
   await page.goForward(); await page.waitForTimeout(400);
@@ -687,7 +689,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await setup(ctx2, true);
   const p2 = await ctx2.newPage();
   await p2.goto('https://isgcalisanplatformu.com/'); await p2.waitForTimeout(900);
-  check(await frameOf(p2).evaluate(() => document.getElementById('kisgApp').dataset.routing) === 'shell' && JSON.parse(await p2.evaluate(() => localStorage.getItem('kisg:shell:version'))).v === (APP.match(/version: '([^']+)'/) || [])[1], 'QA sürüm koruması: normal durumda shell modu, sürüm kaydı');
+  check(await frameOf(p2).evaluate(() => document.getElementById('kisgApp').dataset.routing) === 'shell' && JSON.parse(await p2.evaluate(() => localStorage.getItem('kisg:shell:version'))).v === (APP.match(/version:\s*["'](\d+\.\d+\.\d+)["']/) || [])[1], 'QA sürüm koruması: normal durumda shell modu, sürüm kaydı');
   await ctx2.close();
 }
 
@@ -702,7 +704,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await page.goto('https://isgcalisanplatformu.com/hizmetler'); await page.waitForTimeout(900);
   const f = frameOf(page);
   await f.waitForSelector('[data-view="services"] .ks-card');
-  await page.evaluate(() => scrollTo(0, 600)); await page.waitForTimeout(200);
+  const y0 = await page.evaluate(() => { scrollTo(0, 600); return scrollY; }); await page.waitForTimeout(200);   // v4.32 kartlar kısa: sayfa 600'e inemeyebilir
   const setVV = (h, top) => page.evaluate(([h, top]) => { const vv = window.visualViewport; Object.defineProperty(vv, 'height', { get: () => h, configurable: true }); Object.defineProperty(vv, 'offsetTop', { get: () => top, configurable: true }); vv.dispatchEvent(new Event('resize')); vv.dispatchEvent(new Event('scroll')); }, [h, top]);
   await setVV(700, 0);   // alt araç çubuğu 144px
   await page.evaluate(() => document.getElementById('kisg-pro-nav').shadowRoot.querySelector('[data-action="login"]').click());
@@ -719,7 +721,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   g = await geo();
   check(g.bottom <= 701, 'mobil giriş: klavye kapanınca yeniden yerleşir');
   await f.click('#kaLoginDialog [data-close]'); await page.waitForTimeout(400);
-  check(await page.evaluate(() => getComputedStyle(document.body).position) !== 'fixed' && Math.abs(await page.evaluate(() => scrollY) - 600) < 3, 'mobil giriş: kapanınca sayfa kilidi kalkar, konum aynı');
+  check(await page.evaluate(() => getComputedStyle(document.body).position) !== 'fixed' && y0 > 0 && Math.abs(await page.evaluate(() => scrollY) - y0) < 3, 'mobil giriş: kapanınca sayfa kilidi kalkar, konum aynı');
   await ctx.close();
 }
 
@@ -733,8 +735,8 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   page.on('pageerror', e => errors.push(`vitrin: ${e.message}`));
   await page.goto('https://isgcalisanplatformu.com/'); await page.waitForTimeout(1200);
   const f = frameOf(page);
-  const side = await page.evaluate(() => { const r = document.getElementById('kisg-pro-sides').shadowRoot; return [...r.querySelectorAll('.kw-offer')].map(a => ({ cat: a.querySelector('.kw-offer-cat')?.textContent, title: a.querySelector('strong')?.textContent, by: a.querySelector('.kw-offer-by')?.textContent, av: !!a.querySelector('.kw-offer-by .k-avatar'), href: a.getAttribute('href') })); });
-  check(side.length >= 2 && side.length <= 3 && side.every(x => x.cat && x.title && x.by && x.av && x.href.includes('/hizmet-detay?id=')), `vitrin: 2–3 hizmet kartı kategori/başlık/profesyonel ile (${side.length})`);
+  const side = await page.evaluate(() => { const r = document.getElementById('kisg-pro-sides').shadowRoot; return [...r.querySelectorAll('.kw-offer')].map(a => ({ cat: a.title, title: a.querySelector('strong')?.textContent, by: a.querySelector('.kw-offer-meta')?.textContent, av: !!a.querySelector('.ks-mark svg'), href: a.getAttribute('href') })); });
+  check(side.length >= 2 && side.length <= 4 && side.every(x => x.cat && x.title && x.by && x.av && x.href.includes('/hizmet-detay?id=')), `vitrin: 2–4 hizmet satırı (v4.36.0: 4) kategori ikonu/başlık/profesyonel ile (${side.length})`);
   const link = await page.evaluate(() => { const a = document.getElementById('kisg-pro-sides').shadowRoot.querySelector('.kw-vitrin-link'); return a ? a.textContent.trim() : ''; });
   check(/^Tümünü gör/.test(link), 'vitrin: başlıkta "Tümünü gör" bağlantısı');
   const feedW = await f.evaluate(() => document.querySelector('[data-view="works"] .kw-feed').getBoundingClientRect().width);

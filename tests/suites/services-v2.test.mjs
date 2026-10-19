@@ -18,16 +18,15 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   await f.waitForSelector('[data-view="services"] .ks-card');
   // Kart hiyerarşisi: başlık → açıklama → kategori/bölge/şekil → profesyonel (avatar+ad+meslek) → "Hizmeti İncele"
   const cards = await f.evaluate(() => [...document.querySelectorAll('[data-view="services"] .ks-card')].map(c => ({
-    order: [...c.children].map(x => x.className.split(' ')[0] || x.tagName),
-    title: c.querySelector('h2')?.textContent.trim(), cat: c.querySelector('.ks-facts .ks-cat')?.textContent.trim(),
-    pro: !!c.querySelector('.ks-foot .ks-pro .k-avatar') && !!c.querySelector('.ks-pro-copy strong')?.textContent.trim(),
-    line: c.querySelector('.ks-pro-copy span')?.textContent.trim() || '', cta: c.querySelector('.ks-foot .ks-cta')?.textContent.trim(),
+    order: [...c.children].map(x => (x.getAttribute('class') || x.tagName).split(' ')[0]),
+    title: c.querySelector('h2')?.textContent.trim(), cat: c.querySelector('.ks-copy .ks-cat')?.textContent.trim(),
+    pro: !!c.querySelector('.ks-lead .k-avatar'), line: c.querySelector('.ks-meta')?.textContent.trim() || '', cta: c.querySelector('.ks-cta'),
     featured: c.querySelectorAll('.k-featured').length, price: /₺|TL\b|fiyat|teklif|puan/i.test(c.textContent)
   })));
   check(cards.length === 6, `${vp.name}: 6 hizmet kartı`);
-  check(cards.every(c => JSON.stringify(c.order.filter(x => x !== 'ks-card-top')) === JSON.stringify(['ks-head', 'ks-description', 'ks-facts', 'ks-foot'])), `${vp.name}: kart sırası başlık → açıklama → bilgiler → alt satır (${cards[0].order.join(',')})`);
-  check(cards.every(c => c.title && c.cat && c.pro && /^Hizmeti İncele/.test(c.cta)), `${vp.name}: her kartta kategori, profesyonel avatar+ad, "Hizmeti İncele"`);
-  check(cards.find(c => c.title === 'Gürültü ve Toz Ölçümü')?.line === 'İşyeri Hekimi' && /İş Güvenliği Uzmanı/.test(cards.find(c => c.title === 'Uzaktan İSG Danışmanlığı')?.line), `${vp.name}: meslek/statü satırı`);
+  check(cards.every(c => JSON.stringify(c.order) === JSON.stringify(['ks-lead', 'ks-copy', 'k-save', 'ks-go'])), `${vp.name}: v4.32 kart: kişi fotoğrafı → metin → kaydet (v4.38) → ok (${cards[0].order.join(',')})`);
+  check(cards.every(c => c.title && c.cat && c.pro && !c.cta), `${vp.name}: her kartta kategori, profesyonelin fotoğrafı; ayrı "Hizmeti İncele" yok`);
+  check(/^Mehmet Şahin Öztürk · /.test(cards.find(c => c.title === 'Gürültü ve Toz Ölçümü')?.line) && /^Ayşe Yılmaz · /.test(cards.find(c => c.title === 'Uzaktan İSG Danışmanlığı')?.line), `${vp.name}: "kişi · şekil · bölge" satırı`);
   check(cards.every(c => c.featured === 0), `${vp.name}: DB'de öne çıkarma alanı yok → taç rozeti yok`);
   check(cards.every(c => !c.price), `${vp.name}: fiyat/teklif/puan yok (pazar yeri değil)`);
   const overflow = await f.evaluate(() => [...document.querySelectorAll('[data-view="services"] .ks-card')].some(c => c.scrollWidth > c.clientWidth + 1));
@@ -84,12 +83,13 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   const side = await page.evaluate(() => { const r = document.getElementById('kisg-pro-sides').shadowRoot; return {
     head: r.querySelector('#kwServicesTitle')?.textContent.trim(), all: r.querySelector('.kw-side-head-services a')?.textContent.trim(), bottom: r.querySelectorAll('.kw-side-link').length,
     popular: /Popüler|Elite/i.test(r.textContent),
-    items: [...r.querySelectorAll('.kw-offer')].map(a => ({ title: a.querySelector('strong')?.textContent, by: a.querySelector('.kw-offer-by')?.textContent.trim(), cat: a.querySelector('.kw-offer-top .kw-offer-cat')?.textContent, featured: a.querySelectorAll('.k-featured').length }))
+    items: [...r.querySelectorAll('.kw-offer')].map(a => ({ title: a.querySelector('strong')?.textContent, by: a.querySelector('.kw-offer-meta')?.textContent.split(' · ')[0], cat: a.title, ico: !!a.querySelector('.ks-lead .k-avatar + .ks-mark svg'), featured: a.querySelectorAll('.k-featured').length })),
+    tool: !!r.querySelector('[data-side-find] input[type=search]') && !!r.querySelector('.kw-offer-cta [data-then="publish"]')
   }; });
-  check(side.head === 'Hizmetler' && /^Tümünü gör/.test(side.all) && side.bottom === 0 && !side.popular, `sağ panel başlık "Hizmetler — Tümünü gör →", alt bağlantı/Popüler yok: ${side.head} | ${side.all}`);
-  check(side.items.length === 3 && JSON.stringify(side.items.map(x => x.title)) === JSON.stringify(['Yeni A1', 'İşyeri Hekimliği Hizmeti', 'Üçüncü Hizmet']), `sağlayıcı başına bir hizmet, en yeniden: ${side.items.map(x => `${x.title} (${x.by})`).join(' | ')}`);
-  check(new Set(side.items.map(x => x.by)).size === 3 && side.items.every(x => x.cat && x.featured === 0), 'üç farklı sağlayıcı, kategori var, taç yok');
-  check(svcReqs.some(q => /status=eq\.active/.test(q) && /order=created_at\.desc/.test(q) && /limit=24/.test(q)), 'sorgu: aktif, en yeni, 24 aday');
+  check(side.head === 'Hizmet Bul' && /^Tümünü gör/.test(side.all) && side.bottom === 0 && !side.popular && side.tool, `sağ panel "Hizmet Bul" aracı: arama + "Yayınla", Popüler yok: ${side.head} | ${side.all}`);
+  check(side.items.length === 4 && JSON.stringify(side.items.map(x => x.title)) === JSON.stringify(['Yeni A1', 'İşyeri Hekimliği Hizmeti', 'Üçüncü Hizmet', 'Yeni A2']), `v4.36.0 dört satır: önce sağlayıcı başına bir hizmet (en yeniden), kalan yer en yeni hizmetle: ${side.items.map(x => `${x.title} (${x.by})`).join(' | ')}`);
+  check(new Set(side.items.slice(0, 3).map(x => x.by)).size === 3 && side.items.every(x => x.cat && x.ico && x.featured === 0), 'üç farklı sağlayıcı, kategori ikonu + adı (title), taç yok');
+  check(svcReqs.some(q => /status=eq\.active/.test(q) && /order=created_at\.desc/.test(q) && /limit=32/.test(q)), 'sorgu: aktif, en yeni, 32 aday (4 × 8)');
   await page.screenshot({ path: `${OUT}/services-v2-feed-desktop.png`, clip: { x: 0, y: 64, width: 1366, height: 836 } });
   await ctx.close();
 }
