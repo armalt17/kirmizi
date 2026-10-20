@@ -1,0 +1,220 @@
+<!doctype html>
+<!--
+Kırmızı İSG · Rapor doğrulama sayfası (v1.0.0, 2026-10-20)
+KURULUM: Hostinger'da /dogrula sayfasının Custom HTML/Embed içeriği olarak bu dosyanın TAMAMI yapıştırılır.
+PDF'teki kare kod https://isgcalisanplatformu.com/dogrula?k=KOD adresine gider (app_settings.report_verify_url).
+Veri: herkese açık report_verify(kod) (yalnız özet: uzman, rapor no, sürümler, kısaltılmış firma; tespit metni yok).
+Yayına almadan önce production'da 20261020020000_report_verify_qr.sql uygulanmış olmalı.
+Staging deneme kopyası: node tools/build-dogrula-staging.mjs → dist-dogrula/kisg-dogrula-staging.html
+-->
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Rapor doğrulama · Kırmızı İSG</title>
+<style>
+  :root {
+    --red: #E30A17; --red-text: #C7101B; --ink: #141A24; --text: #262D38; --muted: #5D6878; --faint: #6B7585;
+    --line: #E6E9EE; --line-soft: #EEF0F3; --page: #ECEEF1; --surface: #FFFFFF; --green: #1F7A4D;
+    --green-wash: rgba(31, 122, 77, .10); --orange: #B25E09;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { background: var(--page); }
+  body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--text); -webkit-font-smoothing: antialiased;
+  }
+  .kd { max-width: 480px; margin: 0 auto; padding: 0 16px 28px; }
+  .kd-brand { display: flex; align-items: center; gap: 10px; padding: 14px 2px; }
+  .kd-brand b { font-size: 16px; font-weight: 800; color: var(--ink); letter-spacing: -.2px; }
+  .kd-brand span { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .kd-mark { width: 28px; height: 28px; border-radius: 8px; object-fit: cover; background: var(--red); }
+  .kd-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+  .kd-hero { padding: 24px 20px; text-align: center; }
+  .kd-tick { width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 14px; display: flex; align-items: center;
+    justify-content: center; background: var(--green); }
+  .kd-tick.bad { background: var(--orange); }
+  .kd-tick svg { width: 34px; height: 34px; }
+  h1 { font-size: 22px; line-height: 28px; font-weight: 800; color: var(--ink); letter-spacing: -.4px; }
+  .kd-hero p { font-size: 15px; line-height: 22px; margin-top: 8px; }
+  .kd-hero p b { color: var(--ink); }
+  .kd-gap { height: 12px; }
+  .kd-who { display: flex; gap: 12px; align-items: center; padding: 16px; }
+  .kd-av { width: 52px; height: 52px; border-radius: 50%; background: #2C3440; color: #fff; font-weight: 700;
+    font-size: 18px; display: flex; align-items: center; justify-content: center; flex: none; overflow: hidden; }
+  .kd-av img { width: 100%; height: 100%; object-fit: cover; }
+  .kd-name { font-size: 16px; font-weight: 700; color: var(--ink); }
+  .kd-role { font-size: 13px; line-height: 18px; color: var(--muted); margin-top: 2px; }
+  .kd-ok { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--green);
+    background: var(--green-wash); padding: 3px 8px; border-radius: 999px; margin-top: 6px; }
+  .kd-ok.past { color: var(--muted); background: var(--line-soft); }
+  .kd-row { display: flex; justify-content: space-between; gap: 12px; padding: 11px 16px; border-top: 1px solid var(--line-soft);
+    font-size: 14px; color: var(--muted); }
+  .kd-row b { font-weight: 600; color: var(--ink); text-align: right; }
+  .kd-note { font-size: 12.5px; line-height: 18px; color: var(--faint); padding: 12px 4px 0; }
+  .kd-btn { display: block; width: 100%; margin-top: 14px; border: 0; background: var(--ink); color: #fff; text-align: center;
+    border-radius: 14px; padding: 14px; font: inherit; font-size: 15px; font-weight: 600; text-decoration: none; cursor: pointer; }
+  .kd-link { display: block; text-align: center; margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--red-text);
+    text-decoration: none; }
+  .kd-form { padding: 20px; }
+  .kd-form label { display: block; font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+  .kd-form input { width: 100%; font: inherit; font-size: 20px; letter-spacing: 2px; text-transform: uppercase; text-align: center;
+    padding: 12px; border: 1px solid #D3D8DF; border-radius: 12px; color: var(--ink); background: #fff; }
+  .kd-form input:focus { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .kd-form p { font-size: 13px; line-height: 19px; color: var(--muted); margin-top: 10px; }
+  .kd-old { padding: 10px 16px 12px; border-top: 1px solid var(--line-soft); font-size: 13px; line-height: 19px; color: var(--muted); }
+  .kd-wait { text-align: center; padding: 40px 0; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main class="kd" id="kd" aria-live="polite"><div class="kd-wait">Yükleniyor…</div></main>
+<script>
+(() => {
+  const CONFIG = {
+    supabaseUrl: 'https://wztoupambatmvhwdhjmy.supabase.co',
+    supabaseKey: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH',
+    siteUrl: 'https://isgcalisanplatformu.com',
+    logoUrl: 'https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/logo.jpg',
+  };
+  const root = document.getElementById('kd');
+
+  // Hostinger sayfayı aynı kökenli bir çerçevede açar: adres ve gezinme üst pencereden.
+  const top = (() => {
+    try { if (window.parent !== window && typeof window.parent.location.href === 'string') return window.parent; } catch (e) {}
+    return window;
+  })();
+  const frame = (() => { try { return window.frameElement; } catch (e) { return null; } })();
+  const fit = () => {
+    if (!frame) return;
+    frame.style.height = `${document.documentElement.scrollHeight}px`;
+  };
+
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const clean = (k) => String(k || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 16);
+  const MONTHS = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+  // PDF'teki gibi İstanbul saatine göre gün.
+  const day = (iso) => {
+    if (!iso) return '';
+    const t = new Date(new Date(iso.length === 10 ? `${iso}T12:00:00Z` : iso).getTime() + 3 * 3600 * 1000);
+    return `${t.getUTCDate()} ${MONTHS[t.getUTCMonth()]} ${t.getUTCFullYear()}`;
+  };
+  const initials = (name) => (name || '').trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toLocaleUpperCase('tr-TR')).join('') || '?';
+  // PDF'teki unvan kuralı: A/B/C sınıfı → "İş Güvenliği Uzmanı · A Sınıfı".
+  const role = (e) => {
+    const base = (e.title || e.profession || '').trim();
+    const cls = (e.certificate_class || '').trim();
+    if (/^[ABC]$/i.test(cls)) return `${base || 'İş Güvenliği Uzmanı'} · ${cls.toUpperCase()} Sınıfı`;
+    return base || cls;
+  };
+  const tick = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const bang = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 7v6"/><path d="M12 17h.01"/></svg>';
+  const small = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const brand = `<div class="kd-brand"><img class="kd-mark" src="${CONFIG.logoUrl}" alt="" width="28" height="28"><b>Kırmızı İSG</b><span>Rapor doğrulama</span></div>`;
+  const about = `<a class="kd-link" href="${CONFIG.siteUrl}/" target="_top">Kırmızı İSG nedir?</a>`;
+
+  function show(html) {
+    root.innerHTML = brand + html;
+    requestAnimationFrame(fit);
+  }
+
+  function form(value = '') {
+    show(`<form class="kd-card kd-form" id="kdForm">
+        <label for="kdCode">Doğrulama kodu</label>
+        <input id="kdCode" name="k" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="9" placeholder="XXXX-XXXX" value="${esc(value)}">
+        <p>Kod, raporun son sayfasında imzanın altındaki kare kodun yanında yazar. Kare kodu telefon kamerasıyla okutursanız bu sayfa kendiliğinden açılır.</p>
+        <button class="kd-btn" type="submit">Doğrula</button>
+      </form>${about}`);
+    document.getElementById('kdForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const k = clean(document.getElementById('kdCode').value);
+      if (k) verify(k, true);
+    });
+  }
+
+  function notFound(code) {
+    show(`<div class="kd-card kd-hero">
+        <div class="kd-tick bad">${bang}</div>
+        <h1>Bu rapor doğrulanamadı</h1>
+        <p>Bu kodla kayıtlı bir rapor bulunamadı. Rapor değiştirilmiş, silinmiş ya da kod yanlış yazılmış olabilir.</p>
+      </div>
+      <div class="kd-note">Kod: ${esc(code.length === 8 ? `${code.slice(0, 4)}-${code.slice(4)}` : code)}. Raporu hazırlayan uzmana danışabilirsiniz. Doğrulama kodu raporun son sayfasında, kare kodun yanında yazar.</div>
+      <button class="kd-btn" type="button" id="kdRetry">Başka bir kod gir</button>${about}`);
+    document.getElementById('kdRetry').addEventListener('click', () => form());
+  }
+
+  function verified(r) {
+    const e = r.expert || {};
+    const versions = Array.isArray(r.versions) ? r.versions.slice().sort((a, b) => b.rev - a.rev) : [];
+    const v = versions[0] || {};
+    const name = (e.full_name || '').trim() || 'Uzman';
+    const av = e.avatar_url && /^https:\/\//.test(e.avatar_url) ? `<img src="${esc(e.avatar_url)}" alt="">` : esc(initials(name));
+    const badge = e.verified_now
+      ? `<div class="kd-ok">${small}Onaylı hesap</div>`
+      : '<div class="kd-ok past">Rapor tarihinde onaylı hesaptı</div>';
+    const findings = Number(v.findings) || 0;
+    const urgent = Number(v.urgent) || 0;
+    const rows = [
+      ['Rapor no', `${esc(r.report_no)}${v.rev > 1 ? ` · Rev. ${esc(v.rev)}` : ''}`],
+      ['Rapor tarihi', esc(day(v.issued_at))],
+      v.visited_on ? ['Ziyaret tarihi', esc(day(v.visited_on))] : null,
+      r.company ? ['Firma', esc(r.company)] : null,
+      ['Tespit', findings ? `${findings} madde${urgent ? ` · ${urgent} acil` : ''}` : 'Eksiklik yok'],
+    ].filter(Boolean).map(([k, val]) => `<div class="kd-row">${k}<b>${val}</b></div>`).join('');
+    const older = versions.slice(1).map((o) => `Rev. ${esc(o.rev)} · ${esc(day(o.issued_at))} · ${Number(o.findings) || 0} madde`).join('<br>');
+    const profile = e.id ? `<a class="kd-btn" href="${CONFIG.siteUrl}/profil?id=${encodeURIComponent(e.id)}" target="_top">Uzmanın profilini gör</a>` : '';
+    show(`<div class="kd-card kd-hero">
+        <div class="kd-tick">${tick}</div>
+        <h1>Bu rapor doğrulandı</h1>
+        <p>Bu rapor <b>${esc(name)}</b> tarafından Kırmızı İSG'de hazırlanmıştır.</p>
+      </div>
+      <div class="kd-gap"></div>
+      <div class="kd-card">
+        <div class="kd-who"><div class="kd-av">${av}</div><div>
+          <div class="kd-name">${esc(name)}</div>
+          ${role(e) ? `<div class="kd-role">${esc(role(e))}</div>` : ''}
+          ${badge}
+        </div></div>
+        ${rows}
+        ${older ? `<div class="kd-old">Önceki sürümler:<br>${older}</div>` : ''}
+      </div>
+      <div class="kd-note">Elinizdeki rapordaki numara, tarih ve madde sayısı bunlarla aynı değilse rapor değiştirilmiş olabilir.</div>
+      ${profile}${about}`);
+  }
+
+  async function verify(code, push) {
+    show('<div class="kd-wait">Doğrulanıyor…</div>');
+    if (push) {
+      try { top.history.replaceState(top.history.state, '', `${top.location.pathname}?k=${code}`); } catch (e) {}
+    }
+    try {
+      const res = await fetch(`${CONFIG.supabaseUrl}/rest/v1/rpc/report_verify`, {
+        method: 'POST',
+        headers: { apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_code: code }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = await res.json();
+      if (data && data.report_no) verified(data);
+      else notFound(code);
+    } catch (e) {
+      show(`<div class="kd-card kd-hero">
+          <div class="kd-tick bad">${bang}</div>
+          <h1>Şu anda doğrulanamıyor</h1>
+          <p>Bağlantı kurulamadı. Biraz sonra tekrar deneyin.</p>
+        </div>
+        <button class="kd-btn" type="button" id="kdRetry">Tekrar dene</button>${about}`);
+      document.getElementById('kdRetry').addEventListener('click', () => verify(code, false));
+    }
+  }
+
+  let code = '';
+  try { code = clean(new URLSearchParams(top.location.search).get('k')); } catch (e) {}
+  if (!code) { try { code = clean(new URLSearchParams(window.location.search).get('k')); } catch (e) {} }
+  if (code) verify(code, false);
+  else form();
+  window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>
