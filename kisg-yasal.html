@@ -1,11 +1,14 @@
 <!--
-KIRMIZI İSG — YASAL & GİZLİLİK v1.0.0 (Legal V1)
+KIRMIZI İSG — YASAL & GİZLİLİK v1.1.0 (Legal V1)
 
 KURULUM: Bu dosyanın TAMAMI Hostinger'da /yasal sayfasının Custom HTML/Embed içeriği olarak kullanılır.
 Bağımsız ve hafif bir sayfadır: Professional App Shell'i, Supabase'i veya harici kitaplık yüklemez.
 
 Doğrudan bağlantılar (üst sayfa adresindeki #bölüm okunur, ilgili bölüme kaydırılır):
-  /yasal#kvkk   /yasal#gizlilik   /yasal#kullanim-kosullari   /yasal#topluluk-kurallari
+  /yasal#kvkk   /yasal#gizlilik   /yasal#kullanim-kosullari   /yasal#topluluk-kurallari   /yasal#hesap-silme
+
+v1.1.0 (2026-10-20): "Hesap Silme" bölümü (Google Play "hesap silme adresi" şartı: uygulamayı açmadan silme talebi).
+Bu bölüm hukuki metin değil, kullanım rehberidir; dört onaylı metne dokunulmadı.
 
 METİNLER: Dört onaylı hukuki metin (Word dosyalarından, metin değiştirilmeden) data-doc bölümlerindedir.
 Sürüm tarihi (Son Güncelleme: 30 Eylül 2026) legal_acceptances.document_version '2026-09-30' ile aynıdır;
@@ -33,6 +36,7 @@ metin değişirse ikisi birlikte güncellenir.
       <a href="#gizlilik" data-section="gizlilik">Gizlilik Politikası</a>
       <a href="#kullanim-kosullari" data-section="kullanim-kosullari">Kullanım Koşulları</a>
       <a href="#topluluk-kurallari" data-section="topluluk-kurallari">Topluluk Kuralları</a>
+      <a href="#hesap-silme" data-section="hesap-silme">Hesap Silme</a>
     </nav>
 
     <main class="lg-main">
@@ -590,6 +594,36 @@ metin değişirse ikisi birlikte güncellenir.
 <p><strong>Kırmızı İSG</strong><br><strong>E-posta:</strong> destek@isgcalisanplatformu.com</p>
         </div>
       </section>
+
+      <section id="hesap-silme" class="lg-doc" aria-labelledby="hesap-silme-title" data-doc="hesap-silme">
+        <h2 id="hesap-silme-title">Hesap Silme</h2>
+        <div class="lg-text">
+<p class="lg-updated">Son Güncelleme: 20 Ekim 2026</p>
+<p>Kırmızı İSG hesabını ve hesabına bağlı verileri istediğin zaman kalıcı olarak sildirebilirsin. Silme geri alınamaz.</p>
+<h3>1. Uygulamadan sil (hemen)</h3>
+<ol>
+<li>Kırmızı İSG uygulamasında sol üstteki menüyü aç ve <strong>Ayarlar</strong>'a dokun.</li>
+<li><strong>Hesabı sil</strong>'e dokun, silinecekleri oku ve onay kutusunu işaretle.</li>
+<li><strong>Kalıcı olarak sil</strong> ile onayla. Apple ile giriş yaptıysan Apple penceresinde de onaylarsın.</li>
+</ol>
+<p>Hesabın ve verilerin o anda silinir.</p>
+<h3>2. Uygulamaya giremiyorsan e-postayla iste</h3>
+<p>Hesabına kayıtlı e-posta adresinden <a href="mailto:destek@isgcalisanplatformu.com?subject=Hesap%20silme%20talebi">destek@isgcalisanplatformu.com</a> adresine <strong>"Hesap silme talebi"</strong> konulu bir e-posta gönder. Hesabın sana ait olduğunu doğruladıktan sonra hesabın en geç 30 gün içinde silinir ve sana e-postayla bilgi verilir.</p>
+<h3>3. Silinenler</h3>
+<ul>
+<li>Profilin, profil fotoğrafın ve yetkinlik kartın</li>
+<li>Postların, yorumların ve beğenilerin</li>
+<li>İş ilanların ve kalan ilan hakların</li>
+<li>Hizmetlerin ve onaylı hesap başvurun</li>
+<li>Saha raporların, rapor fotoğrafların ve firmaların (raporlardaki dijital kaşe kodları da geçersiz olur)</li>
+<li>Mesajların ve sohbetlerin, bildirim kayıtların</li>
+</ul>
+<h3>4. Saklananlar</h3>
+<p>Kişisel bilgi içermeyen, yalnız hesap numarasıyla tutulan şu kayıtlar yasal yükümlülükler (muhasebe, mağaza iadeleri, hukuki uyuşmazlık) için saklanır: satın alma ve ilan hakkı hareketleri, yasal metin onay kayıtları ve topluluk kuralı yaptırım kayıtları. Bu kayıtlar ilgili saklama süreleri dolunca silinir.</p>
+<h3>5. Abonelikler</h3>
+<p>Hesabı silmek App Store ya da Google Play aboneliğini durdurmaz. Aboneliğini telefonunun App Store / Google Play hesap ayarlarından ayrıca iptal etmelisin.</p>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -663,7 +697,7 @@ metin değişirse ikisi birlikte güncellenir.
 const root = document.getElementById('kisgLegal');
 if (!root || root.dataset.ready) return;
 root.dataset.ready = 'true';
-const SECTIONS = ['kvkk', 'gizlilik', 'kullanim-kosullari', 'topluluk-kurallari'];
+const SECTIONS = ['kvkk', 'gizlilik', 'kullanim-kosullari', 'topluluk-kurallari', 'hesap-silme'];
 const SITE = 'https://isgcalisanplatformu.com';
 
 // Hostinger srcdoc iframe: üst sayfaya (same-origin) erişim, genişlik ve yükseklik
