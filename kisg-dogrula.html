@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-Kırmızı İSG · Rapor doğrulama sayfası (v1.2.0, 2026-10-20: uzmanın dijital kaşesi sayfada)
+Kırmızı İSG · Rapor doğrulama sayfası (v1.2.1, 2026-10-20: kaşedeki ad kaşe anındaki ad; aynı Rev'in farklı hâlleri ayrı listelenir)
 KURULUM: Hostinger'da /dogrula sayfasının Custom HTML/Embed içeriği olarak bu dosyanın TAMAMI yapıştırılır.
 PDF'teki kare kod https://isgcalisanplatformu.com/dogrula?k=KOD adresine gider (app_settings.report_verify_url).
 Veri: herkese açık report_verify(kod) (yalnız özet: uzman, rapor no, sürümler, kısaltılmış firma; tespit metni yok).
@@ -163,9 +163,11 @@ Staging deneme kopyası: node tools/build-dogrula-staging.mjs → dist-dogrula/k
 
   function verified(r, code) {
     const e = r.expert || {};
-    const versions = Array.isArray(r.versions) ? r.versions.slice().sort((a, b) => b.rev - a.rev) : [];
+    const versions = Array.isArray(r.versions) ? r.versions.slice().sort((a, b) => b.rev - a.rev || (b.revision || 0) - (a.revision || 0)) : [];
     const v = versions[0] || {};
     const name = (e.full_name || '').trim() || 'Uzman';
+    // Kaşedeki ad kaşe basıldığı andaki addır.
+    const stampName = (v.expert_name || '').trim() || name;
     const av = e.avatar_url && /^https:\/\//.test(e.avatar_url) ? `<img src="${esc(e.avatar_url)}" alt="">` : esc(initials(name));
     const badge = e.verified_now
       ? `<div class="kd-ok">${small}Onaylı hesap</div>`
@@ -182,10 +184,10 @@ Staging deneme kopyası: node tools/build-dogrula-staging.mjs → dist-dogrula/k
     const older = versions.slice(1).map((o) => `Rev. ${esc(o.rev)} · ${esc(day(o.issued_at))} · ${Number(o.findings) || 0} madde`).join('<br>');
     const profile = e.id ? `<a class="kd-btn" href="${CONFIG.siteUrl}/profil?id=${encodeURIComponent(e.id)}" target="_top">Uzmanın profilini gör</a>` : '';
     show(`<div class="kd-card kd-hero">
-        ${seal(name, code.length === 8 ? `${code.slice(0, 4)}-${code.slice(4)}` : code)}
+        ${seal(stampName, code.length === 8 ? `${code.slice(0, 4)}-${code.slice(4)}` : code)}
         <div class="kd-pass">${small}Doğrulandı</div>
         <h1>Bu rapor gerçek</h1>
-        <p>Bu rapor <b>${esc(name)}</b> tarafından hazırlanmış ve dijital kaşesiyle onaylanmıştır.</p>
+        <p>Bu rapor <b>${esc(stampName)}</b> tarafından hazırlanmış ve dijital kaşesiyle onaylanmıştır.</p>
       </div>
       <div class="kd-gap"></div>
       <div class="kd-card">
