@@ -1,0 +1,255 @@
+<!doctype html>
+<!--
+Kırmızı İSG · Rapor QR sayfası "Raporu aldınız, şimdi ne yapmalısınız?" (v1.0.0, 2026-10-20; ürün sahibi kararı, hukuki
+inceleme sonrası: dijital kaşe ve /dogrula sayfası kalktı, yerine rapordaki QR bu sayfayı açar).
+ADRES: https://isgcalisanplatformu.com/r/{kod}  (kod: 20 karakter, her revizyona ayrı; uygulama yüklüyse QR uygulamada açılır).
+KURULUM: Hostinger Website Builder /r/* yollarını sunamadığı için sayfayı Cloudflare Worker sunar:
+  node tools/build-rapor.mjs → dist-rapor/r-worker.js (bu dosya içine gömülü) → Cloudflare → Workers → yapıştır.
+  Rota: isgcalisanplatformu.com/r/*  ve  www.isgcalisanplatformu.com/r/*
+Veri: Worker'daki /r/api (deneme sınırlı) → herkese açık report_public(kod) ve report_public_match(kod, sha256).
+Firma adı, madde metni, fotoğraf yok. "Aslıyla aynı mı?": dosya tarayıcıda okunur, yalnız SHA-256 özeti gönderilir.
+Staging deneme kopyası: dist-rapor/kisg-rapor-staging.html?k=KOD (doğrudan staging Supabase'e bakar).
+-->
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Rapor · Kırmızı İSG</title>
+<style>
+  :root {
+    --red: #E30A17; --red-text: #C7101B; --ink: #141A24; --text: #262D38; --muted: #5D6878; --faint: #6B7585;
+    --line: #E6E9EE; --line-soft: #EEF0F3; --page: #ECEEF1; --surface: #FFFFFF; --green: #1F7A4D;
+    --green-wash: rgba(31, 122, 77, .10); --orange: #B25E09; --orange-wash: rgba(178, 94, 9, .10); --blue: #1D6FD8;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { background: var(--page); }
+  body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--text); -webkit-font-smoothing: antialiased;
+  }
+  .kr { max-width: 520px; margin: 0 auto; padding: 0 16px 28px; }
+  .kr-brand { display: flex; align-items: center; gap: 10px; padding: 14px 2px; }
+  .kr-brand b { font-size: 16px; font-weight: 800; color: var(--ink); letter-spacing: -.2px; }
+  .kr-mark { width: 28px; height: 28px; border-radius: 8px; object-fit: cover; background: var(--red); }
+  h1 { font-size: 22px; line-height: 28px; font-weight: 800; color: var(--ink); letter-spacing: -.4px; margin: 4px 2px 14px; }
+  h2 { font-size: 16px; line-height: 22px; font-weight: 700; color: var(--ink); }
+  .kr-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; margin-bottom: 12px; }
+  .kr-pad { padding: 16px; }
+  .kr-row { display: flex; justify-content: space-between; gap: 12px; padding: 11px 16px; border-top: 1px solid var(--line-soft);
+    font-size: 14px; color: var(--muted); }
+  .kr-row:first-child { border-top: 0; }
+  .kr-row b { font-weight: 600; color: var(--ink); text-align: right; }
+  .kr-row b.urgent { color: var(--red-text); }
+  .kr-step { display: flex; gap: 12px; padding: 14px 16px; border-top: 1px solid var(--line-soft); }
+  .kr-step:first-child { border-top: 0; }
+  .kr-no { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--red); color: #fff; font-size: 13px;
+    font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .kr-step b { display: block; font-size: 15px; line-height: 21px; color: var(--ink); }
+  .kr-step p { font-size: 14px; line-height: 21px; margin-top: 2px; }
+  .kr-small { font-size: 13px; line-height: 19px; color: var(--muted); margin-top: 6px; }
+  .kr-drop { display: block; margin-top: 12px; border: 1.5px dashed #C9CFD8; border-radius: 14px; padding: 18px 14px;
+    text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .kr-drop.over { border-color: var(--ink); background: var(--line-soft); }
+  .kr-drop input { display: none; }
+  .kr-drop span { display: block; font-size: 12.5px; font-weight: 400; color: var(--muted); margin-top: 4px; }
+  .kr-result { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 12px; border-radius: 12px;
+    font-size: 14px; line-height: 20px; }
+  .kr-result.same { background: var(--green-wash); color: var(--green); }
+  .kr-result.diff { background: var(--orange-wash); color: var(--orange); }
+  .kr-result.info { background: var(--line-soft); color: var(--muted); }
+  .kr-result svg { flex: none; width: 20px; height: 20px; margin-top: 0; }
+  .kr-result b { color: inherit; }
+  .kr-kicker { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--faint); }
+  .kr-who { display: flex; gap: 12px; align-items: center; margin-top: 10px; }
+  .kr-av { width: 52px; height: 52px; border-radius: 50%; background: #2C3440; color: #fff; font-weight: 700;
+    font-size: 18px; display: flex; align-items: center; justify-content: center; flex: none; overflow: hidden; }
+  .kr-av img { width: 100%; height: 100%; object-fit: cover; }
+  .kr-name { display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 700; color: var(--ink); }
+  .kr-name svg { flex: none; }
+  .kr-role { font-size: 13px; line-height: 18px; color: var(--muted); margin-top: 2px; }
+  .kr-btn { display: block; width: 100%; margin-top: 14px; border: 0; background: var(--ink); color: #fff; text-align: center;
+    border-radius: 14px; padding: 14px; font: inherit; font-size: 15px; font-weight: 600; text-decoration: none; cursor: pointer; }
+  .kr-msg { display: flex; gap: 12px; padding: 18px 16px; }
+  .kr-msg svg { flex: none; width: 26px; height: 26px; }
+  .kr-msg p { font-size: 14px; line-height: 20px; color: var(--muted); margin-top: 4px; }
+  .kr-link { display: block; text-align: center; margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--red-text);
+    text-decoration: none; }
+  .kr-note { font-size: 12.5px; line-height: 18px; color: var(--faint); padding: 2px 4px 0; }
+  .kr-wait { text-align: center; padding: 40px 0; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main class="kr" id="kr" aria-live="polite"><div class="kr-wait">Yükleniyor…</div></main>
+<script>
+(() => {
+  const CONFIG = {
+    // Boşsa Worker'daki /r/api kullanılır (deneme sınırlı). Staging kopyasında doğrudan Supabase.
+    supabaseUrl: '',
+    supabaseKey: '',
+    apiBase: '/r/api',
+    siteUrl: 'https://isgcalisanplatformu.com',
+    logoUrl: 'https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/logo.jpg',
+  };
+  const CODE_LEN = 20;
+  const root = document.getElementById('kr');
+
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const clean = (k) => String(k || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, CODE_LEN);
+  const MONTHS = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+  // PDF'teki gibi İstanbul gününe göre "20 Ekim 2026".
+  const day = (iso) => {
+    if (!iso) return '';
+    const t = new Date(new Date(iso.length === 10 ? `${iso}T12:00:00Z` : iso).getTime() + 3 * 3600 * 1000);
+    return `${t.getUTCDate()} ${MONTHS[t.getUTCMonth()]} ${t.getUTCFullYear()}`;
+  };
+  const initials = (name) => (name || '').trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toLocaleUpperCase('tr-TR')).join('') || '?';
+  // Uygulamadaki expertRoleLine ile aynı: unvan · sınıf (beyan).
+  const role = (e) => {
+    const cls = e.class && /^[ABC]$/i.test(e.class) ? `${e.class.toUpperCase()} Sınıfı` : (e.class || null);
+    const base = e.title || (cls && /Sınıfı$/.test(cls) ? 'İş Güvenliği Uzmanı' : null);
+    const line = [base, cls && cls !== base ? cls : null].filter(Boolean).join(' · ');
+    return line ? `${line} (beyan)` : '';
+  };
+  const ICON = {
+    alert: '<svg viewBox="0 0 24 24" fill="none" stroke="#B25E09" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg>',
+    same: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>',
+    diff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v5.5"/><path d="M12 7.5h.01"/></svg>',
+    // Uygulamadaki onaylı hesap rozeti.
+    badge: '<svg width="16" height="16" viewBox="0 0 24 24" role="img" aria-label="Onaylı hesap"><circle cx="12" cy="12" r="11" fill="#1D6FD8"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  };
+  const brand = `<div class="kr-brand"><img class="kr-mark" src="${CONFIG.logoUrl}" alt="" width="28" height="28"><b>Kırmızı İSG</b></div>`;
+  const about = `<a class="kr-link" href="${CONFIG.siteUrl}/">Kırmızı İSG nedir?</a>`;
+  const show = (html) => { root.innerHTML = brand + html; };
+  const message = (title, text) => `<div class="kr-card"><div class="kr-msg">${ICON.alert}<div><h2>${esc(title)}</h2><p>${esc(text)}</p></div></div></div>`;
+
+  async function rpc(name, body) {
+    const direct = !!CONFIG.supabaseUrl;
+    const url = direct ? `${CONFIG.supabaseUrl}/rest/v1/rpc/${name}` : `${CONFIG.apiBase}/${name}`;
+    const headers = { 'Content-Type': 'application/json' };
+    if (direct) headers.apikey = CONFIG.supabaseKey;
+    const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+    if (res.status === 429) throw Object.assign(new Error('limit'), { limit: true });
+    if (!res.ok) throw new Error(String(res.status));
+    return res.json();
+  }
+
+  function summary(r) {
+    const findings = Number(r.findings) || 0;
+    const urgent = Number(r.urgent) || 0;
+    const rows = [
+      ['Rapor no', `${esc(r.report_no)} · Rev. ${esc(r.rev)}`],
+      ['Tarih', esc(day(r.issued_at))],
+      r.visited_on ? ['Ziyaret tarihi', esc(day(r.visited_on))] : null,
+      ['Madde', findings ? `${findings} madde${urgent ? ` · <b class="urgent">${urgent} acil</b>` : ''}` : 'Eksiklik yok'],
+    ].filter(Boolean);
+    return `<div class="kr-card">${rows.map(([k, v]) => `<div class="kr-row">${k}<b>${v}</b></div>`).join('')}</div>`;
+  }
+
+  function steps(list) {
+    const items = (Array.isArray(list) ? list : []).filter((s) => s && s.title && s.body);
+    if (!items.length) return '';
+    return `<div class="kr-card">${items.map((s, i) => `<div class="kr-step"><div class="kr-no">${i + 1}</div><div><b>${esc(s.title)}</b><p>${esc(s.body)}</p></div></div>`).join('')}</div>`;
+  }
+
+  function sameFile() {
+    return `<div class="kr-card kr-pad" id="asli">
+        <h2>Aslıyla aynı mı?</h2>
+        <p class="kr-small">Elinizdeki PDF'in, uzmanın Kırmızı İSG'de oluşturduğu dosyayla birebir aynı olup olmadığına bakabilirsiniz. Dosya bu cihazda okunur, hiçbir yere gönderilmez.</p>
+        <label class="kr-drop" id="krDrop">PDF dosyasını seçin<span>ya da buraya bırakın</span><input type="file" id="krFile" accept="application/pdf,.pdf"></label>
+        <div id="krResult"></div>
+      </div>`;
+  }
+
+  function expert(e) {
+    if (!e) return '';
+    const name = (e.name || '').trim() || 'Uzman';
+    const av = e.avatar_url && /^https:\/\//.test(e.avatar_url) ? `<img src="${esc(e.avatar_url)}" alt="">` : esc(initials(name));
+    const line = role(e);
+    const profile = e.id ? `<a class="kr-btn" href="${CONFIG.siteUrl}/profil?id=${encodeURIComponent(e.id)}">Uzmanın profili</a>` : '';
+    return `<div class="kr-card kr-pad">
+        <div class="kr-kicker">RAPORU HAZIRLAYAN</div>
+        <div class="kr-who"><div class="kr-av">${av}</div><div>
+          <div class="kr-name">${esc(name)}${e.verified ? ICON.badge : ''}</div>
+          ${line ? `<div class="kr-role">${esc(line)}</div>` : ''}
+        </div></div>
+        ${profile}
+      </div>`;
+  }
+
+  // İleride: işverenin "Teslim aldım" kaydı (report_revisions.id'ye bağlı). Bugün gösterilmez.
+  const receipt = () => '';
+
+  async function sha256Hex(file) {
+    const buf = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+    return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function bindFile(code) {
+    const input = document.getElementById('krFile');
+    const drop = document.getElementById('krDrop');
+    const out = document.getElementById('krResult');
+    if (!input || !drop) return;
+    const result = (kind, text) => { out.innerHTML = `<div class="kr-result ${kind}">${ICON[kind]}<div>${text}</div></div>`; };
+    const check = async (file) => {
+      if (!file) return;
+      result('info', 'Dosya karşılaştırılıyor…');
+      try {
+        const sha = await sha256Hex(file);
+        const r = await rpc('report_public_match', { p_code: code, p_sha256: sha });
+        if (r === 'same') result('same', '<b>Bu dosya Kırmızı İSG\'de üretilen dosyayla birebir aynı.</b>');
+        else if (r === 'different') result('diff', '<b>Bu dosya Kırmızı İSG\'de üretilen dosyayla birebir aynı değil; değiştirilmiş ya da yeniden kaydedilmiş olabilir.</b>');
+        else result('info', 'Bu rapor için karşılaştırılacak kayıt yok.');
+      } catch (e) {
+        result('info', e && e.limit ? 'Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.' : 'Şu anda karşılaştırılamıyor. İnternet bağlantınızı kontrol edip tekrar deneyin.');
+      }
+      input.value = '';
+    };
+    input.addEventListener('change', () => check(input.files && input.files[0]));
+    drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+    drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); check(e.dataTransfer.files && e.dataTransfer.files[0]); });
+  }
+
+  function found(r, code) {
+    const withdrawn = r.status === 'withdrawn';
+    show(`${withdrawn
+        ? message('Bu rapor hazırlayan tarafından geri çekildi', 'Rapor kaydı duruyor; içeriği için raporu hazırlayan uzmana danışın.')
+        : '<h1>Raporu aldınız, şimdi ne yapmalısınız?</h1>'}
+      ${summary(r)}
+      ${withdrawn ? '' : steps(r.steps)}
+      ${r.has_file ? sameFile() : ''}
+      ${expert(r.expert)}
+      ${receipt(r)}
+      <div class="kr-note">Raporun içeriğinden raporu hazırlayan uzman sorumludur. Elinizdeki rapordaki numara ve Rev buradakilerle aynı olmalı.</div>
+      ${about}`);
+    bindFile(code);
+    if (location.hash === '#asli') { const el = document.getElementById('asli'); if (el) el.scrollIntoView(); }
+  }
+
+  const notFound = () => show(`${message('Kayıt bulunamadı', 'Bu koda ait bir rapor kaydı yok. Adresi raporun üzerindeki QR\'dan okuttuğunuzdan emin olun.')}${about}`);
+
+  async function load(code) {
+    show('<div class="kr-wait">Yükleniyor…</div>');
+    try {
+      const data = await rpc('report_public', { p_code: code });
+      if (data && data.report_no) found(data, code);
+      else notFound();
+    } catch (e) {
+      show(`${message('Şu anda açılamıyor', e && e.limit ? 'Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.' : 'İnternet bağlantınızı kontrol edip tekrar deneyin.')}
+        <button class="kr-btn" type="button" id="krRetry">Tekrar dene</button>${about}`);
+      document.getElementById('krRetry').addEventListener('click', () => load(code));
+    }
+  }
+
+  // Kod adresten: /r/{kod}; deneme kopyasında ?k=KOD.
+  const fromPath = (location.pathname.match(/\/r\/([0-9A-Za-z]+)\/?$/) || [])[1];
+  const code = clean(fromPath || new URLSearchParams(location.search).get('k'));
+  if (code.length === CODE_LEN) load(code);
+  else notFound();
+})();
+</script>
+</body>
+</html>

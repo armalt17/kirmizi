@@ -19,6 +19,9 @@ GÜVENLİK
 BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler · Hizmet Kategorileri · Alanlar · Şikâyetler · Destek · Onaylar · Saha Raporu
  - v1.8.0 Onaylar (20261013_verified_accounts.sql): onaylı hesap başvuruları. Belge gizli depodan (kisg-verifications)
    10 dakikalık imzalı bağlantıyla görülür; onay/ret kararıyla birlikte depodan silinir.
+ - v1.18.0 Saha Raporu → Limitler: "PDF kaşe notu" kalktı (dijital kaşe kaldırıldı, 2026-10-20 hukuki inceleme). Yerine
+   "Rapor QR sayfası: işverene adımlar" (isgcalisanplatformu.com/r/{kod}; kirmizi-isg-mobile 20261020160000_report_qr_revisions.sql,
+   admin_set_report_steps).
  - v1.17.1 Saha Raporu: "Checklist" sekmesinin adı "Hazır şablonlar" (mobil uygulamayla aynı; veri ve RPC'ler aynı).
  - v1.17.0 Saha Raporu → Limitler: PDF kaşe notu (dijital kaşenin yanındaki kısa yazı; kirmizi-isg-mobile
    20261020100000_report_verify_note.sql, admin_set_report_text).
@@ -287,7 +290,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.17.1',
+  version: '1.18.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -399,7 +402,7 @@ const LABEL = {
     'sanction.revoke': 'Yaptırım kaldırıldı', 'report.resolve': 'Şikâyet sonuçlandırıldı',
     'tag.update': 'Alan düzenlendi', 'tag.merge': 'Alanlar birleştirildi',
     'ai_model.create': 'AI modeli eklendi', 'ai_model.update': 'AI modeli düzenlendi', 'ai_setting.update': 'Model seçimi değişti',
-    'ai_prompt.update': 'Prompt düzenlendi', 'ai_prompt.delete': 'Özel prompt kaldırıldı', 'report_limit.update': 'Rapor limiti değişti', 'report_text.update': 'PDF kaşe notu değişti',
+    'ai_prompt.update': 'Prompt düzenlendi', 'ai_prompt.delete': 'Özel prompt kaldırıldı', 'report_limit.update': 'Rapor limiti değişti', 'report_text.update': 'Rapor metni değişti', 'report_steps.update': 'QR sayfası adımları değişti',
     'checklist.create': 'Hazır şablon eklendi', 'checklist.update': 'Hazır şablon düzenlendi', 'checklist.reorder': 'Hazır şablon sırası değişti',
     'blocked_word.set': 'Yasaklı kelime eklendi', 'blocked_word.remove': 'Yasaklı kelime çıkarıldı',
     'job_phrase.set': 'İş ilanı ifadesi eklendi', 'job_phrase.remove': 'İş ilanı ifadesi çıkarıldı' }
@@ -1550,8 +1553,8 @@ const typicalReports = (budgetUsd, unit) => {
 function frLimits(cfg, unit) {
   const lim = cfg.limits || {};
   return h('div', null,
-    h('h3', { text: 'PDF kaşe notu', style: 'margin:0 0 10px' }),
-    frVerifyNote(cfg.texts || {}),
+    h('h3', { text: 'Rapor QR sayfası: işverene adımlar', style: 'margin:0 0 10px' }),
+    frReportSteps(cfg.texts || {}),
     h('h3', { text: 'Limitler', style: 'margin:22px 0 10px' }),
     frLimitCard(lim, FR_LIMITS, 'Limitler kaydedilsin mi?', 'Kota sunucuda hemen değişir; uygulamadaki yüzde en geç 5 dakikada güncellenir. Rapor yazmak ve PDF her planda ücretsiz.', unit),
     h('h3', { text: 'Spam koruması ve yeni hesap kuralları', style: 'margin:22px 0 10px' }),
@@ -1562,29 +1565,44 @@ function frLimits(cfg, unit) {
     frJobPhrases());
 }
 
-// PDF kaşe notu (v1.17.0; ürün sahibi 2026-10-20: "şu yazıyı admin bölümüne al, ben değiştireyim arada"): dijital
-// kaşenin yanındaki kısa yazı. Yeni PDF'lerde hemen geçerli; daha önce gönderilmiş PDF'ler değişmez. 20–240 karakter, tek
-// satır (sunucu satır sonlarını boşluğa çevirir). Ayar hiç yoksa PDF kendi varsayılanını basar.
-const VERIFY_NOTE_MAX = 240;
-function frVerifyNote(texts) {
-  const current = texts.report_verify_note || '';
-  const area = Object.assign(h('textarea', { name: 'report_verify_note', maxlength: VERIFY_NOTE_MAX, rows: 3, 'aria-label': 'PDF kaşe notu' }), { value: current });
-  const count = h('small', { class: 'pa-small' });
-  const sync = () => { count.textContent = `${area.value.trim().length} / ${VERIFY_NOTE_MAX} karakter`; };
-  area.addEventListener('input', sync); sync();
+// Rapor QR sayfası adımları (v1.18.0; ürün sahibi 2026-10-20): raporun QR'ını okutan işveren /r/{kod} sayfasında bu
+// adımları görür ("Raporu aldınız, şimdi ne yapmalısınız?"). 1–10 adım; başlık en çok 80, metin en çok 600 karakter.
+// Kaydedilince hemen geçerli (eski raporların QR'ı da güncel adımları gösterir).
+const STEP_TITLE_MAX = 80, STEP_BODY_MAX = 600, STEPS_MAX = 10;
+function parseSteps(raw) {
+  try { const v = JSON.parse(raw || '[]'); return Array.isArray(v) ? v.map(x => ({ title: String(x?.title || ''), body: String(x?.body || '') })) : []; }
+  catch (e) { return []; }
+}
+function frReportSteps(texts) {
+  const current = parseSteps(texts.report_receiver_steps);
+  const box = h('div', { class: 'pa-form' });
+  const rows = [];
+  const addRow = (step) => {
+    if (rows.length >= STEPS_MAX) { toast(`En çok ${STEPS_MAX} adım.`, true); return; }
+    const title = h('input', { type: 'text', name: 'step_title', maxlength: STEP_TITLE_MAX, value: step.title, 'aria-label': 'Adım başlığı' });
+    const body = Object.assign(h('textarea', { name: 'step_body', maxlength: STEP_BODY_MAX, rows: 2, 'aria-label': 'Adım metni' }), { value: step.body });
+    const row = h('div', { class: 'pa-form-row', 'data-step': '' },
+      h('div', null, title, body),
+      h('button', { type: 'button', class: 'pa-btn', text: 'Çıkar', 'aria-label': `${step.title || 'Adım'} çıkar`, onclick: () => {
+        rows.splice(rows.indexOf(entry), 1); row.remove(); } }));
+    const entry = { title, body, row };
+    rows.push(entry); box.append(row);
+  };
+  current.forEach(addRow);
   const save = () => {
-    const v = area.value.replace(/\s+/g, ' ').trim();
-    if (v.length < 20) { toast('Not en az 20 karakter olmalı.', true); area.focus(); return; }
-    frSaveChanges(v === current ? [] : [{ key: 'report_verify_note', value: v, label: 'PDF kaşe notu', from: current || '—', to: v }],
-      'PDF kaşe notu kaydedilsin mi?', (c, reason) => rpc('admin_set_report_text', { p_key: c.key, p_value: c.value, p_reason: reason }));
+    const steps = rows.map(r => ({ title: r.title.value.replace(/\s+/g, ' ').trim(), body: r.body.value.replace(/\s+/g, ' ').trim() }));
+    if (!steps.length) { toast('En az bir adım olmalı.', true); return; }
+    if (steps.some(x => !x.title || !x.body)) { toast('Her adımın başlığı ve metni dolu olmalı.', true); return; }
+    const same = JSON.stringify(steps) === JSON.stringify(current.map(x => ({ title: x.title.trim(), body: x.body.trim() })));
+    frSaveChanges(same ? [] : [{ label: 'İşverene adımlar', from: `${current.length} adım`, to: `${steps.length} adım` }],
+      'Adımlar kaydedilsin mi?', (c, reason) => rpc('admin_set_report_steps', { p_steps: steps, p_reason: reason }));
   };
   return h('div', { class: 'pa-card' },
-    h('div', { class: 'pa-form' }, h('div', { class: 'pa-form-row' },
-      h('div', null, h('b', { text: 'Dijital kaşenin yanındaki yazı' }),
-        h('span', { text: 'Onaylı uzmanın PDF\'inde kare kodun yanında çıkar. Kısa tut: doğrulama yolu ve "elektronik imza yerine geçmez" yeterli; ayrıntı /yasal#onayli-hesap\'ta.' }), count),
-      area)),
-    h('div', { class: 'pa-form-foot' }, h('span', { class: 'pa-small', text: 'Yeni PDF\'lerde hemen geçerli; önceden gönderilmiş PDF\'ler değişmez.' }),
-      h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Notu kaydet', onclick: save })));
+    h('p', { class: 'pa-small', text: 'Raporun QR\'ını okutan işveren bu adımları sırayla görür. Kısa, sade ve yol gösteren cümleler kullan; raporu olduğundan farklı bir niteliğe büründüren ifadelerden kaçın.' }),
+    box,
+    h('div', { class: 'pa-form-foot' },
+      h('button', { type: 'button', class: 'pa-btn', text: 'Adım ekle', onclick: () => addRow({ title: '', body: '' }) }),
+      h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Adımları kaydet', onclick: save })));
 }
 
 // Yasaklı kelimeler (v1.15.0; sunucuda kisg_word_filter, Apple 1.2): Post, yorum, mesaj, hizmet, ilan ve Alan adında listedeki
