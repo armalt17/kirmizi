@@ -282,7 +282,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.12.0',
+  version: '1.13.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -1297,10 +1297,15 @@ const FR_TABS = [['routing', 'Model seçimi'], ['models', 'Modeller'], ['prompts
 const FR_STYLE = [['sade', 'Sade', 'Kısa, yalın cümleler'], ['dengeli', 'Dengeli', 'Önerilen'], ['ayrintili', 'Ayrıntılı', 'Daha açıklayıcı öneriler']];
 const FR_PURPOSE = { report_analyze: 'Analiz', finding_rewrite: 'Yeniden yazma' };
 const FR_LIMITS = [
-  ['free_monthly_limit', 'Ücretsiz: aylık rapor hakkı', 'Her yeni rapor bir hak düşürür (yapay zekâlı ya da yalnız checklist). Bulgu çıkmayan analiz ve hata hak düşürmez; aynı raporun yeniden analizi yeni hak düşürmez.', 0, 1000],
-  ['premium_daily_limit', 'PRO: günlük rapor hakkı', 'Aynı kural; gün Türkiye saatine göre döner.', 0, 1000],
-  ['max_daily_limit', 'MAX: günlük rapor hakkı', 'Ayrı MAX aboneliği. Uygulamada sayı gösterilmez ("Yüksek limit"); yalnız son 3 hakta görünür.', 0, 1000],
-  ['report_rewrite_daily_limit', 'Günlük "Yeniden yaz" sınırı', '“Yeniden yaz / Ben söyleyeyim” üst sınırı; analiz hakkından düşmez.', 0, 1000],
+  // Yapay zekâ kullanım kotası (v1.13.0): rapor hakkı yok. Her analiz ve yeniden yazma gerçek maliyetiyle planın aylık
+  // bütçesinden düşer; rapor yazmak ve PDF ücretsiz. Uygulamada yalnız yüzde görünür. Bütçe dolar olarak girilir
+  // (sunucuda mikro dolar). 6. alan 'usd': dolar girişi.
+  ['ai_budget_free_month_microusd', 'Ücretsiz: aylık yapay zekâ bütçesi ($)', 'Bir uzmanın ayda yapay zekâya harcayabileceği en çok tutar. Hedef: ayda 3–4 rapor; ilk ağır raporda bitmemeli.', 0, 1000, 'usd'],
+  ['ai_budget_pro_month_microusd', 'PRO: aylık yapay zekâ bütçesi ($)', 'Hedef: günde ~10 rapor (ayda ~300). Takvim ayı başında (Türkiye saati) sıfırlanır.', 0, 1000, 'usd'],
+  ['ai_budget_max_month_microusd', 'MAX: aylık yapay zekâ bütçesi ($)', 'Hedef: günde ~30 rapor.', 0, 1000, 'usd'],
+  ['ai_daily_factor', 'Günlük sigorta (PRO / MAX)', 'Bir günde aylık bütçenin en çok kaç otuzda biri harcanabilir (3 → %10). Kötüye kullanıma karşı; uygulamada görünmez.', 1, 30],
+  ['report_max_analyses', 'Rapor başına en çok analiz', 'Aynı raporda yapay zekâ analizi en çok kaç kez çalışır (tekrar analizler de bütçeden düşer).', 1, 50],
+  ['report_rewrite_daily_limit', 'Günlük "Yeniden yaz" sınırı', '“Yeniden yaz / Ben söyleyeyim” günlük üst sınırı; maliyeti ayrıca bütçeden düşer.', 0, 1000],
   ['report_max_photos', 'Rapor başına en çok fotoğraf', 'Fazlası maliyeti ve analiz süresini artırır.', 1, 20],
   ['report_max_drafts', 'Telefonda en çok taslak', 'Dolunca uzman yeni rapora başlamadan önce bir taslağı bitirir ya da siler.', 1, 50]];
 // Spam koruması (v1.11.0; sunucuda kisg_spam_guard). Adminler bu sınırlardan muaftır.
@@ -1330,14 +1335,16 @@ async function renderFieldReports() {
   main.replaceChildren(head('Saha Raporu', 'Mobil uygulamadaki yapay zekâ destekli saha raporu: model, prompt, limit ve checklist ayarları; kullanım ve maliyet. Değişiklikler hemen geçerli olur.'),
     h('div', { class: 'pa-tools' }, chips(FR_TABS, v.tab, x => { v.tab = x; renderFieldReports(); })),
     bodyBox);
-  let cfg, usage;
+  let cfg, usage, unit = null;
   try {
     if (v.tab === 'usage') usage = await rpc('admin_report_usage', { p_days: v.days });
     else cfg = await rpc('admin_report_config', {});
+    // Rapor başına gerçek maliyet ölçümü (Limitler'de "≈ N tipik rapor", Kullanım'da tablo); yoksa sessizce atlanır.
+    if (v.tab === 'usage' || v.tab === 'limits') unit = await rpc('admin_report_unit_stats', { p_days: v.tab === 'usage' ? v.days : 30 }).catch(() => null);
   } catch (e) { if (seq === renderSeq) bodyBox.replaceChildren(failed(e, renderFieldReports)); return; }
   if (seq !== renderSeq) return;
   const render = { routing: frRouting, models: frModels, prompts: frPrompts, limits: frLimits, checklist: frChecklist, usage: frUsage }[v.tab];
-  bodyBox.replaceChildren(render(v.tab === 'usage' ? usage : cfg));
+  bodyBox.replaceChildren(render(v.tab === 'usage' ? usage : cfg, unit));
   host.sync();
 }
 
@@ -1523,27 +1530,43 @@ function frRemovePrompt(p, models) {
   });
 }
 
-function frLimits(cfg) {
+// Tipik rapor: en az bir analiz yapılmış raporun bütün yapay zekâ çağrıları (son 30 gün ortalaması).
+const typicalReports = (budgetUsd, unit) => {
+  const avg = Number(unit?.reports?.avg_usd);
+  return avg > 0 ? `≈ ${nf.format(Math.floor(budgetUsd / avg))} tipik rapor (son 30 gün ortalaması ${usd.format(avg)} / rapor)` : 'Henüz ölçüm yok (son 30 günde analizli rapor yok).';
+};
+
+function frLimits(cfg, unit) {
   const lim = cfg.limits || {};
   return h('div', null,
-    frLimitCard(lim, FR_LIMITS, 'Limitler kaydedilsin mi?', 'Hak kontrolü sunucuda hemen değişir; uygulamadaki gösterim en geç 1 saatte ya da uygulama yeniden açılınca güncellenir.'),
+    frLimitCard(lim, FR_LIMITS, 'Limitler kaydedilsin mi?', 'Kota sunucuda hemen değişir; uygulamadaki yüzde en geç 5 dakikada güncellenir. Rapor yazmak ve PDF her planda ücretsiz.', unit),
     h('h3', { text: 'Spam koruması ve yeni hesap kuralları', style: 'margin:22px 0 10px' }),
     frLimitCard(lim, SPAM_LIMITS, 'Spam sınırları kaydedilsin mi?', 'Sınıra takılan kullanıcı kısa bir uyarı görür. Aynı metnin (en az 20 karakter) kısa sürede tekrar gönderilmesi de engellenir.'));
 }
 
-function frLimitCard(lim, list, confirmTitle, foot) {
-  const inputs = Object.fromEntries(list.map(([k, , , min, max]) => [k, h('input', { type: 'number', name: k, min, max, step: 1, value: lim[k] ?? '', 'aria-label': k })]));
+function frLimitCard(lim, list, confirmTitle, foot, unit = null) {
+  // 'usd' alanları dolar olarak gösterilir ve girilir; sunucuya mikro dolar (tam sayı) gider.
+  const shown = (k, kind) => (lim[k] == null || lim[k] === '' ? '' : kind === 'usd' ? String(Number(lim[k]) / 1e6) : lim[k]);
+  const inputs = Object.fromEntries(list.map(([k, , , min, max, kind]) => [k, h('input', { type: 'number', name: k, min, max, step: kind === 'usd' ? 0.01 : 1, value: shown(k, kind), 'aria-label': k })]));
+  const hints = Object.fromEntries(list.filter(r => r[5] === 'usd').map(([k, , , , , kind]) => [k, h('small', { class: 'pa-small', text: typicalReports(Number(shown(k, kind)) || 0, unit) })]));
+  for (const [k] of list.filter(r => r[5] === 'usd')) inputs[k].addEventListener('input', () => { hints[k].textContent = typicalReports(Number(inputs[k].value) || 0, unit); });
   const save = () => {
     const changes = [];
-    for (const [k, title, , min, max] of list) {
-      const n = Number(inputs[k].value);
-      if (!Number.isInteger(n) || n < min || n > max) { toast(`${title}: ${min} ile ${max} arasında bir tam sayı olmalı.`, true); inputs[k].focus(); return; }
-      if (String(n) !== String(lim[k] ?? '')) changes.push({ key: k, value: n, label: title, from: lim[k] ?? '—', to: String(n) });
+    for (const [k, title, , min, max, kind] of list) {
+      const raw = Number(inputs[k].value);
+      if (kind === 'usd') {
+        if (!Number.isFinite(raw) || raw < min || raw > max) { toast(`${title}: ${min} ile ${max} dolar arasında olmalı.`, true); inputs[k].focus(); return; }
+        const n = Math.round(raw * 1e6);
+        if (String(n) !== String(lim[k] ?? '')) changes.push({ key: k, value: n, label: title, from: lim[k] == null ? '—' : usd.format(Number(lim[k]) / 1e6), to: usd.format(raw) });
+        continue;
+      }
+      if (!Number.isInteger(raw) || raw < min || raw > max) { toast(`${title}: ${min} ile ${max} arasında bir tam sayı olmalı.`, true); inputs[k].focus(); return; }
+      if (String(raw) !== String(lim[k] ?? '')) changes.push({ key: k, value: raw, label: title, from: lim[k] ?? '—', to: String(raw) });
     }
     frSaveChanges(changes, confirmTitle, (c, reason) => rpc('admin_set_report_limit', { p_key: c.key, p_value: c.value, p_reason: reason }));
   };
   return h('div', { class: 'pa-card' },
-    h('div', { class: 'pa-form' }, list.map(([k, title, sub]) => h('div', { class: 'pa-form-row' }, h('div', null, h('b', { text: title }), h('span', { text: sub })), inputs[k]))),
+    h('div', { class: 'pa-form' }, list.map(([k, title, sub]) => h('div', { class: 'pa-form-row' }, h('div', null, h('b', { text: title }), h('span', { text: sub }), hints[k] || null), inputs[k]))),
     h('div', { class: 'pa-form-foot' }, h('span', { class: 'pa-small', text: foot }), h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Değişiklikleri kaydet', onclick: save })));
 }
 
@@ -1557,7 +1580,7 @@ function frChecklist(cfg) {
   };
   return h('div', null,
     h('div', { class: 'pa-tools' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: '+ Yeni madde', onclick: () => frEditItem(null) })),
-    h('p', { class: 'pa-note', style: 'margin-bottom:14px' }, 'Uzman maddeyi işaretlerse tespit ve öneri metni rapora eklenir; yalnız checklist ile oluşturulan rapor da bir rapor hakkı düşürür. Başlık eksiklik diliyle yazılır (ör. “Uyarı levhaları eksik”) ve yapay zekâya yalnız başlık gider.'),
+    h('p', { class: 'pa-note', style: 'margin-bottom:14px' }, 'Uzman maddeyi işaretlerse tespit ve öneri metni rapora eklenir; yalnız checklist ile oluşturulan rapor yapay zekâ kullanmaz (bütçeden düşmez). Başlık eksiklik diliyle yazılır (ör. “Uyarı levhaları eksik”) ve yapay zekâya yalnız başlık gider.'),
     rows.length ? h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
       h('thead', null, h('tr', null, ['Sıra', 'Madde', 'Öncelik', 'Durum', ''].map(t => h('th', { text: t })))),
       h('tbody', null, rows.map((r, i) => h('tr', { 'data-item': r.id },
@@ -1608,7 +1631,34 @@ function frToggleItem(r) {
   });
 }
 
-function frUsage(u) {
+// Kotayı ayarlamak için ölçüm (v1.13.0): rapor başına gerçek yapay zekâ maliyeti ve bu ay plan başına kullanıcı maliyeti.
+// Bütçe dolu kullanıcı çoksa kota dardır; kimse yaklaşmıyorsa cömerttir. Plan maliyetini abonelik fiyatıyla karşılaştırın.
+function frUnitStats(unit) {
+  if (!unit) return h('div', { class: 'pa-card pa-empty', text: 'Rapor başına maliyet ölçümü alınamadı.' });
+  const r = unit.reports || {}, b = unit.budgets || {};
+  const PLAN = { free: 'Ücretsiz', pro: 'PRO', max: 'MAX' };
+  const s = (label, value, sub) => h('div', { class: 'pa-stat' }, h('span', { text: label }), h('b', { text: value }), sub ? h('small', { text: sub }) : null);
+  const rows = unit.month_by_plan || [];
+  return h('div', null,
+    h('h2', { class: 'pa-subtitle pa-section-gap', text: 'Rapor başına yapay zekâ maliyeti' }),
+    h('div', { class: 'pa-stats' },
+      s('Tipik rapor', usd.format(r.avg_usd || 0), `Ortalama · ${num(r.count)} rapor`),
+      s('Ortanca', usd.format(r.p50_usd || 0), 'Raporların yarısı bunun altında'),
+      s('Ağır raporlar', usd.format(r.p90_usd || 0), `En pahalı %10 · en çok ${usd.format(r.max_usd || 0)}`),
+      s('Rapor başına', `${nf.format(r.avg_analyses || 0)} analiz`, `${nf.format(r.avg_rewrites || 0)} yeniden yazma`)),
+    h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
+      h('thead', null, h('tr', null, ['Plan', 'Aylık bütçe', '≈ Tipik rapor', 'Bu ay kullanan', 'Ort. maliyet', 'En çok', 'Bütçesi dolan'].map(c => h('th', { text: c })))),
+      h('tbody', null, ['free', 'pro', 'max'].map(p => {
+        const m = rows.find(x => x.plan === p) || {};
+        const avg = Number(r.avg_usd);
+        const cells = [PLAN[p], usd.format(b[p] || 0), avg > 0 ? nf.format(Math.floor((b[p] || 0) / avg)) : '—', num(m.users || 0),
+          usd.format(m.avg_usd || 0), usd.format(m.max_usd || 0), num(m.budget_full || 0)];
+        return h('tr', null, cells.map((c, i) => h('td', { 'data-label': i ? ['Plan', 'Aylık bütçe', '≈ Tipik rapor', 'Bu ay kullanan', 'Ort. maliyet', 'En çok', 'Bütçesi dolan'][i] : null, class: i ? 'pa-num' : null, text: c })));
+      })))),
+    h('p', { class: 'pa-note', text: 'Model değişince gerçek maliyet değişir, bütçe değişmez: pahalı modelde uzman daha az rapor çıkarır. Birkaç günlük ölçümden sonra Limitler’de bütçeyi hedef rapor sayısına göre güncelleyin.' }));
+}
+
+function frUsage(u, unit) {
   const v = view.fr, t = u?.totals || {};
   const s = (label, value, sub, alert) => h('div', { class: `pa-stat${alert ? ' is-alert' : ''}` }, h('span', { text: label }), h('b', { text: value }), sub ? h('small', { text: sub }) : null);
   const table = (cols, rows, cells) => rows.length ? h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
@@ -1619,17 +1669,18 @@ function frUsage(u) {
     h('div', { class: 'pa-tools' }, chips([[7, 'Son 7 gün'], [30, 'Son 30 gün'], [90, 'Son 90 gün']], v.days, x => { v.days = x; renderFieldReports(); })),
     h('div', { class: 'pa-stats' },
       s('Toplam maliyet', usd.format(t.cost_usd || 0), `Yapay zekâ sağlayıcılarına (${num(u?.days)} gün)`),
-      s('Analiz', num(t.analyze), `Hak düşen: ${num(t.charged)}`),
-      s('Yeniden yazma', num(t.rewrite), 'Hak düşürmez'),
-      s('Hata oranı', pct(t.errors, t.calls), `${num(t.errors)} hata · hak düşmedi`, errRate > 0.05),
+      s('Analiz', num(t.analyze), `Bulgulu: ${num(t.charged)}`),
+      s('Yeniden yazma', num(t.rewrite), 'Bütçeden düşer'),
+      s('Hata oranı', pct(t.errors, t.calls), `${num(t.errors)} hata`, errRate > 0.05),
       s('Yedek model', pct(t.fallback, t.calls), `${num(t.fallback)} çağrı`),
       s('Kullanan uzman', num(t.users), `Ortalama süre ${nf.format(Math.round(Number(t.avg_ms || 0) / 100) / 10)} sn`)),
-    h('h2', { class: 'pa-subtitle', text: 'Model bazında' }),
+    frUnitStats(unit),
+    h('h2', { class: 'pa-subtitle pa-section-gap', text: 'Model bazında' }),
     table(['Model', 'Çağrı', 'Hata', 'Yedek', 'Token (giriş / çıkış)', 'Maliyet'], u?.by_model || [], r => [r.model, num(r.calls), num(r.errors), num(r.fallback), `${num(r.input_tokens)} / ${num(r.output_tokens)}`, usd.format(r.cost_usd)]),
     h('h2', { class: 'pa-subtitle pa-section-gap', text: 'Gün bazında' }),
     table(['Gün', 'Çağrı', 'Hata', 'Maliyet'], u?.by_day || [], r => [new Date(`${r.day}T12:00:00`).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }), num(r.calls), num(r.errors), usd.format(r.cost_usd)]),
     h('h2', { class: 'pa-subtitle pa-section-gap', text: 'En çok kullanan uzmanlar' }),
-    table(['Uzman', 'Çağrı', 'Hak düşen', 'Maliyet'], u?.top_users || [], r => [who(r.full_name, r.email), num(r.calls), num(r.charged), usd.format(r.cost_usd)]),
+    table(['Uzman', 'Çağrı', 'Bulgulu analiz', 'Maliyet'], u?.top_users || [], r => [who(r.full_name, r.email), num(r.calls), num(r.charged), usd.format(r.cost_usd)]),
     h('p', { class: 'pa-note pa-section-gap', text: 'Maliyet, Modeller sekmesindeki fiyatlarla hesaplanır; sağlayıcı faturasıyla küçük farklar olabilir. Rapor içerikleri burada görünmez.' }));
 }
 

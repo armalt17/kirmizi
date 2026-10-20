@@ -60,7 +60,8 @@ function server(ctx) {
       { target: 'default', purpose: 'report_analyze', prompt: 'Sen deneyimli bir iş güvenliği uzmanısın. Tespitleri nesnel yaz; öneriler ...sağlanmalıdır diliyle.', updated_at: iso(600) },
       { target: 'default', purpose: 'finding_rewrite', prompt: 'Bulguyu hukuki dille yeniden yaz; öneri ...sağlanmalıdır.', updated_at: iso(600) },
       { target: 'openai', purpose: 'report_analyze', prompt: 'ChatGPT için özel analiz talimatı: kısa ve nesnel yaz.', updated_at: iso(100) }],
-    limits: { free_monthly_limit: '5', premium_daily_limit: '50', max_daily_limit: '30', report_rewrite_daily_limit: '40', report_max_photos: '8', report_max_drafts: '5',
+    limits: { ai_budget_free_month_microusd: '250000', ai_budget_pro_month_microusd: '10000000', ai_budget_max_month_microusd: '30000000', ai_daily_factor: '3',
+      report_max_analyses: '5', report_rewrite_daily_limit: '40', report_max_photos: '8', report_max_drafts: '5',
       spam_posts_per_hour: '10', spam_posts_per_day: '30', spam_comments_per_minute: '5', spam_comments_per_hour: '60', spam_likes_per_hour: '200',
       spam_services_per_day: '10', spam_reports_per_day: '20', spam_new_account_link_hours: '24', spam_max_links: '3',
       new_account_hours: '24', new_posts_per_day: '3', new_comments_per_day: '20', new_chats_per_day: '3' },
@@ -94,6 +95,10 @@ function server(ctx) {
     admin_revoke_verification: a => { Object.assign(st.verif.find(x => x.user_id === a.p_user), { status: 'rejected', reason: a.p_reason }); return null; },
     admin_update_profile: a => ({ changed: Object.keys(a.p_patch) }),
     admin_report_config: () => JSON.parse(JSON.stringify(st.fr)),
+    // v1.13.0: rapor başına gerçek maliyet (kota ayarı için ölçüm).
+    admin_report_unit_stats: a => ({ days: a.p_days, budgets: { free: 0.25, pro: 10, max: 30 },
+      reports: { count: 12, avg_usd: 0.025, p50_usd: 0.02, p90_usd: 0.07, max_usd: 0.11, avg_analyses: 1.3, avg_rewrites: 2.1 },
+      month_by_plan: [{ plan: 'free', users: 4, avg_usd: 0.08, max_usd: 0.25, budget_full: 1 }, { plan: 'pro', users: 2, avg_usd: 1.4, max_usd: 2.2, budget_full: 0 }] }),
     admin_report_usage: a => ({ days: a.p_days, totals: { calls: 40, analyze: 30, rewrite: 10, charged: 26, errors: 3, fallback: 2, cost_usd: 1.2345, users: 6, avg_ms: 5400 },
       by_day: [{ day: '2026-10-18', calls: 12, errors: 1, cost_usd: 0.41 }, { day: '2026-10-17', calls: 28, errors: 2, cost_usd: 0.8245 }],
       by_model: [{ model: 'anthropic:claude-sonnet-5-5', calls: 25, errors: 2, fallback: 0, input_tokens: 120000, output_tokens: 30000, cost_usd: 0.9 }, { model: 'anthropic:claude-haiku-5-5', calls: 15, errors: 1, fallback: 2, input_tokens: 40000, output_tokens: 9000, cost_usd: 0.3345 }],
@@ -203,7 +208,7 @@ const until = async (fn, ms = 5000) => { const t = Date.now(); while (Date.now()
 const visible = (f, sel) => f.locator(sel).first().isVisible().catch(() => false);
 const lastRpc = (st, name) => [...st.rpc].reverse().find(x => x.name === name);
 const ALLOWED = new Set(['kisg_is_admin', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_service_category_icons', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification',
-  'admin_report_config', 'admin_report_usage', 'admin_set_ai_setting', 'admin_upsert_ai_model', 'admin_set_ai_prompt', 'admin_set_report_limit', 'admin_upsert_checklist_item', 'admin_reorder_checklist']);
+  'admin_report_config', 'admin_report_usage', 'admin_report_unit_stats', 'admin_set_ai_setting', 'admin_upsert_ai_model', 'admin_set_ai_prompt', 'admin_set_report_limit', 'admin_upsert_checklist_item', 'admin_reorder_checklist']);
 
 // ---------------- statik ----------------
 check(!/service_role|service-role|serviceRole/i.test(ADMIN_HTML.replace(/service_role YOKTUR|service_role YOK/g, '')), 'admin HTML\'de service role anahtarı/kullanımı yok');
@@ -624,12 +629,14 @@ try {
     check(await until(() => f.locator('[data-prompt]').count().then(n => n === 1)), `${vp.n}: Yeniden yazma prompt'ları ayrı`);
     // Limitler
     await tab('Limitler');
-    check(await until(() => visible(f, 'input[name="premium_daily_limit"]')) && await f.inputValue('input[name="premium_daily_limit"]') === '50' && await f.inputValue('input[name="max_daily_limit"]') === '30', `${vp.n}: Limitler mevcut değerlerle`);
+    check(await until(() => visible(f, 'input[name="ai_budget_pro_month_microusd"]')) && await f.inputValue('input[name="ai_budget_pro_month_microusd"]') === '10' && await f.inputValue('input[name="ai_budget_free_month_microusd"]') === '0.25', `${vp.n}: Limitler: bütçeler dolar olarak`);
+    check(/≈ 400 tipik rapor/.test(await f.textContent('[data-main]')) && /≈ 10 tipik rapor/.test(await f.textContent('[data-main]')), `${vp.n}: bütçenin yanında ölçülen tipik rapor sayısı`);
     await f.fill('input[name="report_max_photos"]', '30'); await f.click('button:text-is("Değişiklikleri kaydet")');
     check(await until(async () => /en çok fotoğraf: 1 ile 20/.test(await f.textContent('[data-toast]'))), `${vp.n}: aralık dışı limit engellenir`);
-    await f.fill('input[name="report_max_photos"]', '10'); await f.fill('input[name="premium_daily_limit"]', '60');
+    await f.fill('input[name="report_max_photos"]', '10'); await f.fill('input[name="ai_budget_pro_month_microusd"]', '12.5');
+    check(await until(async () => /≈ 500 tipik rapor/.test(await f.textContent('[data-main]'))), `${vp.n}: yazarken tipik rapor sayısı güncellenir`);
     await f.click('button:text-is("Değişiklikleri kaydet")'); await dialog(); await submit();
-    check(await until(() => st.fr.limits.report_max_photos === '10' && st.fr.limits.premium_daily_limit === '60') && st.rpc.some(x => x.name === 'admin_set_report_limit' && x.args.p_key === 'premium_daily_limit' && x.args.p_value === 60), `${vp.n}: limitler tam sayı olarak kaydedildi`);
+    check(await until(() => st.fr.limits.report_max_photos === '10' && st.fr.limits.ai_budget_pro_month_microusd === '12500000') && st.rpc.some(x => x.name === 'admin_set_report_limit' && x.args.p_key === 'ai_budget_pro_month_microusd' && x.args.p_value === 12500000), `${vp.n}: bütçe mikro dolar (tam sayı) olarak kaydedildi`);
     // Spam koruması (v1.11.0): ayrı kart, kendi kaydet düğmesi
     check(await f.inputValue('input[name="spam_comments_per_minute"]') === '5' && await f.inputValue('input[name="new_posts_per_day"]') === '3', `${vp.n}: spam ve yeni hesap sınırları mevcut değerlerle`);
     await f.fill('input[name="spam_comments_per_minute"]', '3');
@@ -658,6 +665,7 @@ try {
     check(await until(() => visible(f, '.pa-stats')), `${vp.n}: Kullanım açıldı`);
     const ustat = await f.textContent('[data-main]');
     check(/\$1\.2345/.test(ustat) && /%7,5/.test(ustat) && /Ayşe Yılmaz/.test(ustat) && /claude-sonnet-5-5/.test(ustat) && lastRpc(st, 'admin_report_usage').args.p_days === 30, `${vp.n}: maliyet, hata oranı, model ve uzman tablosu`);
+    check(/Tipik rapor/.test(ustat) && /\$0\.025/.test(ustat) && /Bütçesi dolan/.test(ustat) && !/Hak düşen/.test(ustat), `${vp.n}: rapor başına maliyet ve plan tablosu; "hak" yok`);
     await f.click('.pa-tools .pa-chips button:text-is("Son 7 gün")');
     check(await until(() => lastRpc(st, 'admin_report_usage').args.p_days === 7), `${vp.n}: dönem değişir (7 gün)`);
     const ov = await f.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
