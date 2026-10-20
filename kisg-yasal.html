@@ -1,12 +1,18 @@
 <!--
-KIRMIZI İSG — YASAL & GİZLİLİK v1.1.0 (Legal V1)
+KIRMIZI İSG — YASAL & GİZLİLİK v1.2.0 (Legal V1)
 
 KURULUM: Bu dosyanın TAMAMI Hostinger'da /yasal sayfasının Custom HTML/Embed içeriği olarak kullanılır.
 Bağımsız ve hafif bir sayfadır: Professional App Shell'i, Supabase'i veya harici kitaplık yüklemez.
 
 Doğrudan bağlantılar (üst sayfa adresindeki #bölüm okunur, ilgili bölüme kaydırılır):
   /yasal#kvkk   /yasal#gizlilik   /yasal#kullanim-kosullari   /yasal#topluluk-kurallari   /yasal#hesap-silme
+  /yasal#onayli-hesap
 
+v1.2.0 (2026-10-20): "Onaylı Hesap ve Dijital Kaşe" bölümü (hukuki ön değerlendirme, kirmizi-isg-mobile
+docs/legal/2026-10-20-dijital-kase-hukuki-degerlendirme.md): onaylı hesap yalnız kimlik belgesinin kontrol edildiğini
+gösterir, Kırmızı İSG kimliği ve içeriği garanti etmez; dijital kaşe e-imza değildir; kimlik belgesinin işlenmesi ve
+doğrulama sayfasında görünen bilgiler. Avukat onayına kadar ayrı bölümdür; dört onaylı metne dokunulmadı. Onaylanınca
+Kullanım Koşulları ve KVKK metnine işlenir, sürüm tarihi ve legal_acceptances.document_version birlikte güncellenir.
 v1.1.0 (2026-10-20): "Hesap Silme" bölümü (Google Play "hesap silme adresi" şartı: uygulamayı açmadan silme talebi).
 Bu bölüm hukuki metin değil, kullanım rehberidir; dört onaylı metne dokunulmadı.
 
@@ -37,6 +43,7 @@ metin değişirse ikisi birlikte güncellenir.
       <a href="#kullanim-kosullari" data-section="kullanim-kosullari">Kullanım Koşulları</a>
       <a href="#topluluk-kurallari" data-section="topluluk-kurallari">Topluluk Kuralları</a>
       <a href="#hesap-silme" data-section="hesap-silme">Hesap Silme</a>
+      <a href="#onayli-hesap" data-section="onayli-hesap">Onaylı Hesap ve Dijital Kaşe</a>
     </nav>
 
     <main class="lg-main">
@@ -624,6 +631,29 @@ metin değişirse ikisi birlikte güncellenir.
 <p>Hesabı silmek App Store ya da Google Play aboneliğini durdurmaz. Aboneliğini telefonunun App Store / Google Play hesap ayarlarından ayrıca iptal etmelisin.</p>
         </div>
       </section>
+
+      <section id="onayli-hesap" class="lg-doc" aria-labelledby="onayli-hesap-title" data-doc="onayli-hesap">
+        <h2 id="onayli-hesap-title">Onaylı Hesap ve Dijital Kaşe</h2>
+        <div class="lg-text">
+<p class="lg-updated">Son Güncelleme: 20 Ekim 2026</p>
+<h3>1. Onaylı hesap ne anlama gelir?</h3>
+<p>Onaylı hesap rozeti, kullanıcının yüklediği kimlik belgesinin (kimlik kartı, pasaport ya da ehliyet) Kırmızı İSG ekibi tarafından kontrol edildiğini ve belgedeki adın profildeki adla eşleştiğini gösterir.</p>
+<p>Kontrol, kullanıcının yüklediği belgeye dayanır. Kırmızı İSG kullanıcının kimliğini, mesleki yeterliliğini, uzmanlık sınıfını ya da yetki belgesini garanti etmez. Profildeki unvan, meslek ve uzmanlık sınıfı kullanıcının beyanıdır.</p>
+<p>Başkasının kimlik belgesiyle başvurmak yasaktır; tespit edilirse onay ve hesap kapatılır, gerekirse yasal yollara başvurulur.</p>
+<h3>2. Dijital kaşe nedir?</h3>
+<p>Dijital kaşe, onaylı hesap sahibi bir uzmanın Kırmızı İSG'de hazırladığı rapora bastığı kare kodlu işarettir. Kare kod ya da kod, raporun Kırmızı İSG'de bu kullanıcının hesabından üretildiğini ve kaşe anındaki özet bilgilerini (rapor numarası, sürümü, tarihi, madde sayısı) gösterir.</p>
+<p>Dijital kaşe, 5070 sayılı Elektronik İmza Kanunu kapsamında elektronik imza ya da elektronik mühür değildir. Islak imzanın, işyerinin onaylı defterinin ve İSG-KATİP kayıtlarının yerine geçmez; bu yükümlülükler kullanıcıya ve işverene aittir.</p>
+<h3>3. Raporun içeriğinden kim sorumludur?</h3>
+<p>Raporun içeriğinden, tespit ve önerilerin doğruluğundan ve mevzuata uygunluğundan raporu hazırlayan uzman sorumludur. Kırmızı İSG raporun içeriğini incelemez ve garanti etmez; yapay zekâ destekli metinler uzman tarafından kontrol edilmelidir.</p>
+<p>Kaşeli bir rapor değiştirilip yeniden PDF'e çevrildiğinde yeni bir sürüm (Rev.) olarak kaydedilir; önceki sürümler doğrulama sayfasında listelenir.</p>
+<h3>4. Kötüye kullanım</h3>
+<p>Dijital kaşenin başka bir belgeye kopyalanması, değiştirilmiş bir raporda kullanılması ya da yanıltıcı biçimde gösterilmesi yasaktır. Bu durumda onay ve hesap kapatılabilir, gerekirse yasal yollara başvurulur. Şüpheli bir raporu <a href="mailto:destek@isgcalisanplatformu.com?subject=%C5%9E%C3%BCpheli%20rapor">destek@isgcalisanplatformu.com</a> adresine bildirebilirsiniz.</p>
+<h3>5. Kişisel veriler</h3>
+<p><strong>Kimlik belgesi:</strong> Onaylı hesap başvurusunda yüklenen kimlik belgesi görüntüsü yalnız kimlik kontrolü için işlenir, yalnız yetkili Kırmızı İSG ekibi görür ve başvuru karara bağlanınca silinir. Hukuki sebep: KVKK m.5/2-c (sözleşmenin kurulması ve ifası) ve m.5/2-f (meşru menfaat: sahte hesapların önlenmesi). Kimlik numarası ve kontrol için gerekmeyen diğer bilgiler kapatılabilir.</p>
+<p><strong>Doğrulama sayfası:</strong> Kaşeli raporun kare kodunu okutan ya da kodunu giren herkes; uzmanın adını, unvanını, profil fotoğrafını, onaylı hesap durumunu, rapor numarasını ve sürümünü, rapor ve ziyaret tarihini, madde ve acil madde sayısını ve kısaltılmış firma adını görür. Raporun maddeleri ve fotoğrafları bu sayfada görünmez.</p>
+<p>Diğer konularda KVKK Aydınlatma Metni ve Gizlilik Politikası geçerlidir.</p>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -697,7 +727,7 @@ metin değişirse ikisi birlikte güncellenir.
 const root = document.getElementById('kisgLegal');
 if (!root || root.dataset.ready) return;
 root.dataset.ready = 'true';
-const SECTIONS = ['kvkk', 'gizlilik', 'kullanim-kosullari', 'topluluk-kurallari', 'hesap-silme'];
+const SECTIONS = ['kvkk', 'gizlilik', 'kullanim-kosullari', 'topluluk-kurallari', 'hesap-silme', 'onayli-hesap'];
 const SITE = 'https://isgcalisanplatformu.com';
 
 // Hostinger srcdoc iframe: üst sayfaya (same-origin) erişim, genişlik ve yükseklik

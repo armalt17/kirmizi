@@ -1,6 +1,8 @@
 <!doctype html>
 <!--
-Kırmızı İSG · Rapor doğrulama sayfası (v1.2.2, 2026-10-20: "dijital kaşe" ifadesi her yerde; v1.2.1, 2026-10-20: kaşedeki ad kaşe anındaki ad; aynı Rev'in farklı hâlleri ayrı listelenir)
+Kırmızı İSG · Rapor doğrulama sayfası (v1.3.0, 2026-10-20: muhafazakâr hukuki dil: "Bu rapor gerçek / doğrulandı /
+onaylanmıştır" yerine "Kaşe kaydı bulundu"; içerikten uzman sorumlu; Kırmızı İSG kimliği ve içeriği garanti etmez; dijital
+kaşe elektronik imza değildir (hukuki ön değerlendirme, mobil depo docs/legal); v1.2.2, 2026-10-20: "dijital kaşe" ifadesi her yerde; v1.2.1, 2026-10-20: kaşedeki ad kaşe anındaki ad; aynı Rev'in farklı hâlleri ayrı listelenir)
 KURULUM: Hostinger'da /dogrula sayfasının Custom HTML/Embed içeriği olarak bu dosyanın TAMAMI yapıştırılır.
 PDF'teki kare kod https://isgcalisanplatformu.com/dogrula?k=KOD adresine gider (app_settings.report_verify_url).
 Veri: herkese açık report_verify(kod) (yalnız özet: uzman, rapor no, sürümler, kısaltılmış firma; tespit metni yok).
@@ -153,8 +155,8 @@ Staging deneme kopyası: node tools/build-dogrula-staging.mjs → dist-dogrula/k
   function notFound(code) {
     show(`<div class="kd-card kd-hero">
         <div class="kd-tick bad">${bang}</div>
-        <h1>Bu rapor doğrulanamadı</h1>
-        <p>Bu kodla kayıtlı bir rapor bulunamadı. Rapor değiştirilmiş, silinmiş ya da kod yanlış yazılmış olabilir.</p>
+        <h1>Kaşe kaydı bulunamadı</h1>
+        <p>Bu kodla kayıtlı bir kaşe yok. Kod yanlış yazılmış, rapor silinmiş ya da PDF'teki kare kod Kırmızı İSG'ye ait olmayabilir.</p>
       </div>
       <div class="kd-note">Kod: ${esc(code.length === 8 ? `${code.slice(0, 4)}-${code.slice(4)}` : code)}. Raporu hazırlayan uzmana danışabilirsiniz. Doğrulama kodu raporun son sayfasında, uzmanın dijital kaşesinin yanında yazar.</div>
       <button class="kd-btn" type="button" id="kdRetry">Başka bir kod gir</button>${about}`);
@@ -185,9 +187,9 @@ Staging deneme kopyası: node tools/build-dogrula-staging.mjs → dist-dogrula/k
     const profile = e.id ? `<a class="kd-btn" href="${CONFIG.siteUrl}/profil?id=${encodeURIComponent(e.id)}" target="_top">Uzmanın profilini gör</a>` : '';
     show(`<div class="kd-card kd-hero">
         ${seal(stampName, code.length === 8 ? `${code.slice(0, 4)}-${code.slice(4)}` : code)}
-        <div class="kd-pass">${small}Doğrulandı</div>
-        <h1>Bu rapor gerçek</h1>
-        <p>Bu rapor <b>${esc(stampName)}</b> tarafından hazırlanmış ve dijital kaşesiyle onaylanmıştır.</p>
+        <div class="kd-pass">${small}Kayıt bulundu</div>
+        <h1>Kaşe kaydı bulundu</h1>
+        <p>Bu kaşe <b>${esc(stampName)}</b> adına Kırmızı İSG'de kayıtlı. Raporun içeriğinden hazırlayan uzman sorumludur.</p>
       </div>
       <div class="kd-gap"></div>
       <div class="kd-card">
@@ -199,7 +201,8 @@ Staging deneme kopyası: node tools/build-dogrula-staging.mjs → dist-dogrula/k
         ${rows}
         ${older ? `<div class="kd-old">Önceki sürümler:<br>${older}</div>` : ''}
       </div>
-      <div class="kd-note">Elinizdeki rapordaki dijital kaşe, numara, tarih ve madde sayısı bunlarla aynı değilse rapor değiştirilmiş olabilir.</div>
+      <div class="kd-note">Elinizdeki rapordaki dijital kaşe, numara, Rev, tarih ve madde sayısı bunlarla aynı değilse rapor değiştirilmiş olabilir.</div>
+      <div class="kd-note">Kırmızı İSG uzmanın kimlik belgesini kontrol eder, ancak kimliği ve raporun içeriğini garanti etmez. Dijital kaşe elektronik imza değildir; ıslak imza, onaylı defter ve İSG-KATİP yükümlülüklerinin yerine geçmez.</div>
       ${profile}${about}`);
   }
 

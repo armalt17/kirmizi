@@ -35,9 +35,14 @@ try {
     check(await until(async () => Math.abs(await top('kullanim-kosullari')) < 40), `${vp.name} /yasal#kullanim-kosullari doğrudan açılır (bölüm üstte: ${await top('kullanim-kosullari')}px)`);
     check((await f.getAttribute('.lg-nav a[data-section="kullanim-kosullari"]', 'aria-current')) === 'true', `${vp.name} menüde aktif bölüm işaretli`);
     const ids = await f.evaluate(() => [...document.querySelectorAll('.lg-doc')].map(s => s.id + ':' + s.querySelector('h2').textContent));
-    check(JSON.stringify(ids) === JSON.stringify(['kvkk:KVKK Aydınlatma Metni', 'gizlilik:Gizlilik Politikası', 'kullanim-kosullari:Kullanım Koşulları', 'topluluk-kurallari:Topluluk Kuralları', 'hesap-silme:Hesap Silme']) && (await f.textContent('h1')) === 'Yasal & Gizlilik', `${vp.name} başlık ve beş bölüm doğru sırada (dört hukuki metin + Hesap Silme)`);
+    check(JSON.stringify(ids) === JSON.stringify(['kvkk:KVKK Aydınlatma Metni', 'gizlilik:Gizlilik Politikası', 'kullanim-kosullari:Kullanım Koşulları', 'topluluk-kurallari:Topluluk Kuralları', 'hesap-silme:Hesap Silme', 'onayli-hesap:Onaylı Hesap ve Dijital Kaşe']) && (await f.textContent('h1')) === 'Yasal & Gizlilik', `${vp.name} başlık ve altı bölüm doğru sırada (dört hukuki metin + Hesap Silme + Onaylı Hesap)`);
     await f.click('.lg-nav a[data-section="hesap-silme"]');
     check(await until(async () => new URL(page.url()).hash === '#hesap-silme' && Math.abs(await top('hesap-silme')) < 40) && /destek@isgcalisanplatformu\.com/.test(await f.textContent('#hesap-silme')), `${vp.name} Hesap Silme bölümü (Google Play silme adresi): #hesap-silme ve e-postayla talep yolu`);
+    await f.click('.lg-nav a[data-section="onayli-hesap"]');
+    const oh = await f.textContent('#onayli-hesap');
+    check(await until(async () => new URL(page.url()).hash === '#onayli-hesap' && Math.abs(await top('onayli-hesap')) < 40)
+      && /garanti etmez/.test(oh) && /elektronik imza ya da elektronik mühür değildir/.test(oh) && /karara bağlanınca silinir/.test(oh),
+      `${vp.name} Onaylı Hesap ve Dijital Kaşe bölümü: garanti yok, e-imza değil, kimlik belgesi karar sonrası silinir`);
     await f.click('.lg-nav a[data-section="topluluk-kurallari"]');
     check(await until(async () => new URL(page.url()).hash === '#topluluk-kurallari' && Math.abs(await top('topluluk-kurallari')) < 40), `${vp.name} menü tıklaması: üst adres #topluluk-kurallari ve bölüme kayar`);
     await page.evaluate(() => { location.hash = 'kvkk'; });
