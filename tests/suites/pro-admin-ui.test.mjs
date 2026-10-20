@@ -60,6 +60,7 @@ function server(ctx) {
       { target: 'default', purpose: 'report_analyze', prompt: 'Sen deneyimli bir iş güvenliği uzmanısın. Tespitleri nesnel yaz; öneriler ...sağlanmalıdır diliyle.', updated_at: iso(600) },
       { target: 'default', purpose: 'finding_rewrite', prompt: 'Bulguyu hukuki dille yeniden yaz; öneri ...sağlanmalıdır.', updated_at: iso(600) },
       { target: 'openai', purpose: 'report_analyze', prompt: 'ChatGPT için özel analiz talimatı: kısa ve nesnel yaz.', updated_at: iso(100) }],
+    texts: { report_verify_note: 'Doğrulamak için kare kodu okutun. Elektronik imza yerine geçmez; rapor içeriğinden hazırlayan uzman sorumludur.' },
     limits: { ai_budget_free_month_microusd: '250000', ai_budget_pro_month_microusd: '10000000', ai_budget_max_month_microusd: '30000000', ai_daily_factor: '3',
       report_max_analyses: '5', report_rewrite_daily_limit: '40', report_max_photos: '8', report_max_drafts: '5',
       spam_posts_per_hour: '10', spam_posts_per_day: '30', spam_comments_per_minute: '5', spam_comments_per_hour: '60', spam_likes_per_hour: '200',
@@ -98,6 +99,11 @@ function server(ctx) {
     // v1.15.0 yasaklı kelimeler: sunucu kuralı (2–40 harf) taklit edilir; liste her yazmada geri döner.
     admin_blocked_words: () => st.words.map(w => ({ ...w })),
     admin_job_phrases: () => st.phrases.map(w => ({ ...w })),
+    admin_set_report_text: a => {
+      const v = String(a.p_value || '').replace(/\s+/g, ' ').trim();
+      if (a.p_key !== 'report_verify_note' || v.length < 20 || v.length > 240) bad('text');
+      st.fr.texts[a.p_key] = v; return { key: a.p_key, value: v };
+    },
     admin_set_job_phrase: a => {
       const norm = String(a.p_phrase || '').trim().toLocaleLowerCase('tr-TR');
       if (norm.length < 3) bad('phrase');
@@ -225,7 +231,7 @@ const until = async (fn, ms = 5000) => { const t = Date.now(); while (Date.now()
 const visible = (f, sel) => f.locator(sel).first().isVisible().catch(() => false);
 const lastRpc = (st, name) => [...st.rpc].reverse().find(x => x.name === name);
 const ALLOWED = new Set(['kisg_is_admin', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_service_category_icons', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification',
-  'admin_report_config', 'admin_report_usage', 'admin_report_unit_stats', 'admin_set_ai_setting', 'admin_upsert_ai_model', 'admin_set_ai_prompt', 'admin_set_report_limit', 'admin_upsert_checklist_item', 'admin_reorder_checklist', 'admin_blocked_words', 'admin_set_blocked_word', 'admin_job_phrases', 'admin_set_job_phrase']);
+  'admin_report_config', 'admin_report_usage', 'admin_report_unit_stats', 'admin_set_ai_setting', 'admin_upsert_ai_model', 'admin_set_ai_prompt', 'admin_set_report_limit', 'admin_upsert_checklist_item', 'admin_reorder_checklist', 'admin_blocked_words', 'admin_set_blocked_word', 'admin_job_phrases', 'admin_set_job_phrase', 'admin_set_report_text']);
 
 // ---------------- statik ----------------
 check(!/service_role|service-role|serviceRole/i.test(ADMIN_HTML.replace(/service_role YOKTUR|service_role YOK/g, '')), 'admin HTML\'de service role anahtarı/kullanımı yok');
@@ -667,6 +673,14 @@ try {
     await f.fill('input[name="spam_comments_per_minute"]', '3');
     await f.locator('button:text-is("Değişiklikleri kaydet")').nth(1).click(); await dialog(); await submit();
     check(await until(() => st.fr.limits.spam_comments_per_minute === '3') && st.rpc.some(x => x.name === 'admin_set_report_limit' && x.args.p_key === 'spam_comments_per_minute' && x.args.p_value === 3), `${vp.n}: spam sınırı kaydedildi`);
+    // PDF kaşe notu (v1.17.0): mevcut metin, kısa metin reddi, kaydet (satır sonları boşluk olur)
+    check(/Doğrulamak için kare kodu okutun/.test(await f.inputValue('textarea[name="report_verify_note"]')), `${vp.n}: PDF kaşe notu mevcut metinle`);
+    await f.fill('textarea[name="report_verify_note"]', 'Kısa');
+    await f.click('button:text-is("Notu kaydet")');
+    check(await until(async () => /en az 20 karakter/.test(await f.textContent('[data-toast]'))), `${vp.n}: kısa not reddedilir`);
+    await f.fill('textarea[name="report_verify_note"]', 'Kare kodu okutarak doğrulayın.\nElektronik imza yerine geçmez.');
+    await f.click('button:text-is("Notu kaydet")'); await dialog(); await submit();
+    check(await until(() => st.fr.texts.report_verify_note === 'Kare kodu okutarak doğrulayın. Elektronik imza yerine geçmez.') && lastRpc(st, 'admin_set_report_text')?.args.p_key === 'report_verify_note', `${vp.n}: PDF kaşe notu kaydedildi`);
     // Yasaklı kelimeler (v1.15.0): liste, ekle (önek), geçersiz giriş, çıkar
     check(await until(async () => /orospu/.test(await f.textContent('[data-main]')) && /Önek/.test(await f.textContent('[data-main]'))), `${vp.n}: yasaklı kelimeler listesi görünür`);
     await f.fill('input[name="word"]', 'a1'); await f.click('[data-add="word"]');
