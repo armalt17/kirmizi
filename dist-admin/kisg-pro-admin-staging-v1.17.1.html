@@ -20,6 +20,7 @@ GÜVENLİK
 BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler · Hizmet Kategorileri · Alanlar · Şikâyetler · Destek · Onaylar · Saha Raporu
  - v1.8.0 Onaylar (20261013_verified_accounts.sql): onaylı hesap başvuruları. Belge gizli depodan (kisg-verifications)
    10 dakikalık imzalı bağlantıyla görülür; onay/ret kararıyla birlikte depodan silinir.
+ - v1.17.1 Saha Raporu: "Checklist" sekmesinin adı "Hazır şablonlar" (mobil uygulamayla aynı; veri ve RPC'ler aynı).
  - v1.17.0 Saha Raporu → Limitler: PDF kaşe notu (dijital kaşenin yanındaki kısa yazı; kirmizi-isg-mobile
    20261020100000_report_verify_note.sql, admin_set_report_text).
  - v1.16.0 Saha Raporu → Limitler: İş ilanı ifadeleri (kirmizi-isg-mobile 20261020070000_job_phrases.sql).
@@ -287,7 +288,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.17.0',
+  version: '1.17.1',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -390,7 +391,7 @@ const LABEL = {
   support: { open: 'Açık', resolved: 'Çözüldü' },
   supportCategory: { technical: 'Teknik sorun', account: 'Hesap / profil sorunu', suggestion: 'Öneri / geri bildirim', other: 'Diğer' },
   target: { post: 'Post', comment: 'Yorum', profile: 'Profil', service: 'Hizmet', tag: 'Alan', service_category: 'Hizmet kategorisi',
-    ai_model: 'AI modeli', ai_setting: 'Model seçimi', ai_prompt: 'Prompt', app_setting: 'Rapor limiti', checklist_question: 'Checklist' },
+    ai_model: 'AI modeli', ai_setting: 'Model seçimi', ai_prompt: 'Prompt', app_setting: 'Rapor limiti', checklist_question: 'Hazır şablon' },
   reason: { spam: 'Spam', inappropriate: 'Uygunsuz içerik', misleading: 'Yanıltıcı', harassment: 'Taciz / hakaret', fake_profile: 'Sahte profil', other: 'Diğer' },
   action_taken: { none: 'İşlem yok', content_hidden: 'İçerik gizlendi', content_deleted: 'İçerik silindi', user_warned: 'Uyarıldı', user_suspended: 'Askıya alındı', user_banned: 'Banlandı', other: 'Diğer' },
   audit: { 'profile.update': 'Profil düzenlendi', 'post.hide': 'Post gizlendi', 'post.restore': 'Post geri açıldı', 'post.delete': 'Post silindi',
@@ -400,7 +401,7 @@ const LABEL = {
     'tag.update': 'Alan düzenlendi', 'tag.merge': 'Alanlar birleştirildi',
     'ai_model.create': 'AI modeli eklendi', 'ai_model.update': 'AI modeli düzenlendi', 'ai_setting.update': 'Model seçimi değişti',
     'ai_prompt.update': 'Prompt düzenlendi', 'ai_prompt.delete': 'Özel prompt kaldırıldı', 'report_limit.update': 'Rapor limiti değişti', 'report_text.update': 'PDF kaşe notu değişti',
-    'checklist.create': 'Checklist maddesi eklendi', 'checklist.update': 'Checklist maddesi düzenlendi', 'checklist.reorder': 'Checklist sırası değişti',
+    'checklist.create': 'Hazır şablon eklendi', 'checklist.update': 'Hazır şablon düzenlendi', 'checklist.reorder': 'Hazır şablon sırası değişti',
     'blocked_word.set': 'Yasaklı kelime eklendi', 'blocked_word.remove': 'Yasaklı kelime çıkarıldı',
     'job_phrase.set': 'İş ilanı ifadesi eklendi', 'job_phrase.remove': 'İş ilanı ifadesi çıkarıldı' }
 };
@@ -1300,7 +1301,7 @@ function mergeTag(r) {
    kullanım sayıları; uzmanların rapor içerikleri burada görünmez. RPC'ler: admin_report_config, admin_set_ai_setting,
    admin_upsert_ai_model, admin_set_ai_prompt, admin_set_report_limit, admin_upsert_checklist_item,
    admin_reorder_checklist, admin_report_usage. ----- */
-const FR_TABS = [['routing', 'Model seçimi'], ['models', 'Modeller'], ['prompts', 'Prompt’lar'], ['limits', 'Limitler'], ['checklist', 'Checklist'], ['usage', 'Kullanım ve maliyet']];
+const FR_TABS = [['routing', 'Model seçimi'], ['models', 'Modeller'], ['prompts', 'Prompt’lar'], ['limits', 'Limitler'], ['checklist', 'Hazır şablonlar'], ['usage', 'Kullanım ve maliyet']];
 const FR_STYLE = [['sade', 'Sade', 'Kısa, yalın cümleler'], ['dengeli', 'Dengeli', 'Önerilen'], ['ayrintili', 'Ayrıntılı', 'Daha açıklayıcı öneriler']];
 const FR_PURPOSE = { report_analyze: 'Analiz', finding_rewrite: 'Yeniden yazma' };
 const FR_LIMITS = [
@@ -1339,7 +1340,7 @@ const PRIORITY = { acil: ['Acil', 'is-deleted'], onemli: ['Önemli', 'is-active'
 async function renderFieldReports() {
   const seq = ++renderSeq, v = view.fr;
   const bodyBox = h('div', null, loading());
-  main.replaceChildren(head('Saha Raporu', 'Mobil uygulamadaki yapay zekâ destekli saha raporu: model, prompt, limit ve checklist ayarları; kullanım ve maliyet. Değişiklikler hemen geçerli olur.'),
+  main.replaceChildren(head('Saha Raporu', 'Mobil uygulamadaki yapay zekâ destekli saha raporu: model, prompt, limit ve hazır şablon ayarları; kullanım ve maliyet. Değişiklikler hemen geçerli olur.'),
     h('div', { class: 'pa-tools' }, chips(FR_TABS, v.tab, x => { v.tab = x; renderFieldReports(); })),
     bodyBox);
   let cfg, usage, unit = null;
@@ -1679,8 +1680,8 @@ function frChecklist(cfg) {
     catch (e) { toast(e.message || 'Sıra kaydedilemedi.', true); }
   };
   return h('div', null,
-    h('div', { class: 'pa-tools' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: '+ Yeni madde', onclick: () => frEditItem(null) })),
-    h('p', { class: 'pa-note', style: 'margin-bottom:14px' }, 'Uzman maddeyi işaretlerse tespit ve öneri metni rapora eklenir; yalnız checklist ile oluşturulan rapor yapay zekâ kullanmaz (bütçeden düşmez). Başlık eksiklik diliyle yazılır (ör. “Uyarı levhaları eksik”) ve yapay zekâya yalnız başlık gider.'),
+    h('div', { class: 'pa-tools' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: '+ Yeni şablon', onclick: () => frEditItem(null) })),
+    h('p', { class: 'pa-note', style: 'margin-bottom:14px' }, 'Uzman maddeyi işaretlerse tespit ve öneri metni rapora eklenir; yalnız hazır şablonlarla oluşturulan rapor yapay zekâ kullanmaz (bütçeden düşmez). Başlık eksiklik diliyle yazılır (ör. “Uyarı levhaları eksik”) ve yapay zekâya yalnız başlık gider.'),
     rows.length ? h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
       h('thead', null, h('tr', null, ['Sıra', 'Madde', 'Öncelik', 'Durum', ''].map(t => h('th', { text: t })))),
       h('tbody', null, rows.map((r, i) => h('tr', { 'data-item': r.id },
@@ -1694,7 +1695,7 @@ function frChecklist(cfg) {
         h('td', null, h('div', { class: 'pa-actions' },
           btn('Düzenle', () => frEditItem(r)),
           btn(r.is_active ? 'Gizle' : 'Göster', () => frToggleItem(r)))))))))
-      : h('div', { class: 'pa-card pa-empty', text: 'Checklist maddesi yok.' }));
+      : h('div', { class: 'pa-card pa-empty', text: 'Hazır şablon yok.' }));
 }
 function frEditItem(r) {
   const area = (name, label, value, rows = 3) => h('label', { class: 'pa-field' }, h('span', { text: label }), Object.assign(h('textarea', { name, maxlength: 2000, rows }), { value: value || '' }));
@@ -1709,7 +1710,7 @@ function frEditItem(r) {
       h('label', null, h('input', { type: 'radio', name: 'priority', value: 'acil', checked: pr === 'acil' }), 'Acil')),
     r?.question && r.question !== r.deficiency_title ? h('p', { class: 'pa-small', text: `Eski uygulamadaki soru metni değişmez: “${r.question}”` }) : null);
   confirmDialog({
-    title: r ? 'Checklist maddesi düzenle' : 'Yeni checklist maddesi', confirm: r ? 'Kaydet' : 'Ekle', reasonRequired: false, wide: true, fields,
+    title: r ? 'Hazır şablonu düzenle' : 'Yeni hazır şablon', confirm: r ? 'Kaydet' : 'Ekle', reasonRequired: false, wide: true, fields,
     submit: async ({ reason, form }) => {
       const el = form.elements, title = clean(el.title.value);
       if (title.length < 3) throw new AdminError('Başlık en az 3 karakter olmalı.', 'input');
@@ -1723,7 +1724,7 @@ function frToggleItem(r) {
   const on = !r.is_active;
   confirmDialog({
     title: `${clean(r.deficiency_title) || 'Madde'}: ${on ? 'gösterilsin mi?' : 'gizlensin mi?'}`, confirm: on ? 'Göster' : 'Gizle', danger: !on, reasonRequired: false,
-    text: on ? 'Madde uygulamadaki checklist’te yeniden görünür.' : 'Madde uygulamadaki checklist’te görünmez. Daha önce kaydedilmiş raporlar değişmez.',
+    text: on ? 'Şablon uygulamadaki Hazır şablonlar listesinde yeniden görünür.' : 'Şablon uygulamadaki Hazır şablonlar listesinde görünmez. Daha önce kaydedilmiş raporlar değişmez.',
     submit: async ({ reason }) => {
       await rpc('admin_upsert_checklist_item', { p_id: r.id, p_patch: { is_active: on }, p_reason: reason || null });
       toast(on ? 'Madde gösteriliyor.' : 'Madde gizlendi.'); renderFieldReports();

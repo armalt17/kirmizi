@@ -698,8 +698,8 @@ try {
     check(await until(() => !st.phrases.some(w => w.phrase === 'eleman aranıyor')) && lastRpc(st, 'admin_set_job_phrase')?.args.p_on === false, `${vp.n}: ifade çıkarıldı`);
     st.phrases.push({ phrase: 'eleman aranıyor', norm: 'eleman araniyor', strong: true, created_at: iso(0) });
     // Checklist
-    await tab('Checklist');
-    check(await until(() => f.locator('[data-item]').count().then(n => n === 2)), `${vp.n}: Checklist: 2 madde`);
+    await tab('Hazır şablonlar');
+    check(await until(() => f.locator('[data-item]').count().then(n => n === 2)), `${vp.n}: Hazır şablonlar: 2 şablon`);
     check(/İşaretsiz \(eski\)/.test(await f.textContent(`[data-item="${st.Q.Q2}"]`)), `${vp.n}: eski "iyileştirme" önceliği işaretsiz görünür`);
     await f.click(`[data-item="${st.Q.Q2}"] button:text-is("Düzenle")`); await dialog();
     check(/Eski uygulamadaki soru metni değişmez/.test(await f.textContent('.pa-dialog')), `${vp.n}: eski soru metni bilgisi`);
@@ -711,8 +711,8 @@ try {
     await until(() => f.locator(`[data-item="${st.Q.Q1}"] button:text-is("Gizle")`).count().then(n => n === 1));
     await f.click(`[data-item="${st.Q.Q1}"] button:text-is("Gizle")`); await dialog(); await submit();
     check(await until(() => st.fr.checklist.find(x => x.id === st.Q.Q1).is_active === false), `${vp.n}: madde gizlendi`);
-    await until(() => f.locator('button:text-is("+ Yeni madde")').count().then(n => n === 1));
-    await f.click('button:text-is("+ Yeni madde")'); await dialog();
+    await until(() => f.locator('button:text-is("+ Yeni şablon")').count().then(n => n === 1));
+    await f.click('button:text-is("+ Yeni şablon")'); await dialog();
     await f.fill('.pa-dialog input[name="title"]', 'Acil çıkış yolu kapalı'); await submit();
     check(await until(() => st.fr.checklist.some(x => x.deficiency_title === 'Acil çıkış yolu kapalı' && x.default_priority === 'onemli')), `${vp.n}: yeni madde eklendi (varsayılan Önemli)`);
     // Kullanım
