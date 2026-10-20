@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-Kırmızı İSG · Rapor doğrulama sayfası (v1.2.1, 2026-10-20: kaşedeki ad kaşe anındaki ad; aynı Rev'in farklı hâlleri ayrı listelenir)
+Kırmızı İSG · Rapor doğrulama sayfası (v1.2.2, 2026-10-20: "dijital kaşe" ifadesi her yerde; v1.2.1, 2026-10-20: kaşedeki ad kaşe anındaki ad; aynı Rev'in farklı hâlleri ayrı listelenir)
 KURULUM: Hostinger'da /dogrula sayfasının Custom HTML/Embed içeriği olarak bu dosyanın TAMAMI yapıştırılır.
 PDF'teki kare kod https://isgcalisanplatformu.com/dogrula?k=KOD adresine gider (app_settings.report_verify_url).
 Veri: herkese açık report_verify(kod) (yalnız özet: uzman, rapor no, sürümler, kısaltılmış firma; tespit metni yok).
@@ -199,7 +199,7 @@ Staging deneme kopyası: node tools/build-dogrula-staging.mjs → dist-dogrula/k
         ${rows}
         ${older ? `<div class="kd-old">Önceki sürümler:<br>${older}</div>` : ''}
       </div>
-      <div class="kd-note">Elinizdeki rapordaki kaşe, numara, tarih ve madde sayısı bunlarla aynı değilse rapor değiştirilmiş olabilir.</div>
+      <div class="kd-note">Elinizdeki rapordaki dijital kaşe, numara, tarih ve madde sayısı bunlarla aynı değilse rapor değiştirilmiş olabilir.</div>
       ${profile}${about}`);
   }
 
