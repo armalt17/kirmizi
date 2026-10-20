@@ -20,6 +20,7 @@ GÜVENLİK
 BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler · Hizmet Kategorileri · Alanlar · Şikâyetler · Destek · Onaylar · Saha Raporu
  - v1.8.0 Onaylar (20261013_verified_accounts.sql): onaylı hesap başvuruları. Belge gizli depodan (kisg-verifications)
    10 dakikalık imzalı bağlantıyla görülür; onay/ret kararıyla birlikte depodan silinir.
+ - v1.15.0 Saha Raporu → Limitler: Yasaklı kelimeler (kirmizi-isg-mobile 20261020060000_blocked_words.sql).
  - v1.9.0 Saha Raporu (mobil uygulamanın AI destekli saha raporu; kirmizi-isg-mobile
    supabase/migrations/20261019220000_admin_report_rpcs.sql ve rapor şeması): model seçimi, modeller, prompt'lar,
    limitler, checklist ve kullanım/maliyet. Yalnız ayarlar ve toplu sayılar; uzmanların rapor içerikleri görünmez.
@@ -283,7 +284,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.14.0',
+  version: '1.15.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -396,7 +397,8 @@ const LABEL = {
     'tag.update': 'Alan düzenlendi', 'tag.merge': 'Alanlar birleştirildi',
     'ai_model.create': 'AI modeli eklendi', 'ai_model.update': 'AI modeli düzenlendi', 'ai_setting.update': 'Model seçimi değişti',
     'ai_prompt.update': 'Prompt düzenlendi', 'ai_prompt.delete': 'Özel prompt kaldırıldı', 'report_limit.update': 'Rapor limiti değişti',
-    'checklist.create': 'Checklist maddesi eklendi', 'checklist.update': 'Checklist maddesi düzenlendi', 'checklist.reorder': 'Checklist sırası değişti' }
+    'checklist.create': 'Checklist maddesi eklendi', 'checklist.update': 'Checklist maddesi düzenlendi', 'checklist.reorder': 'Checklist sırası değişti',
+    'blocked_word.set': 'Yasaklı kelime eklendi', 'blocked_word.remove': 'Yasaklı kelime çıkarıldı' }
 };
 const badge = (kind, value) => h('span', { class: `pa-badge is-${value}` , text: LABEL[kind]?.[value] || value || '—' });
 const who = (name, sub) => h('span', { class: 'pa-who' }, h('b', { text: clean(name) || 'İsimsiz kullanıcı' }), sub ? h('span', { class: 'pa-small', text: sub }) : null);
@@ -1546,7 +1548,48 @@ function frLimits(cfg, unit) {
   return h('div', null,
     frLimitCard(lim, FR_LIMITS, 'Limitler kaydedilsin mi?', 'Kota sunucuda hemen değişir; uygulamadaki yüzde en geç 5 dakikada güncellenir. Rapor yazmak ve PDF her planda ücretsiz.', unit),
     h('h3', { text: 'Spam koruması ve yeni hesap kuralları', style: 'margin:22px 0 10px' }),
-    frLimitCard(lim, SPAM_LIMITS, 'Spam sınırları kaydedilsin mi?', 'Sınıra takılan kullanıcı kısa bir uyarı görür. Aynı metnin (en az 20 karakter) kısa sürede tekrar gönderilmesi de engellenir.'));
+    frLimitCard(lim, SPAM_LIMITS, 'Spam sınırları kaydedilsin mi?', 'Sınıra takılan kullanıcı kısa bir uyarı görür. Aynı metnin (en az 20 karakter) kısa sürede tekrar gönderilmesi de engellenir.'),
+    h('h3', { text: 'Yasaklı kelimeler', style: 'margin:22px 0 10px' }),
+    frBlockedWords());
+}
+
+// Yasaklı kelimeler (v1.15.0; sunucuda kisg_word_filter, Apple 1.2): Post, yorum, mesaj, hizmet, ilan ve Alan adında listedeki
+// bir ifade varsa kayıt reddedilir; kullanıcı "Topluluk Kurallarına uymayan bir ifade var" uyarısı görür (hangi kelime
+// olduğu söylenmez). Karşılaştırma küçük harfle, ş/ğ/ü/ö sadeleşerek ve tekrar eden harfler teke inerek yapılır.
+// "Önek": kelimenin başı yeter (çekimler). Adminler muaftır.
+function frBlockedWords() {
+  const box = h('div', { class: 'pa-card' }, loading());
+  const word = h('input', { type: 'text', name: 'word', maxlength: 40, placeholder: 'Kelime', 'aria-label': 'Yasaklı kelime' });
+  const prefix = h('input', { type: 'checkbox', name: 'prefix' });
+  const set = async (w, p, on) => {
+    try { draw(await rpc('admin_set_blocked_word', { p_word: w, p_prefix: p, p_on: on })); toast(on ? 'Kelime eklendi.' : 'Kelime çıkarıldı.'); }
+    catch (e) { toast(e.code === 'input' || /KISG_ADMIN_INPUT/.test(e.message || '') ? 'Kelime 2–40 harf olmalı (rakam ve boşluk olmadan).' : (e.message || 'Kaydedilemedi.'), true); }
+  };
+  const add = () => {
+    const w = word.value.trim();
+    if (!w) { word.focus(); return; }
+    void set(w, prefix.checked, true).then(() => { word.value = ''; prefix.checked = false; });
+  };
+  word.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); add(); } });
+  function draw(list) {
+    const rows = Array.isArray(list) ? list : [];
+    box.replaceChildren(
+      h('div', { class: 'pa-form-row' },
+        h('div', null, h('b', { text: 'Kelime ekle' }), h('span', { text: 'Gündelik bir sözcüğün parçası olabilecek kısa kelimeleri önek yapma (ör. "sik" yazmak "sıkıntı"yı Türkçe karaktersiz yazanı da engeller).' })),
+        h('div', { class: 'pa-actions' }, word, h('label', { class: 'pa-check' }, prefix, h('span', { text: 'Önek (çekimleri de yakala)' })),
+          h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Ekle', onclick: add }))),
+      rows.length
+        ? h('table', { class: 'pa-table' },
+            h('thead', null, h('tr', null, ['Kelime', 'Eşleme', ''].map(t => h('th', { text: t })))),
+            h('tbody', null, rows.map(r => h('tr', null,
+              h('td', null, h('b', { style: 'color:var(--ink)', text: r.word })),
+              h('td', { 'data-label': 'Eşleme' }, h('span', { class: `pa-badge ${r.prefix ? 'is-pending' : 'is-active'}`, text: r.prefix ? 'Önek' : 'Tam kelime' })),
+              h('td', null, h('button', { type: 'button', class: 'pa-btn pa-btn-sm', text: 'Çıkar', 'aria-label': `${r.word} çıkar`, onclick: () => void set(r.word, r.prefix, false) }))))))
+        : h('p', { class: 'pa-note', text: 'Liste boş: hiçbir kelime engellenmiyor.' }),
+      h('div', { class: 'pa-form-foot' }, h('span', { class: 'pa-small', text: `${rows.length} kelime. Değişiklik hemen geçerli olur; daha önce yazılmış içerik etkilenmez (şikâyetle incelenir).` })));
+  }
+  rpc('admin_blocked_words', {}).then(draw).catch(e => box.replaceChildren(h('p', { class: 'pa-note', text: e.message || 'Liste yüklenemedi.' })));
+  return box;
 }
 
 function frLimitCard(lim, list, confirmTitle, foot, unit = null) {
