@@ -20,6 +20,7 @@ GÜVENLİK
 BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler · Hizmet Kategorileri · Alanlar · Şikâyetler · Destek · Onaylar · Saha Raporu
  - v1.8.0 Onaylar (20261013_verified_accounts.sql): onaylı hesap başvuruları. Belge gizli depodan (kisg-verifications)
    10 dakikalık imzalı bağlantıyla görülür; onay/ret kararıyla birlikte depodan silinir.
+ - v1.16.0 Saha Raporu → Limitler: İş ilanı ifadeleri (kirmizi-isg-mobile 20261020070000_job_phrases.sql).
  - v1.15.0 Saha Raporu → Limitler: Yasaklı kelimeler (kirmizi-isg-mobile 20261020060000_blocked_words.sql).
  - v1.9.0 Saha Raporu (mobil uygulamanın AI destekli saha raporu; kirmizi-isg-mobile
    supabase/migrations/20261019220000_admin_report_rpcs.sql ve rapor şeması): model seçimi, modeller, prompt'lar,
@@ -284,7 +285,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.15.0',
+  version: '1.16.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -398,7 +399,8 @@ const LABEL = {
     'ai_model.create': 'AI modeli eklendi', 'ai_model.update': 'AI modeli düzenlendi', 'ai_setting.update': 'Model seçimi değişti',
     'ai_prompt.update': 'Prompt düzenlendi', 'ai_prompt.delete': 'Özel prompt kaldırıldı', 'report_limit.update': 'Rapor limiti değişti',
     'checklist.create': 'Checklist maddesi eklendi', 'checklist.update': 'Checklist maddesi düzenlendi', 'checklist.reorder': 'Checklist sırası değişti',
-    'blocked_word.set': 'Yasaklı kelime eklendi', 'blocked_word.remove': 'Yasaklı kelime çıkarıldı' }
+    'blocked_word.set': 'Yasaklı kelime eklendi', 'blocked_word.remove': 'Yasaklı kelime çıkarıldı',
+    'job_phrase.set': 'İş ilanı ifadesi eklendi', 'job_phrase.remove': 'İş ilanı ifadesi çıkarıldı' }
 };
 const badge = (kind, value) => h('span', { class: `pa-badge is-${value}` , text: LABEL[kind]?.[value] || value || '—' });
 const who = (name, sub) => h('span', { class: 'pa-who' }, h('b', { text: clean(name) || 'İsimsiz kullanıcı' }), sub ? h('span', { class: 'pa-small', text: sub }) : null);
@@ -1550,7 +1552,9 @@ function frLimits(cfg, unit) {
     h('h3', { text: 'Spam koruması ve yeni hesap kuralları', style: 'margin:22px 0 10px' }),
     frLimitCard(lim, SPAM_LIMITS, 'Spam sınırları kaydedilsin mi?', 'Sınıra takılan kullanıcı kısa bir uyarı görür. Aynı metnin (en az 20 karakter) kısa sürede tekrar gönderilmesi de engellenir.'),
     h('h3', { text: 'Yasaklı kelimeler', style: 'margin:22px 0 10px' }),
-    frBlockedWords());
+    frBlockedWords(),
+    h('h3', { text: 'İş ilanı ifadeleri (Akışa ilan yazılamaz)', style: 'margin:22px 0 10px' }),
+    frJobPhrases());
 }
 
 // Yasaklı kelimeler (v1.15.0; sunucuda kisg_word_filter, Apple 1.2): Post, yorum, mesaj, hizmet, ilan ve Alan adında listedeki
@@ -1558,37 +1562,55 @@ function frLimits(cfg, unit) {
 // olduğu söylenmez). Karşılaştırma küçük harfle, ş/ğ/ü/ö sadeleşerek ve tekrar eden harfler teke inerek yapılır.
 // "Önek": kelimenin başı yeter (çekimler). Adminler muaftır.
 function frBlockedWords() {
+  return frPhraseList({ list: 'admin_blocked_words', set: 'admin_set_blocked_word', key: 'word', flag: 'prefix', name: 'word',
+    flagLabel: 'Önek (çekimleri de yakala)', flagOn: 'Önek', flagOff: 'Tam kelime', min: '2–40 harf olmalı (rakam ve boşluk olmadan)',
+    addHelp: 'Gündelik bir sözcüğün parçası olabilecek kısa kelimeleri önek yapma (ör. "sik" yazmak "sıkıntı"yı Türkçe karaktersiz yazanı da engeller).',
+    foot: n => `${n} kelime. Değişiklik hemen geçerli olur; daha önce yazılmış içerik etkilenmez (şikâyetle incelenir).` });
+}
+
+// İş ilanı ifadeleri (v1.16.0; sunucuda kisg_job_filter): Post ya da yorumda güçlü bir ifade ya da en az iki farklı orta
+// ifade varsa yazı Akışa gitmez, uygulama kişiyi İlanlar'a yönlendirir. Türkçe karakterden bağımsız (aranıyor = araniyor),
+// ifadenin sonu ek alabilir. Mevzuat ve sınav konuşmalarında da geçebilecek ifadeler "orta" olmalı.
+function frJobPhrases() {
+  return frPhraseList({ list: 'admin_job_phrases', set: 'admin_set_job_phrase', key: 'phrase', flag: 'strong', name: 'phrase',
+    flagLabel: 'Güçlü (tek başına yeter)', flagOn: 'Güçlü', flagOff: 'Orta (en az iki)', min: '3–80 karakter olmalı', defaultFlag: true,
+    addHelp: 'Güçlü: neredeyse yalnız ilanda geçen ifade ("eleman aranıyor"). Orta: ilanda sık ama tek başına kanıt değil ("tam zamanlı"); en az iki farklısı birlikte geçerse ilan sayılır.',
+    foot: n => `${n} ifade. Değişiklik hemen geçerli olur; daha önce yazılmış Postlar etkilenmez.` });
+}
+
+function frPhraseList(o) {
   const box = h('div', { class: 'pa-card' }, loading());
-  const word = h('input', { type: 'text', name: 'word', maxlength: 40, placeholder: 'Kelime', 'aria-label': 'Yasaklı kelime' });
-  const prefix = h('input', { type: 'checkbox', name: 'prefix' });
-  const set = async (w, p, on) => {
-    try { draw(await rpc('admin_set_blocked_word', { p_word: w, p_prefix: p, p_on: on })); toast(on ? 'Kelime eklendi.' : 'Kelime çıkarıldı.'); }
-    catch (e) { toast(e.code === 'input' || /KISG_ADMIN_INPUT/.test(e.message || '') ? 'Kelime 2–40 harf olmalı (rakam ve boşluk olmadan).' : (e.message || 'Kaydedilemedi.'), true); }
+  const input = h('input', { type: 'text', name: o.name, maxlength: 80, placeholder: o.key === 'word' ? 'Kelime' : 'İfade', 'aria-label': o.key === 'word' ? 'Yasaklı kelime' : 'İş ilanı ifadesi' });
+  const flag = h('input', { type: 'checkbox', name: o.flag });
+  flag.checked = !!o.defaultFlag;
+  const set = async (value, on, flagValue) => {
+    try { draw(await rpc(o.set, { [`p_${o.key}`]: value, [`p_${o.flag}`]: flagValue, p_on: on })); toast(on ? 'Eklendi.' : 'Çıkarıldı.'); return true; }
+    catch (e) { toast(e.code === 'input' || /KISG_ADMIN_INPUT/.test(e.message || '') ? `${o.key === 'word' ? 'Kelime' : 'İfade'} ${o.min}.` : (e.message || 'Kaydedilemedi.'), true); return false; }
   };
-  const add = () => {
-    const w = word.value.trim();
-    if (!w) { word.focus(); return; }
-    void set(w, prefix.checked, true).then(() => { word.value = ''; prefix.checked = false; });
+  const add = async () => {
+    const v = input.value.trim();
+    if (!v) { input.focus(); return; }
+    if (await set(v, true, flag.checked)) { input.value = ''; flag.checked = !!o.defaultFlag; }
   };
-  word.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); add(); } });
+  input.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); void add(); } });
   function draw(list) {
     const rows = Array.isArray(list) ? list : [];
     box.replaceChildren(
       h('div', { class: 'pa-form-row' },
-        h('div', null, h('b', { text: 'Kelime ekle' }), h('span', { text: 'Gündelik bir sözcüğün parçası olabilecek kısa kelimeleri önek yapma (ör. "sik" yazmak "sıkıntı"yı Türkçe karaktersiz yazanı da engeller).' })),
-        h('div', { class: 'pa-actions' }, word, h('label', { class: 'pa-check' }, prefix, h('span', { text: 'Önek (çekimleri de yakala)' })),
-          h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Ekle', onclick: add }))),
+        h('div', null, h('b', { text: o.key === 'word' ? 'Kelime ekle' : 'İfade ekle' }), h('span', { text: o.addHelp })),
+        h('div', { class: 'pa-actions' }, input, h('label', { class: 'pa-check' }, flag, h('span', { text: o.flagLabel })),
+          h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Ekle', 'data-add': o.key, onclick: () => void add() }))),
       rows.length
         ? h('table', { class: 'pa-table' },
-            h('thead', null, h('tr', null, ['Kelime', 'Eşleme', ''].map(t => h('th', { text: t })))),
+            h('thead', null, h('tr', null, [o.key === 'word' ? 'Kelime' : 'İfade', 'Eşleme', ''].map(t => h('th', { text: t })))),
             h('tbody', null, rows.map(r => h('tr', null,
-              h('td', null, h('b', { style: 'color:var(--ink)', text: r.word })),
-              h('td', { 'data-label': 'Eşleme' }, h('span', { class: `pa-badge ${r.prefix ? 'is-pending' : 'is-active'}`, text: r.prefix ? 'Önek' : 'Tam kelime' })),
-              h('td', null, h('button', { type: 'button', class: 'pa-btn pa-btn-sm', text: 'Çıkar', 'aria-label': `${r.word} çıkar`, onclick: () => void set(r.word, r.prefix, false) }))))))
-        : h('p', { class: 'pa-note', text: 'Liste boş: hiçbir kelime engellenmiyor.' }),
-      h('div', { class: 'pa-form-foot' }, h('span', { class: 'pa-small', text: `${rows.length} kelime. Değişiklik hemen geçerli olur; daha önce yazılmış içerik etkilenmez (şikâyetle incelenir).` })));
+              h('td', null, h('b', { style: 'color:var(--ink)', text: r[o.key] })),
+              h('td', { 'data-label': 'Eşleme' }, h('span', { class: `pa-badge ${r[o.flag] ? 'is-pending' : 'is-active'}`, text: r[o.flag] ? o.flagOn : o.flagOff })),
+              h('td', null, h('button', { type: 'button', class: 'pa-btn pa-btn-sm', text: 'Çıkar', 'aria-label': `${r[o.key]} çıkar`, onclick: () => void set(r[o.key], false, r[o.flag]) }))))))
+        : h('p', { class: 'pa-note', text: 'Liste boş.' }),
+      h('div', { class: 'pa-form-foot' }, h('span', { class: 'pa-small', text: o.foot(rows.length) })));
   }
-  rpc('admin_blocked_words', {}).then(draw).catch(e => box.replaceChildren(h('p', { class: 'pa-note', text: e.message || 'Liste yüklenemedi.' })));
+  rpc(o.list, {}).then(draw).catch(e => box.replaceChildren(h('p', { class: 'pa-note', text: e.message || 'Liste yüklenemedi.' })));
   return box;
 }
 

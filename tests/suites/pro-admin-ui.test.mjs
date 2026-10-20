@@ -16,7 +16,7 @@ const iso = m => new Date(Date.now() - m * 60000).toISOString();
 const hostPage = p => `<!doctype html><html><head><meta charset="utf-8"><title>${p}</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{height:100%}body{margin:0;font-family:sans-serif}header{height:64px;background:#222;color:#fff}footer{height:200px;background:#eee}</style></head><body><header>Hostinger header</header><section><div class="block-layout"><div><iframe style="width:100%;border:0" srcdoc="${ADMIN_HTML.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"></iframe></div></div></section><footer>footer</footer></body></html>`;
 
 function server(ctx) {
-  const st = { rpc: [], table: [], fail: {}, words: [{ word: 'orospu', norm: 'orospu', prefix: true, created_at: '2026-10-20T10:00:00Z' }], support: [
+  const st = { rpc: [], table: [], fail: {}, words: [{ word: 'orospu', norm: 'orospu', prefix: true, created_at: '2026-10-20T10:00:00Z' }], phrases: [{ phrase: 'eleman aranıyor', norm: 'eleman araniyor', strong: true, created_at: '2026-10-20T10:00:00Z' }], support: [
     { id: 'cccccccc-0000-4000-8000-000000000001', user_id: A, category: 'technical', message: 'Fotoğraf yüklenmiyor.\nAndroid telefondayım.', status: 'open', created_at: iso(15), updated_at: iso(15) },
     { id: 'cccccccc-0000-4000-8000-000000000002', user_id: M, category: 'suggestion', message: 'Karanlık tema olsa iyi olur.', status: 'resolved', created_at: iso(300), updated_at: iso(100) }] };
   const users = [
@@ -97,6 +97,14 @@ function server(ctx) {
     admin_report_config: () => JSON.parse(JSON.stringify(st.fr)),
     // v1.15.0 yasaklı kelimeler: sunucu kuralı (2–40 harf) taklit edilir; liste her yazmada geri döner.
     admin_blocked_words: () => st.words.map(w => ({ ...w })),
+    admin_job_phrases: () => st.phrases.map(w => ({ ...w })),
+    admin_set_job_phrase: a => {
+      const norm = String(a.p_phrase || '').trim().toLocaleLowerCase('tr-TR');
+      if (norm.length < 3) bad('phrase');
+      st.phrases = st.phrases.filter(w => w.phrase !== a.p_phrase.trim());
+      if (a.p_on) st.phrases.push({ phrase: a.p_phrase.trim(), norm, strong: !!a.p_strong, created_at: iso(0) });
+      return st.phrases.map(w => ({ ...w }));
+    },
     admin_set_blocked_word: a => {
       const norm = String(a.p_word || '').trim().toLocaleLowerCase('tr-TR');
       if (!/^[a-zçığüöş]{2,40}$/.test(norm)) bad('word');
@@ -217,7 +225,7 @@ const until = async (fn, ms = 5000) => { const t = Date.now(); while (Date.now()
 const visible = (f, sel) => f.locator(sel).first().isVisible().catch(() => false);
 const lastRpc = (st, name) => [...st.rpc].reverse().find(x => x.name === name);
 const ALLOWED = new Set(['kisg_is_admin', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_service_category_icons', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification',
-  'admin_report_config', 'admin_report_usage', 'admin_report_unit_stats', 'admin_set_ai_setting', 'admin_upsert_ai_model', 'admin_set_ai_prompt', 'admin_set_report_limit', 'admin_upsert_checklist_item', 'admin_reorder_checklist', 'admin_blocked_words', 'admin_set_blocked_word']);
+  'admin_report_config', 'admin_report_usage', 'admin_report_unit_stats', 'admin_set_ai_setting', 'admin_upsert_ai_model', 'admin_set_ai_prompt', 'admin_set_report_limit', 'admin_upsert_checklist_item', 'admin_reorder_checklist', 'admin_blocked_words', 'admin_set_blocked_word', 'admin_job_phrases', 'admin_set_job_phrase']);
 
 // ---------------- statik ----------------
 check(!/service_role|service-role|serviceRole/i.test(ADMIN_HTML.replace(/service_role YOKTUR|service_role YOK/g, '')), 'admin HTML\'de service role anahtarı/kullanımı yok');
@@ -661,13 +669,20 @@ try {
     check(await until(() => st.fr.limits.spam_comments_per_minute === '3') && st.rpc.some(x => x.name === 'admin_set_report_limit' && x.args.p_key === 'spam_comments_per_minute' && x.args.p_value === 3), `${vp.n}: spam sınırı kaydedildi`);
     // Yasaklı kelimeler (v1.15.0): liste, ekle (önek), geçersiz giriş, çıkar
     check(await until(async () => /orospu/.test(await f.textContent('[data-main]')) && /Önek/.test(await f.textContent('[data-main]'))), `${vp.n}: yasaklı kelimeler listesi görünür`);
-    await f.fill('input[name="word"]', 'a1'); await f.click('button:text-is("Ekle")');
+    await f.fill('input[name="word"]', 'a1'); await f.click('[data-add="word"]');
     check(await until(async () => /2–40 harf/.test(await f.textContent('[data-toast]'))), `${vp.n}: geçersiz kelime reddedilir`);
-    await f.fill('input[name="word"]', 'kerhane'); await f.check('input[name="prefix"]'); await f.click('button:text-is("Ekle")');
+    await f.fill('input[name="word"]', 'kerhane'); await f.check('input[name="prefix"]'); await f.click('[data-add="word"]');
     check(await until(() => st.words.some(w => w.norm === 'kerhane' && w.prefix)) && lastRpc(st, 'admin_set_blocked_word')?.args.p_on === true && await until(async () => /kerhane/.test(await f.textContent('[data-main]'))), `${vp.n}: kelime önek olarak eklendi ve listede`);
     await f.click('button[aria-label="orospu çıkar"]');
     check(await until(() => !st.words.some(w => w.norm === 'orospu')) && lastRpc(st, 'admin_set_blocked_word')?.args.p_on === false, `${vp.n}: kelime çıkarıldı`);
     st.words.push({ word: 'orospu', norm: 'orospu', prefix: true, created_at: iso(0) });
+    // İş ilanı ifadeleri (v1.16.0): güçlü varsayılan; orta eklenebilir; çıkar
+    check(await until(async () => /eleman aranıyor/.test(await f.textContent('[data-main]'))) && await f.isChecked('input[name="strong"]'), `${vp.n}: iş ilanı ifadeleri listesi; yeni ifade varsayılan güçlü`);
+    await f.fill('input[name="phrase"]', 'tam zamanlı'); await f.uncheck('input[name="strong"]'); await f.click('[data-add="phrase"]');
+    check(await until(() => st.phrases.some(w => w.phrase === 'tam zamanlı' && !w.strong)) && await until(async () => /Orta \(en az iki\)/.test(await f.textContent('[data-main]'))), `${vp.n}: orta ifade eklendi`);
+    await f.click('button[aria-label="eleman aranıyor çıkar"]');
+    check(await until(() => !st.phrases.some(w => w.phrase === 'eleman aranıyor')) && lastRpc(st, 'admin_set_job_phrase')?.args.p_on === false, `${vp.n}: ifade çıkarıldı`);
+    st.phrases.push({ phrase: 'eleman aranıyor', norm: 'eleman araniyor', strong: true, created_at: iso(0) });
     // Checklist
     await tab('Checklist');
     check(await until(() => f.locator('[data-item]').count().then(n => n === 2)), `${vp.n}: Checklist: 2 madde`);
