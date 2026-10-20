@@ -70,7 +70,7 @@ function server(ctx) {
       { id: Q2, deficiency_title: 'Yangın tüpü dolum tarihi geçmiş', finding_text: null, recommendation_text: null, default_priority: 'iyilestirme', explanation: null, is_active: true, order_index: 2, question: 'Yangın tüpü kontrol edildi mi?' }]
   };
   st.Q = { Q1, Q2 };
-  const frUsed = () => ['report_model_text', 'report_model', 'report_model_complex', 'rewrite_model', 'report_fallback_model'].map(k => st.fr.settings[k]).filter(Boolean);
+  const frUsed = () => ['report_model_text', 'report_model', 'report_model_complex', 'rewrite_model', 'report_fallback_model', 'free_report_model'].map(k => st.fr.settings[k]).filter(Boolean);
   const bad = m => { throw { code: '22023', message: `KISG_ADMIN_INPUT: ${m}` }; };
   const withTotal = rows => rows.map(r => ({ ...r, total_count: rows.length }));
   const ADMIN_RPC = {
@@ -105,7 +105,7 @@ function server(ctx) {
       top_users: [{ user_id: A, full_name: 'Ayşe Yılmaz', email: 'ayse@ornek.com', calls: 22, charged: 15, cost_usd: 0.7 }] }),
     admin_set_ai_setting: a => {
       const m = st.fr.models.find(x => x.key === a.p_value);
-      if (['report_model', 'report_model_complex', 'rewrite_model'].includes(a.p_key) && a.p_value && !m?.supports_vision) bad('model');
+      if (['report_model', 'report_model_complex', 'rewrite_model', 'free_report_model'].includes(a.p_key) && a.p_value && !m?.supports_vision) bad('model');
       if (a.p_key === 'report_style' && !['sade', 'dengeli', 'ayrintili'].includes(a.p_value)) bad('value');
       st.fr.settings[a.p_key] = a.p_value; return { key: a.p_key, value: a.p_value };
     },
@@ -583,6 +583,14 @@ try {
     check(await until(() => st.rpc.filter(x => x.name === 'admin_set_ai_setting').length === 3) && st.fr.settings.report_model === 'openai:gpt-4o' && st.fr.settings.report_complex_photos === '6' && st.fr.settings.report_style === 'sade', `${vp.n}: 3 ayar ayrı RPC ile kaydedildi`);
     await f.click('button:text-is("Değişiklikleri kaydet")');
     check(await until(async () => /Değişiklik yok/.test(await f.textContent('[data-toast]'))), `${vp.n}: değişiklik yoksa RPC yok`);
+    // v1.14.0: ücretsiz plana isteğe bağlı ayrı model (yalnız fotoğraf okuyan modeller; boş = ücretli planlarla aynı)
+    const freeOpts = await f.evaluate(() => [...document.querySelectorAll('select[name="free_report_model"] option')].map(o => o.value));
+    check(freeOpts[0] === '' && freeOpts.includes('anthropic:claude-haiku-5-5') && !freeOpts.includes('openai:gpt-6-luna') && await f.inputValue('select[name="free_report_model"]') === '', `${vp.n}: ücretsiz plan modeli seçimi (varsayılan: ücretli planlarla aynı)`);
+    await f.selectOption('select[name="free_report_model"]', 'anthropic:claude-haiku-5-5');
+    await f.click('button:text-is("Değişiklikleri kaydet")'); await dialog();
+    check(/Ücretsiz plan modeli/.test(await f.textContent('.pa-dialog')) && /ücretli planlarla aynı → Claude Haiku/.test(await f.textContent('.pa-dialog')), `${vp.n}: onayda ücretsiz plan modeli değişimi`);
+    await submit();
+    check(await until(() => st.fr.settings.free_report_model === 'anthropic:claude-haiku-5-5') && lastRpc(st, 'admin_set_ai_setting').args.p_key === 'free_report_model', `${vp.n}: ücretsiz plan modeli kaydedildi`);
     await f.fill('input[name="report_complex_photos"]', '25'); await f.click('button:text-is("Değişiklikleri kaydet")');
     check(await until(async () => /Eşik 0 ile 20/.test(await f.textContent('[data-toast]'))) && !await f.locator('.pa-dialog').count(), `${vp.n}: geçersiz eşik engellenir`);
     // Modeller

@@ -282,7 +282,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.13.0',
+  version: '1.14.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -1381,6 +1381,7 @@ function frRouting(cfg) {
     report_model: sel('report_model', true),
     report_model_complex: sel('report_model_complex', true),
     rewrite_model: sel('rewrite_model', true, 'Fotoğraflı analiz modeliyle aynı'),
+    free_report_model: sel('free_report_model', true, 'Ücretli planlarla aynı'),
     report_fallback_model: sel('report_fallback_model', false, 'Yok')
   };
   const row = (title, sub, control) => h('div', { class: 'pa-form-row' }, h('div', null, h('b', { text: title }), h('span', { text: sub })), control);
@@ -1390,8 +1391,8 @@ function frRouting(cfg) {
     const next = Object.fromEntries(Object.entries(fields).map(([k, el]) => [k, el.value]));
     next.report_complex_photos = String(n);
     next.report_style = style.querySelector('input:checked')?.value || 'dengeli';
-    const names = { report_model_text: 'Yalnız yazı', report_model: 'Fotoğraflı', report_model_complex: 'Çok fotoğraflı', rewrite_model: 'Fotoğraflı yeniden yazma', report_fallback_model: 'Yedek model', report_complex_photos: 'Çok fotoğraf eşiği', report_style: 'Yazım tarzı' };
-    const fmt = (k, val) => k === 'report_style' ? (FR_STYLE.find(x => x[0] === val)?.[1] || val) : k === 'report_complex_photos' ? (val === '0' ? 'kapalı' : `${val} fotoğraf`) : (label(val) || (k === 'rewrite_model' ? 'fotoğraflı modelle aynı' : 'yok'));
+    const names = { report_model_text: 'Yalnız yazı', report_model: 'Fotoğraflı', report_model_complex: 'Çok fotoğraflı', rewrite_model: 'Fotoğraflı yeniden yazma', free_report_model: 'Ücretsiz plan modeli', report_fallback_model: 'Yedek model', report_complex_photos: 'Çok fotoğraf eşiği', report_style: 'Yazım tarzı' };
+    const fmt = (k, val) => k === 'report_style' ? (FR_STYLE.find(x => x[0] === val)?.[1] || val) : k === 'report_complex_photos' ? (val === '0' ? 'kapalı' : `${val} fotoğraf`) : (label(val) || (k === 'rewrite_model' ? 'fotoğraflı modelle aynı' : k === 'free_report_model' ? 'ücretli planlarla aynı' : 'yok'));
     const changes = Object.keys(next).filter(k => (s[k] || '') !== next[k]).map(k => ({ key: k, value: next[k], label: names[k], from: fmt(k, s[k] || ''), to: fmt(k, next[k]) }));
     frSaveChanges(changes, 'Model seçimi kaydedilsin mi?', (c, reason) => rpc('admin_set_ai_setting', { p_key: c.key, p_value: c.value, p_reason: reason }));
   };
@@ -1404,6 +1405,9 @@ function frRouting(cfg) {
         row('Çok fotoğraflı', 'Eşik ve üstü fotoğraflı analiz (güçlü model).', fields.report_model_complex),
         row('Çok fotoğraf eşiği', 'Bu sayıda ve üstü fotoğrafta “Çok fotoğraflı” model kullanılır. 0 = kapalı.', threshold),
         row('Fotoğraflı yeniden yazma', '“Yeniden yaz / Ben söyleyeyim”, fotoğraflı bulguda.', fields.rewrite_model),
+        // v1.14.0 (ürün sahibi 2026-10-20, isteğe bağlı): ücretsiz kullanıcıya ayrı model. Ucuz model ücretsiz kotayı daha
+        // çok rapora yayar ama PRO farkı belirginleşir; güçlü model ise ücretsiz kotayı çabuk bitirir.
+        row('Ücretsiz plan modeli', 'İsteğe bağlı. Seçilirse ücretsiz kullanıcının bütün fotoğraflı analizi ve yeniden yazması bu modelle yapılır (eşik uygulanmaz). Ucuz model ücretsiz kotayı daha çok rapora yayar; PRO’da daha iyi model fark olarak kalır.', fields.free_report_model),
         row('Yedek model', 'Teknik hatada bir kez denenir. Farklı sağlayıcıdan seçmek güvenlidir.', fields.report_fallback_model),
         row('Yazım tarzı', 'Prompt’a tek satır eklenir; hukuki dil her tarzda korunur.', style)),
       h('div', { class: 'pa-form-foot' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Değişiklikleri kaydet', onclick: save }))));
