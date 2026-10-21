@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.46.1
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.46.2
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -8,6 +8,8 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.46.2: Onaylı hesap başvurusunda "Fotoğrafta adın açıkça okunmalı" (yüz anlatımı kalktı; kontrol yalnız belgedeki ada
+  bakar, mobil uygulamayla aynı).
 v4.46.1: "Onaylı hesap" etiketi "kimlik belgesini Kırmızı İSG'ye sundu; Kırmızı İSG kimliği ve mesleki yeterliliği
   garanti etmez" (kimlik kontrolü sorumluluğu alınmaz; mobil uygulamayla aynı).
 v4.46.0: Muhafazakâr hukuki dil (kirmizi-isg-mobile docs/legal/2026-10-20-dijital-kase-hukuki-degerlendirme.md): onaylı
@@ -1959,7 +1961,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.45.0',
+  version: '4.46.2',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik', topics: '/?sayfa=alanlar', saved: '/?sayfa=kaydedilenler' },
@@ -3887,7 +3889,7 @@ const verifyFlow = (() => {
       if (!pro) return set(`<p><b>Onaylı hesap Pro'ya özel.</b> ${ok ? 'Pro üyeliğin sona erdiği için rozetin duraklatıldı; uygulamadan yenilersen yeniden belge istemeden geri gelir.' : 'Pro üyelik Kırmızı İSG uygulamasından alınır; aynı hesapla giriş yaptığında burada da geçerli olur.'}</p>`, STORES);
       if (v?.status === 'pending') return set('<p><b>Belgen inceleniyor.</b>' + DAY + '</p>');
       const why = v?.status === 'approved' ? 'Adın değiştiği için rozetin kalktı; yeni adınla belge yükle.' : v?.reason ? `Önceki başvuru reddedildi: ${esc(v.reason)}` : '';
-      set(`${why ? `<p class="k-form-error">${why}</p>` : ''}<p>Adının <b>${esc(name)}</b> olarak göründüğü kimlik belgenin fotoğrafını yükle: kimlik kartı, pasaport ya da ehliyet. Fotoğrafta adın ve yüzün açıkça görünmeli.</p>`
+      set(`${why ? `<p class="k-form-error">${why}</p>` : ''}<p>Adının <b>${esc(name)}</b> olarak göründüğü kimlik belgenin fotoğrafını yükle: kimlik kartı, pasaport ya da ehliyet. Fotoğrafta adın açıkça okunmalı.</p>`
         + '<label class="k-btn av-pick"><input type="file" accept="image/jpeg,image/png,image/webp" data-vf-file><span data-vf-name>Fotoğraf seç</span></label>'
         + '<p class="kg-delete-info" role="note">Belgeni yalnız yönetim görür ve karar verilince silinir. TC kimlik numarası gibi bilgileri kapatabilirsin; bize yalnız adın lazım.</p><p class="k-form-error" data-vf-err role="alert" hidden></p>',
         '<button type="button" class="k-btn k-btn-primary" data-vf-send disabled>Onaya gönder</button>');
