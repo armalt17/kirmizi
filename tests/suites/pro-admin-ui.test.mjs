@@ -66,7 +66,7 @@ function server(ctx) {
         recipients: [{ key: 'il_mudurlugu', label: 'İl Müdürlüğü', to: '{il} Çalışma ve İş Kurumu İl Müdürlüğüne' }],
         reasons: [{ key: 'durdurma', label: 'Acil durdurma', text: 'acil durdurmayı gerektiren bir hâl' }],
         channels: [{ key: 'elden', label: 'Elden', note: 'Evrak kayıt numarasını alın.' }], attachments: ['Rapor', 'Fotoğraflar'] }),
-      report_guides: JSON.stringify({ ledger: { title: 'Defter', steps: [{ title: 'Metni aç', body: 'Dokun.' }], final: 'Bildirilmiş sayılır.' }, notice: { title: 'Bildirim', steps: [{ title: 'Madde seç', body: 'Seç.' }], final: 'Feshedilemez.' } }),
+      report_guides: JSON.stringify({ ledger: { title: 'Defter', steps: [{ title: 'Metni aç', body: 'Dokun.' }], final: 'Bildirilmiş sayılır.' }, notice: { title: 'Bildirim', steps: [{ title: 'Madde seç', body: 'Seç.' }], final: 'Kopyasını sakla.' } }),
       report_receiver_steps: JSON.stringify([{ title: 'Önce acil maddeler', body: 'ACİL işaretli maddeler önce.' }, { title: 'Onaylı deftere yazdırın', body: 'Rapor onaylı defterin yerine geçmez.' }]) },
     limits: { ai_budget_free_month_microusd: '250000', ai_budget_pro_month_microusd: '10000000', ai_budget_max_month_microusd: '30000000', ai_daily_factor: '3',
       report_max_analyses: '5', report_rewrite_daily_limit: '40', report_max_photos: '8', report_max_drafts: '5',
@@ -727,9 +727,9 @@ try {
     await f.fill('[data-list="Bildirim sebepleri"] [data-row] >> nth=1 >> textarea[name="text"]', 'hayati tehlike arz eden bir durum');
     await f.click('[data-assist="report_notice_template"] button:text-is("Kaydet")'); await dialog(); await submit();
     check(await until(() => JSON.parse(st.fr.texts.report_notice_template).reasons.length === 2) && JSON.parse(st.fr.texts.report_notice_template).attachments.length === 2, `${vp.n}: sebep eklendi (kod gerekmez), ekler korunur`);
-    await f.fill('textarea[name="guide_notice_final"]', 'Bu bildirim yüzünden iş sözleşmen feshedilemez.');
+    await f.fill('textarea[name="guide_notice_final"]', 'Dilekçenin ve gönderim belgesinin bir kopyasını sakla.');
     await f.click('[data-assist="report_guides"] button:text-is("Kaydet")'); await dialog(); await submit();
-    check(await until(() => JSON.parse(st.fr.texts.report_guides).notice.final === 'Bu bildirim yüzünden iş sözleşmen feshedilemez.'), `${vp.n}: kılavuz metni kaydedildi`);
+    check(await until(() => JSON.parse(st.fr.texts.report_guides).notice.final === 'Dilekçenin ve gönderim belgesinin bir kopyasını sakla.'), `${vp.n}: kılavuz metni kaydedildi`);
     // Checklist
     await tab('Hazır şablonlar');
     check(await until(() => f.locator('[data-item]').count().then(n => n === 2)), `${vp.n}: Hazır şablonlar: 2 şablon`);
