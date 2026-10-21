@@ -25,6 +25,8 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
    "Defter metni" ve "Bildirim tespiti" modelleri, Prompt'lar'da iki yeni amaç (kirmizi-isg-mobile 20261021090000).
  - v1.19.1 Defter şablonuna "Rica satırı" (Ayrıntılı metinde maddelerden sonra; uygulama 2026-10-21).
  - v1.20.0 Alanlar → "Sabit Post": Alan sayfasının en üstünde görünen Post (admin_tag_posts, admin_pin_tag_post).
+ - v1.20.1 Defter ve bildirim: "Deftere ne yazabilirim?" (madde madde öneri; hazır metin ve imza satırı yok). Dilekçede
+   "TASLAK" başlığı ve son ekrandaki kanun bilgi satırı alanları kalktı (uygulamada artık kullanılmıyor).
  - v1.19.2 Defter ve bildirim: yarım satır uyarısız atılmaz, aynı anahtar iki kez olmaz; değişiklik yoksa "değişiklik yok".
  - v1.18.0 Saha Raporu → Limitler: "PDF kaşe notu" kalktı (dijital kaşe kaldırıldı, 2026-10-20 hukuki inceleme). Yerine
    "Rapor QR sayfası: işverene adımlar" (isgcalisanplatformu.com/r/{kod}; kirmizi-isg-mobile 20261020160000_report_qr_revisions.sql,
@@ -297,7 +299,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.20.0',
+  version: '1.20.1',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -1457,7 +1459,7 @@ function frRouting(cfg) {
         row('Ücretsiz plan modeli', 'İsteğe bağlı. Seçilirse ücretsiz kullanıcının bütün fotoğraflı analizi ve yeniden yazması bu modelle yapılır (eşik uygulanmaz). Ucuz model ücretsiz kotayı daha çok rapora yayar; PRO’da daha iyi model fark olarak kalır.', fields.free_report_model),
         row('Yedek model', 'Teknik hatada bir kez denenir. Farklı sağlayıcıdan seçmek güvenlidir.', fields.report_fallback_model),
         row('Yazım tarzı', 'Prompt’a tek satır eklenir; hukuki dil her tarzda korunur.', style),
-        row('Defter metni', '“Deftere yazılacak metin”de “Yapay zekâyla kısalt”. Yalnız madde metinleri gider.', fields.ledger_model),
+        row('Defter önerileri', '“Deftere ne yazabilirim?” açılınca her madde için kısa cümle önerir. Yalnız madde metinleri gider.', fields.ledger_model),
         row('Bildirim tespiti', 'İl müdürlüğü bildirim taslağında “Tespiti yapay zekâyla toparla”. Yalnız tespit, öneri ve sebep gider.', fields.notice_model)),
       h('div', { class: 'pa-form-foot' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Değişiklikleri kaydet', onclick: save }))));
 }
@@ -1645,7 +1647,7 @@ function frReportSteps(texts) {
 }
 
 // Defter ve bildirim (v1.19.0; ürün sahibi 2026-10-20; İSG Uzmanları Yönetmeliği m.11/4 ve m.11/3): kesinleşmiş rapordan
-// sonra "Deftere yazılacak metin" ve "İl müdürlüğüne bildirim taslağı". Şablonlar, sebepler, alıcılar, gönderim kanalı
+// sonra "Deftere ne yazabilirim?" (madde madde öneri; v1.20.1) ve "İl müdürlüğüne bildirim taslağı". Şablonlar, sebepler, alıcılar, gönderim kanalı
 // notları ve iki kılavuzun ekran metinleri. Uygulama bunları hemen kullanır (en geç 1 saatte); boş bırakılan alan için
 // varsayılan metin geçerli. Kanuni ve sabit kısımlar (kime, konu, tarihçe, imza) yapay zekâya bırakılmaz.
 const LEDGER_REQUEST = 'Tespit edilen eksikliklerin giderilmesi için gerekli önlemlerin alınması ve sonucun bildirilmesi rica olunur.';
@@ -1704,11 +1706,12 @@ function assistCard(title, help, key, current, parts, build) {
 function frAssist(cfg) {
   const t = cfg.texts || {};
   const L = assistParse(t.report_ledger_template), N = assistParse(t.report_notice_template), G = assistParse(t.report_guides);
-  const ledger = { note: assistField('Üstteki not', L.note, { multiline: true, name: 'ledger_note' }), header: assistField('İlk satır', L.header, { multiline: true, name: 'ledger_header' }),
-    urgent_label: assistField('Acil ibaresi', L.urgent_label, { max: 20, name: 'ledger_urgent' }), footer: assistField('Son satır', L.footer, { multiline: true, name: 'ledger_footer' }),
-    request: assistField('Rica satırı (Ayrıntılı metinde, maddelerden sonra)', L.request || LEDGER_REQUEST, { multiline: true, name: 'ledger_request' }) };
-  const notice = { title: assistField('Başlık (TASLAK)', N.title, { max: 20, name: 'notice_title' }), subject: assistField('Konu', N.subject, { multiline: true, max: 400, name: 'notice_subject' }),
-    closing: assistField('Kapanış', N.closing, { multiline: true, max: 1000, name: 'notice_closing' }), info: assistField('Son ekrandaki bilgi satırı', N.info, { multiline: true, name: 'notice_info' }),
+  const ledger = { note: assistField('Üstteki not', L.note, { multiline: true, name: 'ledger_note' }), header: assistField('Başa önerilen cümle', L.header, { multiline: true, name: 'ledger_header' }),
+    urgent_label: assistField('Acil ibaresi', L.urgent_label, { max: 20, name: 'ledger_urgent' }), footer: assistField('Sona önerilen son satır', L.footer, { multiline: true, name: 'ledger_footer' }),
+    request: assistField('Sona önerilen rica satırı (maddelerden sonra)', L.request || LEDGER_REQUEST, { multiline: true, name: 'ledger_request' }) };
+  // PDF'te "TASLAK" başlığı ve son ekrandaki kanun bilgi satırı kalktı (uygulama 2026-10-21; v1.20.1).
+  const notice = { subject: assistField('Konu', N.subject, { multiline: true, max: 400, name: 'notice_subject' }),
+    closing: assistField('Kapanış', N.closing, { multiline: true, max: 1000, name: 'notice_closing' }),
     province_note: assistField('İl notu', N.province_note, { name: 'notice_province' }), address_note: assistField('İş adresi notu', N.address_note, { name: 'notice_address' }) };
   const recipients = assistList('Alıcılar (ilk satır kullanılır)', N.recipients, [{ key: 'key', label: 'Anahtar', max: 40 }, { key: 'label', label: 'Ad' }, { key: 'to', label: 'Kime satırı' }]);
   const reasons = assistList('Bildirim sebepleri', N.reasons, [{ key: 'key', label: 'Anahtar', max: 40 }, { key: 'label', label: 'Uygulamadaki seçenek' }, { key: 'text', label: 'Dilekçedeki ifade', multiline: true }]);
@@ -1720,9 +1723,9 @@ function frAssist(cfg) {
   const gl = guideParts('guide_ledger', G.ledger), gn = guideParts('guide_notice', G.notice);
   const need = (obj) => { const missing = Object.entries(obj).find(([, f]) => !f.get()); if (missing) { toast('Boş alan bırakma.', true); return false; } return true; };
   return h('div', null,
-    h('p', { class: 'pa-note' }, h('b', { text: 'Kesinleşmiş rapordan sonra: ' }), 'Uzman “Kontrol ettim, PDF’e çevir” ile çıkan raporda deftere yazılacak metni ve il müdürlüğüne bildirim taslağını hazırlar. Metinler ve PDF’ler sunucuda saklanmaz. Yapay zekâ modelleri “Model seçimi”nde, prompt’ları “Prompt’lar”da.'),
-    h('h3', { text: 'Deftere yazılacak metin', style: 'margin:0 0 10px' }),
-    assistCard('Defter metni şablonu', ASSIST_PLACEHOLDERS, 'report_ledger_template', { ...L, request: L.request || LEDGER_REQUEST }, Object.values(ledger).map(f => f.row),
+    h('p', { class: 'pa-note' }, h('b', { text: 'Kesinleşmiş rapordan sonra: ' }), 'Uzman “Kontrol ettim, PDF’e çevir” ile çıkan raporda “Deftere ne yazabilirim?” önerilerini görür ve il müdürlüğüne bildirim taslağını hazırlar. Metinler ve PDF’ler sunucuda saklanmaz. Yapay zekâ modelleri “Model seçimi”nde, prompt’ları “Prompt’lar”da.'),
+    h('h3', { text: 'Deftere ne yazabilirim?', style: 'margin:0 0 10px' }),
+    assistCard('Defter önerileri', ASSIST_PLACEHOLDERS, 'report_ledger_template', { ...L, request: L.request || LEDGER_REQUEST }, Object.values(ledger).map(f => f.row),
       () => need(ledger) && Object.fromEntries(Object.entries(ledger).map(([k, f]) => [k, f.get()]))),
     h('h3', { text: 'İl müdürlüğüne bildirim taslağı', style: 'margin:22px 0 10px' }),
     assistCard('Dilekçe şablonu', `${ASSIST_PLACEHOLDERS}. Sebep ve alıcı eklemek kod gerektirmez.`, 'report_notice_template', N,

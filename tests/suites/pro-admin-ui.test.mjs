@@ -732,10 +732,13 @@ try {
     await f.click('[data-assist="report_ledger_template"] button:text-is("Kaydet")'); await dialog(); await submit();
     check(await until(() => /rapor_tarihi/.test(JSON.parse(st.fr.texts.report_ledger_template).footer)) && lastRpc(st, 'admin_set_report_assist')?.args.p_key === 'report_ledger_template', `${vp.n}: defter şablonu kaydedildi`);
     check(/rica olunur/.test(JSON.parse(st.fr.texts.report_ledger_template).request ?? ''), `${vp.n}: defter şablonunda rica satırı da kaydedilir`);
-    await f.fill('input[name="notice_title"]', '');
+    // Dilekçede "TASLAK" başlığı ve bilgi satırı alanları yok (v1.20.1).
+    check(await f.locator('[name="notice_title"], [name="notice_info"]').count() === 0, `${vp.n}: TASLAK başlığı ve bilgi satırı alanı yok`);
+    const subject = await f.inputValue('textarea[name="notice_subject"]');
+    await f.fill('textarea[name="notice_subject"]', '');
     await f.click('[data-assist="report_notice_template"] button:text-is("Kaydet")');
     check(await until(async () => /Boş alan bırakma/.test(await f.textContent('[data-toast]'))), `${vp.n}: boş alan reddedilir`);
-    await f.fill('input[name="notice_title"]', 'TASLAK');
+    await f.fill('textarea[name="notice_subject"]', subject);
     await f.click('[data-list="Bildirim sebepleri"] + button:text-is("+ Satır ekle")');
     await f.fill('[data-list="Bildirim sebepleri"] [data-row] >> nth=1 >> input[name="key"]', 'hayati');
     await f.fill('[data-list="Bildirim sebepleri"] [data-row] >> nth=1 >> input[name="label"]', 'Hayati tehlike');
