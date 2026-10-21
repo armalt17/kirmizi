@@ -25,6 +25,8 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
    "Defter metni" ve "Bildirim tespiti" modelleri, Prompt'lar'da iki yeni amaç (kirmizi-isg-mobile 20261021090000).
  - v1.19.1 Defter şablonuna "Rica satırı" (Ayrıntılı metinde maddelerden sonra; uygulama 2026-10-21).
  - v1.20.0 Alanlar → "Sabit Post": Alan sayfasının en üstünde görünen Post (admin_tag_posts, admin_pin_tag_post).
+ - v1.22.0 Saha Raporu → Limitler: "Hizmet / ilan yapay zekâ düzenleme (günlük)" (listing_ai_daily_limit; herkese açık,
+   rapor bütçesinden düşmez; kirmizi-isg-mobile 20261021230000).
  - v1.21.1 "Taslak dilekçe" adları (şablon, kılavuz, sebep ifadesi).
  - v1.21.0 Saha Raporu → Limitler: "QR yanındaki yazı" (report_qr_label, admin_set_report_qr_label; 3–40 karakter).
  - v1.20.1 Defter ve bildirim: "Deftere ne yazabilirim?" (madde madde öneri; hazır metin ve imza satırı yok). Dilekçede
@@ -301,7 +303,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.21.1',
+  version: '1.22.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -1354,6 +1356,7 @@ const FR_LIMITS = [
   ['ai_daily_factor', 'Günlük sigorta (PRO / MAX)', 'Bir günde aylık bütçenin en çok kaç otuzda biri harcanabilir (3 → %10). Kötüye kullanıma karşı; uygulamada görünmez.', 1, 30],
   ['report_max_analyses', 'Rapor başına en çok analiz', 'Aynı raporda yapay zekâ analizi en çok kaç kez çalışır (tekrar analizler de bütçeden düşer).', 1, 50],
   ['report_rewrite_daily_limit', 'Günlük "Yeniden yaz" sınırı', '“Yeniden yaz / Ben söyleyeyim” günlük üst sınırı; maliyeti ayrıca bütçeden düşer.', 0, 1000],
+  ['listing_ai_daily_limit', 'Hizmet / ilan yapay zekâ düzenleme (günlük)', 'Hizmet ve ilan açıklamasındaki “Yapay zekâyla düzenle” kişi başı günlük sınırı. Herkese açık; rapor bütçesinden düşmez. 0 = kapalı.', 0, 1000],
   ['report_max_photos', 'Rapor başına en çok fotoğraf', 'Fazlası maliyeti ve analiz süresini artırır.', 1, 20],
   ['report_max_drafts', 'Telefonda en çok taslak', 'Dolunca uzman yeni rapora başlamadan önce bir taslağı bitirir ya da siler.', 1, 50]];
 // Spam koruması (v1.11.0; sunucuda kisg_spam_guard). Adminler bu sınırlardan muaftır.
