@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.46.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.46.1
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -8,6 +8,8 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.46.1: "Onaylı hesap" etiketi "kimlik belgesini Kırmızı İSG'ye sundu; Kırmızı İSG kimliği ve mesleki yeterliliği
+  garanti etmez" (kimlik kontrolü sorumluluğu alınmaz; mobil uygulamayla aynı).
 v4.46.0: Muhafazakâr hukuki dil (kirmizi-isg-mobile docs/legal/2026-10-20-dijital-kase-hukuki-degerlendirme.md): onaylı
   hesap başvurusu yalnız kimlik belgesi (kimlik kartı, pasaport, ehliyet; mobil uygulamayla aynı); profil "Onaylı hesap"
   etiketinde "kimlik belgesi kontrol edildi; Kırmızı İSG kimliği ve mesleki yeterliliği garanti etmez" açıklaması; Hizmet
@@ -6370,7 +6372,7 @@ function createProfileView() {
       + (own() ? '' : `<div class="kp-more"><button type="button" class="kw-dots" data-popover-trigger aria-label="Profil seçenekleri" aria-expanded="false">···</button><div class="k-popover kw-menu" hidden><button type="button" data-profile-action="report">Profili bildir</button></div></div>`)
       + `<p class="kp-kicker"><span class="k-badge">KIRMIZI İSG KİŞİ KARTI</span></p>`
       + `<div class="kp-head"><div class="kp-av">${avatar(p, 'profile')}${own() ? `<button type="button" class="kp-av-edit" data-profile-action="avatar" aria-label="Profil fotoğrafını değiştir">${PICONS.camera}</button>` : ''}</div>`
-      + `<div class="kp-idn"><h1 id="kpName" data-vu="${esc(p.id)}">${esc(p.full_name || 'Kırmızı İSG üyesi')}</h1><p class="kp-vchip" data-vu-chip="${esc(p.id)}" title="Kimlik belgesi Kırmızı İSG tarafından kontrol edildi. Kırmızı İSG kimliği ve mesleki yeterliliği garanti etmez; unvan ve uzmanlık sınıfı kişinin beyanıdır.">Onaylı hesap</p>${role ? `<p class="kp-role">${esc(role)}</p>` : ''}`
+      + `<div class="kp-idn"><h1 id="kpName" data-vu="${esc(p.id)}">${esc(p.full_name || 'Kırmızı İSG üyesi')}</h1><p class="kp-vchip" data-vu-chip="${esc(p.id)}" title="Kimlik belgesini Kırmızı İSG'ye sundu. Kırmızı İSG kimliği ve mesleki yeterliliği garanti etmez; unvan ve uzmanlık sınıfı kişinin beyanıdır.">Onaylı hesap</p>${role ? `<p class="kp-role">${esc(role)}</p>` : ''}`
       + (showStatus ? `<p class="kp-cert"><span class="k-tag k-tag-cert"><i aria-hidden="true"></i>${esc(status)}</span></p>` : '')
       + `<p class="kp-serving" data-kp-serving hidden></p></div></div>`
       + (facts ? `<ul class="kp-facts">${facts}</ul>` : '')
