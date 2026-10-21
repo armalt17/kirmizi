@@ -90,6 +90,9 @@ function server(ctx) {
     admin_list_reports: a => withTotal(reports.filter(r => !a.p_status || r.status === a.p_status).filter(r => !a.p_target_type || r.target_type === a.p_target_type)),
     admin_list_tags: a => withTotal(st.tags.filter(t => (!a.p_q || t.name.toLowerCase().includes(String(a.p_q).toLowerCase())) && (!a.p_filter || t[a.p_filter]))
       .sort((x, y) => a.p_sort === 'az' ? x.name.localeCompare(y.name, 'tr') : a.p_sort === 'new' ? y.created_at.localeCompare(x.created_at) : y.post_count - x.post_count)),
+    admin_tag_posts: a => [{ id: 'P-pin-1', content: 'Çatıda yaşam hattı kuralları', created_at: iso(1), author_name: 'Ayşe Yılmaz', has_image: false, pinned: st.pinnedPost === 'P-pin-1' },
+      { id: 'P-pin-2', content: '', created_at: iso(2), author_name: null, has_image: true, pinned: false }],
+    admin_pin_tag_post: a => { st.pinnedPost = a.p_post; return { pinned_post_id: a.p_post }; },
     admin_update_tag: a => { if (a.p_patch.name === 'Yüksekte Çalışma') throw { code: '23505', message: 'KISG_TAG_EXISTS: bu adda etiket var, birlestirmeyi kullan' }; const t = st.tags.find(x => x.id === a.p_id); Object.assign(t, a.p_patch); return { name: t.name, pinned: t.pinned, blocked: t.blocked }; },
     admin_merge_tags: a => { const s = st.tags.find(x => x.id === a.p_source), t = st.tags.find(x => x.id === a.p_target); t.post_count += s.post_count; st.tags = st.tags.filter(x => x !== s); return { target_id: t.id, moved_posts: s.post_count }; },
     admin_list_service_categories: () => st.cats.slice().sort((x, y) => x.sort_order - y.sort_order),
@@ -241,7 +244,7 @@ async function open(browser, { uid = null, width = 1280, height = 900, qs = '' }
 const until = async (fn, ms = 5000) => { const t = Date.now(); while (Date.now() - t < ms) { if (await fn()) return true; await new Promise(r => setTimeout(r, 50)); } return false; };
 const visible = (f, sel) => f.locator(sel).first().isVisible().catch(() => false);
 const lastRpc = (st, name) => [...st.rpc].reverse().find(x => x.name === name);
-const ALLOWED = new Set(['kisg_is_admin', 'admin_set_report_steps', 'admin_set_report_assist', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_service_category_icons', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification',
+const ALLOWED = new Set(['kisg_is_admin', 'admin_set_report_steps', 'admin_set_report_assist', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_tag_posts', 'admin_pin_tag_post', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_service_category_icons', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification',
   'admin_report_config', 'admin_report_usage', 'admin_report_unit_stats', 'admin_set_ai_setting', 'admin_upsert_ai_model', 'admin_set_ai_prompt', 'admin_set_report_limit', 'admin_upsert_checklist_item', 'admin_reorder_checklist', 'admin_blocked_words', 'admin_set_blocked_word', 'admin_job_phrases', 'admin_set_job_phrase', 'admin_set_report_text']);
 
 // ---------------- statik ----------------
@@ -474,6 +477,17 @@ try {
     await f.click(`[data-tag="${T1}"] button:text-is("Sabitle")`);
     await f.click('.pa-dialog button[type="submit"]');
     check(await until(() => JSON.stringify(lastRpc(st, 'admin_update_tag')?.args.p_patch) === '{"pinned":true}') && await until(async () => (await f.textContent(`[data-tag="${T1}"]`)).includes('Sabit')), `${vp.n}: sabitlendi`);
+    // sabit Post (v1.20.0): Alan'ın Postlarından biri seçilir; "Sabit Post yok" kaldırır
+    await f.click(`[data-tag="${T1}"] button:text-is("Sabit Post")`);
+    check(await until(async () => /Çatıda yaşam hattı kuralları/.test(await f.textContent('.pa-dialog'))) && /\(yalnız fotoğraf\)/.test(await f.textContent('.pa-dialog')), `${vp.n}: sabit Post: Alan'ın Postları listelenir`);
+    await f.check('.pa-dialog input[name="post"][value="P-pin-1"]');
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_pin_tag_post')?.args.p_post === 'P-pin-1' && lastRpc(st, 'admin_pin_tag_post').args.p_tag === T1), `${vp.n}: Post sabitlendi`);
+    await f.click(`[data-tag="${T1}"] button:text-is("Sabit Post")`);
+    check(await until(async () => /şu an sabit/.test(await f.textContent('.pa-dialog'))), `${vp.n}: şu an sabit olan işaretli`);
+    await f.check('.pa-dialog input[name="post"][value=""]');
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_pin_tag_post')?.args.p_post === null), `${vp.n}: sabit Post kaldırıldı`);
     // açıklama
     await f.click(`[data-tag="${T1}"] button:text-is("Açıklama")`);
     await f.fill('.pa-dialog textarea[name="note"]', 'Yüksekte çalışma deneyimlerini paylaş.');

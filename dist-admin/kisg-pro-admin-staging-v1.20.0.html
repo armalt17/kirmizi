@@ -24,6 +24,7 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
    şablonu (sebepler, alıcılar, kanallar, ekler) ve iki kılavuzun metinleri (admin_set_report_assist); Model seçimi'nde
    "Defter metni" ve "Bildirim tespiti" modelleri, Prompt'lar'da iki yeni amaç (kirmizi-isg-mobile 20261021090000).
  - v1.19.1 Defter şablonuna "Rica satırı" (Ayrıntılı metinde maddelerden sonra; uygulama 2026-10-21).
+ - v1.20.0 Alanlar → "Sabit Post": Alan sayfasının en üstünde görünen Post (admin_tag_posts, admin_pin_tag_post).
  - v1.19.2 Defter ve bildirim: yarım satır uyarısız atılmaz, aynı anahtar iki kez olmaz; değişiklik yoksa "değişiklik yok".
  - v1.18.0 Saha Raporu → Limitler: "PDF kaşe notu" kalktı (dijital kaşe kaldırıldı, 2026-10-20 hukuki inceleme). Yerine
    "Rapor QR sayfası: işverene adımlar" (isgcalisanplatformu.com/r/{kod}; kirmizi-isg-mobile 20261020160000_report_qr_revisions.sql,
@@ -296,7 +297,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.19.2',
+  version: '1.20.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -406,7 +407,7 @@ const LABEL = {
     'comment.hide': 'Yorum gizlendi', 'comment.restore': 'Yorum geri açıldı', 'comment.delete': 'Yorum silindi',
     'service.hide': 'Hizmet gizlendi', 'service.restore': 'Hizmet geri açıldı', 'sanction.create': 'Yaptırım uygulandı',
     'sanction.revoke': 'Yaptırım kaldırıldı', 'report.resolve': 'Şikâyet sonuçlandırıldı',
-    'tag.update': 'Alan düzenlendi', 'tag.merge': 'Alanlar birleştirildi',
+    'tag.update': 'Alan düzenlendi', 'tag.merge': 'Alanlar birleştirildi', 'tag.pin_post': 'Alanda Post sabitlendi', 'tag.unpin_post': 'Alanın sabit Postu kaldırıldı',
     'ai_model.create': 'AI modeli eklendi', 'ai_model.update': 'AI modeli düzenlendi', 'ai_setting.update': 'Model seçimi değişti',
     'ai_prompt.update': 'Prompt düzenlendi', 'ai_prompt.delete': 'Özel prompt kaldırıldı', 'report_limit.update': 'Rapor limiti değişti', 'report_text.update': 'Rapor metni değişti', 'report_steps.update': 'QR sayfası adımları değişti',
     'checklist.create': 'Hazır şablon eklendi', 'checklist.update': 'Hazır şablon düzenlendi', 'checklist.reorder': 'Hazır şablon sırası değişti',
@@ -1241,6 +1242,7 @@ async function renderTags() {
           btn('Yeniden adlandır', () => renameTag(r)),
           btn(r.pinned ? 'Sabitten kaldır' : 'Sabitle', () => toggleTag(r, 'pinned')),
           btn('Açıklama', () => noteTag(r)),
+          btn('Sabit Post', () => pinPostTag(r)),
           btn(r.blocked ? 'Engeli kaldır' : 'Engelle', () => toggleTag(r, 'blocked'), r.blocked ? '' : ' pa-btn-danger'),
           btn('Birleştir', () => mergeTag(r)))))))),
     pager(total, v.offset, off => { v.offset = off; renderTags(); })));
@@ -1267,6 +1269,32 @@ function noteTag(r) {
     submit: async ({ reason, form }) => {
       await rpc('admin_update_tag', { p_id: r.id, p_patch: { note: clean(form.elements.note.value) || null }, p_reason: reason || null });
       toast('Açıklama kaydedildi.'); renderTags();
+    }
+  });
+}
+// Alanda sabit Post (v1.20.0; kirmizi-isg-mobile 20261021130000): Alan sayfasının en üstünde "Sabit Post" olarak
+// görünür. Her Alan'da en çok bir tane; yalnız o Alan'ın yayındaki Postlarından seçilir.
+function pinPostTag(r) {
+  const list = h('div', { class: 'pa-radio', style: 'flex-direction:column;gap:8px', role: 'radiogroup', 'aria-label': 'Sabit Post' }, loading());
+  const option = (value, label, sub, checked) => h('label', { style: 'align-items:flex-start' },
+    h('input', { type: 'radio', name: 'post', value, checked }),
+    h('span', null, h('span', { text: label, style: 'display:block' }), sub ? h('span', { class: 'pa-small', text: sub }) : null));
+  rpc('admin_tag_posts', { p_tag: r.id, p_limit: 30 }).then(rows => {
+    rows ||= [];
+    const any = rows.some(x => x.pinned);
+    list.replaceChildren(option('', 'Sabit Post yok', null, !any),
+      ...(rows.length ? rows.map(x => option(x.id, clean(x.content) || (x.has_image ? '(yalnız fotoğraf)' : '—'),
+        `${clean(x.author_name) || 'İsimsiz'} · ${fmtDate(x.created_at)}${x.pinned ? ' · şu an sabit' : ''}`, !!x.pinned))
+        : [h('p', { class: 'pa-small', text: 'Bu alanda yayında Post yok.' })]));
+  }).catch(e => list.replaceChildren(h('p', { class: 'pa-small', text: e.message })));
+  confirmDialog({
+    title: `${r.name}: sabit Post`, text: 'Seçilen Post Alan sayfasının en üstünde "Sabit Post" olarak görünür. Post gizlenir ya da silinirse sabit de kalkar.', confirm: 'Kaydet', reasonRequired: false,
+    fields: list,
+    submit: async ({ reason, form }) => {
+      const picked = form.querySelector('input[name="post"]:checked');
+      if (!picked) throw new AdminError('Bir seçenek seçin.', 'input');
+      await rpc('admin_pin_tag_post', { p_tag: r.id, p_post: picked.value || null, p_reason: reason || null });
+      toast(picked.value ? 'Post sabitlendi.' : 'Sabit Post kaldırıldı.'); renderTags();
     }
   });
 }
