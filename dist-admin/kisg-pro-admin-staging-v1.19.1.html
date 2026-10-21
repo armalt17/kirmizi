@@ -23,6 +23,7 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
  - v1.19.0 Saha Raporu → "Defter ve bildirim" sekmesi: deftere yazılacak metin şablonu, il müdürlüğü bildirim dilekçesi
    şablonu (sebepler, alıcılar, kanallar, ekler) ve iki kılavuzun metinleri (admin_set_report_assist); Model seçimi'nde
    "Defter metni" ve "Bildirim tespiti" modelleri, Prompt'lar'da iki yeni amaç (kirmizi-isg-mobile 20261021090000).
+ - v1.19.1 Defter şablonuna "Rica satırı" (Ayrıntılı metinde maddelerden sonra; uygulama 2026-10-21).
  - v1.18.0 Saha Raporu → Limitler: "PDF kaşe notu" kalktı (dijital kaşe kaldırıldı, 2026-10-20 hukuki inceleme). Yerine
    "Rapor QR sayfası: işverene adımlar" (isgcalisanplatformu.com/r/{kod}; kirmizi-isg-mobile 20261020160000_report_qr_revisions.sql,
    admin_set_report_steps).
@@ -294,7 +295,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.19.0',
+  version: '1.19.1',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -1660,7 +1661,8 @@ function frAssist(cfg) {
   const t = cfg.texts || {};
   const L = assistParse(t.report_ledger_template), N = assistParse(t.report_notice_template), G = assistParse(t.report_guides);
   const ledger = { note: assistField('Üstteki not', L.note, { multiline: true, name: 'ledger_note' }), header: assistField('İlk satır', L.header, { multiline: true, name: 'ledger_header' }),
-    urgent_label: assistField('Acil ibaresi', L.urgent_label, { max: 20, name: 'ledger_urgent' }), footer: assistField('Son satır', L.footer, { multiline: true, name: 'ledger_footer' }) };
+    urgent_label: assistField('Acil ibaresi', L.urgent_label, { max: 20, name: 'ledger_urgent' }), footer: assistField('Son satır', L.footer, { multiline: true, name: 'ledger_footer' }),
+    request: assistField('Rica satırı (Ayrıntılı metinde, maddelerden sonra)', L.request || 'Tespit edilen eksikliklerin giderilmesi için gerekli önlemlerin alınması ve sonucun bildirilmesi rica olunur.', { multiline: true, name: 'ledger_request' }) };
   const notice = { title: assistField('Başlık (TASLAK)', N.title, { max: 20, name: 'notice_title' }), subject: assistField('Konu', N.subject, { multiline: true, max: 400, name: 'notice_subject' }),
     closing: assistField('Kapanış', N.closing, { multiline: true, max: 1000, name: 'notice_closing' }), info: assistField('Son ekrandaki bilgi satırı', N.info, { multiline: true, name: 'notice_info' }),
     province_note: assistField('İl notu', N.province_note, { name: 'notice_province' }), address_note: assistField('İş adresi notu', N.address_note, { name: 'notice_address' }) };

@@ -717,6 +717,7 @@ try {
     await f.fill('textarea[name="ledger_footer"]', 'Ayrıntılar {rapor_tarihi} tarihli {rapor_no} Rev.{rev} no\'lu saha raporundadır.');
     await f.click('[data-assist="report_ledger_template"] button:text-is("Kaydet")'); await dialog(); await submit();
     check(await until(() => /rapor_tarihi/.test(JSON.parse(st.fr.texts.report_ledger_template).footer)) && lastRpc(st, 'admin_set_report_assist')?.args.p_key === 'report_ledger_template', `${vp.n}: defter şablonu kaydedildi`);
+    check(/rica olunur/.test(JSON.parse(st.fr.texts.report_ledger_template).request ?? ''), `${vp.n}: defter şablonunda rica satırı da kaydedilir`);
     await f.fill('input[name="notice_title"]', '');
     await f.click('[data-assist="report_notice_template"] button:text-is("Kaydet")');
     check(await until(async () => /Boş alan bırakma/.test(await f.textContent('[data-toast]'))), `${vp.n}: boş alan reddedilir`);
