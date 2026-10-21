@@ -41,7 +41,7 @@ try {
     await f.click('.lg-nav a[data-section="onayli-hesap"]');
     const oh = await f.textContent('#onayli-hesap');
     check(await until(async () => new URL(page.url()).hash === '#onayli-hesap' && Math.abs(await top('onayli-hesap')) < 40)
-      && /garanti etmez/.test(oh) && /elektronik imza ya da elektronik mühür değildir/.test(oh) && /karara bağlanınca silinir/.test(oh) && /PDF'in kendisi saklanmaz/.test(oh) && /yalnız uzmanın telefonunda en çok 7 gün/.test(oh) && !/kaşe/i.test(oh),
+      && /garanti etmez/.test(oh) && /elektronik imza değildir/.test(oh) && !/mühür/i.test(oh) && /karara bağlanınca silinir/.test(oh) && /PDF'in kendisi saklanmaz/.test(oh) && /yalnız uzmanın telefonunda en çok 7 gün/.test(oh) && !/kaşe/i.test(oh),
       `${vp.name} Onaylı Hesap ve Rapor QR'ı bölümü: garanti yok, e-imza değil, kimlik belgesi karar sonrası silinir, PDF saklanmaz, kaşe yok`);
     await f.click('.lg-nav a[data-section="topluluk-kurallari"]');
     check(await until(async () => new URL(page.url()).hash === '#topluluk-kurallari' && Math.abs(await top('topluluk-kurallari')) < 40), `${vp.name} menü tıklaması: üst adres #topluluk-kurallari ve bölüme kayar`);
