@@ -60,7 +60,14 @@ function server(ctx) {
       { target: 'default', purpose: 'report_analyze', prompt: 'Sen deneyimli bir iş güvenliği uzmanısın. Tespitleri nesnel yaz; öneriler ...sağlanmalıdır diliyle.', updated_at: iso(600) },
       { target: 'default', purpose: 'finding_rewrite', prompt: 'Bulguyu hukuki dille yeniden yaz; öneri ...sağlanmalıdır.', updated_at: iso(600) },
       { target: 'openai', purpose: 'report_analyze', prompt: 'ChatGPT için özel analiz talimatı: kısa ve nesnel yaz.', updated_at: iso(100) }],
-    texts: { report_receiver_steps: JSON.stringify([{ title: 'Önce acil maddeler', body: 'ACİL işaretli maddeler önce.' }, { title: 'Onaylı deftere yazdırın', body: 'Rapor onaylı defterin yerine geçmez.' }]) },
+    texts: {
+      report_ledger_template: JSON.stringify({ note: 'Tespitleri onaylı deftere yazın ve imzalatın.', header: '{ziyaret_tarihi} tarihinde {isyeri} işyerinde:', urgent_label: 'ACİL', footer: 'Ayrıntılar {rapor_no} Rev.{rev} raporundadır.' }),
+      report_notice_template: JSON.stringify({ title: 'TASLAK', subject: 'm.11/3 kapsamında bildirim', closing: 'Arz ederim.', info: '6331 m.8 bilgisi', province_note: 'SGK ili.', address_note: 'Adres saklanmaz.',
+        recipients: [{ key: 'il_mudurlugu', label: 'İl Müdürlüğü', to: '{il} Çalışma ve İş Kurumu İl Müdürlüğüne' }],
+        reasons: [{ key: 'durdurma', label: 'Acil durdurma', text: 'acil durdurmayı gerektiren bir hâl' }],
+        channels: [{ key: 'elden', label: 'Elden', note: 'Evrak kayıt numarasını alın.' }], attachments: ['Rapor', 'Fotoğraflar'] }),
+      report_guides: JSON.stringify({ ledger: { title: 'Defter', steps: [{ title: 'Metni aç', body: 'Dokun.' }], final: 'Bildirilmiş sayılır.' }, notice: { title: 'Bildirim', steps: [{ title: 'Madde seç', body: 'Seç.' }], final: 'Feshedilemez.' } }),
+      report_receiver_steps: JSON.stringify([{ title: 'Önce acil maddeler', body: 'ACİL işaretli maddeler önce.' }, { title: 'Onaylı deftere yazdırın', body: 'Rapor onaylı defterin yerine geçmez.' }]) },
     limits: { ai_budget_free_month_microusd: '250000', ai_budget_pro_month_microusd: '10000000', ai_budget_max_month_microusd: '30000000', ai_daily_factor: '3',
       report_max_analyses: '5', report_rewrite_daily_limit: '40', report_max_photos: '8', report_max_drafts: '5',
       spam_posts_per_hour: '10', spam_posts_per_day: '30', spam_comments_per_minute: '5', spam_comments_per_hour: '60', spam_likes_per_hour: '200',
@@ -99,6 +106,10 @@ function server(ctx) {
     // v1.15.0 yasaklı kelimeler: sunucu kuralı (2–40 harf) taklit edilir; liste her yazmada geri döner.
     admin_blocked_words: () => st.words.map(w => ({ ...w })),
     admin_job_phrases: () => st.phrases.map(w => ({ ...w })),
+    admin_set_report_assist: a => {
+      if (!['report_ledger_template', 'report_notice_template', 'report_guides'].includes(a.p_key) || !a.p_value || typeof a.p_value !== 'object' || Array.isArray(a.p_value)) bad('value');
+      st.fr.texts[a.p_key] = JSON.stringify(a.p_value); return a.p_value;
+    },
     admin_set_report_steps: a => {
       const steps = a.p_steps;
       if (!Array.isArray(steps) || !steps.length || steps.length > 10 || steps.some(x => !x.title || !x.body || x.title.length > 80 || x.body.length > 600)) bad('steps');
@@ -230,7 +241,7 @@ async function open(browser, { uid = null, width = 1280, height = 900, qs = '' }
 const until = async (fn, ms = 5000) => { const t = Date.now(); while (Date.now() - t < ms) { if (await fn()) return true; await new Promise(r => setTimeout(r, 50)); } return false; };
 const visible = (f, sel) => f.locator(sel).first().isVisible().catch(() => false);
 const lastRpc = (st, name) => [...st.rpc].reverse().find(x => x.name === name);
-const ALLOWED = new Set(['kisg_is_admin', 'admin_set_report_steps', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_service_category_icons', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification',
+const ALLOWED = new Set(['kisg_is_admin', 'admin_set_report_steps', 'admin_set_report_assist', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_service_category_icons', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification',
   'admin_report_config', 'admin_report_usage', 'admin_report_unit_stats', 'admin_set_ai_setting', 'admin_upsert_ai_model', 'admin_set_ai_prompt', 'admin_set_report_limit', 'admin_upsert_checklist_item', 'admin_reorder_checklist', 'admin_blocked_words', 'admin_set_blocked_word', 'admin_job_phrases', 'admin_set_job_phrase', 'admin_set_report_text']);
 
 // ---------------- statik ----------------
@@ -699,6 +710,26 @@ try {
     await f.click('button[aria-label="eleman aranıyor çıkar"]');
     check(await until(() => !st.phrases.some(w => w.phrase === 'eleman aranıyor')) && lastRpc(st, 'admin_set_job_phrase')?.args.p_on === false, `${vp.n}: ifade çıkarıldı`);
     st.phrases.push({ phrase: 'eleman aranıyor', norm: 'eleman araniyor', strong: true, created_at: iso(0) });
+    // Defter ve bildirim (v1.19.0): şablonlar, sebep ekle, boş alan reddi, kılavuzlar; kaşe ve yasak kelimeler yok
+    await tab('Defter ve bildirim');
+    check(await until(() => visible(f, '[data-assist="report_ledger_template"]')) && await f.inputValue('input[name="ledger_urgent"]') === 'ACİL', `${vp.n}: Defter ve bildirim: defter şablonu mevcut metinle`);
+    check(!/kaşe|resmî|e-imza|mühür|onaylı belge/i.test(await f.textContent('[data-main]')), `${vp.n}: Defter ve bildirim'de kaçınılan kelimeler yok`);
+    await f.fill('textarea[name="ledger_footer"]', 'Ayrıntılar {rapor_tarihi} tarihli {rapor_no} Rev.{rev} no\'lu saha raporundadır.');
+    await f.click('[data-assist="report_ledger_template"] button:text-is("Kaydet")'); await dialog(); await submit();
+    check(await until(() => /rapor_tarihi/.test(JSON.parse(st.fr.texts.report_ledger_template).footer)) && lastRpc(st, 'admin_set_report_assist')?.args.p_key === 'report_ledger_template', `${vp.n}: defter şablonu kaydedildi`);
+    await f.fill('input[name="notice_title"]', '');
+    await f.click('[data-assist="report_notice_template"] button:text-is("Kaydet")');
+    check(await until(async () => /Boş alan bırakma/.test(await f.textContent('[data-toast]'))), `${vp.n}: boş alan reddedilir`);
+    await f.fill('input[name="notice_title"]', 'TASLAK');
+    await f.click('[data-list="Bildirim sebepleri"] + button:text-is("+ Satır ekle")');
+    await f.fill('[data-list="Bildirim sebepleri"] [data-row] >> nth=1 >> input[name="key"]', 'hayati');
+    await f.fill('[data-list="Bildirim sebepleri"] [data-row] >> nth=1 >> input[name="label"]', 'Hayati tehlike');
+    await f.fill('[data-list="Bildirim sebepleri"] [data-row] >> nth=1 >> textarea[name="text"]', 'hayati tehlike arz eden bir durum');
+    await f.click('[data-assist="report_notice_template"] button:text-is("Kaydet")'); await dialog(); await submit();
+    check(await until(() => JSON.parse(st.fr.texts.report_notice_template).reasons.length === 2) && JSON.parse(st.fr.texts.report_notice_template).attachments.length === 2, `${vp.n}: sebep eklendi (kod gerekmez), ekler korunur`);
+    await f.fill('textarea[name="guide_notice_final"]', 'Bu bildirim yüzünden iş sözleşmen feshedilemez.');
+    await f.click('[data-assist="report_guides"] button:text-is("Kaydet")'); await dialog(); await submit();
+    check(await until(() => JSON.parse(st.fr.texts.report_guides).notice.final === 'Bu bildirim yüzünden iş sözleşmen feshedilemez.'), `${vp.n}: kılavuz metni kaydedildi`);
     // Checklist
     await tab('Hazır şablonlar');
     check(await until(() => f.locator('[data-item]').count().then(n => n === 2)), `${vp.n}: Hazır şablonlar: 2 şablon`);
