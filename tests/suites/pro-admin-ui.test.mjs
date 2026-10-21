@@ -725,6 +725,14 @@ try {
     await f.click('[data-list="Bildirim sebepleri"] + button:text-is("+ Satır ekle")');
     await f.fill('[data-list="Bildirim sebepleri"] [data-row] >> nth=1 >> input[name="key"]', 'hayati');
     await f.fill('[data-list="Bildirim sebepleri"] [data-row] >> nth=1 >> input[name="label"]', 'Hayati tehlike');
+    // Yarım satır uyarısız atılmaz; aynı anahtar iki kez olmaz (v1.19.2).
+    await f.click('[data-assist="report_notice_template"] button:text-is("Kaydet")');
+    check(await until(async () => /satırdaki tüm alanları doldur/.test(await f.textContent('[data-toast]'))), `${vp.n}: yarım sebep satırı uyarı verir`);
+    await f.fill('[data-list="Bildirim sebepleri"] [data-row] >> nth=1 >> input[name="key"]', 'durdurma');
+    await f.fill('[data-list="Bildirim sebepleri"] [data-row] >> nth=1 >> textarea[name="text"]', 'x');
+    await f.click('[data-assist="report_notice_template"] button:text-is("Kaydet")');
+    check(await until(async () => /aynı anahtar iki kez/.test(await f.textContent('[data-toast]'))), `${vp.n}: aynı anahtar reddedilir`);
+    await f.fill('[data-list="Bildirim sebepleri"] [data-row] >> nth=1 >> input[name="key"]', 'hayati');
     await f.fill('[data-list="Bildirim sebepleri"] [data-row] >> nth=1 >> textarea[name="text"]', 'hayati tehlike arz eden bir durum');
     await f.click('[data-assist="report_notice_template"] button:text-is("Kaydet")'); await dialog(); await submit();
     check(await until(() => JSON.parse(st.fr.texts.report_notice_template).reasons.length === 2) && JSON.parse(st.fr.texts.report_notice_template).attachments.length === 2, `${vp.n}: sebep eklendi (kod gerekmez), ekler korunur`);

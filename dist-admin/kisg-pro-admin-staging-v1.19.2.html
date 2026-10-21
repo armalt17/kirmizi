@@ -24,6 +24,7 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
    şablonu (sebepler, alıcılar, kanallar, ekler) ve iki kılavuzun metinleri (admin_set_report_assist); Model seçimi'nde
    "Defter metni" ve "Bildirim tespiti" modelleri, Prompt'lar'da iki yeni amaç (kirmizi-isg-mobile 20261021090000).
  - v1.19.1 Defter şablonuna "Rica satırı" (Ayrıntılı metinde maddelerden sonra; uygulama 2026-10-21).
+ - v1.19.2 Defter ve bildirim: yarım satır uyarısız atılmaz, aynı anahtar iki kez olmaz; değişiklik yoksa "değişiklik yok".
  - v1.18.0 Saha Raporu → Limitler: "PDF kaşe notu" kalktı (dijital kaşe kaldırıldı, 2026-10-20 hukuki inceleme). Yerine
    "Rapor QR sayfası: işverene adımlar" (isgcalisanplatformu.com/r/{kod}; kirmizi-isg-mobile 20261020160000_report_qr_revisions.sql,
    admin_set_report_steps).
@@ -295,7 +296,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.19.1',
+  version: '1.19.2',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -1619,6 +1620,7 @@ function frReportSteps(texts) {
 // sonra "Deftere yazılacak metin" ve "İl müdürlüğüne bildirim taslağı". Şablonlar, sebepler, alıcılar, gönderim kanalı
 // notları ve iki kılavuzun ekran metinleri. Uygulama bunları hemen kullanır (en geç 1 saatte); boş bırakılan alan için
 // varsayılan metin geçerli. Kanuni ve sabit kısımlar (kime, konu, tarihçe, imza) yapay zekâya bırakılmaz.
+const LEDGER_REQUEST = 'Tespit edilen eksikliklerin giderilmesi için gerekli önlemlerin alınması ve sonucun bildirilmesi rica olunur.';
 const ASSIST_PLACEHOLDERS = 'Yer tutucular: {ziyaret_tarihi} {isyeri} {rapor_tarihi} {rapor_no} {rev} {il}';
 function assistParse(raw) { try { const v = JSON.parse(raw || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch (e) { return {}; } }
 function assistField(label, value, { multiline = false, max = 600, name } = {}) {
@@ -1642,13 +1644,27 @@ function assistList(title, items, cols, max = 12) {
   return {
     el: h('div', null, h('b', { text: title }), box, h('button', { type: 'button', class: 'pa-btn', text: '+ Satır ekle', onclick: () => add({}) })),
     get: () => rows.map(r => Object.fromEntries(cols.map((c, i) => [c.key, r.fields[i].get()]))).filter(x => cols.every(c => x[c.key])),
+    // Yarım satır sessizce atılmaz; aynı anahtar iki kez olmaz (uygulama seçimi anahtarla yapar). Sorun yoksa null.
+    check: () => {
+      const vals = rows.map(r => cols.map((c, i) => r.fields[i].get()));
+      if (vals.some(v => v.some(Boolean) && !v.every(Boolean))) return `${title}: satırdaki tüm alanları doldur ya da satırı çıkar.`;
+      const ki = cols.findIndex(c => c.key === 'key');
+      if (ki >= 0) {
+        const keys = vals.filter(v => v.every(Boolean)).map(v => v[ki]);
+        if (keys.some(k => !/^[a-z0-9_]{1,40}$/.test(k))) return `${title}: anahtar yalnız küçük harf, rakam ve _ olabilir.`;
+        if (new Set(keys).size !== keys.length) return `${title}: aynı anahtar iki kez kullanılamaz.`;
+      }
+      return null;
+    },
   };
 }
 function assistCard(title, help, key, current, parts, build) {
   const save = () => {
     const value = build();
     if (!value) return;
-    const same = JSON.stringify(value) === JSON.stringify(current);
+    // Anahtar sırasından bağımsız karşılaştırma (sunucu JSON'u anahtarları sıralı döndürür).
+    const stable = (v) => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(n => [n, x[n]])) : x));
+    const same = stable(value) === stable(current);
     frSaveChanges(same ? [] : [{ label: title, from: 'önceki metin', to: 'yeni metin' }], `${title} kaydedilsin mi?`,
       (c, reason) => rpc('admin_set_report_assist', { p_key: key, p_value: value, p_reason: reason }));
   };
@@ -1662,7 +1678,7 @@ function frAssist(cfg) {
   const L = assistParse(t.report_ledger_template), N = assistParse(t.report_notice_template), G = assistParse(t.report_guides);
   const ledger = { note: assistField('Üstteki not', L.note, { multiline: true, name: 'ledger_note' }), header: assistField('İlk satır', L.header, { multiline: true, name: 'ledger_header' }),
     urgent_label: assistField('Acil ibaresi', L.urgent_label, { max: 20, name: 'ledger_urgent' }), footer: assistField('Son satır', L.footer, { multiline: true, name: 'ledger_footer' }),
-    request: assistField('Rica satırı (Ayrıntılı metinde, maddelerden sonra)', L.request || 'Tespit edilen eksikliklerin giderilmesi için gerekli önlemlerin alınması ve sonucun bildirilmesi rica olunur.', { multiline: true, name: 'ledger_request' }) };
+    request: assistField('Rica satırı (Ayrıntılı metinde, maddelerden sonra)', L.request || LEDGER_REQUEST, { multiline: true, name: 'ledger_request' }) };
   const notice = { title: assistField('Başlık (TASLAK)', N.title, { max: 20, name: 'notice_title' }), subject: assistField('Konu', N.subject, { multiline: true, max: 400, name: 'notice_subject' }),
     closing: assistField('Kapanış', N.closing, { multiline: true, max: 1000, name: 'notice_closing' }), info: assistField('Son ekrandaki bilgi satırı', N.info, { multiline: true, name: 'notice_info' }),
     province_note: assistField('İl notu', N.province_note, { name: 'notice_province' }), address_note: assistField('İş adresi notu', N.address_note, { name: 'notice_address' }) };
@@ -1678,13 +1694,15 @@ function frAssist(cfg) {
   return h('div', null,
     h('p', { class: 'pa-note' }, h('b', { text: 'Kesinleşmiş rapordan sonra: ' }), 'Uzman “Kontrol ettim, PDF’e çevir” ile çıkan raporda deftere yazılacak metni ve il müdürlüğüne bildirim taslağını hazırlar. Metinler ve PDF’ler sunucuda saklanmaz. Yapay zekâ modelleri “Model seçimi”nde, prompt’ları “Prompt’lar”da.'),
     h('h3', { text: 'Deftere yazılacak metin', style: 'margin:0 0 10px' }),
-    assistCard('Defter metni şablonu', ASSIST_PLACEHOLDERS, 'report_ledger_template', L, Object.values(ledger).map(f => f.row),
+    assistCard('Defter metni şablonu', ASSIST_PLACEHOLDERS, 'report_ledger_template', { ...L, request: L.request || LEDGER_REQUEST }, Object.values(ledger).map(f => f.row),
       () => need(ledger) && Object.fromEntries(Object.entries(ledger).map(([k, f]) => [k, f.get()]))),
     h('h3', { text: 'İl müdürlüğüne bildirim taslağı', style: 'margin:22px 0 10px' }),
     assistCard('Dilekçe şablonu', `${ASSIST_PLACEHOLDERS}. Sebep ve alıcı eklemek kod gerektirmez.`, 'report_notice_template', N,
       [...Object.values(notice).map(f => f.row), attachments.row, recipients.el, reasons.el, channels.el],
       () => {
         if (!need(notice)) return null;
+        const bad = [recipients, reasons, channels].map(l => l.check()).find(Boolean);
+        if (bad) { toast(bad, true); return null; }
         const v = { ...Object.fromEntries(Object.entries(notice).map(([k, f]) => [k, f.get()])), recipients: recipients.get(), reasons: reasons.get(), channels: channels.get(),
           attachments: attachments.el.value.split('\n').map(x => x.trim()).filter(Boolean) };
         if (!v.recipients.length || !v.reasons.length || !v.channels.length) { toast('En az bir alıcı, bir sebep ve bir kanal olmalı.', true); return null; }
@@ -1694,6 +1712,8 @@ function frAssist(cfg) {
     assistCard('Kılavuzlar', 'İlk kullanımda bir kez gösterilir; uzman “?” ile yine izler. Sıcak ve yardımcı bir dil kullan.', 'report_guides', G,
       [h('b', { text: 'Defter kılavuzu' }), gl.title.row, gl.steps.el, gl.final.row, h('b', { text: 'Dilekçe kılavuzu' }), gn.title.row, gn.steps.el, gn.final.row],
       () => {
+        const bad = [gl.steps, gn.steps].map(l => l.check()).find(Boolean);
+        if (bad) { toast(bad, true); return null; }
         const g = (x) => ({ title: x.title.get(), steps: x.steps.get(), final: x.final.get() });
         const v = { ledger: g(gl), notice: g(gn) };
         if (![v.ledger, v.notice].every(x => x.title && x.final && x.steps.length)) { toast('Her kılavuzun başlığı, en az bir adımı ve son karesi olmalı.', true); return null; }
