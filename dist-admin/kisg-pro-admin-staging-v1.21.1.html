@@ -25,6 +25,7 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
    "Defter metni" ve "Bildirim tespiti" modelleri, Prompt'lar'da iki yeni amaç (kirmizi-isg-mobile 20261021090000).
  - v1.19.1 Defter şablonuna "Rica satırı" (Ayrıntılı metinde maddelerden sonra; uygulama 2026-10-21).
  - v1.20.0 Alanlar → "Sabit Post": Alan sayfasının en üstünde görünen Post (admin_tag_posts, admin_pin_tag_post).
+ - v1.21.1 "Taslak dilekçe" adları (şablon, kılavuz, sebep ifadesi).
  - v1.21.0 Saha Raporu → Limitler: "QR yanındaki yazı" (report_qr_label, admin_set_report_qr_label; 3–40 karakter).
  - v1.20.1 Defter ve bildirim: "Deftere ne yazabilirim?" (madde madde öneri; hazır metin ve imza satırı yok). Dilekçede
    "TASLAK" başlığı ve son ekrandaki kanun bilgi satırı alanları kalktı (uygulamada artık kullanılmıyor).
@@ -300,7 +301,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.21.0',
+  version: '1.21.1',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -1739,7 +1740,7 @@ function frAssist(cfg) {
     closing: assistField('Kapanış', N.closing, { multiline: true, max: 1000, name: 'notice_closing' }),
     province_note: assistField('İl notu', N.province_note, { name: 'notice_province' }), address_note: assistField('İş adresi notu', N.address_note, { name: 'notice_address' }) };
   const recipients = assistList('Alıcılar (ilk satır kullanılır)', N.recipients, [{ key: 'key', label: 'Anahtar', max: 40 }, { key: 'label', label: 'Ad' }, { key: 'to', label: 'Kime satırı' }]);
-  const reasons = assistList('Bildirim sebepleri', N.reasons, [{ key: 'key', label: 'Anahtar', max: 40 }, { key: 'label', label: 'Uygulamadaki seçenek' }, { key: 'text', label: 'Dilekçedeki ifade', multiline: true }]);
+  const reasons = assistList('Bildirim sebepleri', N.reasons, [{ key: 'key', label: 'Anahtar', max: 40 }, { key: 'label', label: 'Uygulamadaki seçenek' }, { key: 'text', label: 'Taslak dilekçedeki ifade', multiline: true }]);
   const channels = assistList('Gönderim kanalları', N.channels, [{ key: 'key', label: 'Anahtar', max: 40 }, { key: 'label', label: 'Ad' }, { key: 'note', label: 'Not', multiline: true }]);
   const attachments = assistField('Ekler (her satıra bir ek)', (Array.isArray(N.attachments) ? N.attachments : []).join('\n'), { multiline: true, max: 1000, name: 'notice_attachments' });
   const guideParts = (k, g) => ({ title: assistField('Başlık', g?.title, { max: 80, name: `${k}_title` }),
@@ -1753,7 +1754,7 @@ function frAssist(cfg) {
     assistCard('Defter önerileri', ASSIST_PLACEHOLDERS, 'report_ledger_template', { ...L, request: L.request || LEDGER_REQUEST }, Object.values(ledger).map(f => f.row),
       () => need(ledger) && Object.fromEntries(Object.entries(ledger).map(([k, f]) => [k, f.get()]))),
     h('h3', { text: 'İl müdürlüğüne bildirim taslağı', style: 'margin:22px 0 10px' }),
-    assistCard('Dilekçe şablonu', `${ASSIST_PLACEHOLDERS}. Sebep ve alıcı eklemek kod gerektirmez.`, 'report_notice_template', N,
+    assistCard('Taslak dilekçe şablonu', `${ASSIST_PLACEHOLDERS}. Sebep ve alıcı eklemek kod gerektirmez.`, 'report_notice_template', N,
       [...Object.values(notice).map(f => f.row), attachments.row, recipients.el, reasons.el, channels.el],
       () => {
         if (!need(notice)) return null;
@@ -1766,7 +1767,7 @@ function frAssist(cfg) {
       }),
     h('h3', { text: 'Kılavuz metinleri', style: 'margin:22px 0 10px' }),
     assistCard('Kılavuzlar', 'İlk kullanımda bir kez gösterilir; uzman “?” ile yine izler. Sıcak ve yardımcı bir dil kullan.', 'report_guides', G,
-      [h('b', { text: 'Defter kılavuzu' }), gl.title.row, gl.steps.el, gl.final.row, h('b', { text: 'Dilekçe kılavuzu' }), gn.title.row, gn.steps.el, gn.final.row],
+      [h('b', { text: 'Defter kılavuzu' }), gl.title.row, gl.steps.el, gl.final.row, h('b', { text: 'Taslak dilekçe kılavuzu' }), gn.title.row, gn.steps.el, gn.final.row],
       () => {
         const bad = [gl.steps, gn.steps].map(l => l.check()).find(Boolean);
         if (bad) { toast(bad, true); return null; }
