@@ -25,6 +25,7 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
    "Defter metni" ve "Bildirim tespiti" modelleri, Prompt'lar'da iki yeni amaç (kirmizi-isg-mobile 20261021090000).
  - v1.19.1 Defter şablonuna "Rica satırı" (Ayrıntılı metinde maddelerden sonra; uygulama 2026-10-21).
  - v1.20.0 Alanlar → "Sabit Post": Alan sayfasının en üstünde görünen Post (admin_tag_posts, admin_pin_tag_post).
+ - v1.21.0 Saha Raporu → Limitler: "QR yanındaki yazı" (report_qr_label, admin_set_report_qr_label; 3–40 karakter).
  - v1.20.1 Defter ve bildirim: "Deftere ne yazabilirim?" (madde madde öneri; hazır metin ve imza satırı yok). Dilekçede
    "TASLAK" başlığı ve son ekrandaki kanun bilgi satırı alanları kalktı (uygulamada artık kullanılmıyor).
  - v1.19.2 Defter ve bildirim: yarım satır uyarısız atılmaz, aynı anahtar iki kez olmaz; değişiklik yoksa "değişiklik yok".
@@ -299,7 +300,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.20.1',
+  version: '1.21.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -1594,7 +1595,9 @@ const typicalReports = (budgetUsd, unit) => {
 function frLimits(cfg, unit) {
   const lim = cfg.limits || {};
   return h('div', null,
-    h('h3', { text: 'Rapor QR sayfası: işverene adımlar', style: 'margin:0 0 10px' }),
+    h('h3', { text: 'Rapor PDF\'inde QR\'ın yanındaki yazı', style: 'margin:0 0 10px' }),
+    frQrLabel(cfg.texts || {}),
+    h('h3', { text: 'Rapor QR sayfası: işverene adımlar', style: 'margin:22px 0 10px' }),
     frReportSteps(cfg.texts || {}),
     h('h3', { text: 'Limitler', style: 'margin:22px 0 10px' }),
     frLimitCard(lim, FR_LIMITS, 'Limitler kaydedilsin mi?', 'Kota sunucuda hemen değişir; uygulamadaki yüzde en geç 5 dakikada güncellenir. Rapor yazmak ve PDF her planda ücretsiz.', unit),
@@ -1604,6 +1607,28 @@ function frLimits(cfg, unit) {
     frBlockedWords(),
     h('h3', { text: 'İş ilanı ifadeleri (Akışa ilan yazılamaz)', style: 'margin:22px 0 10px' }),
     frJobPhrases());
+}
+
+// QR yanındaki yazı (v1.21.0; ürün sahibi 2026-10-21; kirmizi-isg-mobile 20261021160000): PDF'te QR'ın soluna tek satır
+// basılır. 3–40 karakter; onay ya da resmiyet izlenimi veren kelimeler sunucuda da reddedilir. Yeni PDF'lerde geçerli.
+const QR_LABEL_DEFAULT = 'Okutun · rapordan sonra ne yapmalısınız', QR_LABEL_MAX = 40;
+const QR_LABEL_AVOID = /(doğrula|onaylı|resm[iî]|mühür|kaşe|e-imza)/i;
+function frQrLabel(texts) {
+  const current = String(texts.report_qr_label || QR_LABEL_DEFAULT);
+  const input = h('input', { type: 'text', name: 'qr_label', maxlength: QR_LABEL_MAX, value: current, 'aria-label': 'QR yanındaki yazı' });
+  const save = () => {
+    const v = input.value.replace(/\s+/g, ' ').trim();
+    if (v.length < 3) { toast('En az 3 karakter yaz.', true); return; }
+    if (QR_LABEL_AVOID.test(v)) { toast('Onay ya da resmiyet izlenimi veren kelime kullanma.', true); return; }
+    frSaveChanges(v === current ? [] : [{ label: 'QR yanındaki yazı', from: current, to: v }],
+      'QR yazısı kaydedilsin mi?', (c, reason) => rpc('admin_set_report_qr_label', { p_text: v, p_reason: reason }));
+  };
+  return h('div', { class: 'pa-card', 'data-qr-label': '' },
+    h('p', { class: 'pa-small', text: `PDF'te QR'ın solunda tek satır görünür (en çok ${QR_LABEL_MAX} karakter). Yeni hazırlanan PDF'lerde geçerli; eski PDF'ler değişmez.` }),
+    h('label', { class: 'pa-field' }, h('span', { text: 'QR yanındaki yazı' }), input),
+    h('div', { class: 'pa-form-foot' },
+      h('button', { type: 'button', class: 'pa-btn', text: 'Varsayılana dön', onclick: () => { input.value = QR_LABEL_DEFAULT; } }),
+      h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Yazıyı kaydet', onclick: save })));
 }
 
 // Rapor QR sayfası adımları (v1.18.0; ürün sahibi 2026-10-20): raporun QR'ını okutan işveren /r/{kod} sayfasında bu

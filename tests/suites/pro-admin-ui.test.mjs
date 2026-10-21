@@ -113,6 +113,11 @@ function server(ctx) {
       if (!['report_ledger_template', 'report_notice_template', 'report_guides'].includes(a.p_key) || !a.p_value || typeof a.p_value !== 'object' || Array.isArray(a.p_value)) bad('value');
       st.fr.texts[a.p_key] = JSON.stringify(a.p_value); return a.p_value;
     },
+    admin_set_report_qr_label: a => {
+      const v = String(a.p_text || '').replace(/\s+/g, ' ').trim();
+      if (v.length < 3 || v.length > 40 || /(doğrula|onaylı|resm[iî]|mühür|kaşe|e-imza)/i.test(v)) bad('qr_label');
+      st.fr.texts.report_qr_label = v; return v;
+    },
     admin_set_report_steps: a => {
       const steps = a.p_steps;
       if (!Array.isArray(steps) || !steps.length || steps.length > 10 || steps.some(x => !x.title || !x.body || x.title.length > 80 || x.body.length > 600)) bad('steps');
@@ -244,7 +249,7 @@ async function open(browser, { uid = null, width = 1280, height = 900, qs = '' }
 const until = async (fn, ms = 5000) => { const t = Date.now(); while (Date.now() - t < ms) { if (await fn()) return true; await new Promise(r => setTimeout(r, 50)); } return false; };
 const visible = (f, sel) => f.locator(sel).first().isVisible().catch(() => false);
 const lastRpc = (st, name) => [...st.rpc].reverse().find(x => x.name === name);
-const ALLOWED = new Set(['kisg_is_admin', 'admin_set_report_steps', 'admin_set_report_assist', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_tag_posts', 'admin_pin_tag_post', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_service_category_icons', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification',
+const ALLOWED = new Set(['kisg_is_admin', 'admin_set_report_qr_label', 'admin_set_report_steps', 'admin_set_report_assist', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_tag_posts', 'admin_pin_tag_post', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_service_category_icons', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification',
   'admin_report_config', 'admin_report_usage', 'admin_report_unit_stats', 'admin_set_ai_setting', 'admin_upsert_ai_model', 'admin_set_ai_prompt', 'admin_set_report_limit', 'admin_upsert_checklist_item', 'admin_reorder_checklist', 'admin_blocked_words', 'admin_set_blocked_word', 'admin_job_phrases', 'admin_set_job_phrase', 'admin_set_report_text']);
 
 // ---------------- statik ----------------
@@ -698,6 +703,14 @@ try {
     await f.fill('input[name="spam_comments_per_minute"]', '3');
     await f.locator('button:text-is("Değişiklikleri kaydet")').nth(1).click(); await dialog(); await submit();
     check(await until(() => st.fr.limits.spam_comments_per_minute === '3') && st.rpc.some(x => x.name === 'admin_set_report_limit' && x.args.p_key === 'spam_comments_per_minute' && x.args.p_value === 3), `${vp.n}: spam sınırı kaydedildi`);
+    // QR yanındaki yazı (v1.21.0): mevcut ya da varsayılan; kaçınılan kelime reddi; kaydet
+    check(await f.inputValue('input[name="qr_label"]') === 'Okutun · rapordan sonra ne yapmalısınız' && await f.getAttribute('input[name="qr_label"]', 'maxlength') === '40', `${vp.n}: QR yazısı varsayılanla, en çok 40 karakter`);
+    await f.fill('input[name="qr_label"]', 'Okutun, raporu doğrulayın');
+    await f.click('button:text-is("Yazıyı kaydet")');
+    check(await until(async () => /resmiyet izlenimi/.test(await f.textContent('[data-toast]'))), `${vp.n}: QR yazısında kaçınılan kelime reddedilir`);
+    await f.fill('input[name="qr_label"]', 'Okutun:  sonraki adımlar');
+    await f.click('button:text-is("Yazıyı kaydet")'); await dialog(); await submit();
+    check(await until(() => st.fr.texts.report_qr_label === 'Okutun: sonraki adımlar') && lastRpc(st, 'admin_set_report_qr_label'), `${vp.n}: QR yazısı kaydedildi`);
     // QR sayfası adımları (v1.18.0): mevcut adımlar, boş adım reddi, ekle, kaydet; kaşe notu yok
     check(!/kaşe/i.test(await f.textContent('[data-main]')), `${vp.n}: Saha Raporu'nda kaşe kalmadı`);
     check(await f.inputValue('input[name="step_title"] >> nth=0') === 'Önce acil maddeler' && await f.locator('[data-step]').count() === 2, `${vp.n}: adımlar mevcut metinle`);
