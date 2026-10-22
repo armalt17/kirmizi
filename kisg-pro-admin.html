@@ -1692,6 +1692,7 @@ function frReportSteps(texts) {
 // notları ve iki kılavuzun ekran metinleri. Uygulama bunları hemen kullanır (en geç 1 saatte); boş bırakılan alan için
 // varsayılan metin geçerli. Kanuni ve sabit kısımlar (kime, konu, tarihçe, imza) yapay zekâya bırakılmaz.
 const LEDGER_REQUEST = 'Tespit edilen eksikliklerin giderilmesi için gerekli önlemlerin alınması ve sonucun bildirilmesi rica olunur.';
+const NOTICE_SUBJECT_HEALTH = 'İşyeri Hekimi ve Diğer Sağlık Personelinin Görev, Yetki, Sorumluluk ve Eğitimleri Hakkında Yönetmelik m.11/3 kapsamında bildirim';
 const ASSIST_PLACEHOLDERS = 'Yer tutucular: {ziyaret_tarihi} {isyeri} {rapor_tarihi} {rapor_no} {rev} {il}';
 function assistParse(raw) { try { const v = JSON.parse(raw || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch (e) { return {}; } }
 function assistField(label, value, { multiline = false, max = 600, name } = {}) {
@@ -1751,7 +1752,9 @@ function frAssist(cfg) {
     urgent_label: assistField('Acil ibaresi', L.urgent_label, { max: 20, name: 'ledger_urgent' }), footer: assistField('Sona önerilen son satır', L.footer, { multiline: true, name: 'ledger_footer' }),
     request: assistField('Sona önerilen rica satırı (maddelerden sonra)', L.request || LEDGER_REQUEST, { multiline: true, name: 'ledger_request' }) };
   // PDF'te "TASLAK" başlığı ve son ekrandaki kanun bilgi satırı kalktı (uygulama 2026-10-21; v1.20.1).
-  const notice = { subject: assistField('Konu', N.subject, { multiline: true, max: 400, name: 'notice_subject' }),
+  // İşyeri hekimi / DSP için ayrı konu (uygulama 2026-10-22, hukuki inceleme).
+  const notice = { subject: assistField('Konu (iş güvenliği uzmanı)', N.subject, { multiline: true, max: 400, name: 'notice_subject' }),
+    subject_health: assistField('Konu (işyeri hekimi / DSP)', N.subject_health || NOTICE_SUBJECT_HEALTH, { multiline: true, max: 400, name: 'notice_subject_health' }),
     closing: assistField('Kapanış', N.closing, { multiline: true, max: 1000, name: 'notice_closing' }),
     province_note: assistField('İl notu', N.province_note, { name: 'notice_province' }), address_note: assistField('İş adresi notu', N.address_note, { name: 'notice_address' }) };
   const recipients = assistList('Alıcılar (ilk satır kullanılır)', N.recipients, [{ key: 'key', label: 'Anahtar', max: 40 }, { key: 'label', label: 'Ad' }, { key: 'to', label: 'Kime satırı' }]);
