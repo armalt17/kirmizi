@@ -106,7 +106,7 @@ try {
   await page.goto(`https://isgcalisanplatformu.com/r/${GONE}`);
   await page.waitForSelector('.kr-msg');
   const gone = await page.locator('main').innerText();
-  check(/Bu rapor güncellendi ya da geri çekildi/.test(gone) && /Elinizdeki nüsha eski olabilir\. Güncelini uzmanınızdan isteyin\./.test(gone) && /eksikliklerin giderilmesi işverenin yükümlülüğüdür/.test(gone) && !/Bu rapor nedir/.test(gone) && /2026-0007/.test(gone), 'geri çekilen: mesaj, özet var, adım yok');
+  check(/Bu rapora bu bağlantıdan artık ulaşılamıyor/.test(gone) && /Elinizdeki nüsha eski olabilir; güncelini uzmanınızdan isteyebilirsiniz\./.test(gone) && /Bu sayfanın durumu, rapordaki tespit ve önerileri etkilemez/.test(gone) && !/Bu rapor nedir/.test(gone) && /2026-0007/.test(gone), 'geri çekilen: mesaj, özet var, adım yok');
 
   await page.goto(`https://isgcalisanplatformu.com/r/${OLD}`);
   await page.waitForSelector('.kr-msg');

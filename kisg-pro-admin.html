@@ -1693,7 +1693,7 @@ function frReportSteps(texts) {
 // varsayılan metin geçerli. Kanuni ve sabit kısımlar (kime, konu, tarihçe, imza) yapay zekâya bırakılmaz.
 const LEDGER_REQUEST = 'Tespit edilen eksikliklerin giderilmesi için gerekli önlemlerin alınması ve sonucun bildirilmesi rica olunur.';
 const NOTICE_SUBJECT_HEALTH = 'İşyeri Hekimi ve Diğer Sağlık Personelinin Görev, Yetki, Sorumluluk ve Eğitimleri Hakkında Yönetmelik m.11/3 kapsamında bildirim';
-const ASSIST_PLACEHOLDERS = 'Yer tutucular: {ziyaret_tarihi} {isyeri} {rapor_tarihi} {rapor_no} {rev} {il}';
+const ASSIST_PLACEHOLDERS = 'Yer tutucular: {ziyaret_tarihi} {isyeri} {rapor_tarihi} {rapor_no} {rev} {madde_sayisi} {il}';
 function assistParse(raw) { try { const v = JSON.parse(raw || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch (e) { return {}; } }
 function assistField(label, value, { multiline = false, max = 600, name } = {}) {
   const el = multiline ? Object.assign(h('textarea', { name, rows: 3, maxlength: max, 'aria-label': label }), { value: value || '' })
