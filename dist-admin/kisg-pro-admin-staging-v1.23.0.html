@@ -25,6 +25,10 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
    "Defter metni" ve "Bildirim tespiti" modelleri, Prompt'lar'da iki yeni amaç (kirmizi-isg-mobile 20261021090000).
  - v1.19.1 Defter şablonuna "Rica satırı" (Ayrıntılı metinde maddelerden sonra; uygulama 2026-10-21).
  - v1.20.0 Alanlar → "Sabit Post": Alan sayfasının en üstünde görünen Post (admin_tag_posts, admin_pin_tag_post).
+ - v1.23.0 Saha Raporu: "Hazır şablonlar" sekmesinin adı "Kontrol listesi" (mobil uygulamayla aynı). Maddeye konu seçilir
+   (Belgeler ve planlar, Eğitim, Yangın ve acil durum…; boş = Diğer), listede konu sütunu; öncelikte "İyileştirme" de var
+   (kirmizi-isg-mobile 20261022140000_checklist_categories.sql). Model seçimi'nde "İlan ve hizmet metni düzenleme"
+   (listing_model, boş = Yalnız yazı modeli; kirmizi-isg-mobile 20261022120000_listing_ai_v2.sql).
  - v1.22.0 Saha Raporu → Limitler: "Hizmet / ilan yapay zekâ düzenleme (günlük)" (listing_ai_daily_limit; herkese açık,
    rapor bütçesinden düşmez; kirmizi-isg-mobile 20261021230000).
  - v1.21.1 "Taslak dilekçe" adları (şablon, kılavuz, sebep ifadesi).
@@ -303,7 +307,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_85NeRUePWMVOCQH4sOISuw_CzdvwlDR',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.22.0',
+  version: '1.23.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -406,7 +410,7 @@ const LABEL = {
   support: { open: 'Açık', resolved: 'Çözüldü' },
   supportCategory: { technical: 'Teknik sorun', account: 'Hesap / profil sorunu', suggestion: 'Öneri / geri bildirim', other: 'Diğer' },
   target: { post: 'Post', comment: 'Yorum', profile: 'Profil', service: 'Hizmet', tag: 'Alan', service_category: 'Hizmet kategorisi',
-    ai_model: 'AI modeli', ai_setting: 'Model seçimi', ai_prompt: 'Prompt', app_setting: 'Rapor limiti', checklist_question: 'Hazır şablon' },
+    ai_model: 'AI modeli', ai_setting: 'Model seçimi', ai_prompt: 'Prompt', app_setting: 'Rapor limiti', checklist_question: 'Kontrol listesi maddesi' },
   reason: { spam: 'Spam', inappropriate: 'Uygunsuz içerik', misleading: 'Yanıltıcı', harassment: 'Taciz / hakaret', fake_profile: 'Sahte profil', other: 'Diğer' },
   action_taken: { none: 'İşlem yok', content_hidden: 'İçerik gizlendi', content_deleted: 'İçerik silindi', user_warned: 'Uyarıldı', user_suspended: 'Askıya alındı', user_banned: 'Banlandı', other: 'Diğer' },
   audit: { 'profile.update': 'Profil düzenlendi', 'post.hide': 'Post gizlendi', 'post.restore': 'Post geri açıldı', 'post.delete': 'Post silindi',
@@ -416,7 +420,7 @@ const LABEL = {
     'tag.update': 'Alan düzenlendi', 'tag.merge': 'Alanlar birleştirildi', 'tag.pin_post': 'Alanda Post sabitlendi', 'tag.unpin_post': 'Alanın sabit Postu kaldırıldı',
     'ai_model.create': 'AI modeli eklendi', 'ai_model.update': 'AI modeli düzenlendi', 'ai_setting.update': 'Model seçimi değişti',
     'ai_prompt.update': 'Prompt düzenlendi', 'ai_prompt.delete': 'Özel prompt kaldırıldı', 'report_limit.update': 'Rapor limiti değişti', 'report_text.update': 'Rapor metni değişti', 'report_steps.update': 'QR sayfası adımları değişti',
-    'checklist.create': 'Hazır şablon eklendi', 'checklist.update': 'Hazır şablon düzenlendi', 'checklist.reorder': 'Hazır şablon sırası değişti',
+    'checklist.create': 'Kontrol listesi maddesi eklendi', 'checklist.update': 'Kontrol listesi maddesi düzenlendi', 'checklist.reorder': 'Kontrol listesi sırası değişti',
     'blocked_word.set': 'Yasaklı kelime eklendi', 'blocked_word.remove': 'Yasaklı kelime çıkarıldı',
     'job_phrase.set': 'İş ilanı ifadesi eklendi', 'job_phrase.remove': 'İş ilanı ifadesi çıkarıldı' }
 };
@@ -1343,7 +1347,7 @@ function mergeTag(r) {
    kullanım sayıları; uzmanların rapor içerikleri burada görünmez. RPC'ler: admin_report_config, admin_set_ai_setting,
    admin_upsert_ai_model, admin_set_ai_prompt, admin_set_report_limit, admin_upsert_checklist_item,
    admin_reorder_checklist, admin_report_usage. ----- */
-const FR_TABS = [['routing', 'Model seçimi'], ['models', 'Modeller'], ['prompts', 'Prompt’lar'], ['limits', 'Limitler'], ['checklist', 'Hazır şablonlar'], ['assist', 'Defter ve bildirim'], ['usage', 'Kullanım ve maliyet']];
+const FR_TABS = [['routing', 'Model seçimi'], ['models', 'Modeller'], ['prompts', 'Prompt’lar'], ['limits', 'Limitler'], ['checklist', 'Kontrol listesi'], ['assist', 'Defter ve bildirim'], ['usage', 'Kullanım ve maliyet']];
 const FR_STYLE = [['sade', 'Sade', 'Kısa, yalın cümleler'], ['dengeli', 'Dengeli', 'Önerilen'], ['ayrintili', 'Ayrıntılı', 'Daha açıklayıcı öneriler']];
 const FR_PURPOSE = { report_analyze: 'Analiz', finding_rewrite: 'Yeniden yazma', ledger_text: 'Defter metni', notice_text: 'Bildirim tespiti' };
 const FR_LIMITS = [
@@ -1378,12 +1382,18 @@ const SPAM_LIMITS = [
 const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const pct = (a, b) => (Number(b) ? `%${nf.format(Math.round((Number(a) / Number(b)) * 1000) / 10)}` : '—');
 const modelPrice = m => `${usd.format(m.input_usd_per_mtok)} / ${usd.format(m.output_usd_per_mtok)}`;
-const PRIORITY = { acil: ['Acil', 'is-deleted'], onemli: ['Önemli', 'is-active'], iyilestirme: ['İşaretsiz (eski)', 'is-pending'] };
+const PRIORITY = { acil: ['Acil', 'is-deleted'], onemli: ['Önemli', 'is-active'], iyilestirme: ['İyileştirme', 'is-pending'] };
+// v1.23.0 Kontrol listesi konuları: anahtarlar veritabanı kısıtıyla, adlar ve sıra mobil uygulamayla aynı
+// (kirmizi-isg-mobile src/features/field-reports/checklist.ts CHECKLIST_CATEGORIES). Boş konu uygulamada "Diğer" grubundadır.
+const FR_CATEGORIES = [['belgeler', 'Belgeler ve planlar'], ['egitim', 'Eğitim'], ['yangin', 'Yangın ve acil durum'], ['elektrik', 'Elektrik'],
+  ['kkd', 'Kişisel koruyucu donanım ve işaretler'], ['yuksekte', 'Yüksekte çalışma'], ['ekipman', 'İş ekipmanları'], ['ilkyardim', 'İlk yardım ve sağlık'],
+  ['duzen', 'Düzen, depolama ve kimyasallar']];
+const frCategory = k => FR_CATEGORIES.find(c => c[0] === k)?.[1] || 'Diğer';
 
 async function renderFieldReports() {
   const seq = ++renderSeq, v = view.fr;
   const bodyBox = h('div', null, loading());
-  main.replaceChildren(head('Saha Raporu', 'Mobil uygulamadaki yapay zekâ destekli saha raporu: model, prompt, limit ve hazır şablon ayarları; kullanım ve maliyet. Değişiklikler hemen geçerli olur.'),
+  main.replaceChildren(head('Saha Raporu', 'Mobil uygulamadaki yapay zekâ destekli saha raporu: model, prompt, limit ve kontrol listesi ayarları; kullanım ve maliyet. Değişiklikler hemen geçerli olur.'),
     h('div', { class: 'pa-tools' }, chips(FR_TABS, v.tab, x => { v.tab = x; renderFieldReports(); })),
     bodyBox);
   let cfg, usage, unit = null;
@@ -1436,7 +1446,9 @@ function frRouting(cfg) {
     report_fallback_model: sel('report_fallback_model', false, 'Yok'),
     // v1.19.0: kesinleşmiş rapordan sonra iki yardımcı (yalnız yazı; boşsa "Yalnız yazı" modeli).
     ledger_model: sel('ledger_model', false, 'Yalnız yazı modeliyle aynı'),
-    notice_model: sel('notice_model', false, 'Yalnız yazı modeliyle aynı')
+    notice_model: sel('notice_model', false, 'Yalnız yazı modeliyle aynı'),
+    // v1.23.0: hizmet / iş ilanı metnini "Yapay zekâyla düzenle" (listing-ai; yalnız yazı; boşsa "Yalnız yazı" modeli).
+    listing_model: sel('listing_model', false, 'Yalnız yazı modeliyle aynı')
   };
   const row = (title, sub, control) => h('div', { class: 'pa-form-row' }, h('div', null, h('b', { text: title }), h('span', { text: sub })), control);
   const save = () => {
@@ -1445,8 +1457,8 @@ function frRouting(cfg) {
     const next = Object.fromEntries(Object.entries(fields).map(([k, el]) => [k, el.value]));
     next.report_complex_photos = String(n);
     next.report_style = style.querySelector('input:checked')?.value || 'dengeli';
-    const names = { report_model_text: 'Yalnız yazı', report_model: 'Fotoğraflı', report_model_complex: 'Çok fotoğraflı', rewrite_model: 'Fotoğraflı yeniden yazma', free_report_model: 'Ücretsiz plan modeli', report_fallback_model: 'Yedek model', report_complex_photos: 'Çok fotoğraf eşiği', report_style: 'Yazım tarzı', ledger_model: 'Defter metni', notice_model: 'Bildirim tespiti' };
-    const fmt = (k, val) => k === 'report_style' ? (FR_STYLE.find(x => x[0] === val)?.[1] || val) : k === 'report_complex_photos' ? (val === '0' ? 'kapalı' : `${val} fotoğraf`) : (label(val) || (k === 'rewrite_model' ? 'fotoğraflı modelle aynı' : k === 'free_report_model' ? 'ücretli planlarla aynı' : k === 'ledger_model' || k === 'notice_model' ? 'yalnız yazı modeliyle aynı' : 'yok'));
+    const names = { report_model_text: 'Yalnız yazı', report_model: 'Fotoğraflı', report_model_complex: 'Çok fotoğraflı', rewrite_model: 'Fotoğraflı yeniden yazma', free_report_model: 'Ücretsiz plan modeli', report_fallback_model: 'Yedek model', report_complex_photos: 'Çok fotoğraf eşiği', report_style: 'Yazım tarzı', ledger_model: 'Defter metni', notice_model: 'Bildirim tespiti', listing_model: 'İlan ve hizmet metni düzenleme' };
+    const fmt = (k, val) => k === 'report_style' ? (FR_STYLE.find(x => x[0] === val)?.[1] || val) : k === 'report_complex_photos' ? (val === '0' ? 'kapalı' : `${val} fotoğraf`) : (label(val) || (k === 'rewrite_model' ? 'fotoğraflı modelle aynı' : k === 'free_report_model' ? 'ücretli planlarla aynı' : ['ledger_model', 'notice_model', 'listing_model'].includes(k) ? 'yalnız yazı modeliyle aynı' : 'yok'));
     const changes = Object.keys(next).filter(k => (s[k] || '') !== next[k]).map(k => ({ key: k, value: next[k], label: names[k], from: fmt(k, s[k] || ''), to: fmt(k, next[k]) }));
     frSaveChanges(changes, 'Model seçimi kaydedilsin mi?', (c, reason) => rpc('admin_set_ai_setting', { p_key: c.key, p_value: c.value, p_reason: reason }));
   };
@@ -1464,14 +1476,15 @@ function frRouting(cfg) {
         row('Ücretsiz plan modeli', 'İsteğe bağlı. Seçilirse ücretsiz kullanıcının bütün fotoğraflı analizi ve yeniden yazması bu modelle yapılır (eşik uygulanmaz). Ucuz model ücretsiz kotayı daha çok rapora yayar; PRO’da daha iyi model fark olarak kalır.', fields.free_report_model),
         row('Yedek model', 'Teknik hatada bir kez denenir. Farklı sağlayıcıdan seçmek güvenlidir.', fields.report_fallback_model),
         row('Yazım tarzı', 'Prompt’a tek satır eklenir; hukuki dil her tarzda korunur.', style),
-        row('Defter önerileri', '“Deftere ne yazabilirim?” açılınca her madde için kısa cümle önerir. Yalnız madde metinleri gider.', fields.ledger_model),
-        row('Bildirim tespiti', 'İl müdürlüğü bildirim taslağında “Tespiti yapay zekâyla toparla”. Yalnız tespit, öneri ve sebep gider.', fields.notice_model)),
+        row('Onaylı defter önerileri', '“Onaylı deftere ne yazacağının önerisi” açılınca her madde için kısa cümle önerir. Yalnız madde metinleri gider.', fields.ledger_model),
+        row('Bildirim tespiti', 'İl müdürlüğü bildirim taslağında “Tespiti yapay zekâyla toparla”. Yalnız tespit, öneri ve sebep gider.', fields.notice_model),
+        row('İlan ve hizmet metni düzenleme', 'Hizmet ve iş ilanı yazarken “Yapay zekâyla düzenle”. Yalnız ilan metni gider; fotoğraf gitmez.', fields.listing_model)),
       h('div', { class: 'pa-form-foot' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: 'Değişiklikleri kaydet', onclick: save }))));
 }
 
 function frModels(cfg) {
   const s = cfg.settings || {}, models = cfg.models || [];
-  const used = new Set(['report_model_text', 'report_model', 'report_model_complex', 'rewrite_model', 'report_fallback_model', 'free_report_model', 'ledger_model', 'notice_model'].map(k => s[k]).filter(Boolean));
+  const used = new Set(['report_model_text', 'report_model', 'report_model_complex', 'rewrite_model', 'report_fallback_model', 'free_report_model', 'ledger_model', 'notice_model', 'listing_model'].map(k => s[k]).filter(Boolean));
   const btn = (text, onclick, cls = '') => h('button', { type: 'button', class: `pa-btn pa-btn-sm${cls}`, text, onclick });
   return h('div', null,
     h('div', { class: 'pa-tools' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: '+ Yeni model', onclick: () => frEditModel(null) })),
@@ -1676,7 +1689,7 @@ function frReportSteps(texts) {
 }
 
 // Defter ve bildirim (v1.19.0; ürün sahibi 2026-10-20; İSG Uzmanları Yönetmeliği m.11/4 ve m.11/3): kesinleşmiş rapordan
-// sonra "Deftere ne yazabilirim?" (madde madde öneri; v1.20.1) ve "İl müdürlüğüne bildirim taslağı". Şablonlar, sebepler, alıcılar, gönderim kanalı
+// sonra "Onaylı deftere ne yazacağının önerisi" (madde madde öneri; v1.20.1) ve "İl müdürlüğüne bildirim taslağı". Şablonlar, sebepler, alıcılar, gönderim kanalı
 // notları ve iki kılavuzun ekran metinleri. Uygulama bunları hemen kullanır (en geç 1 saatte); boş bırakılan alan için
 // varsayılan metin geçerli. Kanuni ve sabit kısımlar (kime, konu, tarihçe, imza) yapay zekâya bırakılmaz.
 const LEDGER_REQUEST = 'Tespit edilen eksikliklerin giderilmesi için gerekli önlemlerin alınması ve sonucun bildirilmesi rica olunur.';
@@ -1752,8 +1765,8 @@ function frAssist(cfg) {
   const gl = guideParts('guide_ledger', G.ledger), gn = guideParts('guide_notice', G.notice);
   const need = (obj) => { const missing = Object.entries(obj).find(([, f]) => !f.get()); if (missing) { toast('Boş alan bırakma.', true); return false; } return true; };
   return h('div', null,
-    h('p', { class: 'pa-note' }, h('b', { text: 'Kesinleşmiş rapordan sonra: ' }), 'Uzman “Kontrol ettim, PDF’e çevir” ile çıkan raporda “Deftere ne yazabilirim?” önerilerini görür ve il müdürlüğüne bildirim taslağını hazırlar. Metinler ve PDF’ler sunucuda saklanmaz. Yapay zekâ modelleri “Model seçimi”nde, prompt’ları “Prompt’lar”da.'),
-    h('h3', { text: 'Deftere ne yazabilirim?', style: 'margin:0 0 10px' }),
+    h('p', { class: 'pa-note' }, h('b', { text: 'Kesinleşmiş rapordan sonra: ' }), 'Uzman “Kontrol ettim, PDF’e çevir” ile çıkan raporda “Onaylı deftere ne yazacağının önerisi” önerilerini görür ve il müdürlüğüne bildirim taslağını hazırlar. Metinler ve PDF’ler sunucuda saklanmaz. Yapay zekâ modelleri “Model seçimi”nde, prompt’ları “Prompt’lar”da.'),
+    h('h3', { text: 'Onaylı deftere ne yazacağının önerisi', style: 'margin:0 0 10px' }),
     assistCard('Defter önerileri', ASSIST_PLACEHOLDERS, 'report_ledger_template', { ...L, request: L.request || LEDGER_REQUEST }, Object.values(ledger).map(f => f.row),
       () => need(ledger) && Object.fromEntries(Object.entries(ledger).map(([k, f]) => [k, f.get()]))),
     h('h3', { text: 'İl müdürlüğüne bildirim taslağı', style: 'margin:22px 0 10px' }),
@@ -1873,41 +1886,45 @@ function frChecklist(cfg) {
     catch (e) { toast(e.message || 'Sıra kaydedilemedi.', true); }
   };
   return h('div', null,
-    h('div', { class: 'pa-tools' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: '+ Yeni şablon', onclick: () => frEditItem(null) })),
-    h('p', { class: 'pa-note', style: 'margin-bottom:14px' }, 'Uzman maddeyi işaretlerse tespit ve öneri metni rapora eklenir; yalnız hazır şablonlarla oluşturulan rapor yapay zekâ kullanmaz (bütçeden düşmez). Başlık eksiklik diliyle yazılır (ör. “Uyarı levhaları eksik”) ve yapay zekâya yalnız başlık gider.'),
+    h('div', { class: 'pa-tools' }, h('button', { type: 'button', class: 'pa-btn pa-btn-primary', text: '+ Yeni madde', onclick: () => frEditItem(null) })),
+    h('p', { class: 'pa-note', style: 'margin-bottom:14px' }, 'Uzman maddeyi işaretlerse tespit ve öneri metni rapora eklenir; yalnız kontrol listesiyle oluşturulan rapor yapay zekâ kullanmaz (bütçeden düşmez). Başlık eksiklik diliyle yazılır (ör. “Uyarı levhaları eksik”) ve yapay zekâya yalnız başlık gider. Uygulamada maddeler konularına göre gruplanır; konusu seçilmemiş madde “Diğer” grubunda görünür.'),
     rows.length ? h('div', { class: 'pa-card' }, h('table', { class: 'pa-table' },
-      h('thead', null, h('tr', null, ['Sıra', 'Madde', 'Öncelik', 'Durum', ''].map(t => h('th', { text: t })))),
+      h('thead', null, h('tr', null, ['Sıra', 'Madde', 'Konu', 'Öncelik', 'Durum', ''].map(t => h('th', { text: t })))),
       h('tbody', null, rows.map((r, i) => h('tr', { 'data-item': r.id },
         h('td', { 'data-label': 'Sıra' }, h('div', { class: 'pa-actions' },
           btn('↑', () => move(i, -1), '', { disabled: i === 0, 'aria-label': `${r.deficiency_title} yukarı` }),
           btn('↓', () => move(i, 1), '', { disabled: i === rows.length - 1, 'aria-label': `${r.deficiency_title} aşağı` }))),
         h('td', null, h('b', { style: 'color:var(--ink)', text: clean(r.deficiency_title) || clean(r.question) || '—' }),
           h('span', { class: 'pa-preview', text: [r.finding_text, r.recommendation_text].filter(Boolean).join('\n') || 'Tespit / öneri metni yok' })),
+        h('td', { 'data-label': 'Konu', 'data-topic': r.category || '' }, h('span', { class: 'pa-small', text: frCategory(r.category) })),
         h('td', { 'data-label': 'Öncelik' }, h('span', { class: `pa-badge ${(PRIORITY[r.default_priority] || PRIORITY.onemli)[1]}`, text: (PRIORITY[r.default_priority] || PRIORITY.onemli)[0] })),
         h('td', { 'data-label': 'Durum' }, h('span', { class: `pa-badge ${r.is_active ? 'is-active' : 'is-deleted'}`, text: r.is_active ? 'Görünür' : 'Gizli' })),
         h('td', null, h('div', { class: 'pa-actions' },
           btn('Düzenle', () => frEditItem(r)),
           btn(r.is_active ? 'Gizle' : 'Göster', () => frToggleItem(r)))))))))
-      : h('div', { class: 'pa-card pa-empty', text: 'Hazır şablon yok.' }));
+      : h('div', { class: 'pa-card pa-empty', text: 'Kontrol listesinde madde yok.' }));
 }
 function frEditItem(r) {
   const area = (name, label, value, rows = 3) => h('label', { class: 'pa-field' }, h('span', { text: label }), Object.assign(h('textarea', { name, maxlength: 2000, rows }), { value: value || '' }));
-  const pr = r?.default_priority === 'acil' ? 'acil' : 'onemli';
+  const pr = PRIORITY[r?.default_priority] ? r.default_priority : 'onemli';
   const fields = h('div', { style: 'display:flex;flex-direction:column;gap:12px' },
     h('label', { class: 'pa-field' }, h('span', { text: 'Başlık (eksiklik dilinde, 3–160 karakter)' }), h('input', { name: 'title', maxlength: 160, required: true, value: r?.deficiency_title || '', placeholder: 'ör. Uyarı levhaları eksik' })),
+    h('label', { class: 'pa-field' }, h('span', { text: 'Konu (uygulamadaki grup)' }), Object.assign(h('select', { name: 'category' },
+      h('option', { value: '', text: 'Diğer (konu seçilmedi)' }), FR_CATEGORIES.map(([k, t]) => h('option', { value: k, text: t }))), { value: FR_CATEGORIES.some(c => c[0] === r?.category) ? r.category : '' })),
     area('finding', 'Tespit metni (rapora yazılır)', r?.finding_text),
     area('rec', 'Öneri metni (“…sağlanmalıdır”)', r?.recommendation_text),
     area('explanation', 'Açıklama (uygulamadaki ⓘ)', r?.explanation, 2),
     h('div', { class: 'pa-radio', role: 'radiogroup', 'aria-label': 'Varsayılan öncelik' },
       h('label', null, h('input', { type: 'radio', name: 'priority', value: 'onemli', checked: pr === 'onemli' }), 'Önemli'),
-      h('label', null, h('input', { type: 'radio', name: 'priority', value: 'acil', checked: pr === 'acil' }), 'Acil')),
+      h('label', null, h('input', { type: 'radio', name: 'priority', value: 'acil', checked: pr === 'acil' }), 'Acil'),
+      h('label', null, h('input', { type: 'radio', name: 'priority', value: 'iyilestirme', checked: pr === 'iyilestirme' }), 'İyileştirme')),
     r?.question && r.question !== r.deficiency_title ? h('p', { class: 'pa-small', text: `Eski uygulamadaki soru metni değişmez: “${r.question}”` }) : null);
   confirmDialog({
-    title: r ? 'Hazır şablonu düzenle' : 'Yeni hazır şablon', confirm: r ? 'Kaydet' : 'Ekle', reasonRequired: false, wide: true, fields,
+    title: r ? 'Maddeyi düzenle' : 'Kontrol listesine yeni madde', confirm: r ? 'Kaydet' : 'Ekle', reasonRequired: false, wide: true, fields,
     submit: async ({ reason, form }) => {
       const el = form.elements, title = clean(el.title.value);
       if (title.length < 3) throw new AdminError('Başlık en az 3 karakter olmalı.', 'input');
-      const patch = { deficiency_title: title, finding_text: clean(el.finding.value), recommendation_text: clean(el.rec.value), explanation: clean(el.explanation.value), default_priority: el.priority.value };
+      const patch = { deficiency_title: title, finding_text: clean(el.finding.value), recommendation_text: clean(el.rec.value), explanation: clean(el.explanation.value), default_priority: el.priority.value, category: el.category.value || null };
       await rpc('admin_upsert_checklist_item', { p_id: r?.id || null, p_patch: patch, p_reason: reason || null });
       toast(r ? 'Madde kaydedildi.' : 'Madde eklendi.'); renderFieldReports();
     }
@@ -1917,7 +1934,7 @@ function frToggleItem(r) {
   const on = !r.is_active;
   confirmDialog({
     title: `${clean(r.deficiency_title) || 'Madde'}: ${on ? 'gösterilsin mi?' : 'gizlensin mi?'}`, confirm: on ? 'Göster' : 'Gizle', danger: !on, reasonRequired: false,
-    text: on ? 'Şablon uygulamadaki Hazır şablonlar listesinde yeniden görünür.' : 'Şablon uygulamadaki Hazır şablonlar listesinde görünmez. Daha önce kaydedilmiş raporlar değişmez.',
+    text: on ? 'Madde uygulamadaki kontrol listesinde yeniden görünür.' : 'Madde uygulamadaki kontrol listesinde görünmez. Daha önce kaydedilmiş raporlar değişmez.',
     submit: async ({ reason }) => {
       await rpc('admin_upsert_checklist_item', { p_id: r.id, p_patch: { is_active: on }, p_reason: reason || null });
       toast(on ? 'Madde gösteriliyor.' : 'Madde gizlendi.'); renderFieldReports();

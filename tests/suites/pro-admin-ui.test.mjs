@@ -74,8 +74,8 @@ function server(ctx) {
       spam_services_per_day: '10', spam_reports_per_day: '20', spam_new_account_link_hours: '24', spam_max_links: '3',
       new_account_hours: '24', new_posts_per_day: '3', new_comments_per_day: '20', new_chats_per_day: '3' },
     checklist: [
-      { id: Q1, deficiency_title: 'Uyarı levhaları eksik', finding_text: 'Levha yok.', recommendation_text: 'Levha asılmalıdır.', default_priority: 'onemli', explanation: null, is_active: true, order_index: 1, question: 'Uyarı levhaları var mı?' },
-      { id: Q2, deficiency_title: 'Yangın tüpü dolum tarihi geçmiş', finding_text: null, recommendation_text: null, default_priority: 'iyilestirme', explanation: null, is_active: true, order_index: 2, question: 'Yangın tüpü kontrol edildi mi?' }]
+      { id: Q1, deficiency_title: 'Uyarı levhaları eksik', finding_text: 'Levha yok.', recommendation_text: 'Levha asılmalıdır.', default_priority: 'onemli', explanation: null, is_active: true, order_index: 1, question: 'Uyarı levhaları var mı?', category: 'kkd' },
+      { id: Q2, deficiency_title: 'Yangın tüpü dolum tarihi geçmiş', finding_text: null, recommendation_text: null, default_priority: 'iyilestirme', explanation: null, is_active: true, order_index: 2, question: 'Yangın tüpü kontrol edildi mi?', category: null }]
   };
   st.Q = { Q1, Q2 };
   const frUsed = () => ['report_model_text', 'report_model', 'report_model_complex', 'rewrite_model', 'report_fallback_model', 'free_report_model'].map(k => st.fr.settings[k]).filter(Boolean);
@@ -165,7 +165,8 @@ function server(ctx) {
     },
     admin_set_report_limit: a => { if (a.p_key === 'report_max_photos' && (a.p_value < 1 || a.p_value > 20)) bad('limit'); st.fr.limits[a.p_key] = String(a.p_value); return { key: a.p_key, value: a.p_value }; },
     admin_upsert_checklist_item: a => {
-      if (a.p_patch.default_priority && !['acil', 'onemli'].includes(a.p_patch.default_priority)) bad('patch');
+      if (a.p_patch.default_priority && !['acil', 'onemli', 'iyilestirme'].includes(a.p_patch.default_priority)) bad('patch');
+      if (a.p_patch.category != null && !['belgeler', 'egitim', 'yangin', 'elektrik', 'kkd', 'yuksekte', 'ekipman', 'ilkyardim', 'duzen'].includes(a.p_patch.category)) bad('patch');
       if (!a.p_id) { const n = { id: 'a3a3a3a3-0000-4000-8000-000000000003', question: a.p_patch.deficiency_title, is_active: true, order_index: st.fr.checklist.length + 1, ...a.p_patch }; st.fr.checklist.push(n); return n; }
       const c = st.fr.checklist.find(x => x.id === a.p_id); if (!c) throw { code: 'P0002', message: 'KISG_ADMIN_NOT_FOUND' }; Object.assign(c, a.p_patch); return c;
     },
@@ -644,6 +645,18 @@ try {
     check(/Ücretsiz plan modeli/.test(await f.textContent('.pa-dialog')) && /ücretli planlarla aynı → Claude Haiku/.test(await f.textContent('.pa-dialog')), `${vp.n}: onayda ücretsiz plan modeli değişimi`);
     await submit();
     check(await until(() => st.fr.settings.free_report_model === 'anthropic:claude-haiku-5-5') && lastRpc(st, 'admin_set_ai_setting').args.p_key === 'free_report_model', `${vp.n}: ücretsiz plan modeli kaydedildi`);
+    // v1.23.0: ilan ve hizmet metni düzenleme modeli (listing_model; yalnız yazı, fotoğraf okumayan model de olur; boş = yalnız yazı modeli)
+    const listOpts = await f.evaluate(() => [...document.querySelectorAll('select[name="listing_model"] option')].map(o => o.value));
+    check(listOpts[0] === '' && listOpts.includes('openai:gpt-6-luna') && await f.inputValue('select[name="listing_model"]') === '' && /İlan ve hizmet metni düzenleme/.test(await f.textContent('[data-main]')), `${vp.n}: ilan ve hizmet metni modeli seçimi (varsayılan: yalnız yazı modeliyle aynı)`);
+    await f.selectOption('select[name="listing_model"]', 'openai:gpt-6-luna');
+    await f.click('button:text-is("Değişiklikleri kaydet")'); await dialog();
+    check(/İlan ve hizmet metni düzenleme/.test(await f.textContent('.pa-dialog')) && /yalnız yazı modeliyle aynı → ChatGPT · GPT-6 Luna/.test(await f.textContent('.pa-dialog')), `${vp.n}: onayda ilan modeli değişimi`);
+    await submit();
+    check(await until(() => st.fr.settings.listing_model === 'openai:gpt-6-luna') && lastRpc(st, 'admin_set_ai_setting').args.p_key === 'listing_model', `${vp.n}: ilan ve hizmet metni modeli kaydedildi`);
+    await until(async () => await f.inputValue('select[name="listing_model"]') === 'openai:gpt-6-luna');
+    await f.selectOption('select[name="listing_model"]', '');
+    await f.click('button:text-is("Değişiklikleri kaydet")'); await dialog(); await submit();
+    check(await until(() => st.fr.settings.listing_model === ''), `${vp.n}: ilan modeli boşaltılabilir (yalnız yazı modeline döner)`);
     await f.fill('input[name="report_complex_photos"]', '25'); await f.click('button:text-is("Değişiklikleri kaydet")');
     check(await until(async () => /Eşik 0 ile 20/.test(await f.textContent('[data-toast]'))) && !await f.locator('.pa-dialog').count(), `${vp.n}: geçersiz eşik engellenir`);
     // Modeller
@@ -770,23 +783,33 @@ try {
     await f.click('[data-assist="report_guides"] button:text-is("Kaydet")'); await dialog(); await submit();
     check(await until(() => JSON.parse(st.fr.texts.report_guides).notice.final === 'Dilekçenin ve gönderim belgesinin bir kopyasını sakla.'), `${vp.n}: kılavuz metni kaydedildi`);
     // Checklist
-    await tab('Hazır şablonlar');
-    check(await until(() => f.locator('[data-item]').count().then(n => n === 2)), `${vp.n}: Hazır şablonlar: 2 şablon`);
-    check(/İşaretsiz \(eski\)/.test(await f.textContent(`[data-item="${st.Q.Q2}"]`)), `${vp.n}: eski "iyileştirme" önceliği işaretsiz görünür`);
+    check(!/Hazır şablon/.test(await f.textContent('.pa-tools .pa-chips')), `${vp.n}: sekmenin eski adı "Hazır şablonlar" yok`);
+    await tab('Kontrol listesi');
+    check(await until(() => f.locator('[data-item]').count().then(n => n === 2)), `${vp.n}: Kontrol listesi: 2 madde`);
+    check(/İyileştirme/.test(await f.textContent(`[data-item="${st.Q.Q2}"]`)) && !/İşaretsiz/.test(await f.textContent('[data-main]')), `${vp.n}: "iyileştirme" önceliği İyileştirme olarak görünür`);
+    check(/Kişisel koruyucu donanım ve işaretler/.test(await f.textContent(`[data-item="${st.Q.Q1}"] [data-label="Konu"]`)) && /Diğer/.test(await f.textContent(`[data-item="${st.Q.Q2}"] [data-label="Konu"]`)), `${vp.n}: konu sütunu (konusuz madde "Diğer")`);
     await f.click(`[data-item="${st.Q.Q2}"] button:text-is("Düzenle")`); await dialog();
     check(/Eski uygulamadaki soru metni değişmez/.test(await f.textContent('.pa-dialog')), `${vp.n}: eski soru metni bilgisi`);
+    const catOpts = await f.evaluate(() => [...document.querySelectorAll('.pa-dialog select[name="category"] option')].map(o => o.value));
+    check(catOpts.length === 10 && catOpts[0] === '' && catOpts.includes('ilkyardim') && await f.inputValue('.pa-dialog select[name="category"]') === '' && await f.isChecked('.pa-dialog input[name="priority"][value="iyilestirme"]'), `${vp.n}: konu seçimi (9 konu + Diğer), mevcut İyileştirme önceliği seçili`);
+    await f.selectOption('.pa-dialog select[name="category"]', 'yangin');
     await f.check('.pa-dialog input[name="priority"][value="acil"]'); await f.fill('.pa-dialog textarea[name="rec"]', 'Dolum yaptırılmalıdır.'); await submit();
-    check(await until(() => { const c = st.fr.checklist.find(x => x.id === st.Q.Q2); return c.default_priority === 'acil' && c.recommendation_text === 'Dolum yaptırılmalıdır.'; }), `${vp.n}: madde düzenlendi (acil, öneri)`);
+    check(await until(() => { const c = st.fr.checklist.find(x => x.id === st.Q.Q2); return c.default_priority === 'acil' && c.recommendation_text === 'Dolum yaptırılmalıdır.' && c.category === 'yangin'; }), `${vp.n}: madde düzenlendi (acil, öneri, konu Yangın)`);
+    await until(async () => /Yangın ve acil durum/.test(await f.textContent(`[data-item="${st.Q.Q2}"]`)));
+    await f.click(`[data-item="${st.Q.Q2}"] button:text-is("Düzenle")`); await dialog();
+    check(await f.inputValue('.pa-dialog select[name="category"]') === 'yangin', `${vp.n}: kayıtlı konu formda seçili`);
+    await f.selectOption('.pa-dialog select[name="category"]', ''); await f.check('.pa-dialog input[name="priority"][value="iyilestirme"]'); await submit();
+    check(await until(() => { const c = st.fr.checklist.find(x => x.id === st.Q.Q2); return c.default_priority === 'iyilestirme' && c.category === null; }) && lastRpc(st, 'admin_upsert_checklist_item').args.p_patch.category === null, `${vp.n}: İyileştirme önceliği ve boş konu (null) kaydedilir`);
     await until(() => f.locator(`[data-item="${st.Q.Q2}"] button:text-is("↑")`).isEnabled());
     await f.click(`[data-item="${st.Q.Q2}"] button:text-is("↑")`);
     check(await until(() => st.fr.checklist[0].id === st.Q.Q2) && lastRpc(st, 'admin_reorder_checklist').args.p_ids.length === 2, `${vp.n}: sıra değişti`);
     await until(() => f.locator(`[data-item="${st.Q.Q1}"] button:text-is("Gizle")`).count().then(n => n === 1));
     await f.click(`[data-item="${st.Q.Q1}"] button:text-is("Gizle")`); await dialog(); await submit();
     check(await until(() => st.fr.checklist.find(x => x.id === st.Q.Q1).is_active === false), `${vp.n}: madde gizlendi`);
-    await until(() => f.locator('button:text-is("+ Yeni şablon")').count().then(n => n === 1));
-    await f.click('button:text-is("+ Yeni şablon")'); await dialog();
-    await f.fill('.pa-dialog input[name="title"]', 'Acil çıkış yolu kapalı'); await submit();
-    check(await until(() => st.fr.checklist.some(x => x.deficiency_title === 'Acil çıkış yolu kapalı' && x.default_priority === 'onemli')), `${vp.n}: yeni madde eklendi (varsayılan Önemli)`);
+    await until(() => f.locator('button:text-is("+ Yeni madde")').count().then(n => n === 1));
+    await f.click('button:text-is("+ Yeni madde")'); await dialog();
+    await f.fill('.pa-dialog input[name="title"]', 'Acil çıkış yolu kapalı'); await f.selectOption('.pa-dialog select[name="category"]', 'yangin'); await submit();
+    check(await until(() => st.fr.checklist.some(x => x.deficiency_title === 'Acil çıkış yolu kapalı' && x.default_priority === 'onemli' && x.category === 'yangin')), `${vp.n}: yeni madde eklendi (varsayılan Önemli, konu Yangın)`);
     // Kullanım
     await tab('Kullanım ve maliyet');
     check(await until(() => visible(f, '.pa-stats')), `${vp.n}: Kullanım açıldı`);
