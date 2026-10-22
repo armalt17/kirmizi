@@ -79,11 +79,11 @@ try {
   await page.goto(`https://isgcalisanplatformu.com/r/${CODE}`);
   await page.waitForSelector('h1');
   const text = await page.locator('main').innerText();
-  check(/İşyeriniz için hazırlanan rapor/.test(text) && /bir kısmını bu raporda topladı/.test(text), 'başlık ve giriş');
+  check(/İşyeriniz için hazırlanan rapor/.test(text) && /gördüğü eksiklikleri ve önerilerini bu raporda topladı/.test(text) && !/bir kısmını/.test(text), 'başlık ve giriş');
   check(/2026-0007 · Rev\. 2/.test(text) && /20 Ekim 2026/.test(text) && /19 Ekim 2026/.test(text) && /5 madde/.test(text) && !/acil/i.test(await page.locator('.kr-row').allInnerTexts().then(a => a.join(' '))), 'özet: no, Rev, tarih, ziyaret, madde (acil vurgusu yok)');
   check(/Bu rapor nedir\?/.test(text) && /Önce acil maddeler/.test(text) && await page.locator('.kr-step').count() === 2, 'adımlar sırayla (admin adımları)');
   check(!/Ayşe Yılmaz|Uzmanın profili|RAPORU HAZIRLAYAN|sorumludur/.test(text) && await page.locator('[aria-label="Onaylı hesap"]').count() === 0, 'uzman kartı ve sorumluluk metni yok');
-  check(/tüm eksiklerin listesi değildir/.test(text) && /firmanızın adı ve raporun maddeleri gösterilmez/.test(text), 'alt notlar');
+  check(/tüm eksiklerin listesi değildir\. Onaylı defterdeki tespitler/.test(text) && /firmanızın adı ve raporun maddeleri gösterilmez/.test(text), 'alt notlar');
   const links = await page.locator('.kr-links a').evaluateAll(a => a.map(x => x.textContent + '=' + x.href).join('|'));
   check(links === 'Akış=https://isgcalisanplatformu.com/|Hizmet Bul=https://isgcalisanplatformu.com/hizmetler|İş İlanları=https://isgcalisanplatformu.com/isg-is-ilanlari', `alt satır bağlantıları ${links}`);
   check(await page.locator('.kr-foot img').getAttribute('src') === 'https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/logo.jpg', 'alt satır: özgün logo');

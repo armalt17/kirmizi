@@ -251,7 +251,7 @@ Staging deneme kopyası: dist-rapor/kisg-rapor-staging.html?k=KOD (doğrudan sta
       : `<section class="kr-card">
           <div class="kr-intro">${scene}
             <h1>İşyeriniz için hazırlanan rapor</h1>
-            <p>İş güvenliği uzmanınız bu ziyarette gördüğü iyileştirilecek noktaların bir kısmını bu raporda topladı. Amaç, çalışanlarınızın daha güvenli çalışması.</p>
+            <p>İş güvenliği uzmanınız bu ziyarette gördüğü eksiklikleri ve önerilerini bu raporda topladı. Amaç, çalışanlarınızın daha güvenli çalışması.</p>
           </div>
           ${rows(r)}
         </section>
@@ -259,7 +259,7 @@ Staging deneme kopyası: dist-rapor/kisg-rapor-staging.html?k=KOD (doğrudan sta
     show(`${head}
       ${r.has_file ? sameFile() : ''}
       ${receipt(r)}
-      <p class="kr-note">Bu rapor işyerinizdeki tüm eksiklerin listesi değildir. Risk değerlendirmenizdeki önlemler ve önceki raporlardaki maddeler de geçerlidir.</p>
+      <p class="kr-note">Bu rapor işyerinizdeki tüm eksiklerin listesi değildir. Onaylı defterdeki tespitler, risk değerlendirmenizdeki önlemler ve önceki raporlardaki maddeler de geçerlidir.</p>
       <p class="kr-note">Bu sayfada firmanızın adı ve raporun maddeleri gösterilmez.</p>`);
     bindFile(code);
     if (location.hash === '#asli') {
