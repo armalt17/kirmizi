@@ -21,7 +21,7 @@ check(/<meta name="robots" content="noindex/.test(src), 'sayfa noindex');
 const visible = src.replace(/<!--[\s\S]*?-->/, '');
 check(!/doğrula|onaylı belge|resm[iî]|e-imza|mühür|kaşe/i.test(visible), 'sayfa metninde doğrula/resmî/e-imza/mühür/kaşe yok');
 
-const CODE = 'ABCDEFGHJKLMNPQRSTUV', GONE = 'BBBBBBBBBBBBBBBBBBBB', NOFILE = 'CCCCCCCCCCCCCCCCCCCC';
+const CODE = 'ABCDEFGHJKLMNPQRSTUV', GONE = 'BBBBBBBBBBBBBBBBBBBB', NOFILE = 'CCCCCCCCCCCCCCCCCCCC', OLD = 'DDDDDDDDDDDDDDDDDDDD';
 const PDF = Buffer.from('%PDF-1.4 deneme raporu\n');
 const SHA = crypto.createHash('sha256').update(PDF).digest('hex');
 const steps = [{ title: 'Bu rapor nedir?', body: 'Saha incelemesi.' }, { title: 'Önce acil maddeler', body: 'Önce bunlar.' }];
@@ -38,7 +38,7 @@ globalThis.fetch = async (url, init = {}) => {
   const name = u.split('/').pop(), body = JSON.parse(init.body);
   calls.push({ name, body, apikey: init.headers.apikey });
   let out = null;
-  if (name === 'report_public') out = body.p_code === CODE ? rec('ok', true) : body.p_code === GONE ? rec('withdrawn', true) : body.p_code === NOFILE ? { ...rec('ok', false), steps: [] } : null;
+  if (name === 'report_public') out = body.p_code === CODE ? rec('ok', true) : body.p_code === GONE ? rec('withdrawn', true) : body.p_code === NOFILE ? { ...rec('ok', false), steps: [] } : body.p_code === OLD ? { ...rec('ok', false), rev: 1, latest_rev: 3 } : null;
   if (name === 'report_public_match') out = body.p_code === CODE ? (body.p_sha256 === SHA ? 'same' : 'different') : null;
   return new Response(JSON.stringify(out), { status: 200, headers: { 'Content-Type': 'application/json' } });
 };
@@ -106,7 +106,12 @@ try {
   await page.goto(`https://isgcalisanplatformu.com/r/${GONE}`);
   await page.waitForSelector('.kr-msg');
   const gone = await page.locator('main').innerText();
-  check(/Bu rapor güncellendi ya da geri çekildi; elinizdeki nüsha eski olabilir\. Güncelini uzmanınızdan isteyin\./.test(gone) && !/Bu rapor nedir/.test(gone) && /2026-0007/.test(gone), 'geri çekilen: mesaj, özet var, adım yok');
+  check(/Bu rapor güncellendi ya da geri çekildi/.test(gone) && /Elinizdeki nüsha eski olabilir\. Güncelini uzmanınızdan isteyin\./.test(gone) && !/Bu rapor nedir/.test(gone) && /2026-0007/.test(gone), 'geri çekilen: mesaj, özet var, adım yok');
+
+  await page.goto(`https://isgcalisanplatformu.com/r/${OLD}`);
+  await page.waitForSelector('.kr-msg');
+  const old = await page.locator('main').innerText();
+  check(/Bu raporun daha yeni bir sürümü var \(Rev\. 3\)/.test(old) && /Elinizdeki nüsha eski\. Güncelini uzmanınızdan isteyin\./.test(old) && !/İşyeriniz için hazırlanan rapor/.test(old), 'eski Rev: yeni sürüm uyarısı, giriş yok');
 
   await page.goto(`https://isgcalisanplatformu.com/r/${NOFILE}`);
   await page.waitForSelector('h1');

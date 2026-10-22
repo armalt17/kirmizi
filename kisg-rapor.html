@@ -239,9 +239,15 @@ Staging deneme kopyası: dist-rapor/kisg-rapor-staging.html?k=KOD (doğrudan sta
 
   function found(r, code) {
     const withdrawn = r.status === 'withdrawn';
+    // Eski Rev'in QR'ı (ürün sahibi 2026-10-22): yeni sürümün yalnız var olduğu söylenir, içeriği gösterilmez.
+    const latest = Number(r.latest_rev) > Number(r.rev) ? Number(r.latest_rev) : 0;
     const head = withdrawn
-      ? `${message('Bu raporun daha yeni bir hâli olabilir', 'Bu rapor güncellendi ya da geri çekildi; elinizdeki nüsha eski olabilir. Güncelini uzmanınızdan isteyin.')}
+      ? `${message('Bu rapor güncellendi ya da geri çekildi', 'Elinizdeki nüsha eski olabilir. Güncelini uzmanınızdan isteyin.')}
          <div class="kr-card">${rows(r)}</div>`
+      : latest
+      ? `${message(`Bu raporun daha yeni bir sürümü var (Rev. ${latest})`, 'Elinizdeki nüsha eski. Güncelini uzmanınızdan isteyin.')}
+         <div class="kr-card">${rows(r)}</div>
+         ${steps(r.steps)}`
       : `<section class="kr-card">
           <div class="kr-intro">${scene}
             <h1>İşyeriniz için hazırlanan rapor</h1>
