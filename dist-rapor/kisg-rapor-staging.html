@@ -151,7 +151,7 @@ Staging deneme kopyası: dist-rapor/kisg-rapor-staging.html?k=KOD (doğrudan sta
   const DEFAULT_STEPS = [
     { title: 'Raporu okuyun', body: 'Acil işaretli maddelerle başlayın.' },
     { title: 'Sorumlu ve tarih belirleyin', body: 'Her madde için kim, ne zamana kadar.' },
-    { title: 'Sorularınızı uzmanınıza sorun', body: 'Raporu hazırlayan uzman size yardımcı olur.' },
+    { title: 'Sorularınızı raporu hazırlayana sorun', body: 'Raporu hazırlayan size yardımcı olur.' },
   ];
 
   const brand = `<div class="kr-brand"><img class="kr-logo" src="${esc(CONFIG.logoUrl)}" alt="" width="30" height="30"><b>Kırmızı İSG</b></div>`;
@@ -197,7 +197,7 @@ Staging deneme kopyası: dist-rapor/kisg-rapor-staging.html?k=KOD (doğrudan sta
   function sameFile() {
     return `<details class="kr-card" id="asli">
         <summary>Elinizdeki PDF aslıyla aynı mı?</summary>
-        <p class="kr-small">Elinizdeki PDF'in, uzmanınızın Kırmızı İSG'de oluşturduğu dosyayla birebir aynı olup olmadığına bakabilirsiniz. Dosya yalnız bu cihazda okunur, hiçbir yere gönderilmez.</p>
+        <p class="kr-small">Elinizdeki PDF'in, raporu hazırlayanın Kırmızı İSG'de oluşturduğu dosyayla birebir aynı olup olmadığına bakabilirsiniz. Dosya yalnız bu cihazda okunur, hiçbir yere gönderilmez.</p>
         <label class="kr-drop" id="krDrop">PDF dosyasını seçin<span>ya da buraya bırakın</span><input type="file" id="krFile" accept="application/pdf,.pdf"></label>
         <div id="krResult" role="status"></div>
       </details>`;
@@ -242,16 +242,16 @@ Staging deneme kopyası: dist-rapor/kisg-rapor-staging.html?k=KOD (doğrudan sta
     // Eski Rev'in QR'ı (ürün sahibi 2026-10-22): yeni sürümün yalnız var olduğu söylenir, içeriği gösterilmez.
     const latest = Number(r.latest_rev) > Number(r.rev) ? Number(r.latest_rev) : 0;
     const head = withdrawn
-      ? `${message('Bu rapora bu bağlantıdan artık ulaşılamıyor', 'Elinizdeki nüsha eski olabilir; güncelini uzmanınızdan isteyebilirsiniz. Bu sayfanın durumu, rapordaki tespit ve önerileri etkilemez.')}
+      ? `${message('Bu rapora bu bağlantıdan artık ulaşılamıyor', 'Elinizdeki nüsha eski olabilir; güncelini raporu hazırlayandan isteyebilirsiniz. Bu sayfanın durumu, rapordaki tespit ve önerileri etkilemez.')}
          <div class="kr-card">${rows(r)}</div>`
       : latest
-      ? `${message(`Bu raporun daha yeni bir sürümü var (Rev. ${latest})`, 'Elinizdeki nüsha eski. Güncelini uzmanınızdan isteyin.')}
+      ? `${message(`Bu raporun daha yeni bir sürümü var (Rev. ${latest})`, 'Elinizdeki nüsha eski. Güncelini raporu hazırlayandan isteyin.')}
          <div class="kr-card">${rows(r)}</div>
          ${steps(r.steps)}`
       : `<section class="kr-card">
           <div class="kr-intro">${scene}
             <h1>İşyeriniz için hazırlanan rapor</h1>
-            <p>İş güvenliği uzmanınız bu ziyarette gördüğü eksiklikleri ve önerilerini bu raporda topladı. Amaç, çalışanlarınızın daha güvenli çalışması.</p>
+            <p>Raporu hazırlayan, bu ziyarette gördüğü eksiklikleri ve önerilerini bu raporda topladı. Amaç, çalışanlarınızın daha güvenli çalışması.</p>
           </div>
           ${rows(r)}
         </section>
@@ -268,7 +268,7 @@ Staging deneme kopyası: dist-rapor/kisg-rapor-staging.html?k=KOD (doğrudan sta
     }
   }
 
-  const notFound = () => show(message('Kayıt bulunamadı', 'Bu koda ait bir rapor kaydı yok. Adresi raporun üzerindeki QR\'dan okuttuğunuzdan emin olun; sorunuz olursa uzmanınıza danışabilirsiniz.'));
+  const notFound = () => show(message('Kayıt bulunamadı', 'Bu koda ait bir rapor kaydı yok. Adresi raporun üzerindeki QR\'dan okuttuğunuzdan emin olun; sorunuz olursa raporu hazırlayana danışabilirsiniz.'));
 
   async function load(code) {
     show('<div class="kr-wait">Yükleniyor…</div>');

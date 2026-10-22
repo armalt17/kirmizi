@@ -106,18 +106,18 @@ try {
   await page.goto(`https://isgcalisanplatformu.com/r/${GONE}`);
   await page.waitForSelector('.kr-msg');
   const gone = await page.locator('main').innerText();
-  check(/Bu rapora bu bağlantıdan artık ulaşılamıyor/.test(gone) && /Elinizdeki nüsha eski olabilir; güncelini uzmanınızdan isteyebilirsiniz\./.test(gone) && /Bu sayfanın durumu, rapordaki tespit ve önerileri etkilemez/.test(gone) && !/Bu rapor nedir/.test(gone) && /2026-0007/.test(gone), 'geri çekilen: mesaj, özet var, adım yok');
+  check(/Bu rapora bu bağlantıdan artık ulaşılamıyor/.test(gone) && /Elinizdeki nüsha eski olabilir; güncelini raporu hazırlayandan isteyebilirsiniz\./.test(gone) && /Bu sayfanın durumu, rapordaki tespit ve önerileri etkilemez/.test(gone) && !/Bu rapor nedir/.test(gone) && /2026-0007/.test(gone), 'geri çekilen: mesaj, özet var, adım yok');
 
   await page.goto(`https://isgcalisanplatformu.com/r/${OLD}`);
   await page.waitForSelector('.kr-msg');
   const old = await page.locator('main').innerText();
-  check(/Bu raporun daha yeni bir sürümü var \(Rev\. 3\)/.test(old) && /Elinizdeki nüsha eski\. Güncelini uzmanınızdan isteyin\./.test(old) && !/İşyeriniz için hazırlanan rapor/.test(old), 'eski Rev: yeni sürüm uyarısı, giriş yok');
+  check(/Bu raporun daha yeni bir sürümü var \(Rev\. 3\)/.test(old) && /Elinizdeki nüsha eski\. Güncelini raporu hazırlayandan isteyin\./.test(old) && !/İşyeriniz için hazırlanan rapor/.test(old), 'eski Rev: yeni sürüm uyarısı, giriş yok');
 
   await page.goto(`https://isgcalisanplatformu.com/r/${NOFILE}`);
   await page.waitForSelector('h1');
   check(await page.locator('#asli').count() === 0, 'dosya kaydı yoksa "Aslıyla aynı mı?" yok');
   const t3 = await page.locator('main').innerText();
-  check(/Raporu okuyun/.test(t3) && /Sorumlu ve tarih belirleyin/.test(t3) && /Sorularınızı uzmanınıza sorun/.test(t3) && await page.locator('.kr-step').count() === 3, 'admin adımı yoksa kısa üç adım');
+  check(/Raporu okuyun/.test(t3) && /Sorumlu ve tarih belirleyin/.test(t3) && /Sorularınızı raporu hazırlayana sorun/.test(t3) && await page.locator('.kr-step').count() === 3, 'admin adımı yoksa kısa üç adım');
 
   await page.goto('https://isgcalisanplatformu.com/r/YYYYYYYYYYYYYYYYYYYY');
   await page.waitForSelector('.kr-msg');
