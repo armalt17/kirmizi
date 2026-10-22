@@ -15,7 +15,7 @@ const staging = src
   .replace("supabaseUrl: ''", `supabaseUrl: '${STAGING.url}'`)
   .replace("supabaseKey: ''", `supabaseKey: '${STAGING.key}'`);
 
-const worker = `// Cloudflare Worker: isgcalisanplatformu.com/r/* — rapor QR sayfası "Raporu aldınız, şimdi ne yapmalısınız?"
+const worker = `// Cloudflare Worker: isgcalisanplatformu.com/r/* — rapor QR sayfası "İşyeriniz için hazırlanan rapor"
 // ÜRETİLMİŞ DOSYA: kaynağı kisg-rapor.html ve tools/build-rapor.mjs (web deposu). Elle düzenlemeyin; yeniden üretin.
 // GET  /r/{kod}            → sayfa (arama motorlarına kapalı)
 // POST /r/api/report_public, /r/api/report_public_match → Supabase'e iletilir; IP başına dakikalık deneme sınırı.

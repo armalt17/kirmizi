@@ -1,7 +1,8 @@
 <!doctype html>
 <!--
-Kırmızı İSG · Rapor QR sayfası "Raporu aldınız, şimdi ne yapmalısınız?" (v1.0.0, 2026-10-20; ürün sahibi kararı, hukuki
-inceleme sonrası: dijital kaşe ve /dogrula sayfası kalktı, yerine rapordaki QR bu sayfayı açar).
+Kırmızı İSG · Rapor QR sayfası "İşyeriniz için hazırlanan rapor" (v2.0.0, 2026-10-22; ürün sahibi onaylı yeni tasarım:
+sakin ve güven veren kısa ton, tek sahne, uzman kartı ve iş ilanı bölümü yok, "aslıyla aynı mı?" kapalı bölümde,
+en altta küçük Kırmızı İSG satırı). Önceki: v1.0.0, 2026-10-20 (dijital kaşe ve /dogrula sayfası yerine bu sayfa).
 ADRES: https://isgcalisanplatformu.com/r/{kod}  (kod: 20 karakter, her revizyona ayrı; uygulama yüklüyse QR uygulamada açılır).
 KURULUM: Hostinger Website Builder /r/* yollarını sunamadığı için sayfayı Cloudflare Worker sunar:
   node tools/build-rapor.mjs → dist-rapor/r-worker.js (bu dosya içine gömülü) → Cloudflare → Workers → yapıştır.
@@ -13,71 +14,108 @@ Staging deneme kopyası: dist-rapor/kisg-rapor-staging.html?k=KOD (doğrudan sta
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <title>Rapor · Kırmızı İSG</title>
 <style>
   :root {
-    --red: #E30A17; --red-text: #C7101B; --ink: #141A24; --text: #262D38; --muted: #5D6878; --faint: #6B7585;
-    --line: #E6E9EE; --line-soft: #EEF0F3; --page: #ECEEF1; --surface: #FFFFFF; --green: #1F7A4D;
-    --green-wash: rgba(31, 122, 77, .10); --orange: #B25E09; --orange-wash: rgba(178, 94, 9, .10); --blue: #1D6FD8;
+    --bg: #ECEEF1; --surface: #FFFFFF; --muted: #F4F5F8; --border: #E3E6EC; --borderStrong: #C9CED8; --subtle: #EEF0F3;
+    --ink: #141A24; --text: #262D38; --sub: #5D6878; --faint: #6B7585;
+    --accent: #E30A17; --wash: #FDEBEC; --success: #1F7A4D; --successWash: #E6F3EC; --warn: #8A5A12; --warnWash: #FBF1E2;
+    --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #0E1218; --surface: #161B23; --muted: #1F252E; --border: #2A313C; --borderStrong: #3A424F; --subtle: #232A34;
+    --ink: #F3F5F8; --text: #D8DDE5; --sub: #A3ACB9; --faint: #8A93A1;
+    --accent: #F0313C; --wash: #3A1518; --success: #4ADE80; --successWash: #13301F; --warn: #F5C27A; --warnWash: #33260F; color-scheme: dark; } }
+  :root[data-theme="dark"] {
+    --bg: #0E1218; --surface: #161B23; --muted: #1F252E; --border: #2A313C; --borderStrong: #3A424F; --subtle: #232A34;
+    --ink: #F3F5F8; --text: #D8DDE5; --sub: #A3ACB9; --faint: #8A93A1;
+    --accent: #F0313C; --wash: #3A1518; --success: #4ADE80; --successWash: #13301F; --warn: #F5C27A; --warnWash: #33260F; color-scheme: dark; }
   * { box-sizing: border-box; margin: 0; }
-  html, body { background: var(--page); }
+  html, body { background: var(--bg); }
   body {
-    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    color: var(--text); -webkit-font-smoothing: antialiased;
+    font-family: var(--font); font-size: 15px; line-height: 1.5; color: var(--text); -webkit-font-smoothing: antialiased;
+    padding: 0 max(16px, env(safe-area-inset-right, 0px)) 28px max(16px, env(safe-area-inset-left, 0px));
   }
-  .kr { max-width: 520px; margin: 0 auto; padding: 0 16px 28px; }
-  .kr-brand { display: flex; align-items: center; gap: 10px; padding: 14px 2px; }
+  .kr { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+  .kr-brand { display: flex; align-items: center; gap: 10px; padding: 16px 2px 0; }
   .kr-brand b { font-size: 16px; font-weight: 800; color: var(--ink); letter-spacing: -.2px; }
-  .kr-mark { width: 28px; height: 28px; border-radius: 8px; object-fit: cover; background: var(--red); }
-  h1 { font-size: 22px; line-height: 28px; font-weight: 800; color: var(--ink); letter-spacing: -.4px; margin: 4px 2px 14px; }
-  h2 { font-size: 16px; line-height: 22px; font-weight: 700; color: var(--ink); }
-  .kr-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; margin-bottom: 12px; }
-  .kr-pad { padding: 16px; }
-  .kr-row { display: flex; justify-content: space-between; gap: 12px; padding: 11px 16px; border-top: 1px solid var(--line-soft);
-    font-size: 14px; color: var(--muted); }
-  .kr-row:first-child { border-top: 0; }
+  .kr-logo { width: 30px; height: 30px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); background: #fff; flex: none; }
+  .kr-logo.sm { width: 20px; height: 20px; border-radius: 5px; }
+  .kr-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+  .kr-intro { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 18px 16px; }
+  .kr-intro h1 { font-size: 20px; line-height: 26px; font-weight: 800; color: var(--ink); letter-spacing: -.3px; text-wrap: balance; }
+  .kr-intro p { color: var(--sub); font-size: 14.5px; max-width: 40ch; }
+  .kr-row { display: flex; justify-content: space-between; gap: 12px; padding: 11px 16px; border-top: 1px solid var(--subtle);
+    font-size: 14px; color: var(--sub); }
   .kr-row b { font-weight: 600; color: var(--ink); text-align: right; }
-  .kr-row b.urgent { color: var(--red-text); }
-  .kr-step { display: flex; gap: 12px; padding: 14px 16px; border-top: 1px solid var(--line-soft); }
+
+  /* Tek sahne: defter sayfası, maddeler sırayla tiklenir */
+  .kr-scene { width: 220px; height: 130px; display: grid; place-items: center; }
+  .kr-page { position: relative; width: 180px; height: 116px; padding: 14px 12px 0 26px; display: flex; flex-direction: column;
+    gap: 12px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); }
+  .kr-page .margin { position: absolute; left: 16px; top: 0; bottom: 0; width: 1px; background: var(--wash); }
+  .kr-line { display: flex; align-items: center; gap: 8px; height: 14px; }
+  .kr-check { width: 14px; height: 14px; border-radius: 4px; border: 2px solid var(--borderStrong); flex: none; }
+  .kr-bar { height: 8px; border-radius: 4px; background: var(--border); }
+  @keyframes kr-tick { 0%, 25% { background: transparent; border-color: var(--borderStrong); } 40%, 100% { background: var(--success); border-color: var(--success); } }
+  .l0 .kr-check { animation: kr-tick 3.6s ease-in-out infinite; }
+  .l1 .kr-check { animation: kr-tick 3.6s ease-in-out .5s infinite; }
+  .l2 .kr-check { animation: kr-tick 3.6s ease-in-out 1s infinite; }
+
+  .kr-step { display: flex; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--subtle); }
   .kr-step:first-child { border-top: 0; }
-  .kr-no { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--red); color: #fff; font-size: 13px;
-    font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
-  .kr-step b { display: block; font-size: 15px; line-height: 21px; color: var(--ink); }
-  .kr-step p { font-size: 14px; line-height: 21px; margin-top: 2px; }
-  .kr-small { font-size: 13px; line-height: 19px; color: var(--muted); margin-top: 6px; }
-  .kr-drop { display: block; margin-top: 12px; border: 1.5px dashed #C9CFD8; border-radius: 14px; padding: 18px 14px;
-    text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--ink); }
-  .kr-drop.over { border-color: var(--ink); background: var(--line-soft); }
-  .kr-drop input { display: none; }
-  .kr-drop span { display: block; font-size: 12.5px; font-weight: 400; color: var(--muted); margin-top: 4px; }
-  .kr-result { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 12px; border-radius: 12px;
+  .kr-no { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--muted); color: var(--ink); font-size: 12px;
+    font-weight: 700; display: grid; place-items: center; margin-top: 1px; }
+  .kr-step b { display: block; font-size: 14.5px; line-height: 21px; color: var(--ink); }
+  .kr-step span { display: block; font-size: 13.5px; line-height: 20px; color: var(--sub); }
+
+  details.kr-card { padding: 0 16px; }
+  summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 14px 0; font-weight: 600; color: var(--ink); font-size: 14.5px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: ""; flex: none; width: 8px; height: 8px; margin: -3px 4px 0 0; border-right: 2px solid var(--faint);
+    border-bottom: 2px solid var(--faint); transform: rotate(45deg); transition: transform .2s; }
+  details[open] summary::after { transform: rotate(-135deg); margin-top: 3px; }
+  summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+  .kr-small { font-size: 13px; line-height: 19px; color: var(--sub); margin: 0 0 10px; }
+  .kr-drop { position: relative; display: block; margin: 0 0 14px; border: 1.5px dashed var(--borderStrong); border-radius: 14px;
+    padding: 16px 14px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .kr-drop.over { border-color: var(--ink); background: var(--subtle); }
+  .kr-drop:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .kr-drop span { display: block; font-size: 12.5px; font-weight: 400; color: var(--sub); margin-top: 4px; }
+  .kr-drop input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .kr-result { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 14px; padding: 12px; border-radius: 12px;
     font-size: 14px; line-height: 20px; }
-  .kr-result.same { background: var(--green-wash); color: var(--green); }
-  .kr-result.diff { background: var(--orange-wash); color: var(--orange); }
-  .kr-result.info { background: var(--line-soft); color: var(--muted); }
-  .kr-result svg { flex: none; width: 20px; height: 20px; margin-top: 0; }
-  .kr-result b { color: inherit; }
-  .kr-kicker { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--faint); }
-  .kr-who { display: flex; gap: 12px; align-items: center; margin-top: 10px; }
-  .kr-av { width: 52px; height: 52px; border-radius: 50%; background: #2C3440; color: #fff; font-weight: 700;
-    font-size: 18px; display: flex; align-items: center; justify-content: center; flex: none; overflow: hidden; }
-  .kr-av img { width: 100%; height: 100%; object-fit: cover; }
-  .kr-name { display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 700; color: var(--ink); }
-  .kr-name svg { flex: none; }
-  .kr-role { font-size: 13px; line-height: 18px; color: var(--muted); margin-top: 2px; }
-  .kr-btn { display: block; width: 100%; margin-top: 14px; border: 0; background: var(--ink); color: #fff; text-align: center;
-    border-radius: 14px; padding: 14px; font: inherit; font-size: 15px; font-weight: 600; text-decoration: none; cursor: pointer; }
+  .kr-result.same { background: var(--successWash); color: var(--success); }
+  .kr-result.diff { background: var(--warnWash); color: var(--warn); }
+  .kr-result.info { background: var(--subtle); color: var(--sub); }
+  .kr-result svg { flex: none; width: 20px; height: 20px; }
+  .kr-result b { color: inherit; font-weight: 600; }
+
   .kr-msg { display: flex; gap: 12px; padding: 18px 16px; }
-  .kr-msg svg { flex: none; width: 26px; height: 26px; }
-  .kr-msg p { font-size: 14px; line-height: 20px; color: var(--muted); margin-top: 4px; }
-  .kr-link { display: block; text-align: center; margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--red-text);
-    text-decoration: none; }
-  .kr-note { font-size: 12.5px; line-height: 18px; color: var(--faint); padding: 2px 4px 0; }
-  .kr-wait { text-align: center; padding: 40px 0; color: var(--muted); font-size: 14px; }
+  .kr-msg svg { flex: none; width: 24px; height: 24px; color: var(--sub); }
+  .kr-msg h2 { font-size: 16px; line-height: 22px; font-weight: 700; color: var(--ink); }
+  .kr-msg p { font-size: 14px; line-height: 20px; color: var(--sub); margin-top: 4px; }
+  .kr-btn { display: block; width: 100%; border: 0; background: var(--ink); color: var(--surface); text-align: center;
+    border-radius: 14px; padding: 14px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .kr-note { font-size: 12.5px; line-height: 18px; color: var(--faint); padding: 0 4px; }
+  .kr-wait { text-align: center; padding: 40px 0; color: var(--sub); font-size: 14px; }
+
+  /* En alt: küçük Kırmızı İSG satırı */
+  .kr-foot { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 8px; padding-top: 14px;
+    border-top: 1px solid var(--border); text-align: center; }
+  .kr-foot .who { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--sub); }
+  .kr-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+  .kr-links a { font-size: 12.5px; font-weight: 600; color: var(--ink); text-decoration: none; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; }
+  .kr-links a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+    .kr-check { background: var(--success); border-color: var(--success); }
+  }
 </style>
 </head>
 <body>
@@ -104,26 +142,30 @@ Staging deneme kopyası: dist-rapor/kisg-rapor-staging.html?k=KOD (doğrudan sta
     const t = new Date(new Date(iso.length === 10 ? `${iso}T12:00:00Z` : iso).getTime() + 3 * 3600 * 1000);
     return `${t.getUTCDate()} ${MONTHS[t.getUTCMonth()]} ${t.getUTCFullYear()}`;
   };
-  const initials = (name) => (name || '').trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toLocaleUpperCase('tr-TR')).join('') || '?';
-  // Uygulamadaki expertRoleLine ile aynı: unvan · sınıf (beyan).
-  const role = (e) => {
-    const cls = e.class && /^[ABC]$/i.test(e.class) ? `${e.class.toUpperCase()} Sınıfı` : (e.class || null);
-    const base = e.title || (cls && /Sınıfı$/.test(cls) ? 'İş Güvenliği Uzmanı' : null);
-    const line = [base, cls && cls !== base ? cls : null].filter(Boolean).join(' · ');
-    return line ? `${line} (beyan)` : '';
-  };
   const ICON = {
-    alert: '<svg viewBox="0 0 24 24" fill="none" stroke="#B25E09" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg>',
-    same: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>',
-    diff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg>',
-    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v5.5"/><path d="M12 7.5h.01"/></svg>',
-    // Uygulamadaki onaylı hesap rozeti.
-    badge: '<svg width="16" height="16" viewBox="0 0 24 24" role="img" aria-label="Onaylı hesap"><circle cx="12" cy="12" r="11" fill="#1D6FD8"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    same: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>',
+    diff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v5.5"/><path d="M12 7.5h.01"/></svg>',
   };
-  const brand = `<div class="kr-brand"><img class="kr-mark" src="${CONFIG.logoUrl}" alt="" width="28" height="28"><b>Kırmızı İSG</b></div>`;
-  const about = `<a class="kr-link" href="${CONFIG.siteUrl}/">Kırmızı İSG nedir?</a>`;
-  const show = (html) => { root.innerHTML = brand + html; };
-  const message = (title, text) => `<div class="kr-card"><div class="kr-msg">${ICON.alert}<div><h2>${esc(title)}</h2><p>${esc(text)}</p></div></div></div>`;
+  // Adımlar admin panelinden gelir (r.steps); yoksa bu kısa üç adım.
+  const DEFAULT_STEPS = [
+    { title: 'Raporu okuyun', body: 'Acil işaretli maddelerle başlayın.' },
+    { title: 'Sorumlu ve tarih belirleyin', body: 'Her madde için kim, ne zamana kadar.' },
+    { title: 'Sorularınızı uzmanınıza sorun', body: 'Raporu hazırlayan uzman size yardımcı olur.' },
+  ];
+
+  const brand = `<div class="kr-brand"><img class="kr-logo" src="${esc(CONFIG.logoUrl)}" alt="" width="30" height="30"><b>Kırmızı İSG</b></div>`;
+  const foot = `<footer class="kr-foot">
+      <div class="who"><img class="kr-logo sm" src="${esc(CONFIG.logoUrl)}" alt="" width="20" height="20" loading="lazy">Kırmızı İSG, iş sağlığı ve güvenliği profesyonellerinin platformu</div>
+      <nav class="kr-links" aria-label="Kırmızı İSG"><a href="${CONFIG.siteUrl}/">Akış</a><a href="${CONFIG.siteUrl}/hizmetler">Hizmet Bul</a><a href="${CONFIG.siteUrl}/isg-is-ilanlari">İş İlanları</a></nav>
+    </footer>`;
+  const show = (html) => { root.innerHTML = brand + html + foot; };
+  const message = (title, text) => `<div class="kr-card"><div class="kr-msg">${ICON.info}<div><h2>${esc(title)}</h2><p>${esc(text)}</p></div></div></div>`;
+  const scene = `<div class="kr-scene" aria-hidden="true"><div class="kr-page"><i class="margin"></i>
+        <div class="kr-line l0"><span class="kr-check"></span><span class="kr-bar" style="width:90px"></span></div>
+        <div class="kr-line l1"><span class="kr-check"></span><span class="kr-bar" style="width:70px"></span></div>
+        <div class="kr-line l2"><span class="kr-check"></span><span class="kr-bar" style="width:100px"></span></div>
+      </div></div>`;
 
   async function rpc(name, body) {
     const direct = !!CONFIG.supabaseUrl;
@@ -136,47 +178,29 @@ Staging deneme kopyası: dist-rapor/kisg-rapor-staging.html?k=KOD (doğrudan sta
     return res.json();
   }
 
-  function summary(r) {
+  function rows(r) {
     const findings = Number(r.findings) || 0;
-    const urgent = Number(r.urgent) || 0;
-    const rows = [
+    return [
       ['Rapor no', `${esc(r.report_no)} · Rev. ${esc(r.rev)}`],
       ['Tarih', esc(day(r.issued_at))],
       r.visited_on ? ['Ziyaret tarihi', esc(day(r.visited_on))] : null,
-      ['Madde', findings ? `${findings} madde${urgent ? ` · <b class="urgent">${urgent} acil</b>` : ''}` : 'Eksiklik yok'],
-    ].filter(Boolean);
-    return `<div class="kr-card">${rows.map(([k, v]) => `<div class="kr-row">${k}<b>${v}</b></div>`).join('')}</div>`;
+      ['Madde', findings ? `${findings} madde` : 'Eksiklik yok'],
+    ].filter(Boolean).map(([k, v]) => `<div class="kr-row">${k}<b>${v}</b></div>`).join('');
   }
 
   function steps(list) {
-    const items = (Array.isArray(list) ? list : []).filter((s) => s && s.title && s.body);
-    if (!items.length) return '';
-    return `<div class="kr-card">${items.map((s, i) => `<div class="kr-step"><div class="kr-no">${i + 1}</div><div><b>${esc(s.title)}</b><p>${esc(s.body)}</p></div></div>`).join('')}</div>`;
+    const given = (Array.isArray(list) ? list : []).filter((s) => s && s.title && s.body);
+    const items = given.length ? given : DEFAULT_STEPS;
+    return `<section class="kr-card" aria-label="Ne yapmalı">${items.map((s, i) => `<div class="kr-step"><span class="kr-no">${i + 1}</span><div><b>${esc(s.title)}</b><span>${esc(s.body)}</span></div></div>`).join('')}</section>`;
   }
 
   function sameFile() {
-    return `<div class="kr-card kr-pad" id="asli">
-        <h2>Aslıyla aynı mı?</h2>
-        <p class="kr-small">Elinizdeki PDF'in, uzmanın Kırmızı İSG'de oluşturduğu dosyayla birebir aynı olup olmadığına bakabilirsiniz. Dosya bu cihazda okunur, hiçbir yere gönderilmez.</p>
+    return `<details class="kr-card" id="asli">
+        <summary>Elinizdeki PDF aslıyla aynı mı?</summary>
+        <p class="kr-small">Elinizdeki PDF'in, uzmanınızın Kırmızı İSG'de oluşturduğu dosyayla birebir aynı olup olmadığına bakabilirsiniz. Dosya yalnız bu cihazda okunur, hiçbir yere gönderilmez.</p>
         <label class="kr-drop" id="krDrop">PDF dosyasını seçin<span>ya da buraya bırakın</span><input type="file" id="krFile" accept="application/pdf,.pdf"></label>
-        <div id="krResult"></div>
-      </div>`;
-  }
-
-  function expert(e) {
-    if (!e) return '';
-    const name = (e.name || '').trim() || 'Uzman';
-    const av = e.avatar_url && /^https:\/\//.test(e.avatar_url) ? `<img src="${esc(e.avatar_url)}" alt="">` : esc(initials(name));
-    const line = role(e);
-    const profile = e.id ? `<a class="kr-btn" href="${CONFIG.siteUrl}/profil?id=${encodeURIComponent(e.id)}">Uzmanın profili</a>` : '';
-    return `<div class="kr-card kr-pad">
-        <div class="kr-kicker">RAPORU HAZIRLAYAN</div>
-        <div class="kr-who"><div class="kr-av">${av}</div><div>
-          <div class="kr-name">${esc(name)}${e.verified ? ICON.badge : ''}</div>
-          ${line ? `<div class="kr-role">${esc(line)}</div>` : ''}
-        </div></div>
-        ${profile}
-      </div>`;
+        <div id="krResult" role="status"></div>
+      </details>`;
   }
 
   // İleride: işverenin "Teslim aldım" kaydı (report_revisions.id'ye bağlı). Bugün gösterilmez.
@@ -215,21 +239,30 @@ Staging deneme kopyası: dist-rapor/kisg-rapor-staging.html?k=KOD (doğrudan sta
 
   function found(r, code) {
     const withdrawn = r.status === 'withdrawn';
-    show(`${withdrawn
-        ? message('Bu rapor hazırlayan tarafından geri çekildi', 'Rapor kaydı duruyor; içeriği için raporu hazırlayan uzmana danışın.')
-        : '<h1>Raporu aldınız, şimdi ne yapmalısınız?</h1>'}
-      ${summary(r)}
-      ${withdrawn ? '' : steps(r.steps)}
+    const head = withdrawn
+      ? `${message('Bu raporun daha yeni bir hâli olabilir', 'Bu rapor güncellendi ya da geri çekildi; elinizdeki nüsha eski olabilir. Güncelini uzmanınızdan isteyin.')}
+         <div class="kr-card">${rows(r)}</div>`
+      : `<section class="kr-card">
+          <div class="kr-intro">${scene}
+            <h1>İşyeriniz için hazırlanan rapor</h1>
+            <p>İş güvenliği uzmanınız bu ziyarette gördüğü iyileştirilecek noktaların bir kısmını bu raporda topladı. Amaç, çalışanlarınızın daha güvenli çalışması.</p>
+          </div>
+          ${rows(r)}
+        </section>
+        ${steps(r.steps)}`;
+    show(`${head}
       ${r.has_file ? sameFile() : ''}
-      ${expert(r.expert)}
       ${receipt(r)}
-      <div class="kr-note">Raporun içeriğinden raporu hazırlayan uzman sorumludur. Elinizdeki rapordaki numara ve Rev buradakilerle aynı olmalı.</div>
-      ${about}`);
+      <p class="kr-note">Bu rapor işyerinizdeki tüm eksiklerin listesi değildir. Risk değerlendirmenizdeki önlemler ve önceki raporlardaki maddeler de geçerlidir.</p>
+      <p class="kr-note">Bu sayfada firmanızın adı ve raporun maddeleri gösterilmez.</p>`);
     bindFile(code);
-    if (location.hash === '#asli') { const el = document.getElementById('asli'); if (el) el.scrollIntoView(); }
+    if (location.hash === '#asli') {
+      const el = document.getElementById('asli');
+      if (el) { el.open = true; el.scrollIntoView(); }
+    }
   }
 
-  const notFound = () => show(`${message('Kayıt bulunamadı', 'Bu koda ait bir rapor kaydı yok. Adresi raporun üzerindeki QR\'dan okuttuğunuzdan emin olun.')}${about}`);
+  const notFound = () => show(message('Kayıt bulunamadı', 'Bu koda ait bir rapor kaydı yok. Adresi raporun üzerindeki QR\'dan okuttuğunuzdan emin olun; sorunuz olursa uzmanınıza danışabilirsiniz.'));
 
   async function load(code) {
     show('<div class="kr-wait">Yükleniyor…</div>');
@@ -239,7 +272,7 @@ Staging deneme kopyası: dist-rapor/kisg-rapor-staging.html?k=KOD (doğrudan sta
       else notFound();
     } catch (e) {
       show(`${message('Şu anda açılamıyor', e && e.limit ? 'Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.' : 'İnternet bağlantınızı kontrol edip tekrar deneyin.')}
-        <button class="kr-btn" type="button" id="krRetry">Tekrar dene</button>${about}`);
+        <button class="kr-btn" type="button" id="krRetry">Tekrar dene</button>`);
       document.getElementById('krRetry').addEventListener('click', () => load(code));
     }
   }
