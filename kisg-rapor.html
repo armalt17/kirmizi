@@ -242,7 +242,7 @@ Staging deneme kopyası: dist-rapor/kisg-rapor-staging.html?k=KOD (doğrudan sta
     // Eski Rev'in QR'ı (ürün sahibi 2026-10-22): yeni sürümün yalnız var olduğu söylenir, içeriği gösterilmez.
     const latest = Number(r.latest_rev) > Number(r.rev) ? Number(r.latest_rev) : 0;
     const head = withdrawn
-      ? `${message('Bu rapor güncellendi ya da geri çekildi', 'Elinizdeki nüsha eski olabilir. Güncelini uzmanınızdan isteyin.')}
+      ? `${message('Bu rapor güncellendi ya da geri çekildi', 'Elinizdeki nüsha eski olabilir. Güncelini uzmanınızdan isteyin. İşyerindeki eksikliklerin giderilmesi işverenin yükümlülüğüdür.')}
          <div class="kr-card">${rows(r)}</div>`
       : latest
       ? `${message(`Bu raporun daha yeni bir sürümü var (Rev. ${latest})`, 'Elinizdeki nüsha eski. Güncelini uzmanınızdan isteyin.')}
