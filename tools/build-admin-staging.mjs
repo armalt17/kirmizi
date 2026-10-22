@@ -11,8 +11,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(ROOT, 'kisg-pro-admin.html');
 export const DIST = path.join(ROOT, 'dist-admin');
 export const STAGING = Object.freeze({
-  url: 'https://wztoupambatmvhwdhjmy.supabase.co',
-  key: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH'
+  url: 'https://vleellyrhmtjpwgzrqii.supabase.co',
+  key: 'sb_publishable_85NeRUePWMVOCQH4sOISuw_CzdvwlDR'
 });
 const PROD_URL = 'https://twaptpofhbnnfciowoig.supabase.co';
 

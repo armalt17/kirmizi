@@ -14,7 +14,7 @@ const staging = fs.readFileSync(stagingFile, 'utf8');
 
 // Üretilmiş dosyalar kaynakla güncel mi
 check(worker.includes(`const PAGE = ${JSON.stringify(src)};`), 'r-worker.js kaynakla güncel (node tools/build-rapor.mjs)');
-check(staging === src.replace("supabaseUrl: ''", "supabaseUrl: 'https://wztoupambatmvhwdhjmy.supabase.co'").replace("supabaseKey: ''", "supabaseKey: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH'"), 'staging kopyası kaynakla güncel');
+check(staging === src.replace("supabaseUrl: ''", "supabaseUrl: 'https://vleellyrhmtjpwgzrqii.supabase.co'").replace("supabaseKey: ''", "supabaseKey: 'sb_publishable_85NeRUePWMVOCQH4sOISuw_CzdvwlDR'"), 'staging kopyası kaynakla güncel');
 check(!/service_role|sb_secret_/.test(worker + src), 'gizli anahtar yok');
 check(/<meta name="robots" content="noindex/.test(src), 'sayfa noindex');
 // Yeni metinlerde kaçınılan kelimeler (ürün sahibi 2026-10-20)

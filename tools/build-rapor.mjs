@@ -6,7 +6,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const PROD = { url: 'https://twaptpofhbnnfciowoig.supabase.co', key: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs' };
-const STAGING = { url: 'https://wztoupambatmvhwdhjmy.supabase.co', key: 'sb_publishable_Y6R46tlz81eROsk3vh3iuw_S0KaDuPH' };
+const STAGING = { url: 'https://vleellyrhmtjpwgzrqii.supabase.co', key: 'sb_publishable_85NeRUePWMVOCQH4sOISuw_CzdvwlDR' };
 
 const src = readFileSync(new URL('../kisg-rapor.html', import.meta.url), 'utf8');
 if (!src.includes("supabaseUrl: ''") || !src.includes("supabaseKey: ''")) throw new Error('kisg-rapor.html yapılandırması beklenen biçimde değil');
