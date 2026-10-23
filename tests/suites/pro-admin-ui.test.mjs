@@ -64,7 +64,7 @@ function server(ctx) {
       { key: 'anthropic:claude-sonnet-5-5', provider: 'anthropic', model: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5', supports_vision: true, enabled: true, input_usd_per_mtok: '2.0000', output_usd_per_mtok: '10.0000', sort: 2 },
       { key: 'openai:gpt-4o', provider: 'openai', model: 'gpt-4o', label: 'ChatGPT · GPT-4o', supports_vision: true, enabled: true, input_usd_per_mtok: '2.5000', output_usd_per_mtok: '10.0000', sort: 10 },
       { key: 'openai:gpt-6-luna', provider: 'openai', model: 'gpt-6-luna', label: 'ChatGPT · GPT-6 Luna', supports_vision: false, enabled: true, input_usd_per_mtok: '0.2000', output_usd_per_mtok: '1.2000', sort: 13 }],
-    settings: { report_model_text: 'anthropic:claude-haiku-5-5', report_model: 'anthropic:claude-sonnet-5-5', report_model_complex: 'anthropic:claude-sonnet-5-5', report_complex_photos: '4', report_fallback_model: '', rewrite_model: '', report_style: 'dengeli' },
+    settings: { report_model_text: 'anthropic:claude-haiku-5-5', report_model: 'anthropic:claude-sonnet-5-5', report_model_complex: 'anthropic:claude-sonnet-5-5', report_complex_photos: '4', report_fallback_model: '', rewrite_model: '', report_style: 'dengeli', report_photos_per_call: '2' },
     prompts: [
       { target: 'default', purpose: 'report_analyze', prompt: 'Sen deneyimli bir iş güvenliği uzmanısın. Tespitleri nesnel yaz; öneriler ...sağlanmalıdır diliyle.', updated_at: iso(600) },
       { target: 'default', purpose: 'finding_rewrite', prompt: 'Bulguyu hukuki dille yeniden yaz; öneri ...sağlanmalıdır.', updated_at: iso(600) },
@@ -718,6 +718,14 @@ try {
     check(await until(() => st.rpc.filter(x => x.name === 'admin_set_ai_setting').length === 3) && st.fr.settings.report_model === 'openai:gpt-4o' && st.fr.settings.report_complex_photos === '6' && st.fr.settings.report_style === 'sade', `${vp.n}: 3 ayar ayrı RPC ile kaydedildi`);
     await f.click('button:text-is("Değişiklikleri kaydet")');
     check(await until(async () => /Değişiklik yok/.test(await f.textContent('[data-toast]'))), `${vp.n}: değişiklik yoksa RPC yok`);
+    // v2.0.1: fotoğrafları gruplarla aynı anda analiz (report_photos_per_call; mevcut 2)
+    check(await f.inputValue('input[name="report_photos_per_call"]') === '2' && /kaçarlı gruplarla aynı anda/.test(await f.textContent('[data-main]')), `${vp.n}: grup başına fotoğraf alanı mevcut değerle`);
+    await f.fill('input[name="report_photos_per_call"]', '25'); await f.click('button:text-is("Değişiklikleri kaydet")');
+    check(await until(async () => /0 ile 20 arasında/.test(await f.textContent('[data-toast]'))) && !await f.locator('.pa-dialog').count(), `${vp.n}: aralık dışı grup sayısı engellenir`);
+    await f.fill('input[name="report_photos_per_call"]', '3'); await f.click('button:text-is("Değişiklikleri kaydet")'); await dialog();
+    check(/2 fotoğraflık gruplar → 3 fotoğraflık gruplar/.test(await f.textContent('.pa-dialog')), `${vp.n}: onayda eski → yeni grup sayısı`);
+    await submit();
+    check(await until(() => st.fr.settings.report_photos_per_call === '3') && lastRpc(st, 'admin_set_ai_setting').args.p_key === 'report_photos_per_call' && lastRpc(st, 'admin_set_ai_setting').args.p_value === '3', `${vp.n}: report_photos_per_call kaydedildi`);
     // v1.14.0: ücretsiz plana isteğe bağlı ayrı model (yalnız fotoğraf okuyan modeller; boş = ücretli planlarla aynı)
     const freeOpts = await f.evaluate(() => [...document.querySelectorAll('select[name="free_report_model"] option')].map(o => o.value));
     check(freeOpts[0] === '' && freeOpts.includes('anthropic:claude-haiku-5-5') && !freeOpts.includes('openai:gpt-6-luna') && await f.inputValue('select[name="free_report_model"]') === '', `${vp.n}: ücretsiz plan modeli seçimi (varsayılan: ücretli planlarla aynı)`);

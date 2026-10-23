@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL ADMIN v2.0.0
+KIRMIZI İSG — PROFESSIONAL ADMIN v2.0.1
 
 KURULUM: Bu dosyanın TAMAMI Hostinger'da /pro-admin sayfasının Custom HTML/Embed içeriği olarak kullanılır.
 Ana uygulama (kisg-professional-app.html) ile aynı Supabase projesi ve aynı oturum (tarayıcı depolaması) kullanılır;
@@ -20,11 +20,13 @@ BÖLÜMLER (v2.0.0, ürün sahibi 2026-10-23): günlük iş önde, bir kez ayarl
  Özet · Bekleyen (Destek · Şikâyetler · Onaylar) · İçerik (Postlar · Yorumlar · Hizmetler · Alanlar) · İlanlar ·
  Menü (Kullanıcılar · Yapay zekâ bütçeleri · Acil durum · Ayarlar: Yapay zekâ · Rapor metinleri · Topluluk kuralları ·
  Hizmet kategorileri). Telefonda altta 5 düğmelik sabit gezinme, masaüstünde solda aynı sıra.
- - v2.0.0 Özet: admin_dashboard (kirmizi-isg-mobile 20261023150000_admin_dashboard.sql); yoksa eski admin_overview.
+ - v2.0.1 Ayarlar → Yapay zekâ → Model seçimi: "Fotoğrafları gruplarla aynı anda analiz" (ai_settings.report_photos_per_call,
+   0–20, 0 = kapalı; kirmizi-isg-mobile 20261023150000 ve 20261023235000_admin_photos_per_call.sql).
+ - v2.0.0 Özet: admin_dashboard (kirmizi-isg-mobile 20261023200000_admin_dashboard.sql); yoksa eski admin_overview.
    İlanlar: admin_list_jobs, admin_close_job, admin_publish_job, admin_grant_job_credit, admin_jobs_config,
-   admin_set_job_owner (20261023160000_admin_jobs.sql). Destek: admin_list_support, admin_set_support_status,
-   admin_reply_support (20261023170000_admin_support.sql); yoksa eski yol (support_requests + RLS, yanıt yok).
-   Acil durum: admin_app_switches, admin_set_app_version (20261023180000_admin_app_version.sql).
+   admin_set_job_owner (20261023210000_admin_jobs.sql). Destek: admin_list_support, admin_set_support_status,
+   admin_reply_support (20261023220000_admin_support.sql); yoksa eski yol (support_requests + RLS, yanıt yok).
+   Acil durum: admin_app_switches, admin_set_app_version (20261023230000_admin_app_version.sql).
    Eski "Saha Raporu" bölümünün sekmeleri: Yapay zekâ (Model seçimi, Modeller, Prompt'lar, Rapor sınırları, Kullanım ve
    maliyet), Rapor metinleri (Kontrol listesi, Defter ve bildirim, QR yazısı ve sayfası), Topluluk kuralları (Spam ve
    yeni hesap, Yasaklı kelimeler, İş ilanı ifadeleri) ve Yapay zekâ bütçeleri. Eski ?b=fieldreports adresi Yapay zekâ'yı açar.
@@ -412,7 +414,7 @@ const CONFIG = Object.freeze({
   supabaseKey: 'sb_publishable_EeIO-kiSHIhdYotKcew3Vg_E9Qhgsl0',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '2.0.0',
+  version: '2.0.1',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -1330,7 +1332,7 @@ function replySupport(r) {
   });
 }
 
-/* ----- İş ilanları (v2.0.0; kirmizi-isg-mobile 20261023160000_admin_jobs.sql). İlan kaldırılınca silinmez, "Kapatıldı"
+/* ----- İş ilanları (v2.0.0; kirmizi-isg-mobile 20261023210000_admin_jobs.sql). İlan kaldırılınca silinmez, "Kapatıldı"
    olur. Yönetimden ilan: ilan hakkı gerekmez; sahibi ilan hesabı (Kırmızı İSG adına) ya da isteyen kullanıcı. ----- */
 // İl kodları uygulamayla aynı: plaka sırası (kirmizi-isg-mobile src/shared/lib/cities.ts TR_PROVINCES), 0 = Yurt Dışı.
 const JOB_PROVINCES = ['Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Amasya', 'Ankara', 'Antalya', 'Artvin', 'Aydın', 'Balıkesir', 'Bilecik', 'Bingöl', 'Bitlis', 'Bolu', 'Burdur', 'Bursa', 'Çanakkale', 'Çankırı',
@@ -2044,6 +2046,9 @@ function frRouting(cfg) {
     return el;
   };
   const threshold = h('input', { type: 'number', name: 'report_complex_photos', min: 0, max: 20, step: 1, value: s.report_complex_photos ?? '4', 'aria-label': 'Eşik' });
+  // v2.0.1 (ürün sahibi 2026-10-23; kirmizi-isg-mobile 20261023150000_report_photos_per_call.sql): fotoğraflar bu sayıda
+  // gruplara bölünüp aynı anda analiz edilir (report-ai). 0 = kapalı (tek istek). Varsayılan 2.
+  const perCall = h('input', { type: 'number', name: 'report_photos_per_call', min: 0, max: 20, step: 1, value: s.report_photos_per_call ?? '2', 'aria-label': 'Grup başına fotoğraf' });
   const style = h('div', { class: 'pa-radio', role: 'radiogroup', 'aria-label': 'Yazım tarzı' }, FR_STYLE.map(([val, text, sub]) =>
     h('label', null, h('input', { type: 'radio', name: 'report_style', value: val, checked: (s.report_style || 'dengeli') === val }), `${text} `, h('span', { class: 'pa-small', text: sub }))));
   const fields = {
@@ -2065,9 +2070,12 @@ function frRouting(cfg) {
     if (!Number.isInteger(n) || n < 0 || n > 20) { toast('Eşik 0 ile 20 arasında bir tam sayı olmalı.', true); return; }
     const next = Object.fromEntries(Object.entries(fields).map(([k, el]) => [k, el.value]));
     next.report_complex_photos = String(n);
+    const pc = Number(perCall.value);
+    if (!Number.isInteger(pc) || pc < 0 || pc > 20) { toast('Grup başına fotoğraf 0 ile 20 arasında bir tam sayı olmalı.', true); return; }
+    next.report_photos_per_call = String(pc);
     next.report_style = style.querySelector('input:checked')?.value || 'dengeli';
-    const names = { report_model_text: 'Yalnız yazı', report_model: 'Fotoğraflı', report_model_complex: 'Çok fotoğraflı', rewrite_model: 'Fotoğraflı yeniden yazma', free_report_model: 'Ücretsiz plan modeli', report_fallback_model: 'Yedek model', report_complex_photos: 'Çok fotoğraf eşiği', report_style: 'Yazım tarzı', ledger_model: 'Defter metni', notice_model: 'Bildirim tespiti', listing_model: 'İlan ve hizmet metni düzenleme' };
-    const fmt = (k, val) => k === 'report_style' ? (FR_STYLE.find(x => x[0] === val)?.[1] || val) : k === 'report_complex_photos' ? (val === '0' ? 'kapalı' : `${val} fotoğraf`) : (label(val) || (k === 'rewrite_model' ? 'fotoğraflı modelle aynı' : k === 'free_report_model' ? 'ücretli planlarla aynı' : ['ledger_model', 'notice_model', 'listing_model'].includes(k) ? 'yalnız yazı modeliyle aynı' : 'yok'));
+    const names = { report_model_text: 'Yalnız yazı', report_model: 'Fotoğraflı', report_model_complex: 'Çok fotoğraflı', rewrite_model: 'Fotoğraflı yeniden yazma', free_report_model: 'Ücretsiz plan modeli', report_fallback_model: 'Yedek model', report_complex_photos: 'Çok fotoğraf eşiği', report_photos_per_call: 'Fotoğrafları gruplarla aynı anda analiz', report_style: 'Yazım tarzı', ledger_model: 'Defter metni', notice_model: 'Bildirim tespiti', listing_model: 'İlan ve hizmet metni düzenleme' };
+    const fmt = (k, val) => k === 'report_style' ? (FR_STYLE.find(x => x[0] === val)?.[1] || val) : k === 'report_complex_photos' ? (val === '0' ? 'kapalı' : `${val} fotoğraf`) : k === 'report_photos_per_call' ? (!val ? 'ayarlanmamış' : val === '0' ? 'kapalı' : `${val} fotoğraflık gruplar`) : (label(val) || (k === 'rewrite_model' ? 'fotoğraflı modelle aynı' : k === 'free_report_model' ? 'ücretli planlarla aynı' : ['ledger_model', 'notice_model', 'listing_model'].includes(k) ? 'yalnız yazı modeliyle aynı' : 'yok'));
     const changes = Object.keys(next).filter(k => (s[k] || '') !== next[k]).map(k => ({ key: k, value: next[k], label: names[k], from: fmt(k, s[k] || ''), to: fmt(k, next[k]) }));
     frSaveChanges(changes, 'Model seçimi kaydedilsin mi?', (c, reason) => rpc('admin_set_ai_setting', { p_key: c.key, p_value: c.value, p_reason: reason }));
   };
@@ -2079,6 +2087,7 @@ function frRouting(cfg) {
         row('Fotoğraflı', `1 ile ${Math.max(1, Number(s.report_complex_photos || 4) - 1)} fotoğraf arası analiz.`, fields.report_model),
         row('Çok fotoğraflı', 'Eşik ve üstü fotoğraflı analiz (güçlü model).', fields.report_model_complex),
         row('Çok fotoğraf eşiği', 'Bu sayıda ve üstü fotoğrafta “Çok fotoğraflı” model kullanılır. 0 = kapalı.', threshold),
+        row('Fotoğrafları gruplarla aynı anda analiz', 'Fotoğrafları kaçarlı gruplarla aynı anda analiz et (0: kapalı). Gruplar aynı anda çalıştığı için analiz kısalabilir; her grup ayrı istek olduğundan maliyet biraz artabilir.', perCall),
         row('Fotoğraflı yeniden yazma', '“Yeniden yaz / Ben söyleyeyim”, fotoğraflı bulguda.', fields.rewrite_model),
         // v1.14.0 (ürün sahibi 2026-10-20, isteğe bağlı): ücretsiz kullanıcıya ayrı model. Ucuz model ücretsiz kotayı daha
         // çok rapora yayar ama PRO farkı belirginleşir; güçlü model ise ücretsiz kotayı çabuk bitirir.
