@@ -14,7 +14,7 @@ function seed() {
 // terminology-city-filter ile aynı: hizmet listesinde or=(...) koşullarını gerçek PostgREST gibi değerlendir
 const orLog = [];
 async function logicRest(ctx) {
-  await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/professional_services*', async route => {
+  await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/professional_services*', async route => {
     const req = route.request(), u = new URL(req.url());
     const ors = u.searchParams.getAll('or');
     if (req.method() !== 'GET' || !ors.length || u.searchParams.get('id')) return route.fallback();

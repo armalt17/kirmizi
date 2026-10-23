@@ -27,7 +27,7 @@ try {
     await setup(ctx, false);
     const user = { id: U1, aud: 'authenticated', email: 'a@b.c', role: 'authenticated', created_at: new Date(Date.now() - 3600e3).toISOString(), user_metadata: { full_name: 'Ayşe Yılmaz', kisg_legal: LEGAL, kisg_disc: true } };
     const updates = [];
-    await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/auth/v1/**', r => {
+    await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/auth/v1/**', r => {
       const req = r.request();
       if (req.method() === 'OPTIONS') return r.fulfill({ status: 200, headers: H });
       if (req.url().includes('/token')) return r.fulfill({ headers: H, contentType: 'application/json', body: JSON.stringify({ access_token: 'x.eyJzdWIiOiIxIn0.y', token_type: 'bearer', expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: 'r', user }) });
@@ -77,7 +77,7 @@ try {
     const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
     await setup(ctx, true);
     let posts = 0;
-    await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/professional_post_comments*', async r => {
+    await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/professional_post_comments*', async r => {
       if (r.request().method() === 'POST') { posts++; await new Promise(res => setTimeout(res, 1500)); }
       return r.fallback();
     });
@@ -131,7 +131,7 @@ try {
     const card = `[data-view="works"] [data-post-id="${PID}"]`;
     if (!(await f.$(`${card} .kw-act-like.is-liked`))) { await f.click(`${card} .kw-act-like`); await f.waitForSelector(`${card} .kw-act-like.is-liked`); await settle(page, 600); }
     // detayın beğeni sorgusu gecikirse bile kalp bilinen durumla gelmeli
-    await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/professional_post_likes*', async r => { if (r.request().method() === 'GET') await new Promise(res => setTimeout(res, 2500)); return r.fallback(); });
+    await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/professional_post_likes*', async r => { if (r.request().method() === 'GET') await new Promise(res => setTimeout(res, 2500)); return r.fallback(); });
     await f.evaluate(s => document.querySelector(`${s} a.kw-post-detail`).click(), card);
     await f.waitForSelector(`[data-view="work"] [data-post-id="${PID}"] .kw-act-like`);
     check(await f.evaluate(id => document.querySelector(`[data-view="work"] [data-post-id="${id}"] .kw-act-like`).classList.contains('is-liked'), PID), 'beğenilmiş Post detayda ilk çizimde kırmızı kalple açıldı (sunucu yanıtı beklenmeden)');

@@ -179,7 +179,7 @@ function server(ctx) {
   st.ready = Promise.all([
     ctx.route('https://isgcalisanplatformu.com/**', r => r.fulfill({ contentType: 'text/html', body: hostPage(new URL(r.request().url()).pathname) })),
     ctx.route('https://cdn.jsdelivr.net/**', r => { const f = libs[r.request().url()]; return f ? r.fulfill({ headers: { 'access-control-allow-origin': '*' }, body: fs.readFileSync(f) }) : r.fulfill({ status: 404 }); }),
-    ctx.route('https://twaptpofhbnnfciowoig.supabase.co/storage/**', r => {
+    ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/storage/**', r => {
       const req = r.request(), p = new URL(req.url()).pathname, J = b => r.fulfill({ headers: H, contentType: 'application/json', body: JSON.stringify(b) });
       if (req.method() === 'OPTIONS') return r.fulfill({ status: 200, headers: H });
       const sign = /\/object\/sign\/kisg-verifications\/(.+)$/.exec(p);
@@ -188,7 +188,7 @@ function server(ctx) {
       if (/\/object\/kisg-verifications$/.test(p) && req.method() === 'DELETE') { const b = JSON.parse(req.postData() || '{}'); if (st.failRemove) return r.fulfill({ status: 400, headers: H, contentType: 'application/json', body: '{"message":"x"}' }); st.removed.push(...(b.prefixes || [])); return J((b.prefixes || []).map(name => ({ name }))); }
       return r.fulfill({ status: 404, headers: H, body: '' });
     }),
-    ctx.route('https://twaptpofhbnnfciowoig.supabase.co/auth/v1/**', r => {
+    ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/auth/v1/**', r => {
       const req = r.request(), p = new URL(req.url()).pathname;
       if (req.method() === 'OPTIONS') return r.fulfill({ status: 200, headers: H });
       if (p.endsWith('/token')) {
@@ -201,7 +201,7 @@ function server(ctx) {
       const uid = uidOf((req.headers().authorization || '').replace(/^Bearer /i, ''));
       return r.fulfill({ headers: H, contentType: 'application/json', body: JSON.stringify({ id: uid, aud: 'authenticated', email: uid === X ? 'admin@ornek.com' : 'ayse@ornek.com' }) });
     }),
-    ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/**', r => {
+    ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/**', r => {
       const req = r.request(), u = new URL(req.url());
       if (req.method() === 'OPTIONS') return r.fulfill({ status: 200, headers: H });
       const m = /\/rest\/v1\/rpc\/([a-z_]+)$/.exec(u.pathname);
@@ -239,7 +239,7 @@ const session = uid => ([key, value]) => localStorage.setItem(key, value);
 async function open(browser, { uid = null, width = 1280, height = 900, qs = '' } = {}) {
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1 });
   const st = server(ctx); await st.ready;
-  if (uid) await ctx.addInitScript(session(uid), ['sb-twaptpofhbnnfciowoig-auth-token', JSON.stringify({ access_token: tokenFor(uid), token_type: 'bearer', expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: 'r', user: { id: uid, aud: 'authenticated', email: uid === X ? 'admin@ornek.com' : 'ayse@ornek.com' } })]);
+  if (uid) await ctx.addInitScript(session(uid), ['sb-cglndmbjinzmmbimxqok-auth-token', JSON.stringify({ access_token: tokenFor(uid), token_type: 'bearer', expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: 'r', user: { id: uid, aud: 'authenticated', email: uid === X ? 'admin@ornek.com' : 'ayse@ornek.com' } })]);
   const page = await ctx.newPage();
   const errs = []; page.on('pageerror', e => errs.push(String(e)));
   await page.goto('https://isgcalisanplatformu.com/pro-admin' + qs);

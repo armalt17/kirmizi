@@ -5,7 +5,7 @@ import { splitTop, unq, likeRe, evalExpr } from '../helpers/postgrest-logic.mjs'
 
 const reqLog = [];
 async function logicRest(ctx) {
-  await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/**', async route => {
+  await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/**', async route => {
     const req = route.request(), u = new URL(req.url()), table = u.pathname.split('/').pop();
     if (req.method() !== 'GET' || !['profiles', 'professional_services'].includes(table) || !u.searchParams.getAll('or').length) return route.fallback();
     reqLog.push({ table, url: decodeURIComponent(u.search) });

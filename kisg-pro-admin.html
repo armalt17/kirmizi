@@ -28,6 +28,8 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
    (Belgeler ve planlar, Eğitim, Yangın ve acil durum…; boş = Diğer), listede konu sütunu; öncelikte "İyileştirme" de var
    (kirmizi-isg-mobile 20261022140000_checklist_categories.sql). Model seçimi'nde "İlan ve hizmet metni düzenleme"
    (listing_model, boş = Yalnız yazı modeli; kirmizi-isg-mobile 20261022120000_listing_ai_v2.sql).
+ - v1.24.0 Supabase Frankfurt production'a (cglndmbjinzmmbimxqok) bağlı; J0 oturum aktarımı (ana uygulamayla aynı).
+   Geçiş gecesinden önce YAYINLANMAZ.
  - v1.22.0 Saha Raporu → Limitler: "Hizmet / ilan yapay zekâ düzenleme (günlük)" (listing_ai_daily_limit; herkese açık,
    rapor bütçesinden düşmez; kirmizi-isg-mobile 20261021230000).
  - v1.21.1 "Taslak dilekçe" adları (şablon, kılavuz, sebep ifadesi).
@@ -54,7 +56,7 @@ BÖLÜMLER: Genel Bakış · Kullanıcılar · Postlar · Yorumlar · Hizmetler 
 <div id="kisgAdmin" lang="tr">
   <header class="pa-top">
     <a class="pa-brand" href="https://isgcalisanplatformu.com/" target="_top" aria-label="Kırmızı İSG Professional ana sayfa">
-      <img src="https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/logo.jpg" alt="" width="32" height="32" decoding="async">
+      <img src="https://cglndmbjinzmmbimxqok.supabase.co/storage/v1/object/public/general/logo.jpg" alt="" width="32" height="32" decoding="async">
       <span class="pa-brand-text"><b>Kırmızı İSG</b><i>Professional</i></span>
       <span class="pa-pill">Yönetim</span>
     </a>
@@ -302,11 +304,11 @@ if (!root || root.dataset.ready) return;
 root.dataset.ready = 'true';
 
 const CONFIG = Object.freeze({
-  supabaseUrl: 'https://twaptpofhbnnfciowoig.supabase.co',
-  supabaseKey: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs',
+  supabaseUrl: 'https://cglndmbjinzmmbimxqok.supabase.co',
+  supabaseKey: 'sb_publishable_EeIO-kiSHIhdYotKcew3Vg_E9Qhgsl0',
   sdkUrl: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js',
   siteUrl: 'https://isgcalisanplatformu.com',
-  version: '1.23.0',
+  version: '1.24.0',
   pageSize: 25,
   hostWidthDesktopMax: 1480
 });
@@ -447,6 +449,11 @@ async function client() {
       });
       try { await window.kisgProfessionalSdkReady; } catch (e) { window.kisgProfessionalSdkReady = null; throw e; }
     }
+    // J0 (Frankfurt taşıması, 2026-10): Tokyo projesinin oturum kaydı bir kez yeni proje adına kopyalanır ve süresi dolmuş
+    // işaretlenir; SDK açılışta yenileme anahtarıyla (veritabanıyla taşındı) Frankfurt'tan yeni oturum alır. Kullanıcı girişli kalır.
+    try { const o = 'sb-twaptpofhbnnfciowoig-auth-token', n = `sb-${new URL(CONFIG.supabaseUrl).hostname.split('.')[0]}-auth-token`;
+      if (o !== n && !localStorage.getItem(n)) { const s = JSON.parse(localStorage.getItem(o) || 'null'); if (s?.refresh_token) localStorage.setItem(n, JSON.stringify({ ...s, expires_at: 0 })); }
+    } catch {}
     c = window.kisgProfessionalSupabaseClient ||= window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
   }
   db = c;

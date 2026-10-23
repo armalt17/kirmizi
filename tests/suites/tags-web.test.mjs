@@ -27,7 +27,7 @@ function seed() {
   ps.push = (...items) => push(...items.map(x => (x.tag_id ? { ...x, tag: db.professional_tags.find(t => t.id === x.tag_id) } : x)));
 }
 async function rpcMock(ctx, rpc, mode = {}) {
-  await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/rpc/kisg_*', r => {
+  await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/rpc/kisg_*', r => {
     const fn = new URL(r.request().url()).pathname.split('/').pop(), body = JSON.parse(r.request().postData() || '{}');
     rpc.push({ fn, body });
     if (mode.noRpc) return J(r, { code: 'PGRST202', message: 'Could not find the function' }, 404);
@@ -252,7 +252,7 @@ try {
     seed();
     const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } }); await setup(ctx, false);
     const rpc = []; await rpcMock(ctx, rpc, { noRpc: true });
-    await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/professional_posts?*', r => (/professional_tags/.test(decodeURIComponent(r.request().url())) ? J(r, { code: 'PGRST200', message: "Could not find a relationship between 'professional_posts' and 'professional_tags'" }, 400) : r.fallback()));
+    await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/professional_posts?*', r => (/professional_tags/.test(decodeURIComponent(r.request().url())) ? J(r, { code: 'PGRST200', message: "Could not find a relationship between 'professional_posts' and 'professional_tags'" }, 400) : r.fallback()));
     const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e)));
     await page.goto(`${SITE}/`); await settle(page, 2000);
     const f = frameOf(page);

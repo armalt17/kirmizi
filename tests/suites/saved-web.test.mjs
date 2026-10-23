@@ -114,7 +114,7 @@ try {
     resetDb();
     const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
     await setup(ctx, true);
-    await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/professional_saved_items*', r => r.fulfill({ status: 404, headers: H, contentType: 'application/json', body: JSON.stringify({ code: 'PGRST205', message: "Could not find the table 'public.professional_saved_items' in the schema cache" }) }));
+    await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/professional_saved_items*', r => r.fulfill({ status: 404, headers: H, contentType: 'application/json', body: JSON.stringify({ code: 'PGRST205', message: "Could not find the table 'public.professional_saved_items' in the schema cache" }) }));
     const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e)));
     await page.goto(`${SITE}/`); await settle(page, 1800);
     const f = frameOf(page);

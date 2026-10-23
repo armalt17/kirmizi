@@ -9,7 +9,7 @@ const SVC_U2 = 'aaaaaaaa-0000-4000-8000-000000000001', SVC_U1 = 'aaaaaaaa-0000-4
 const reqs = [];
 // professional_reports: PostgREST + migration sözleşmesi (yalnız INSERT, return=minimal, unique, kendi içeriği reddi)
 async function reportsRoute(ctx, { fail = false } = {}) {
-  await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/professional_reports*', async route => {
+  await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/professional_reports*', async route => {
     const req = route.request(), H = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 200, headers: H });
     const body = JSON.parse(req.postData() || 'null');

@@ -13,7 +13,7 @@ function authMock(ctx, { confirm = false, triggerDisc = false } = {}) {
   const byId = id => [...st.users.values()].find(u => u.id === id);
   const userObj = u => ({ id: u.id, aud: 'authenticated', role: 'authenticated', email: u.email, email_confirmed_at: u.confirmed ? new Date().toISOString() : null, user_metadata: u.meta || {}, app_metadata: { provider: 'email' }, identities: [{ id: u.id, identity_id: u.id, user_id: u.id, provider: 'email' }], created_at: new Date().toISOString() });
   const sess = u => ({ access_token: tokenFor(u.id), token_type: 'bearer', expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: 'r-' + u.id, user: userObj(u) });
-  st.ready = ctx.route('https://twaptpofhbnnfciowoig.supabase.co/auth/v1/**', r => {
+  st.ready = ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/auth/v1/**', r => {
     const req = r.request(), u = new URL(req.url()), path = u.pathname.replace('/auth/v1', ''), method = req.method();
     if (method === 'OPTIONS') return r.fulfill({ status: 200, headers: H });
     let body = {}; try { body = JSON.parse(req.postData() || '{}'); } catch {}

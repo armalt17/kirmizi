@@ -101,7 +101,7 @@ try {
     const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
     await setup(ctx, true);
     let refused = 0;
-    await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/professional_posts*', r => {
+    await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/professional_posts*', r => {
       if (r.request().method() === 'GET' && r.request().url().includes('image_path_2')) { refused++; return r.fulfill({ status: 400, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: JSON.stringify({ code: '42703', message: 'column professional_posts.image_path_2 does not exist' }) }); }
       return r.fallback();
     });

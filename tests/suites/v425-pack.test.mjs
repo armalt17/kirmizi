@@ -28,7 +28,7 @@ function seed() {
 
 // Ortak mock genel or=(…) imleçlerini yok sayar: Uzmanlar sorgusu için or + order + limit gerçek PostgREST gibi değerlendirilir.
 async function expertsRest(ctx) {
-  await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/profiles?*', route => {
+  await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/profiles?*', route => {
     const req = route.request(), u = new URL(req.url());
     if (req.method() !== 'GET' || u.searchParams.get('is_discoverable') !== 'eq.true' || !/services:/.test(u.searchParams.get('select') || '')) return route.fallback();
     let rows = db.profiles.filter(r => r.is_discoverable === true && u.searchParams.getAll('or').every(o => evalExpr('or' + o, r)));

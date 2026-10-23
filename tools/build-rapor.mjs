@@ -5,7 +5,7 @@
 // Anahtarlar istemciye açık (publishable) anahtarlardır; gizli anahtar yok.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
-const PROD = { url: 'https://twaptpofhbnnfciowoig.supabase.co', key: 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs' };
+const PROD = { url: 'https://cglndmbjinzmmbimxqok.supabase.co', key: 'sb_publishable_EeIO-kiSHIhdYotKcew3Vg_E9Qhgsl0' };
 const STAGING = { url: 'https://vleellyrhmtjpwgzrqii.supabase.co', key: 'sb_publishable_85NeRUePWMVOCQH4sOISuw_CzdvwlDR' };
 
 const src = readFileSync(new URL('../kisg-rapor.html', import.meta.url), 'utf8');

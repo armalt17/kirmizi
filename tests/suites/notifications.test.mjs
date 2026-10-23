@@ -91,7 +91,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   check(joinFilter?.filter === `recipient_id=eq.${U1}` && joinFilter?.schema === 'public', `${N} Realtime filtresi recipient_id=eq.{uid} (${joinFilter?.filter})`);
   // v4.12.1 regresyonu: bildirim kanalı kullanıcı JWT'siyle katılmalı (anon → "invalid column for filter recipient_id")
   const notifJoins = () => rt.joinLog.filter(j => j.bindings.some(b => b.table === NT));
-  const sessToken = await page.evaluate(() => JSON.parse(localStorage.getItem('sb-twaptpofhbnnfciowoig-auth-token') || '{}').access_token);
+  const sessToken = await page.evaluate(() => JSON.parse(localStorage.getItem('sb-cglndmbjinzmmbimxqok-auth-token') || '{}').access_token);
   const nj = notifJoins();
   check(nj.length >= 1 && nj.every(j => !j.anon && j.token === sessToken) && nj[0].bindings.length === 1 && nj[0].bindings[0].schema === 'public' && nj[0].bindings[0].table === NT && nj[0].bindings[0].event === '*' && nj[0].bindings[0].filter === `recipient_id=eq.${U1}`, `${N} Realtime join: kullanıcı JWT'si + public.${NT} + recipient_id=eq.{uid} (${nj.map(j => j.anon ? 'anon' : 'jwt').join(',')})`);
   check(rt.rejects.length === 0, `${N} Realtime: "invalid column for filter" reddi yok (${JSON.stringify(rt.rejects)})`);

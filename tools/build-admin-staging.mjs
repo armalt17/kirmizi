@@ -14,7 +14,7 @@ export const STAGING = Object.freeze({
   url: 'https://vleellyrhmtjpwgzrqii.supabase.co',
   key: 'sb_publishable_85NeRUePWMVOCQH4sOISuw_CzdvwlDR'
 });
-const PROD_URL = 'https://twaptpofhbnnfciowoig.supabase.co';
+const PROD_URL = 'https://cglndmbjinzmmbimxqok.supabase.co';
 
 export function buildStaging(src) {
   let out = src;
@@ -24,7 +24,7 @@ export function buildStaging(src) {
     out = out.replace(from, to);
   };
   once(`supabaseUrl: '${PROD_URL}'`, `supabaseUrl: '${STAGING.url}'`, 'supabaseUrl');
-  once(/supabaseKey: '(sb_publishable_[A-Za-z0-9_]+)'/.exec(out)?.[0] ?? 'supabaseKey: <yok>', `supabaseKey: '${STAGING.key}'`, 'supabaseKey');
+  once(/supabaseKey: '(sb_publishable_[A-Za-z0-9_-]+)'/.exec(out)?.[0] ?? 'supabaseKey: <yok>', `supabaseKey: '${STAGING.key}'`, 'supabaseKey');
   once('<span class="pa-pill">Yönetim</span>', '<span class="pa-pill" style="background:#e30a17">TEST · staging</span>', 'etiket');
   once('<!--\nKIRMIZI İSG — PROFESSIONAL ADMIN', '<!--\nTEST KOPYASI (STAGING) — canlı /pro-admin sayfasına YAPIŞTIRMAYIN.\nKIRMIZI İSG — PROFESSIONAL ADMIN', 'başlık');
   const js = out.split('<script>')[1]?.split('</script>')[0] ?? '';

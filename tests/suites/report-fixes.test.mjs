@@ -6,7 +6,7 @@ const SITE = 'https://isgcalisanplatformu.com';
 const settle = (page, ms = 800) => page.waitForTimeout(ms);
 const until = async (fn, ms = 8000) => { const t = Date.now(); while (Date.now() - t < ms) { if (await fn()) return true; await new Promise(r => setTimeout(r, 60)); } return false; };
 const J = (route, status, body) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(body) });
-const AV = `https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/profile-avatars/${U1}/avatar-old.webp`;
+const AV = `https://cglndmbjinzmmbimxqok.supabase.co/storage/v1/object/public/profile-avatars/${U1}/avatar-old.webp`;
 const vp = { viewport: { width: 1366, height: 900 } };
 
 async function openAvatar(page, f) {
@@ -27,7 +27,7 @@ try {
   for (const mode of ['error', 'zero', 'ok']) {
     resetDb(); db.profiles.find(p => p.id === U1).avatar_url = AV;
     const ctx = await browser.newContext(vp); await setup(ctx, true);
-    if (mode !== 'ok') await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/profiles?*', r => (r.request().method() === 'PATCH' && /avatar_url/.test(r.request().postData() || '') ? (mode === 'error' ? J(r, 500, { message: 'boom' }) : /object/.test(r.request().headers()['accept'] || '') ? J(r, 406, { code: 'PGRST116', message: 'JSON object requested, multiple (or no) rows returned' }) : J(r, 200, [])) : r.fallback()));
+    if (mode !== 'ok') await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/profiles?*', r => (r.request().method() === 'PATCH' && /avatar_url/.test(r.request().postData() || '') ? (mode === 'error' ? J(r, 500, { message: 'boom' }) : /object/.test(r.request().headers()['accept'] || '') ? J(r, 406, { code: 'PGRST116', message: 'JSON object requested, multiple (or no) rows returned' }) : J(r, 200, [])) : r.fallback()));
     const page = await ctx.newPage(); await page.goto(`${SITE}/`); await settle(page, 1500);
     const f = frameOf(page); await f.waitForSelector('[data-view="works"] [data-post-id]');
     uploads.length = 0; writes.length = 0;
@@ -81,7 +81,7 @@ try {
     // F02: kendi yorumunu düzenle → 503 → yazılan metin alanda kalır
     await f.evaluate(s => document.querySelector(`${s} [data-comment-form]`).requestSubmit(), card); await settle(page, 900);
     const own = `${card} .cp`;
-    await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/professional_post_comments?*', r => (r.request().method() === 'PATCH' ? J(r, 503, { message: 'unavailable' }) : r.fallback()));
+    await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/professional_post_comments?*', r => (r.request().method() === 'PATCH' ? J(r, 503, { message: 'unavailable' }) : r.fallback()));
     await f.evaluate(s => document.querySelector(`${s} [data-popover-trigger]`).click(), own);
     await f.evaluate(s => document.querySelector(`${s} [data-comment-act="edit"]`).click(), own); await settle(page, 200);
     await f.fill(`${own} [data-comment-edit] textarea`, 'Yeni düzenleme metni');
@@ -97,7 +97,7 @@ try {
     const sid = db.professional_services.find(v => v.user_id === U1 && v.status === 'active').id;
     const ctx = await browser.newContext(vp); await setup(ctx, true);
     let patched = false;
-    await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/professional_services?*', r => {
+    await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/professional_services?*', r => {
       const m = r.request().method(), u = decodeURIComponent(r.request().url());
       if (m === 'PATCH') { patched = true; return r.fallback(); }
       if (m === 'GET' && patched && u.includes(`id=eq.${sid}`)) return J(r, 503, { message: 'unavailable' });
@@ -121,7 +121,7 @@ try {
     const ctx = await browser.newContext({ ...vp, acceptDownloads: true }); await setup(ctx, true);
     await ctx.route(/Inter_\d+\w+\.ttf$/, r => r.fulfill({ status: 404, body: '' }));
     let served = 0;
-    await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/professional_services?*', async r => {
+    await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/professional_services?*', async r => {
       const u = decodeURIComponent(r.request().url());
       if (r.request().method() !== 'GET' || !u.includes(`user_id=eq.${U1}`) || u.includes('count')) return r.fallback();
       if (mode === 'error') return J(r, 503, { message: 'unavailable' });

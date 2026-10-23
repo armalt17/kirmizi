@@ -23,7 +23,7 @@ function seedRail() {
 }
 // Gömülü author canlı profiles tablosundan (is_discoverable dahil) — gerçek PostgREST gibi
 async function liveAuthors(ctx) {
-  await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/professional_posts?*', async route => {
+  await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/professional_posts?*', async route => {
     const req = route.request(), u = new URL(req.url());
     if (req.method() !== 'GET' || !/is_discoverable/.test(u.searchParams.get('select') || '')) return route.fallback();
     let rows = db.professional_posts.filter(r => !u.searchParams.get('status') || r.status === u.searchParams.get('status').slice(3));

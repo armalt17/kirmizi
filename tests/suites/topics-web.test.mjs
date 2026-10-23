@@ -36,8 +36,8 @@ try {
     const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, isMobile: vp.isMobile, hasTouch: vp.hasTouch });
     await setup(ctx, true);
     const reqs = [];
-    await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/professional_tags*', r => { if ((r.request().url()).includes('today')) reqs.push({ url: decodeURIComponent(r.request().url()) }); return serveTags(r); });
-    await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/rpc/kisg_tags_trending', r => r.fulfill({ headers: H, contentType: 'application/json', body: JSON.stringify([PIN, { ...TAGS[0], slot: 'hot', posts: 30, posts_24h: 5 }]) }));
+    await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/professional_tags*', r => { if ((r.request().url()).includes('today')) reqs.push({ url: decodeURIComponent(r.request().url()) }); return serveTags(r); });
+    await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/rpc/kisg_tags_trending', r => r.fulfill({ headers: H, contentType: 'application/json', body: JSON.stringify([PIN, { ...TAGS[0], slot: 'hot', posts: 30, posts_24h: 5 }]) }));
     const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e)));
     await page.goto(`${SITE}/`); await settle(page, 1500);
     const f = frameOf(page);
@@ -105,7 +105,7 @@ try {
     resetDb();
     const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
     await setup(ctx, true);
-    await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/professional_tags*', r => (r.request().url().includes('today') ? r.fulfill({ status: 500, headers: H, contentType: 'application/json', body: '{"message":"x"}' }) : r.fallback()));
+    await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/professional_tags*', r => (r.request().url().includes('today') ? r.fulfill({ status: 500, headers: H, contentType: 'application/json', body: '{"message":"x"}' }) : r.fallback()));
     const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e)));
     await page.goto(`${SITE}/?sayfa=konular`); await settle(page, 1800);
     const f = frameOf(page);

@@ -122,7 +122,7 @@ for (const vp of VPS.slice(0, +(process.env.NVP || 2))) {
     // çıkış: route korunur
     await page.evaluate(() => { const n = document.getElementById('kisg-pro-nav').shadowRoot; n.querySelector('[data-popover-trigger]').click(); n.querySelector('[data-action="signout"]').click(); }); await settle(page, 800);
     check(await acct(page) === 'guest' && page.url().endsWith(`/profil?id=${U2}`) && await visibleView(f) === 'profile', `${N} mevcut: çıkış → misafir, aynı sayfa`);
-    check(await page.evaluate(() => !localStorage.getItem('sb-twaptpofhbnnfciowoig-auth-token') && !localStorage.getItem('kisg:me:v1')), `${N} mevcut: çıkışta oturum ve "ben" önbelleği temizlendi`);
+    check(await page.evaluate(() => !localStorage.getItem('sb-cglndmbjinzmmbimxqok-auth-token') && !localStorage.getItem('kisg:me:v1')), `${N} mevcut: çıkışta oturum ve "ben" önbelleği temizlendi`);
     // auth gerektiren işlem: beğeni → giriş → işlem devam eder
     await navClick(page, 'works'); await f.waitForSelector('[data-view="works"] [data-post-id]'); await settle(page, 300);
     const pid = await f.evaluate(([u]) => [...document.querySelectorAll('[data-view="works"] [data-post-id]')].find(c => !c.querySelector(`a[href*="${u}"]`))?.dataset.postId, [U1]);
@@ -182,7 +182,7 @@ for (const vp of VPS.slice(0, +(process.env.NVP || 2))) {
     await f.evaluate(() => { const d = document.getElementById('kaProfileDialog'); if (d.open) d.close(); });
     auth.fail['/user'] = '401';
     await f.evaluate(() => document.querySelector('.kp-card [data-profile-action="edit"]').click()); await settle(page, 1500);
-    check(await acct(page) === 'guest' && await page.evaluate(() => !localStorage.getItem('sb-twaptpofhbnnfciowoig-auth-token')), `${N} verified: sunucu oturumu reddedince çıkış + yerel oturum temizlendi`);
+    check(await acct(page) === 'guest' && await page.evaluate(() => !localStorage.getItem('sb-cglndmbjinzmmbimxqok-auth-token')), `${N} verified: sunucu oturumu reddedince çıkış + yerel oturum temizlendi`);
     await ctx.close();
   }
   // --- 7. E-posta bağlantısı dönüşü: hash işlenir ve adresten silinir ---

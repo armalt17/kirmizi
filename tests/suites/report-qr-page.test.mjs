@@ -34,7 +34,7 @@ const calls = [];
 const realFetch = globalThis.fetch;
 globalThis.fetch = async (url, init = {}) => {
   const u = String(url);
-  if (!u.startsWith('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/rpc/')) throw new Error('beklenmeyen istek ' + u);
+  if (!u.startsWith('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/rpc/')) throw new Error('beklenmeyen istek ' + u);
   const name = u.split('/').pop(), body = JSON.parse(init.body);
   calls.push({ name, body, apikey: init.headers.apikey });
   let out = null;
@@ -59,7 +59,7 @@ const W = (await import(workerFile + '?t=' + Date.now())).default;
     last = await W.fetch(new Request('https://isgcalisanplatformu.com/r/api/report_public', { method: 'POST', headers: { 'CF-Connecting-IP': '203.0.113.9' }, body: JSON.stringify({ p_code: 'ZZZZZZZZZZZZZZZZZZZZ' }) }));
   }
   check(last.status === 429, 'Worker: dakikada 20 denemeden sonra 429');
-  check(calls.every(c => c.apikey === 'sb_publishable_PbG6v6BuhMVwVyRdCxHUMw_JscAAhVs'), 'Worker: Supabase\'e publishable anahtarla');
+  check(calls.every(c => c.apikey === 'sb_publishable_EeIO-kiSHIhdYotKcew3Vg_E9Qhgsl0'), 'Worker: Supabase\'e publishable anahtarla');
 }
 
 const browser = await chromium.launch(LAUNCH);
@@ -86,7 +86,7 @@ try {
   check(/tüm eksiklerin listesi değildir\. Onaylı defterdeki tespitler/.test(text) && /firmanızın adı ve raporun maddeleri gösterilmez/.test(text), 'alt notlar');
   const links = await page.locator('.kr-links a').evaluateAll(a => a.map(x => x.textContent + '=' + x.href).join('|'));
   check(links === 'Akış=https://isgcalisanplatformu.com/|Hizmet Bul=https://isgcalisanplatformu.com/hizmetler|İş İlanları=https://isgcalisanplatformu.com/isg-is-ilanlari', `alt satır bağlantıları ${links}`);
-  check(await page.locator('.kr-foot img').getAttribute('src') === 'https://twaptpofhbnnfciowoig.supabase.co/storage/v1/object/public/general/logo.jpg', 'alt satır: özgün logo');
+  check(await page.locator('.kr-foot img').getAttribute('src') === 'https://cglndmbjinzmmbimxqok.supabase.co/storage/v1/object/public/general/logo.jpg', 'alt satır: özgün logo');
   check(!/Firma/.test(text), 'firma adı yok');
   check(await page.locator('details#asli').evaluate(d => !d.open), '"aslıyla aynı mı?" kapalı başlar');
   await page.click('#asli summary');

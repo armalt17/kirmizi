@@ -223,8 +223,8 @@ function makePost(uid, extra = {}) {
 async function setup(ctx, loggedIn) {
   ctx._rt = realtimeMock(ctx); await ctx._rt.ready;
   await ctx.route('https://isgcalisanplatformu.com/**', r => r.fulfill({ contentType: 'text/html', body: hostPage(new URL(r.request().url()).pathname) }));
-  await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/**', handleRest);
-  await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/auth/v1/**', r => {
+  await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/**', handleRest);
+  await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/auth/v1/**', r => {
     const req = r.request(), H = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
     if (req.method() === 'OPTIONS') return r.fulfill({ status: 200, headers: H });
     const user = { id: U1, aud: 'authenticated', email: 'a@b.c', role: 'authenticated' };
@@ -232,7 +232,7 @@ async function setup(ctx, loggedIn) {
     if (req.url().includes('/logout')) return r.fulfill({ status: 204, headers: H, body: '' });
     return r.fulfill({ headers: H, contentType: 'application/json', body: JSON.stringify(user) });
   });
-  await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/storage/**', r => {
+  await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/storage/**', r => {
     const req = r.request(), u = new URL(req.url()), H = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' };
     if (req.method() === 'OPTIONS') return r.fulfill({ status: 200, headers: H });
     if (req.method() === 'GET' && /\/object\/public\/(professional-posts|general|profile-avatars)\//.test(u.pathname)) return r.fulfill({ headers: H, contentType: 'image/png', body: IMG });
@@ -244,7 +244,7 @@ async function setup(ctx, loggedIn) {
   if (process.env.SAFARI) await ctx.addInitScript(() => { const o = HTMLCanvasElement.prototype.toBlob; HTMLCanvasElement.prototype.toBlob = function (cb, type, q) { return o.call(this, cb, type === 'image/webp' ? 'image/png' : type, q); }; });
   if (loggedIn) await ctx.addInitScript(([uid]) => {
     const exp = Math.floor(Date.now() / 1000) + 3600;
-    localStorage.setItem('sb-twaptpofhbnnfciowoig-auth-token', JSON.stringify({ access_token: 'x.eyJzdWIiOiIxIn0.y', token_type: 'bearer', expires_in: 3600, expires_at: exp, refresh_token: 'r', user: { id: uid, aud: 'authenticated', email: 'a@b.c' } }));
+    localStorage.setItem('sb-cglndmbjinzmmbimxqok-auth-token', JSON.stringify({ access_token: 'x.eyJzdWIiOiIxIn0.y', token_type: 'bearer', expires_in: 3600, expires_at: exp, refresh_token: 'r', user: { id: uid, aud: 'authenticated', email: 'a@b.c' } }));
   }, [U1]);
 }
 const frameOf = page => page.frames().find(f => f !== page.mainFrame());

@@ -96,7 +96,7 @@ try {
   {
     const { ctx, page, f } = await boot(browser, vp);
     let fail = true;
-    await ctx.route('https://twaptpofhbnnfciowoig.supabase.co/rest/v1/legal_acceptances*', r => {
+    await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/legal_acceptances*', r => {
       if (r.request().method() === 'OPTIONS') return r.fallback();
       if (fail) return r.fulfill({ status: 500, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: JSON.stringify({ code: 'XX000', message: 'boom' }) });
       return r.fallback();
