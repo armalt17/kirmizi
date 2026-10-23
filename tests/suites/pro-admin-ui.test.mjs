@@ -47,6 +47,15 @@ function server(ctx) {
     { user_id: M, full_name: 'Mehmet Öztürk', role: 'İSG Uzmanı', city: 'Kocaeli', status: 'pending', doc_path: `${M}/2.png`, verified_name: null, reason: null, submitted_at: iso(20), decided_at: null, is_pro: false, pro_until: null },
     { user_id: P, full_name: 'Can Demir', role: null, city: null, status: 'approved', doc_path: null, verified_name: 'Can Demir', reason: null, submitted_at: iso(900), decided_at: iso(800), is_pro: true, pro_until: null }];
   st.removed = [];
+  st.reports = reports; st.users = users;
+  // v2.0.0 İlanlar: ilan hesabı yok; 2 yayında + 1 kapatılmış ilan
+  const J1 = 'jjjjjjjj-0000-4000-8000-000000000001'.replace(/j/g, 'd'), J2 = 'dddddddd-0000-4000-8000-000000000002', J3 = 'dddddddd-0000-4000-8000-000000000003';
+  st.J = { J1, J2, J3 };
+  st.jobs = [
+    { id: J1, job_position: 'B Sınıfı İş Güvenliği Uzmanı', company_name: 'Örnek Yapı', cities: [34, 41], work_type: 'Tam Zamanlı', urgency: 'acil', description: 'Şantiye için B sınıfı uzman aranıyor.', contact_info: 'ik@ornek.com', status: 'published', closed_reason: null, published_at: iso(600), expires_at: iso(-30000), closed_at: null, created_at: iso(600), user_id: M, owner_name: 'Mehmet Öztürk', owner_email: 'mehmet@ornek.com', open_report_count: 1 },
+    { id: J2, job_position: 'İşyeri Hekimi', company_name: 'Örnek OSGB', cities: [6], work_type: 'Kısmi Süreli', urgency: 'normal', description: 'Haftada iki gün.', contact_info: '0212 000 00 00', status: 'published', closed_reason: null, published_at: iso(1200), expires_at: iso(-8000), closed_at: null, created_at: iso(1200), user_id: A, owner_name: 'Ayşe Yılmaz', owner_email: 'ayse@ornek.com', open_report_count: 0 },
+    { id: J3, job_position: 'İSG Teknikeri', company_name: 'Eski Firma', cities: [0], work_type: 'Proje Bazlı', urgency: 'normal', description: 'Kapandı.', contact_info: 'x@ornek.com', status: 'closed', closed_reason: 'owner', published_at: iso(90000), expires_at: iso(40000), closed_at: iso(50000), created_at: iso(90000), user_id: M, owner_name: 'Mehmet Öztürk', owner_email: 'mehmet@ornek.com', open_report_count: 0 }];
+  st.jobOwner = null; st.credits = { [A]: 0, [M]: 1 }; st.switches = { min_app_version_ios: '1.2.0', min_app_version_android: '' }; st.missing = [];
   // v1.9.0 Saha Raporu: admin_report_config tek çağrıda ayarlar; yazma RPC'leri sunucu kurallarını taklit eder
   const Q1 = 'a1a1a1a1-0000-4000-8000-000000000001', Q2 = 'a2a2a2a2-0000-4000-8000-000000000002';
   st.fr = {
@@ -82,6 +91,40 @@ function server(ctx) {
   const bad = m => { throw { code: '22023', message: `KISG_ADMIN_INPUT: ${m}` }; };
   const withTotal = rows => rows.map(r => ({ ...r, total_count: rows.length }));
   const ADMIN_RPC = {
+    // v2.0.0 Özet: admin_dashboard
+    admin_dashboard: () => ({ day_start: iso(600), month_start: iso(30000),
+      pending: { support: st.support.filter(x => x.status === 'open').length, reports: reports.filter(r => r.status === 'pending').length, verifications: st.verif.filter(v => v.status === 'pending').length },
+      users: { total: 1296, today: 4, week: 12 }, content: { posts_today: 5, comments_today: 7, services_active: 3, jobs_active: 2, jobs_expiring_7d: 1 },
+      revenue: { pro: 58, max: 12, job_credits_sold_month: 14, welcome_credits_month: 22, welcome_credits_total: 40, manual_credits_month: 2 },
+      reports: { created_month: 312, pdf_month: 274 },
+      ai: { cost_month_usd: 48.2, calls_month: 900, top_users: [{ user_id: A, full_name: 'Ayşe Yılmaz', email: 'ayse@ornek.com', cost_usd: 6.4, calls: 120 }, { user_id: M, full_name: 'Mehmet Öztürk', email: 'mehmet@ornek.com', cost_usd: 5.1, calls: 80 }] },
+      security: { active_suspensions: 1, active_bans: 0, admin_actions_7d: 4 } }),
+    // v2.0.0 Destek RPC'leri (eski doğrudan tablo yolu st.missing ile denenir)
+    admin_list_support: a => withTotal(st.support.filter(x => (!a.p_status || x.status === a.p_status) && (!a.p_category || x.category === a.p_category))
+      .map(x => ({ ...x, full_name: users.find(u => u.id === x.user_id)?.full_name, email: users.find(u => u.id === x.user_id)?.email }))),
+    admin_set_support_status: a => { const x = st.support.find(r => r.id === a.p_id); if (!x) throw { code: 'P0002', message: 'KISG_ADMIN_NOT_FOUND' }; x.status = a.p_status; return { id: x.id, status: x.status }; },
+    admin_reply_support: a => { const t = String(a.p_text || '').trim(); if (t.length < 2 || t.length > 2000) bad('reply'); const x = st.support.find(r => r.id === a.p_id);
+      Object.assign(x, { admin_reply: t, replied_at: iso(0), replied_by_name: 'Admin' }); if (a.p_resolve) x.status = 'resolved'; return { id: x.id, status: x.status }; },
+    // v2.0.0 İlanlar
+    admin_jobs_config: () => ({ owner: st.jobOwner ? { id: st.jobOwner, full_name: users.find(u => u.id === st.jobOwner)?.full_name, email: users.find(u => u.id === st.jobOwner)?.email } : null,
+      duration_days: 30, positions: ['B Sınıfı İş Güvenliği Uzmanı', 'İşyeri Hekimi'] }),
+    admin_set_job_owner: a => { st.jobOwner = a.p_user; return ADMIN_RPC.admin_jobs_config(); },
+    admin_list_jobs: a => { const q = String(a.p_q || '').toLowerCase(); return withTotal(st.jobs.filter(j => (!a.p_status || j.status === a.p_status) && (!q || j.job_position.toLowerCase().includes(q) || j.company_name.toLowerCase().includes(q)))); },
+    admin_close_job: a => { if (!String(a.p_reason || '').trim()) bad('reason'); const j = st.jobs.find(x => x.id === a.p_id); if (!j) throw { code: 'P0002', message: 'KISG_ADMIN_NOT_FOUND' };
+      if (j.status !== 'published') throw { code: '55000', message: 'KISG_ADMIN_STATE: ilan zaten yayında değil' }; Object.assign(j, { status: 'closed', closed_reason: 'admin', closed_at: iso(0) });
+      if (a.p_regrant) st.credits[j.user_id] = (st.credits[j.user_id] || 0) + 1; return { status: 'closed', regranted_credit: a.p_regrant ? 'c-1' : null }; },
+    admin_publish_job: a => {
+      if (!a.p_owner) bad('owner'); if (!String(a.p_reason || '').trim()) bad('reason');
+      const j = a.p_job || {}; if (!j.cities?.length) throw { code: '22023', message: 'KISG_JOB_INVALID: cities' }; if ((j.description || '').length < 30) throw { code: '22023', message: 'KISG_JOB_INVALID: description' };
+      const prev = st.jobs.find(x => x.request_id === a.p_request_id); if (prev) return { job_id: prev.id, repeated: true };
+      const n = { id: 'dddddddd-0000-4000-8000-00000000000' + (st.jobs.length + 1), job_position: j.position, company_name: j.company_name, cities: j.cities, work_type: j.work_type, urgency: j.urgency, description: j.description, contact_info: j.contact_info,
+        status: 'published', published_at: iso(0), expires_at: iso(-a.p_days * 1440), created_at: iso(0), user_id: a.p_owner, owner_name: users.find(u => u.id === a.p_owner)?.full_name, open_report_count: 0, request_id: a.p_request_id };
+      st.jobs.unshift(n); return { job_id: n.id, repeated: false }; },
+    admin_grant_job_credit: a => { if (!a.p_user) throw { code: 'P0002', message: 'KISG_ADMIN_NOT_FOUND' }; if (!(a.p_count >= 1 && a.p_count <= 10)) bad('count'); if (!String(a.p_reason || '').trim()) bad('reason');
+      st.credits[a.p_user] = (st.credits[a.p_user] || 0) + a.p_count; return { granted: a.p_count, available: st.credits[a.p_user] }; },
+    // v2.0.0 Acil durum: zorunlu güncelleme sürümü
+    admin_app_switches: () => ({ ...st.switches }),
+    admin_set_app_version: a => { const v = String(a.p_version || '').trim(); if (v && !/^\d{1,3}(\.\d{1,3}){0,2}$/.test(v)) bad('version'); st.switches[`min_app_version_${a.p_platform}`] = v; return { ...st.switches }; },
     admin_overview: () => ({ users_total: 1296, users_new_7d: 12, posts: { active: 14, hidden: 1, deleted: 3 }, comments: { active: 9, deleted: 3 }, services: { active: 3, archived: 1 }, reports: { pending: 2 }, active_suspensions: 1, active_bans: 0, warnings_30d: 2, admin_actions_7d: 4 }),
     admin_list_audit_log: () => withTotal([{ id: 'l1', admin_id: X, admin_name: 'Admin', action: 'post.hide', target_type: 'post', target_id: posts[1].id, reason: 'spam', before: {}, after: {}, created_at: iso(20) }]),
     admin_list_users: a => withTotal(users.filter(u => !a.p_q || u.full_name.toLowerCase().includes(String(a.p_q).toLowerCase()) || u.email.includes(a.p_q))),
@@ -227,7 +270,7 @@ function server(ctx) {
       st.rpc.push({ name, args, uid, method: req.method() });
       const J = (b, status = 200) => r.fulfill({ status, headers: H, contentType: 'application/json', body: JSON.stringify(b) });
       if (name === 'kisg_is_admin') return J(uid === X);
-      if (!ADMIN_RPC[name]) return J({ code: 'PGRST202', message: `Could not find the function public.${name}` }, 404);
+      if (!ADMIN_RPC[name] || st.missing.includes(name)) return J({ code: 'PGRST202', message: `Could not find the function public.${name}` }, 404);
       if (uid !== X) return J({ code: '42501', message: 'KISG_ADMIN_ONLY', details: null, hint: null }, 403);
       if (st.fail[name]) return J(st.fail[name], 400);
       try { return J(ADMIN_RPC[name](args)); } catch (e) { if (e?.code) return J(e, 400); return J({ code: '22023', message: 'KISG_ADMIN_STATE: yalniz aktif icerik gizlenir' }, 400); }
@@ -250,7 +293,19 @@ async function open(browser, { uid = null, width = 1280, height = 900, qs = '' }
 const until = async (fn, ms = 5000) => { const t = Date.now(); while (Date.now() - t < ms) { if (await fn()) return true; await new Promise(r => setTimeout(r, 50)); } return false; };
 const visible = (f, sel) => f.locator(sel).first().isVisible().catch(() => false);
 const lastRpc = (st, name) => [...st.rpc].reverse().find(x => x.name === name);
+// v2.0.0 gezinme: masaüstünde sol menü; telefonda alt çubuk (grup) + grup içi sekme ya da Menü satırı.
+const GROUP_OF = { overview: 'home', support: 'inbox', reports: 'inbox', verify: 'inbox', posts: 'content', comments: 'content', services: 'content', tags: 'content', jobs: 'jobs' };
+async function go(f, sec) {
+  if (await f.locator('.pa-nav').isVisible()) return f.click(`.pa-nav [data-sec="${sec}"]`);
+  const g = GROUP_OF[sec] || 'more';
+  await f.click(`.pa-tabbar [data-group="${g}"]`);
+  if (g === 'more') { if (sec !== 'menu') { await f.waitForSelector(`[data-menu="${sec}"]`); await f.click(`[data-menu="${sec}"]`); } return; }
+  if (g === 'home' || g === 'jobs') return;
+  await f.waitForSelector(`.pa-subnav [data-sec="${sec}"]`);
+  if ((await f.getAttribute(`.pa-subnav [data-sec="${sec}"]`, 'aria-current')) !== 'page') await f.click(`.pa-subnav [data-sec="${sec}"]`);
+}
 const ALLOWED = new Set(['kisg_is_admin', 'admin_set_report_qr_label', 'admin_set_report_steps', 'admin_set_report_assist', 'admin_overview', 'admin_list_users', 'admin_get_user', 'admin_list_content', 'admin_list_reports', 'admin_list_audit_log', 'admin_update_profile', 'admin_moderate_content', 'admin_sanction_user', 'admin_revoke_sanction', 'admin_resolve_report', 'admin_list_tags', 'admin_update_tag', 'admin_tag_posts', 'admin_pin_tag_post', 'admin_merge_tags', 'admin_list_service_categories', 'admin_create_service_category', 'admin_update_service_category', 'admin_reorder_service_categories', 'admin_delete_service_category', 'admin_service_category_icons', 'admin_list_verifications', 'admin_decide_verification', 'admin_revoke_verification',
+  'admin_dashboard', 'admin_list_support', 'admin_set_support_status', 'admin_reply_support', 'admin_jobs_config', 'admin_set_job_owner', 'admin_list_jobs', 'admin_close_job', 'admin_publish_job', 'admin_grant_job_credit', 'admin_app_switches', 'admin_set_app_version',
   'admin_report_config', 'admin_report_usage', 'admin_report_unit_stats', 'admin_set_ai_setting', 'admin_upsert_ai_model', 'admin_set_ai_prompt', 'admin_set_report_limit', 'admin_upsert_checklist_item', 'admin_reorder_checklist', 'admin_blocked_words', 'admin_set_blocked_word', 'admin_job_phrases', 'admin_set_job_phrase', 'admin_set_report_text']);
 
 // ---------------- statik ----------------
@@ -295,7 +350,7 @@ try {
     await page.screenshot({ path: path.join(OUT, 'pro-admin-overview-desktop.png'), fullPage: true });
 
     // Kullanıcılar
-    await f.click('.pa-nav [data-sec="users"]');
+    await go(f, 'users');
     check(await until(() => f.locator('[data-user]').count().then(n => n === 2)), 'Kullanıcılar listesi');
     check(new URL(page.url()).searchParams.get('b') === 'users', 'bölüm üst sayfa adresinde (?b=users)');
     await f.fill('.pa-search', 'mehmet');
@@ -352,7 +407,7 @@ try {
     await f.click('.pa-drawer button:has-text("Kapat")').catch(() => {});
 
     // Postlar
-    await f.click('.pa-nav [data-sec="posts"]');
+    await go(f, 'posts');
     check(await until(() => f.locator('[data-row]').count().then(n => n === 1)), 'Postlar: aktif filtre varsayılan');
     check(lastRpc(st, 'admin_list_content').args.p_kind === 'post' && lastRpc(st, 'admin_list_content').args.p_status === 'active', 'admin_list_content(post, active)');
     await f.click('[data-row] button:has-text("Gizle")');
@@ -373,13 +428,13 @@ try {
     await f.click('.pa-dialog button:has-text("Vazgeç")');
 
     // Yorumlar / Hizmetler
-    await f.click('.pa-nav [data-sec="comments"]');
+    await go(f, 'comments');
     check(await until(() => lastRpc(st, 'admin_list_content')?.args.p_kind === 'comment') && await until(async () => (await f.textContent('[data-main]')).includes('Kayıt yok')), 'Yorumlar bölümü (admin_list_content comment)');
-    await f.click('.pa-nav [data-sec="services"]');
+    await go(f, 'services');
     check(await until(() => lastRpc(st, 'admin_list_content')?.args.p_kind === 'service'), 'Hizmetler bölümü (admin_list_content service)');
 
     // Şikâyetler
-    await f.click('.pa-nav [data-sec="reports"]');
+    await go(f, 'reports');
     check(await until(() => f.locator('[data-report]').count().then(n => n === 2)), 'Şikâyetler: bekleyenler');
     check((await f.textContent('[data-report] >> nth=0')).includes('2 bekleyen şikâyet'), 'aynı hedefteki bekleyen şikâyet sayısı gösteriliyor');
     await f.click('[data-report] >> nth=0 >> button:has-text("Sonuçlandır")');
@@ -410,7 +465,7 @@ try {
     const { ctx, page, f, st } = await open(browser, { uid: X, qs: '?b=reports' });
     check(await until(() => f.locator('[data-report]').count().then(n => n === 2)), '?b=reports doğrudan Şikâyetler\'i açar');
     const frameH = () => page.evaluate(() => document.querySelector('iframe').getBoundingClientRect().height);
-    await f.click('.pa-nav [data-sec="overview"]'); await until(() => visible(f, '.pa-stats'));
+    await go(f, 'overview'); await until(() => visible(f, '.pa-stats'));
     await f.evaluate(() => { const m = document.querySelector('[data-main]'); m.append(Object.assign(document.createElement('div'), { style: 'height:2500px', id: 'tall' })); });
     await until(async () => (await frameH()) > 2500);
     const tallH = await frameH();
@@ -418,35 +473,61 @@ try {
     check(await until(async () => (await frameH()) < tallH - 2000), `içerik kısalınca iframe de küçülür (${Math.round(tallH)} → ${Math.round(await frameH())}px)`);
     const rect = await f.evaluate(() => { const n = document.querySelector('.pa-nav').getBoundingClientRect(), m = document.querySelector('[data-main]').getBoundingClientRect(); return { navTop: n.top, mainTop: m.top }; });
     check(Math.abs(rect.navTop - rect.mainTop) < 4, 'masaüstü: menü ve içerik aynı hizada başlıyor');
-    await f.click('.pa-nav [data-sec="reports"]'); await until(() => f.locator('[data-report]').count().then(n => n === 2));
+    await go(f, 'reports'); await until(() => f.locator('[data-report]').count().then(n => n === 2));
     check((await f.getAttribute('.pa-nav [data-sec="reports"]', 'aria-current')) === 'page', 'menüde aktif bölüm işaretli');
     st.fail.admin_list_users = { code: '42501', message: 'KISG_ADMIN_ONLY' };
-    await f.click('.pa-nav [data-sec="users"]');
+    await go(f, 'users');
     check(await until(() => visible(f, '[data-gate-pane="denied"]')), 'sunucu yetkiyi reddederse arayüz "Yetkiniz yok" ekranına döner');
     await ctx.close();
   }
-  // ---------------- 4b) Destek sekmesi (v1.2.0) ----------------
+  // ---------------- 4b) Destek (v2.0.0: RPC + yanıt; RPC yoksa eski doğrudan tablo yolu) ----------------
   for (const vp of [{ n: 'masaüstü', width: 1280, height: 900 }, { n: 'mobil', width: 390, height: 844 }]) {
     const { ctx, page, f, st, errs } = await open(browser, { uid: X, width: vp.width, height: vp.height });
     await until(() => visible(f, '.pa-stats'));
-    check(await visible(f, '.pa-nav [data-sec="support"]'), `${vp.n}: menüde "Destek" sekmesi`);
-    await f.click('.pa-nav [data-sec="support"]');
+    check(await visible(f, vp.width > 900 ? '.pa-nav [data-sec="support"]' : '.pa-tabbar [data-group="inbox"]'), `${vp.n}: menüde "Destek" / alt gezinmede "Bekleyen"`);
+    check(await until(async () => (await f.textContent('[data-support-count]')).trim() === '1' && (await f.textContent('[data-inbox-count]')).trim() === '5'), `${vp.n}: bekleyen sayıları (destek 1; toplam destek + şikâyet + onay = 5)`);
+    await go(f, 'support');
     check(await until(() => f.locator('[data-support]').count().then(n => n === 1)), `${vp.n}: varsayılan filtre Açık → 1 talep`);
+    check(lastRpc(st, 'admin_list_support')?.args.p_status === 'open', `${vp.n}: liste admin_list_support ile`);
     const card = await f.textContent('[data-support]');
-    check(card.includes('Teknik sorun') && card.includes('Açık') && card.includes('Ayşe Yılmaz') && card.includes('Fotoğraf yüklenmiyor.') && /\d{4}/.test(card), `${vp.n}: kullanıcı, kategori, mesaj, tarih ve durum görünüyor`);
+    check(card.includes('Teknik sorun') && card.includes('Açık') && card.includes('Ayşe Yılmaz') && card.includes('ayse@ornek.com') && card.includes('Fotoğraf yüklenmiyor.') && /\d{4}/.test(card), `${vp.n}: kullanıcı, e-posta, kategori, mesaj, tarih ve durum görünüyor`);
     check(await f.evaluate(() => getComputedStyle(document.querySelector('[data-support] .pa-body')).whiteSpace) === 'pre-wrap', `${vp.n}: mesaj satır sonları korunuyor`);
     await f.click('.pa-chip:text-is("Tümü")');
     check(await until(() => f.locator('[data-support]').count().then(n => n === 2)), `${vp.n}: Tümü → 2 talep`);
-    await f.click('[data-support="cccccccc-0000-4000-8000-000000000001"] button:text-is("Çözüldü yap")');
-    check(await until(() => st.support[0].status === 'resolved') && await until(async () => (await f.textContent('[data-support="cccccccc-0000-4000-8000-000000000001"]')).includes('Çözüldü')), `${vp.n}: open → resolved`);
-    const patch = st.table.filter(x => x.method === 'PATCH');
-    check(patch.length === 1 && patch[0].body === '{"status":"resolved"}' && patch[0].q.includes('id=eq.cccccccc-0000-4000-8000-000000000001'), `${vp.n}: yalnız status alanı, yalnız bu talep güncellendi ${JSON.stringify(patch)}`);
-    await f.click('[data-support="cccccccc-0000-4000-8000-000000000001"] button:text-is("Yeniden aç")');
+    const S1 = '[data-support="cccccccc-0000-4000-8000-000000000001"]';
+    await f.click(`${S1} button:text-is("Çözüldü yap")`);
+    check(await until(() => st.support[0].status === 'resolved') && lastRpc(st, 'admin_set_support_status')?.args.p_status === 'resolved' && await until(async () => (await f.textContent(S1)).includes('Çözüldü')), `${vp.n}: open → resolved (admin_set_support_status)`);
+    await f.click(`${S1} button:text-is("Yeniden aç")`);
     check(await until(() => st.support[0].status === 'open'), `${vp.n}: resolved → open`);
-    check(st.table.every(x => /\/(support_requests|profiles)$/.test(x.path)) && st.table.every(x => x.method !== 'POST' && x.method !== 'DELETE'), `${vp.n}: tablo isteği yalnız support_requests/profiles, ekleme/silme yok`);
+    // Yanıt: boş gönderilmez; gönderince çözüldü olur, kartta yanıt görünür
+    await until(() => f.locator(`${S1} button:text-is("Yanıtla")`).count().then(n => n === 1));
+    await f.click(`${S1} button:text-is("Yanıtla")`); await f.waitForSelector('.pa-dialog textarea[name="reply"]');
+    check(/bildirim olarak gider/.test(await f.textContent('.pa-dialog')) && /Fotoğraf yüklenmiyor/.test(await f.textContent('.pa-dialog')), `${vp.n}: yanıt penceresi talebi ve bildirim notunu gösterir`);
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(async () => /Yanıt yazın/.test(await f.textContent('.pa-dialog .pa-error'))) && !lastRpc(st, 'admin_reply_support'), `${vp.n}: boş yanıt gönderilmez`);
+    await f.fill('.pa-dialog textarea[name="reply"]', 'Merhaba, uygulamayı güncelleyip tekrar deneyebilir misiniz?');
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_reply_support')) && lastRpc(st, 'admin_reply_support').args.p_resolve === true && /güncelleyip/.test(lastRpc(st, 'admin_reply_support').args.p_text), `${vp.n}: admin_reply_support (yanıt + çözüldü)`);
+    check(await until(async () => (await f.textContent(S1)).includes('Yanıtınız') && (await f.textContent(S1)).includes('güncelleyip')), `${vp.n}: kartta yanıt görünüyor`);
+    check(!st.table.length, `${vp.n}: doğrudan tablo isteği yok ${JSON.stringify(st.table)}`);
     const ov = await f.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-    check(ov <= 1 && !errs.length, `${vp.n}: yatay taşma ve sayfa hatası yok ${errs.join(' ')}`);
+    check(ov <= 1 && !errs.length && st.rpc.every(x => ALLOWED.has(x.name)), `${vp.n}: yatay taşma ve sayfa hatası yok, yalnız izinli RPC ${errs.join(' ')}`);
     await page.screenshot({ path: path.join(OUT, `pro-admin-support-${vp.width}.png`), fullPage: true });
+    await ctx.close();
+  }
+  // Destek RPC'leri veritabanında yoksa (migration öncesi): eski yol, yanıt düğmesi yok
+  {
+    const { ctx, f, st, errs } = await open(browser, { uid: X });
+    st.missing.push('admin_list_support', 'admin_set_support_status', 'admin_reply_support');
+    await until(() => visible(f, '.pa-stats'));
+    await go(f, 'support');
+    check(await until(() => f.locator('[data-support]').count().then(n => n === 1)), 'eski yol: açık talep tablodan okunur');
+    check(!await f.locator('[data-support] button:text-is("Yanıtla")').count(), 'eski yol: yanıt düğmesi yok');
+    await f.click('[data-support="cccccccc-0000-4000-8000-000000000001"] button:text-is("Çözüldü yap")');
+    check(await until(() => st.support[0].status === 'resolved'), 'eski yol: durum tablodan değişir');
+    const patch = st.table.filter(x => x.method === 'PATCH');
+    check(patch.length === 1 && patch[0].body === '{"status":"resolved"}' && patch[0].q.includes('id=eq.cccccccc-0000-4000-8000-000000000001'), `eski yol: yalnız status alanı, yalnız bu talep ${JSON.stringify(patch)}`);
+    check(st.table.every(x => /\/(support_requests|profiles)$/.test(x.path)) && st.table.every(x => x.method !== 'POST' && x.method !== 'DELETE') && !errs.length, 'eski yol: tablo isteği yalnız support_requests/profiles, ekleme/silme yok');
     await ctx.close();
   }
   // ---------------- 4c) Etiketler (v1.3.0) ----------------
@@ -454,7 +535,7 @@ try {
     const { ctx, page, f, st, errs } = await open(browser, { uid: X, width: vp.width, height: vp.height });
     const { T1, T2, T3 } = st.T;
     await until(() => visible(f, '.pa-stats'));
-    await f.click('.pa-nav [data-sec="tags"]');
+    await go(f, 'tags');
     check(await until(() => f.locator('[data-tag]').count().then(n => n === 3)), `${vp.n}: Alanlar listesi`);
     check((await f.textContent('.pa-nav [data-sec="tags"]')).trim() === 'Alanlar' && (await f.textContent('main h1, .pa-main h1').catch(() => '')).includes('Alanlar'), `${vp.n}: menü ve başlık "Alanlar" (v1.6.0; sitedeki dille aynı)`);
     const l0 = lastRpc(st, 'admin_list_tags').args;
@@ -533,7 +614,7 @@ try {
     const { C1, C2, C3 } = st.C;
     const order = () => f.$$eval('[data-category]', r => r.map(x => x.dataset.category));
     await until(() => visible(f, '.pa-stats'));
-    await f.click('.pa-nav [data-sec="categories"]');
+    await go(f, 'categories');
     check(await until(() => f.locator('[data-category]').count().then(n => n === 3)), `${vp.n}: Hizmet Kategorileri listesi (sıraya göre)`);
     const r1 = await f.textContent(`[data-category="${C1}"]`), r3 = await f.textContent(`[data-category="${C3}"]`);
     check(r1.includes('İş Güvenliği Uzmanlığı') && r1.includes('4') && r1.includes('Görünür') && r3.includes('Gizli'), `${vp.n}: ad, aktif hizmet sayısı, durum`);
@@ -576,7 +657,7 @@ try {
     const { ctx, page, f, st, errs } = await open(browser, { uid: X, width: vp.width, height: vp.height });
     await until(() => visible(f, '.pa-stats'));
     check(await until(async () => (await f.textContent('[data-verify-count]')).trim() === '2'), `${vp.n}: menüde bekleyen onay sayısı`);
-    await f.click('.pa-nav [data-sec="verify"]');
+    await go(f, 'verify');
     check(await until(() => f.locator('[data-verify]').count().then(n => n === 2)), `${vp.n}: Onaylar: 2 bekleyen başvuru`);
     const A1 = `[data-verify="${A}"]`, M1 = `[data-verify="${M}"]`;
     const row = await f.evaluate(s => { const r = document.querySelector(s), img = r.querySelector('.pa-vdoc img'); return { src: img?.src || '', ok: img?.complete && img.naturalWidth > 0, txt: r.textContent }; }, A1);
@@ -621,7 +702,7 @@ try {
     const submit = async () => f.evaluate(() => document.querySelector('.pa-dialog').requestSubmit(document.querySelector('.pa-dialog button[type="submit"]')));
     const tab = async name => { await f.click(`.pa-tools .pa-chips button:text-is("${name}")`); };
     // Model seçimi
-    check(await until(() => visible(f, 'select[name="report_model_text"]')), `${vp.n}: Saha Raporu açıldı (?b=fieldreports), Model seçimi`);
+    check(await until(() => visible(f, 'select[name="report_model_text"]')) && /Yapay zekâ/.test(await f.textContent('.pa-head h1')), `${vp.n}: eski adres ?b=fieldreports → Ayarlar → Yapay zekâ, Model seçimi`);
     await page.screenshot({ path: path.join(OUT, `pro-admin-fieldreports-routing-${vp.width}.png`), fullPage: true });
     const visionOnly = await f.evaluate(() => [...document.querySelectorAll('select[name="report_model"] option')].map(o => o.value));
     check(visionOnly.includes('openai:gpt-4o') && !visionOnly.includes('openai:gpt-6-luna'), `${vp.n}: fotoğraflı modelde yalnız fotoğraf okuyan modeller (${visionOnly.join(', ')})`);
@@ -701,39 +782,32 @@ try {
     check(await until(() => !st.fr.prompts.some(x => x.target === 'openai' && x.purpose === 'report_analyze')) && lastRpc(st, 'admin_set_ai_prompt').args.p_prompt === '', `${vp.n}: özel prompt kaldırıldı (boş metin)`);
     await f.click('.pa-tools .pa-chips button:text-is("Yeniden yazma")');
     check(await until(() => f.locator('[data-prompt]').count().then(n => n === 1)), `${vp.n}: Yeniden yazma prompt'ları ayrı`);
-    // Limitler
-    await tab('Limitler');
-    check(await until(() => visible(f, 'input[name="ai_budget_pro_month_microusd"]')) && await f.inputValue('input[name="ai_budget_pro_month_microusd"]') === '10' && await f.inputValue('input[name="ai_budget_free_month_microusd"]') === '0.25', `${vp.n}: Limitler: bütçeler dolar olarak`);
-    check(/≈ 400 tipik rapor/.test(await f.textContent('[data-main]')) && /≈ 10 tipik rapor/.test(await f.textContent('[data-main]')), `${vp.n}: bütçenin yanında ölçülen tipik rapor sayısı`);
+    // Rapor sınırları (v2.0.0: Ayarlar → Yapay zekâ; bütçeler ayrı sayfada)
+    await tab('Rapor sınırları');
+    check(await until(() => visible(f, 'input[name="report_max_photos"]')) && !await f.locator('input[name="ai_budget_pro_month_microusd"]').count(), `${vp.n}: Rapor sınırları (bütçeler burada değil)`);
     await f.fill('input[name="report_max_photos"]', '30'); await f.click('button:text-is("Değişiklikleri kaydet")');
     check(await until(async () => /en çok fotoğraf: 1 ile 20/.test(await f.textContent('[data-toast]'))), `${vp.n}: aralık dışı limit engellenir`);
-    await f.fill('input[name="report_max_photos"]', '10'); await f.fill('input[name="ai_budget_pro_month_microusd"]', '12.5');
+    await f.fill('input[name="report_max_photos"]', '10');
+    await f.click('button:text-is("Değişiklikleri kaydet")'); await dialog(); await submit();
+    check(await until(() => st.fr.limits.report_max_photos === '10') && lastRpc(st, 'admin_set_report_limit')?.args.p_key === 'report_max_photos', `${vp.n}: rapor sınırı kaydedildi`);
+    // Yapay zekâ bütçeleri (v2.0.0: Menü → Yapay zekâ bütçeleri; telefondan kolay erişim)
+    await go(f, 'budget');
+    check(await until(() => visible(f, 'input[name="ai_budget_pro_month_microusd"]')) && await f.inputValue('input[name="ai_budget_pro_month_microusd"]') === '10' && await f.inputValue('input[name="ai_budget_free_month_microusd"]') === '0.25', `${vp.n}: Bütçeler: dolar olarak`);
+    check(/≈ 400 tipik rapor/.test(await f.textContent('[data-main]')) && /≈ 10 tipik rapor/.test(await f.textContent('[data-main]')) && /Bütçesi dolan/.test(await f.textContent('[data-main]')), `${vp.n}: bütçenin yanında tipik rapor sayısı, altında plan tablosu`);
+    await f.fill('input[name="ai_budget_pro_month_microusd"]', '12.5');
     check(await until(async () => /≈ 500 tipik rapor/.test(await f.textContent('[data-main]'))), `${vp.n}: yazarken tipik rapor sayısı güncellenir`);
     await f.click('button:text-is("Değişiklikleri kaydet")'); await dialog(); await submit();
-    check(await until(() => st.fr.limits.report_max_photos === '10' && st.fr.limits.ai_budget_pro_month_microusd === '12500000') && st.rpc.some(x => x.name === 'admin_set_report_limit' && x.args.p_key === 'ai_budget_pro_month_microusd' && x.args.p_value === 12500000), `${vp.n}: bütçe mikro dolar (tam sayı) olarak kaydedildi`);
+    check(await until(() => st.fr.limits.ai_budget_pro_month_microusd === '12500000') && st.rpc.some(x => x.name === 'admin_set_report_limit' && x.args.p_key === 'ai_budget_pro_month_microusd' && x.args.p_value === 12500000), `${vp.n}: bütçe mikro dolar (tam sayı) olarak kaydedildi`);
+    if (vp.width <= 900) check(await f.evaluate(() => document.querySelector('input[name="ai_budget_pro_month_microusd"]').getBoundingClientRect().height >= 44), `${vp.n}: bütçe kutusu telefonda büyük`);
+    // Topluluk kuralları (v2.0.0)
+    await go(f, 'rules');
+    check(await until(() => visible(f, 'input[name="spam_comments_per_minute"]')), `${vp.n}: Topluluk kuralları: Spam ve yeni hesap`);
     // Spam koruması (v1.11.0): ayrı kart, kendi kaydet düğmesi
     check(await f.inputValue('input[name="spam_comments_per_minute"]') === '5' && await f.inputValue('input[name="new_posts_per_day"]') === '3', `${vp.n}: spam ve yeni hesap sınırları mevcut değerlerle`);
     await f.fill('input[name="spam_comments_per_minute"]', '3');
-    await f.locator('button:text-is("Değişiklikleri kaydet")').nth(1).click(); await dialog(); await submit();
+    await f.click('button:text-is("Değişiklikleri kaydet")'); await dialog(); await submit();
     check(await until(() => st.fr.limits.spam_comments_per_minute === '3') && st.rpc.some(x => x.name === 'admin_set_report_limit' && x.args.p_key === 'spam_comments_per_minute' && x.args.p_value === 3), `${vp.n}: spam sınırı kaydedildi`);
-    // QR yanındaki yazı (v1.21.0): mevcut ya da varsayılan; kaçınılan kelime reddi; kaydet
-    check(await f.inputValue('input[name="qr_label"]') === 'Okutun · rapordan sonra ne yapmalısınız' && await f.getAttribute('input[name="qr_label"]', 'maxlength') === '40', `${vp.n}: QR yazısı varsayılanla, en çok 40 karakter`);
-    await f.fill('input[name="qr_label"]', 'Okutun, raporu doğrulayın');
-    await f.click('button:text-is("Yazıyı kaydet")');
-    check(await until(async () => /resmiyet izlenimi/.test(await f.textContent('[data-toast]'))), `${vp.n}: QR yazısında kaçınılan kelime reddedilir`);
-    await f.fill('input[name="qr_label"]', 'Okutun:  sonraki adımlar');
-    await f.click('button:text-is("Yazıyı kaydet")'); await dialog(); await submit();
-    check(await until(() => st.fr.texts.report_qr_label === 'Okutun: sonraki adımlar') && lastRpc(st, 'admin_set_report_qr_label'), `${vp.n}: QR yazısı kaydedildi`);
-    // QR sayfası adımları (v1.18.0): mevcut adımlar, boş adım reddi, ekle, kaydet; kaşe notu yok
-    check(!/kaşe/i.test(await f.textContent('[data-main]')), `${vp.n}: Saha Raporu'nda kaşe kalmadı`);
-    check(await f.inputValue('input[name="step_title"] >> nth=0') === 'Önce acil maddeler' && await f.locator('[data-step]').count() === 2, `${vp.n}: adımlar mevcut metinle`);
-    await f.click('button:text-is("Adım ekle")');
-    await f.click('button:text-is("Adımları kaydet")');
-    check(await until(async () => /başlığı ve metni dolu/.test(await f.textContent('[data-toast]'))), `${vp.n}: boş adım reddedilir`);
-    await f.fill('input[name="step_title"] >> nth=2', 'Raporu saklayın');
-    await f.fill('textarea[name="step_body"] >> nth=2', 'PDF\'i değiştirmeden\nsaklayın.');
-    await f.click('button:text-is("Adımları kaydet")'); await dialog(); await submit();
-    check(await until(() => JSON.parse(st.fr.texts.report_receiver_steps).length === 3) && JSON.parse(st.fr.texts.report_receiver_steps)[2].body === 'PDF\'i değiştirmeden saklayın.' && lastRpc(st, 'admin_set_report_steps'), `${vp.n}: adımlar kaydedildi (satır sonu boşluk olur)`);
+    await tab('Yasaklı kelimeler');
     // Yasaklı kelimeler (v1.15.0): liste, ekle (önek), geçersiz giriş, çıkar
     check(await until(async () => /orospu/.test(await f.textContent('[data-main]')) && /Önek/.test(await f.textContent('[data-main]'))), `${vp.n}: yasaklı kelimeler listesi görünür`);
     await f.fill('input[name="word"]', 'a1'); await f.click('[data-add="word"]');
@@ -743,6 +817,7 @@ try {
     await f.click('button[aria-label="orospu çıkar"]');
     check(await until(() => !st.words.some(w => w.norm === 'orospu')) && lastRpc(st, 'admin_set_blocked_word')?.args.p_on === false, `${vp.n}: kelime çıkarıldı`);
     st.words.push({ word: 'orospu', norm: 'orospu', prefix: true, created_at: iso(0) });
+    await tab('İş ilanı ifadeleri');
     // İş ilanı ifadeleri (v1.16.0): güçlü varsayılan; orta eklenebilir; çıkar
     check(await until(async () => /eleman aranıyor/.test(await f.textContent('[data-main]'))) && await f.isChecked('input[name="strong"]'), `${vp.n}: iş ilanı ifadeleri listesi; yeni ifade varsayılan güçlü`);
     await f.fill('input[name="phrase"]', 'tam zamanlı'); await f.uncheck('input[name="strong"]'); await f.click('[data-add="phrase"]');
@@ -750,6 +825,28 @@ try {
     await f.click('button[aria-label="eleman aranıyor çıkar"]');
     check(await until(() => !st.phrases.some(w => w.phrase === 'eleman aranıyor')) && lastRpc(st, 'admin_set_job_phrase')?.args.p_on === false, `${vp.n}: ifade çıkarıldı`);
     st.phrases.push({ phrase: 'eleman aranıyor', norm: 'eleman araniyor', strong: true, created_at: iso(0) });
+    // Rapor metinleri (v2.0.0)
+    await go(f, 'reporttexts');
+    await tab('QR yazısı ve sayfası');
+    await until(() => visible(f, 'input[name="qr_label"]'));
+    // QR yanındaki yazı (v1.21.0): mevcut ya da varsayılan; kaçınılan kelime reddi; kaydet
+    check(await f.inputValue('input[name="qr_label"]') === 'Okutun · rapordan sonra ne yapmalısınız' && await f.getAttribute('input[name="qr_label"]', 'maxlength') === '40', `${vp.n}: QR yazısı varsayılanla, en çok 40 karakter`);
+    await f.fill('input[name="qr_label"]', 'Okutun, raporu doğrulayın');
+    await f.click('button:text-is("Yazıyı kaydet")');
+    check(await until(async () => /resmiyet izlenimi/.test(await f.textContent('[data-toast]'))), `${vp.n}: QR yazısında kaçınılan kelime reddedilir`);
+    await f.fill('input[name="qr_label"]', 'Okutun:  sonraki adımlar');
+    await f.click('button:text-is("Yazıyı kaydet")'); await dialog(); await submit();
+    check(await until(() => st.fr.texts.report_qr_label === 'Okutun: sonraki adımlar') && lastRpc(st, 'admin_set_report_qr_label'), `${vp.n}: QR yazısı kaydedildi`);
+    // QR sayfası adımları (v1.18.0): mevcut adımlar, boş adım reddi, ekle, kaydet; kaşe notu yok
+    check(!/kaşe/i.test(await f.textContent('[data-main]')), `${vp.n}: Rapor metinleri'nde kaşe kalmadı`);
+    check(await f.inputValue('input[name="step_title"] >> nth=0') === 'Önce acil maddeler' && await f.locator('[data-step]').count() === 2, `${vp.n}: adımlar mevcut metinle`);
+    await f.click('button:text-is("Adım ekle")');
+    await f.click('button:text-is("Adımları kaydet")');
+    check(await until(async () => /başlığı ve metni dolu/.test(await f.textContent('[data-toast]'))), `${vp.n}: boş adım reddedilir`);
+    await f.fill('input[name="step_title"] >> nth=2', 'Raporu saklayın');
+    await f.fill('textarea[name="step_body"] >> nth=2', 'PDF\'i değiştirmeden\nsaklayın.');
+    await f.click('button:text-is("Adımları kaydet")'); await dialog(); await submit();
+    check(await until(() => JSON.parse(st.fr.texts.report_receiver_steps).length === 3) && JSON.parse(st.fr.texts.report_receiver_steps)[2].body === 'PDF\'i değiştirmeden saklayın.' && lastRpc(st, 'admin_set_report_steps'), `${vp.n}: adımlar kaydedildi (satır sonu boşluk olur)`);
     // Defter ve bildirim (v1.19.0): şablonlar, sebep ekle, boş alan reddi, kılavuzlar; kaşe ve yasak kelimeler yok
     await tab('Defter ve bildirim');
     check(await until(() => visible(f, '[data-assist="report_ledger_template"]')) && await f.inputValue('input[name="ledger_urgent"]') === 'ACİL', `${vp.n}: Defter ve bildirim: defter şablonu mevcut metinle`);
@@ -810,6 +907,7 @@ try {
     await f.click('button:text-is("+ Yeni madde")'); await dialog();
     await f.fill('.pa-dialog input[name="title"]', 'Acil çıkış yolu kapalı'); await f.selectOption('.pa-dialog select[name="category"]', 'yangin'); await submit();
     check(await until(() => st.fr.checklist.some(x => x.deficiency_title === 'Acil çıkış yolu kapalı' && x.default_priority === 'onemli' && x.category === 'yangin')), `${vp.n}: yeni madde eklendi (varsayılan Önemli, konu Yangın)`);
+    await go(f, 'ai');
     // Kullanım
     await tab('Kullanım ve maliyet');
     check(await until(() => visible(f, '.pa-stats')), `${vp.n}: Kullanım açıldı`);
@@ -827,27 +925,179 @@ try {
   {
     const { ctx, f, st, errs } = await open(browser, { uid: X, qs: '?b=fieldreports' });
     st.fail.admin_report_config = { code: 'PGRST202', message: 'Could not find the function public.admin_report_config' };
-    await f.click('.pa-nav [data-sec="fieldreports"]');
-    check(await until(async () => /veritabanı güncellemesi henüz uygulanmamış/.test(await f.textContent('[data-main]'))), 'Saha Raporu: veritabanı yoksa açıklama');
-    await f.click('.pa-nav [data-sec="categories"]');
-    check(await until(() => f.locator('[data-category]').count().then(n => n === 3)) && !errs.length, 'Saha Raporu: diğer bölümler etkilenmez');
+    await go(f, 'ai');
+    check(await until(async () => /veritabanı güncellemesi henüz uygulanmamış/.test(await f.textContent('[data-main]'))), 'Yapay zekâ ayarları: veritabanı yoksa açıklama');
+    await go(f, 'categories');
+    check(await until(() => f.locator('[data-category]').count().then(n => n === 3)) && !errs.length, 'Yapay zekâ ayarları: diğer bölümler etkilenmez');
     await ctx.close();
   }
-  // ---------------- 5) mobil ----------------
+  // ---------------- 4g) İş ilanları (v2.0.0) ----------------
+  for (const vp of [{ n: 'masaüstü', width: 1280, height: 900 }, { n: 'mobil', width: 390, height: 844 }]) {
+    const { ctx, page, f, st, errs } = await open(browser, { uid: X, width: vp.width, height: vp.height });
+    const { J1, J2 } = st.J;
+    const submit = async () => f.evaluate(() => document.querySelector('.pa-dialog').requestSubmit(document.querySelector('.pa-dialog button[type="submit"]')));
+    await until(() => visible(f, '.pa-stats'));
+    await go(f, 'jobs');
+    check(await until(() => f.locator('[data-job]').count().then(n => n === 2)), `${vp.n}: İlanlar: yayındaki 2 ilan`);
+    const c1 = await f.textContent(`[data-job="${J1}"]`);
+    check(/B Sınıfı İş Güvenliği Uzmanı/.test(c1) && /İstanbul, Kocaeli/.test(c1) && /Acil/.test(c1) && /1 şikâyet/.test(c1) && /Mehmet Öztürk/.test(c1) && /gün kaldı/.test(c1), `${vp.n}: kartta pozisyon, iller (plaka kodundan), acil, şikâyet, veren, kalan gün`);
+    check(await f.getAttribute(`[data-job="${J1}"] a:text-is("Aç")`, 'href') === `https://isgcalisanplatformu.com/ilan-detay?id=${J1}`, `${vp.n}: "Aç" sitedeki ilan sayfasına gider`);
+    await f.click('.pa-chip:text-is("Kapatılan")');
+    check(await until(() => lastRpc(st, 'admin_list_jobs')?.args.p_status === 'closed') && await until(() => f.locator('[data-job]').count().then(n => n === 1)) && /sahibi kapattı/.test(await f.textContent('[data-job]')), `${vp.n}: Kapatılan filtresi ve kapanış sebebi`);
+    await f.click('.pa-chip:text-is("Yayında")');
+    await until(() => f.locator('[data-job]').count().then(n => n === 2));
+    await f.fill('.pa-search', 'hekim');
+    check(await until(() => lastRpc(st, 'admin_list_jobs')?.args.p_q === 'hekim') && await until(() => f.locator('[data-job]').count().then(n => n === 1)), `${vp.n}: arama admin_list_jobs(p_q)`);
+    await f.fill('.pa-search', ''); await until(() => f.locator('[data-job]').count().then(n => n === 2));
+    // Kaldır: gerekçe zorunlu; istenirse sahibine yeni hak
+    await f.click(`[data-job="${J1}"] button:text-is("Kaldır")`); await f.waitForSelector('.pa-dialog');
+    check(/silinmez/.test(await f.textContent('.pa-dialog')), `${vp.n}: kaldırma penceresi ilanın silinmediğini söyler`);
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(async () => /Gerekçe/.test(await f.textContent('.pa-dialog .pa-error'))) && !lastRpc(st, 'admin_close_job'), `${vp.n}: gerekçesiz kaldırılmaz`);
+    await f.check('.pa-dialog input[name="regrant"]'); await f.fill('.pa-dialog textarea[name="reason"]', 'yanıltıcı ilan');
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_close_job')) && JSON.stringify(lastRpc(st, 'admin_close_job').args) === JSON.stringify({ p_id: J1, p_reason: 'yanıltıcı ilan', p_regrant: true }) && await until(() => f.locator('[data-job]').count().then(n => n === 1)), `${vp.n}: admin_close_job (gerekçe, hak iadesi); liste yenilendi`);
+    // İlan hakkı ver: kullanıcı ara + seç
+    await f.click('button:text-is("İlan hakkı ver")'); await f.waitForSelector('.pa-dialog select[name="user"]');
+    await f.fill('.pa-dialog .pa-search', 'mehmet');
+    check(await until(() => f.locator(`.pa-dialog select[name="user"] option[value="${M}"]`).count().then(n => n === 1)), `${vp.n}: kullanıcı arama (admin_list_users)`);
+    await f.selectOption('.pa-dialog select[name="user"]', M); await f.selectOption('.pa-dialog select[name="count"]', '3');
+    await f.fill('.pa-dialog textarea[name="reason"]', 'kampanya');
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_grant_job_credit')) && JSON.stringify(lastRpc(st, 'admin_grant_job_credit').args) === JSON.stringify({ p_user: M, p_count: 3, p_reason: 'kampanya' }), `${vp.n}: admin_grant_job_credit (kullanıcı, sayı, gerekçe)`);
+    check(await until(async () => /3 ilan hakkı verildi.*şu an 5 hakkı/.test(await f.textContent('[data-toast]'))), `${vp.n}: kullanıcının güncel hak sayısı bildirilir`);
+    // İlan hesabı yokken "Kırmızı İSG adına" seçilemez; hesap seçilir
+    check(/Seçilmedi/.test(await f.textContent('[data-job-owner]')), `${vp.n}: ilan hesabı seçilmedi`);
+    await f.click('[data-job-owner] button:text-is("Seç")'); await f.waitForSelector('.pa-dialog select[name="user"]');
+    await f.fill('.pa-dialog .pa-search', 'ayşe');
+    await until(() => f.locator(`.pa-dialog select[name="user"] option[value="${A}"]`).count().then(n => n === 1));
+    await f.selectOption('.pa-dialog select[name="user"]', A); await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_set_job_owner')?.args.p_user === A) && await until(async () => /Ayşe Yılmaz/.test(await f.textContent('[data-job-owner]'))), `${vp.n}: ilan hesabı kaydedildi`);
+    // Yönetimden ilan: Kırmızı İSG adına
+    await f.click('button:text-is("+ İlan ver")'); await f.waitForSelector('.pa-dialog input[name="position"]');
+    check(await f.isChecked('.pa-dialog input[name="who"][value="house"]') && await f.locator('.pa-dialog .pa-cities input').count() === 82 && await f.inputValue('.pa-dialog input[name="days"]') === '30', `${vp.n}: form: Kırmızı İSG adına seçili, 81 il + Yurt Dışı, süre 30 gün`);
+    await f.fill('.pa-dialog input[name="position"]', 'B Sınıfı İş Güvenliği Uzmanı'); await f.fill('.pa-dialog input[name="company"]', 'Kırmızı İSG');
+    await f.fill('.pa-dialog input[type="search"][aria-label="İl ara"]', 'koca');
+    check(await f.locator('.pa-dialog .pa-cities label:not([hidden])').count() === 1, `${vp.n}: il araması süzer`);
+    await f.check('.pa-dialog .pa-cities input[value="41"]'); await f.fill('.pa-dialog input[type="search"][aria-label="İl ara"]', '');
+    await f.check('.pa-dialog .pa-cities input[value="34"]');
+    check(/Kocaeli ×/.test(await f.textContent('.pa-dialog .pa-picked')) && /İstanbul ×/.test(await f.textContent('.pa-dialog .pa-picked')), `${vp.n}: seçilen iller çip olarak`);
+    await f.fill('.pa-dialog textarea[name="description"]', 'kısa');
+    await f.fill('.pa-dialog input[name="contact"]', 'ik@kirmiziisg.com'); await f.fill('.pa-dialog textarea[name="reason"]', 'kurumsal ilan');
+    await submit();
+    check(await until(async () => /en az 30 karakter/.test(await f.textContent('.pa-dialog .pa-error'))) && !lastRpc(st, 'admin_publish_job'), `${vp.n}: kısa açıklama formda yakalanır`);
+    await f.fill('.pa-dialog textarea[name="description"]', 'Kocaeli ve İstanbul şantiyeleri için B sınıfı iş güvenliği uzmanı aranıyor.');
+    await f.check('.pa-dialog input[name="urgency"][value="acil"]');
+    await submit();
+    check(await until(() => lastRpc(st, 'admin_publish_job')), `${vp.n}: admin_publish_job çağrıldı`);
+    const pj = lastRpc(st, 'admin_publish_job').args;
+    check(pj.p_owner === A && JSON.stringify(pj.p_job.cities) === '[41,34]' && pj.p_job.urgency === 'acil' && pj.p_job.work_type === 'Tam Zamanlı' && pj.p_days === 30 && pj.p_reason === 'kurumsal ilan' && /^[0-9a-f-]{36}$/.test(pj.p_request_id), `${vp.n}: ilan argümanları (sahip, il sırası, acil, süre, istek kimliği) ${JSON.stringify(pj).slice(0, 160)}`);
+    check(await until(() => f.locator('[data-job]').count().then(n => n === 2)) && /Kırmızı İSG \(ilan hesabı\)/.test(await f.textContent('[data-job] >> nth=0')), `${vp.n}: yeni ilan listede "Kırmızı İSG (ilan hesabı)"`);
+    // Kullanıcı adına: "kullanıcı istedi" işaretlenmeden verilmez
+    await f.click('button:text-is("+ İlan ver")'); await f.waitForSelector('.pa-dialog input[name="position"]');
+    await f.check('.pa-dialog input[name="who"][value="user"]');
+    await f.fill('.pa-dialog .pa-search >> nth=0', 'mehmet');
+    await until(() => f.locator(`.pa-dialog select[name="user"] option[value="${M}"]`).count().then(n => n === 1));
+    await f.fill('.pa-dialog input[name="position"]', 'İşyeri Hekimi'); await f.fill('.pa-dialog input[name="company"]', 'Örnek');
+    await f.check('.pa-dialog .pa-cities input[value="6"]');
+    await f.fill('.pa-dialog textarea[name="description"]', 'Haftada iki gün işyeri hekimi aranıyor; ayrıntılar başvuruda.');
+    await f.fill('.pa-dialog input[name="contact"]', 'ik@ornek.com'); await f.fill('.pa-dialog textarea[name="reason"]', 'destek talebi');
+    const nPub = st.rpc.filter(x => x.name === 'admin_publish_job').length;
+    await submit();
+    check(await until(async () => /kullanıcı istediyse/.test(await f.textContent('.pa-dialog .pa-error'))) && st.rpc.filter(x => x.name === 'admin_publish_job').length === nPub, `${vp.n}: kullanıcı adına ilan onay kutusu olmadan gönderilmez`);
+    await f.click('.pa-dialog button:has-text("Vazgeç")');
+    // İlan şikâyeti: "İlan" filtresi, sonuçlandırmada gizle/sil yok, ilan ayrı düğmeyle kaldırılır
+    st.reports.push({ id: 'aaaaaaaa-0000-4000-8000-000000000009', reporter_id: A, reporter_name: 'Ayşe Yılmaz', target_type: 'job', target_id: J2, reason: 'misleading', details: null, status: 'pending', created_at: iso(1), reviewed_by: null, reviewed_at: null, resolution_note: null, action_taken: null, target_owner_id: A, target_owner_name: 'Ayşe Yılmaz', target_preview: 'İşyeri Hekimi - Örnek OSGB - Haftada iki gün.', target_status: 'published', same_target_pending: 1 });
+    await go(f, 'reports');
+    await f.click('.pa-chip:text-is("İlan")');
+    check(await until(() => lastRpc(st, 'admin_list_reports')?.args.p_target_type === 'job') && await until(() => f.locator('[data-report]').count().then(n => n === 1)), `${vp.n}: Şikâyetler → İlan filtresi`);
+    await f.click('[data-report] button:text-is("Sonuçlandır")'); await f.waitForSelector('.pa-dialog input[name="outcome"]');
+    const jOut = await f.locator('.pa-dialog input[name="outcome"]').evaluateAll(els => els.map(e => e.value));
+    check(!jOut.some(v => v.endsWith('|hide') || v.endsWith('|delete')), `${vp.n}: ilan şikâyetinde gizle/sil seçeneği yok`);
+    await f.click('.pa-dialog button:has-text("Vazgeç")');
+    await f.click('[data-report] button:text-is("İlanı kaldır")'); await f.waitForSelector('.pa-dialog');
+    await f.fill('.pa-dialog textarea[name="reason"]', 'şikâyet haklı'); await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_close_job')?.args.p_id === J2), `${vp.n}: şikâyetten ilan kaldırıldı (admin_close_job)`);
+    const ov = await f.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    check(ov <= 1 && !errs.length && !st.table.length && st.rpc.every(x => ALLOWED.has(x.name)), `${vp.n}: taşma, hata, tablo isteği yok; yalnız izinli RPC ${errs.join(' ')}`);
+    await page.screenshot({ path: path.join(OUT, `pro-admin-jobs-${vp.width}.png`), fullPage: true });
+    await ctx.close();
+  }
+  // ---------------- 4h) Acil durum ve Menü (v2.0.0) ----------------
+  for (const vp of [{ n: 'masaüstü', width: 1280, height: 900 }, { n: 'mobil', width: 390, height: 844 }]) {
+    const { ctx, page, f, st, errs } = await open(browser, { uid: X, width: vp.width, height: vp.height });
+    await until(() => visible(f, '.pa-stats'));
+    if (vp.width <= 900) {
+      await f.click('.pa-tabbar [data-group="more"]');
+      check(await until(() => f.locator('[data-menu]').count().then(n => n === 7)), `${vp.n}: Menü: 7 satır (Kullanıcılar, Bütçeler, Acil durum + 4 ayar)`);
+      check(/Bir kez ayarlanıp bırakılanlar/.test(await f.textContent('[data-main]')), `${vp.n}: Ayarlar başlığı`);
+      await f.click('[data-menu="emergency"]');
+    } else await go(f, 'emergency');
+    check(await until(() => f.locator('[data-service]').count().then(n => n === 10)), `${vp.n}: Acil durum: 10 servis`);
+    const svc = await f.evaluate(() => [...document.querySelectorAll('[data-service]')].map(x => [x.dataset.service, x.querySelector('a').href, x.querySelector('a').target]));
+    check(svc.every(([, href, t]) => /^https:\/\//.test(href) && t === '_blank') && svc.find(x => x[0] === 'Supabase')[1].includes('cglndmbjinzmmbimxqok'), `${vp.n}: her serviste yeni sekmede açılan bağlantı; Supabase doğru projeye`);
+    const text = await f.textContent('[data-main]');
+    check(!/resm[iî]|onaylı belge|e-imza|mühür|kaşe|doğrula/i.test(text) && !/sb_publishable|password|şifre:/i.test(text), `${vp.n}: kaçınılan kelime ve anahtar yok`);
+    if (vp.width <= 900) check(await until(() => visible(f, '.pa-back')), `${vp.n}: Menü'ye dönüş düğmesi`);
+    check(await until(async () => await f.inputValue('input[name="min_app_version_ios"]').catch(() => '') === '1.2.0'), `${vp.n}: zorunlu güncelleme: mevcut iOS sürümü`);
+    await f.fill('input[name="min_app_version_ios"]', 'abc'); await f.click('[data-version="ios"] button:text-is("Kaydet")');
+    check(await until(async () => /1\.2\.3 biçiminde/.test(await f.textContent('[data-toast]'))) && !lastRpc(st, 'admin_set_app_version'), `${vp.n}: geçersiz sürüm gönderilmez`);
+    await f.fill('input[name="min_app_version_ios"]', '1.3'); await f.click('[data-version="ios"] button:text-is("Kaydet")'); await f.waitForSelector('.pa-dialog');
+    check(/Mağazada yayında olan sürümden büyük/.test(await f.textContent('.pa-dialog')) && /1\.2\.0/.test(await f.textContent('.pa-dialog')), `${vp.n}: kaydetmeden önce uyarı ve önce → sonra`);
+    await f.click('.pa-dialog button[type="submit"]');
+    check(await until(() => lastRpc(st, 'admin_set_app_version')) && JSON.stringify(lastRpc(st, 'admin_set_app_version').args) === JSON.stringify({ p_platform: 'ios', p_version: '1.3', p_reason: null }) && st.switches.min_app_version_ios === '1.3', `${vp.n}: admin_set_app_version kaydedildi`);
+    check(await until(async () => /Yapay zekâyı geçici durdur/.test(await f.textContent('[data-main]')) && /henüz yok/.test(await f.textContent('[data-main]'))), `${vp.n}: yapay zekâ anahtarı öneri olarak (eklenmedi)`);
+    const ov = await f.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    check(ov <= 1 && !errs.length && !st.table.length && st.rpc.every(x => ALLOWED.has(x.name)), `${vp.n}: taşma, hata, tablo isteği yok ${errs.join(' ')}`);
+    await page.screenshot({ path: path.join(OUT, `pro-admin-emergency-${vp.width}.png`), fullPage: true });
+    await ctx.close();
+  }
+  // ---------------- 5) mobil: alt gezinme, kartlar, dokunma alanları ----------------
   {
-    const { ctx, page, f } = await open(browser, { uid: X, width: 390, height: 844 });
-    check(await until(() => visible(f, '.pa-stats')), 'mobil: Genel Bakış');
-    const ov = await f.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, dir: getComputedStyle(document.querySelector('.pa-nav')).flexDirection }));
-    check(ov.sw <= ov.cw + 1 && ov.dir === 'row', `mobil: yatay taşma yok, menü yatay sekme (${ov.sw}/${ov.cw}, ${ov.dir})`);
-    await f.click('.pa-nav [data-sec="users"]');
+    const { ctx, page, f, st, errs } = await open(browser, { uid: X, width: 390, height: 844 });
+    check(await until(() => visible(f, '.pa-stats')), 'mobil: Özet');
+    const ov = await f.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, nav: getComputedStyle(document.querySelector('.pa-nav')).display, bar: getComputedStyle(document.querySelector('.pa-tabbar')).display }));
+    check(ov.sw <= ov.cw + 1 && ov.nav === 'none' && ov.bar === 'grid', `mobil: yatay taşma yok; sol menü gizli, altta 5'li gezinme (${ov.sw}/${ov.cw}, ${ov.nav}, ${ov.bar})`);
+    const dash = await f.textContent('[data-main]');
+    check(['Açık destek', 'Bekleyen şikâyet', 'Onay başvurusu', 'Bugün yeni', 'Son 7 gün', 'Bugünkü post', 'Bugünkü yorum', 'Yayındaki hizmet', 'Yayındaki ilan', 'PRO abone', 'MAX abone', 'Satılan ilan hakkı', 'İlk ilan ücretsiz', 'Oluşturulan rapor', 'PDF', 'Toplam harcama', 'En çok harcayan 5 kullanıcı'].every(t => dash.includes(t)) && /\$48\.20/.test(dash) && dash.includes('1.296'), 'mobil: gösterge panelindeki sayaçların hepsi');
+    check(await f.locator('.pa-stat.is-alert').count() >= 3, 'mobil: bekleyenler kırmızı vurgulu');
+    // Alt gezinme çerçevenin görünen alanının altında (Hostinger iframe içeriği kadar uzar)
+    const barAt = async () => page.evaluate(() => { const fr = document.querySelector('iframe'), r = fr.getBoundingClientRect(), b = fr.contentDocument.querySelector('.pa-tabbar').getBoundingClientRect();
+      return { bottom: r.top + b.bottom, view: Math.min(innerHeight, r.bottom), top: r.top + b.top }; });
+    let b = await barAt();
+    check(Math.abs(b.bottom - b.view) <= 2, `mobil: alt gezinme ekranın altında (${Math.round(b.bottom)} / ${Math.round(b.view)})`);
+    await page.evaluate(() => scrollTo(0, 700));
+    await until(async () => { const x = await barAt(); return Math.abs(x.bottom - x.view) <= 2; });
+    b = await barAt();
+    check(Math.abs(b.bottom - b.view) <= 2 && b.top > 0, `mobil: sayfa kayınca gezinme ekranda kalır (${Math.round(b.bottom)} / ${Math.round(b.view)})`);
+    // Sayaca dokununca liste
+    await f.click('.pa-stat:has-text("Açık destek")');
+    check(await until(() => f.locator('[data-support]').count().then(n => n === 1)) && (await f.getAttribute('.pa-tabbar [data-group="inbox"]', 'aria-current')) === 'page', 'mobil: "Açık destek" → Destek listesi, Bekleyen sekmesi seçili');
+    check(await f.locator('.pa-subnav [data-sec]').count() === 3, 'mobil: Bekleyen içinde Destek · Şikâyetler · Onaylar');
+    const small = await f.evaluate(() => [...document.querySelectorAll('[data-main] button, [data-main] a.pa-btn, .pa-tabbar button')].filter(x => x.offsetParent && x.getBoundingClientRect().height < 44).map(x => x.textContent.trim()).slice(0, 5));
+    check(!small.length, `mobil: dokunma alanları en az 44px (${small.join(', ')})`);
+    await go(f, 'users');
     await until(() => f.locator('[data-user]').count().then(n => n === 2));
-    const gap = await f.evaluate(() => document.querySelector('[data-main]').getBoundingClientRect().top - document.querySelector('.pa-nav').getBoundingClientRect().bottom);
-    check(gap < 24, `mobil: menü ile içerik arasında boşluk yok (${Math.round(gap)}px)`);
-    const card = await f.evaluate(() => getComputedStyle(document.querySelector('.pa-table tr')).display);
-    check(card === 'block', 'mobil: tablo satırları karta dönüşür');
+    const card = await f.evaluate(() => { const tr = document.querySelector('.pa-table tr[data-user]'), cs = getComputedStyle(tr); return { d: cs.display, r: parseFloat(cs.borderTopLeftRadius) }; });
+    check(card.d === 'block' && card.r >= 8, `mobil: tablo satırları kart (${JSON.stringify(card)})`);
+    // Kullanıcı ayrıntısı ekranın görünen kısmında açılır
+    await page.evaluate(() => scrollTo(0, 400));
+    await f.click(`[data-user="${M}"]`);
+    check(await until(async () => (await f.textContent('.pa-drawer')).includes('mehmet@ornek.com')), 'mobil: kullanıcı ayrıntısı açıldı');
+    const dr = await page.evaluate(() => { const fr = document.querySelector('iframe'), r = fr.getBoundingClientRect(), d = fr.contentDocument.querySelector('.pa-drawer').getBoundingClientRect(); return { top: r.top + d.top }; });
+    check(Math.abs(dr.top) <= 2, `mobil: çekmece ekranın üstünden açılır (${Math.round(dr.top)})`);
+    check(await f.locator('.pa-drawer button:text-is("İlan hakkı ver")').count() === 1, 'mobil: kullanıcı ayrıntısında "İlan hakkı ver"');
     const fh = await page.evaluate(() => document.querySelector('iframe').getBoundingClientRect().height);
-    check(fh > 400, `iframe yüksekliği içeriğe göre ayarlanıyor (${Math.round(fh)}px)`);
+    check(fh > 400 && !errs.length, `iframe yüksekliği içeriğe göre ayarlanıyor (${Math.round(fh)}px) ${errs.join(' ')}`);
     await page.screenshot({ path: path.join(OUT, 'pro-admin-users-mobile.png'), fullPage: true });
+    await ctx.close();
+  }
+  // Özet: admin_dashboard yoksa eski Genel Bakış kutuları (panel bozulmaz)
+  {
+    const { ctx, f, st, errs } = await open(browser, { uid: X });
+    st.missing.push('admin_dashboard');
+    await go(f, 'users'); await go(f, 'overview');
+    check(await until(async () => /veritabanı güncellemesi bekleniyor/.test(await f.textContent('[data-main]'))) && (await f.locator('.pa-stat').allTextContents()).some(t => t.includes('Aktif post')) && !errs.length, 'Özet: admin_dashboard yoksa eski kutular');
     await ctx.close();
   }
 } finally {
