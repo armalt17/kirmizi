@@ -132,7 +132,7 @@ console.log(errors.length ? 'ERRORS:\n' + errors.join('\n') : 'NO PAGE ERRORS');
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   await setup(ctx, true);
   const page = await ctx.newPage();
-  const reqs = []; page.on('request', r => { if (r.url().includes('/rest/v1/profiles')) reqs.push(decodeURIComponent(r.url())); });
+  const reqs = []; page.on('request', r => { if (/\/rest\/v1\/(public_)?profiles/.test(r.url())) reqs.push(decodeURIComponent(r.url())); });
   const b2 = await chromium.launch(LAUNCH);
   await page.goto(`https://isgcalisanplatformu.com/profil?id=${U1}`);
   await page.waitForTimeout(600);

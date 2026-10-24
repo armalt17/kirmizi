@@ -31,6 +31,7 @@ const SUITES = [
   { name: 'reports-ui', file: 'reports-ui.test.mjs' },
   { name: 'security-fix-pack1-db', file: 'security-fix-pack1-db.test.mjs', note: 'yerel geçici PostgreSQL' },
   { name: 'security-fix-pack1-web', file: 'security-fix-pack1-web.test.mjs' },
+  { name: 'k1-public-profiles', file: 'k1-public-profiles.test.mjs', note: 'K1: başkasının profili public_profiles görünümünden' },
   { name: 'security-fix-pack2-db', file: 'security-fix-pack2-db.test.mjs', note: 'yerel geçici PostgreSQL' },
   { name: 'admin-v1-a-db', file: 'admin-v1-a-db.test.mjs', note: 'yerel geçici PostgreSQL' },
   { name: 'admin-v1-b-db', file: 'admin-v1-b-db.test.mjs', note: 'yerel geçici PostgreSQL' },

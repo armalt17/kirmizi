@@ -83,7 +83,7 @@ try {
     await f.click(`${D} .kc-city-btn`); await f.fill(`${D} [data-city-q]`, 'yurt'); await settle(page, 200);
     const opt = await f.evaluate(d => [...document.querySelectorAll(`${d} [data-city]`)].map(o => o.dataset.city), D);
     check(JSON.stringify(opt) === '["Yurtdışı"]', `Uzmanlar şehir seçicide "Yurtdışı" (${opt})`);
-    const profReqs = []; page.on('request', r => { const u = decodeURIComponent(r.url()); if (u.includes('/rest/v1/profiles') && u.includes('city.ilike')) profReqs.push(u); });
+    const profReqs = []; page.on('request', r => { const u = decodeURIComponent(r.url()); if (/\/rest\/v1\/(public_)?profiles/.test(u) && u.includes('city.ilike')) profReqs.push(u); });
     await f.click(`${D} [data-city="Yurtdışı"]`);
     // Not: sahte sunucu bu or(...) koşullarını uygulamaz (şehir filtresi diğer testlerde de sorgu üzerinden doğrulanır)
     check(await until(() => profReqs.some(u => /city\.ilike\."%Yurtdışı%"/.test(u) && /city\.ilike\."%Yurtdisi%"/.test(u))), `"Yurtdışı" filtresi profil şehrinde (yazım varyantlarıyla) aranıyor`);

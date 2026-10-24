@@ -1,5 +1,5 @@
 <!--
-KIRMIZI İSG — PROFESSIONAL APP SHELL v4.47.0
+KIRMIZI İSG — PROFESSIONAL APP SHELL v4.48.0
 Akış | Uzmanlar | Hizmet Bul | Profil (Kişi Kartı) | Çalışma Detay | Hizmet Detay | Hesap & Gizlilik tek uygulama.
 
 KURULUM: Hostinger'a bu kaynak değil, yayın dosyası dist/kisg-professional-app-v{sürüm}.html yapıştırılır (npm run build ile
@@ -8,6 +8,10 @@ Custom HTML/Embed içeriği olarak BİREBİR AYNI şekilde kullanılır:
   /  (ana sayfa = Akış)   /uzmanlar   /hizmetler   /profil   /calisma-detay   /hizmet-detay   /hesaplar-ve-gizlilik
   /calisma  (eski adres; kalırsa bu dosya açılışta adresi '/' yapar — Hostinger 301 yönlendirmesi tercih edilir)
 
+v4.48.0: K1 (kişisel veri): başkasının profili her yerde public_profiles görünümünden okunur (Akış/yorum yazarı, hizmet
+  sağlayıcı, Uzmanlar listesi ve rayı, bildirim aktörleri, Gündem, başkasının profil sayfası). Telefon yalnız
+  get_public_phone RPC'si; profiles'tan yedek telefon okuması kaldırıldı. Kendi satırı profiles'tan okunmaya devam eder.
+  Ön koşul: canlıda public_profiles görünümü var olmalı (mobil handoff 2026-10-18-web-k1-public-profiles.md).
 v4.47.0: Supabase Frankfurt production'a (cglndmbjinzmmbimxqok) bağlı: adres, publishable anahtar ve logo adresleri;
   J0: Tokyo oturum kaydı bir kez yeni proje adına kopyalanır, kullanıcı girişli kalır. Geçiş gecesinden önce YAYINLANMAZ.
 v4.46.2: Onaylı hesap başvurusunda "Fotoğrafta adın açıkça okunmalı" (yüz anlatımı kalktı; kontrol yalnız belgedeki ada
@@ -1963,7 +1967,7 @@ const CONFIG = Object.freeze({
   },
   siteOrigins: ['https://isgcalisanplatformu.com', 'https://www.isgcalisanplatformu.com'],
   historyRouting: true,
-  version: '4.47.0',
+  version: '4.48.0',
   // Hostinger genişlik entegrasyonu (Dokümanlar/İş İlanları production yöntemi).
   hostWidthDesktopMax: 1480,
   routes: { works: '/', experts: '/uzmanlar', services: '/hizmetler', profile: '/profil', work: '/calisma-detay', service: '/hizmet-detay', account: '/hesaplar-ve-gizlilik', topics: '/?sayfa=alanlar', saved: '/?sayfa=kaydedilenler' },
@@ -2738,10 +2742,8 @@ const rpcMissing = e => /PGRST202|42883|could not find the function/i.test(`${e?
 async function readPublicPhone(profileId) {
   if (!profileId) return null;
   const r = await db.rpc('get_public_phone', { profile_id: profileId });
-  if (!r.error) return clean(r.data) || null;
-  if (!rpcMissing(r.error)) return null;
-  const f = await db.from('profiles').select('phone').eq('id', profileId).eq('show_phone_publicly', true).maybeSingle();
-  return f.error ? null : (f.data?.phone || null);
+  // K1: başkasının telefonu yalnız bu RPC'den (kişi "telefonumu göster" dediyse döner); profiles tablosuna yedek okuma yok.
+  return r.error ? null : clean(r.data) || null;
 }
 async function readMyPhone(uid) {
   const r = await db.rpc('get_my_private_profile');
@@ -3555,7 +3557,7 @@ const notifications = (() => {
       const actorIds = [...new Set(rows.map(r => r.actor_id).filter(Boolean))];
       const commentIds = [...new Set(rows.filter(r => r.type === 'post_comment' && r.comment_id != null).map(r => r.comment_id))];
       const [pr, cm] = await Promise.all([
-        actorIds.length ? db.from('profiles').select('id,full_name,avatar_url').in('id', actorIds) : Promise.resolve({ data: [] }),
+        actorIds.length ? db.from('public_profiles').select('id,full_name,avatar_url').in('id', actorIds) : Promise.resolve({ data: [] }),
         commentIds.length ? db.from('professional_post_comments').select('id,content').in('id', commentIds).eq('status', 'active') : Promise.resolve({ data: [] })
       ]);
       if (rev !== st.rev || uid !== st.uid) return;
@@ -3970,7 +3972,7 @@ const saved = (() => {
   return { html, load, toggle, subscribe: fn => subs.add(fn), get off() { return st.off; } };
 })();
 
-const POST_SELECT = 'id,user_id,content,image_path,profile_featured_order,created_at,updated_at,category:professional_post_categories(id,name),author:profiles!professional_posts_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company),likes:professional_post_likes(count)';
+const POST_SELECT = 'id,user_id,content,image_path,profile_featured_order,created_at,updated_at,category:professional_post_categories(id,name),author:public_profiles!professional_posts_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company),likes:professional_post_likes(count)';
 const postData = (() => {
   const COMMENT_COUNT = ',comments:professional_post_comments(count)', TAG = ',tag_id,tag:professional_tags(id,name)';
   let withCommentCount = true, withTag = true, withImg2 = true;
@@ -4203,7 +4205,7 @@ function createPostFeed({ scope, onRemoved, onFeatured, detail = false }) {
       const need = [...new Set(rows.map(r => r.user_id))].filter(id => !profiles.has(id));
       const ids = rows.map(r => r.id);
       const [pr, lk] = await Promise.all([
-        need.length ? db.from('profiles').select('id,full_name,avatar_url,profession,title').in('id', need) : Promise.resolve({ data: [] }),
+        need.length ? db.from('public_profiles').select('id,full_name,avatar_url,profession,title').in('id', need) : Promise.resolve({ data: [] }),
         db.from('professional_comment_likes').select('comment_id,user_id').in('comment_id', ids)
       ]);
       (pr.data || []).forEach(p => profiles.set(p.id, p));
@@ -5010,7 +5012,7 @@ function createWorksView() {
     const out = [], seen = new Set(), PAGE = 60;
     let cursor = null;
     for (let round = 0; round < 5 && out.length < CONFIG.railExperts; round++) {
-      let q = db.from('professional_posts').select('id,user_id,created_at,author:profiles!professional_posts_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company,city,is_discoverable)')
+      let q = db.from('professional_posts').select('id,user_id,created_at,author:public_profiles!professional_posts_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company,city,is_discoverable)')
         .eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(PAGE);
       if (cursor) q = q.or(`created_at.lt.${quote(cursor.created_at)},and(created_at.eq.${quote(cursor.created_at)},id.lt.${quote(cursor.id)})`);
       const { data, error } = await q;
@@ -5026,7 +5028,7 @@ function createWorksView() {
       cursor = data[data.length - 1];
     }
     if (out.length < CONFIG.railExperts) {
-      const { data, error } = await db.from('profiles').select('id,full_name,avatar_url,profession,title,certificate_class,current_company,city')
+      const { data, error } = await db.from('public_profiles').select('id,full_name,avatar_url,profession,title,certificate_class,current_company,city')
         .eq('is_discoverable', true).order('last_post_at', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(CONFIG.railExperts + seen.size);
       if (!error) for (const a of data || []) { if (out.length >= CONFIG.railExperts) break; if (!seen.has(a.id)) { seen.add(a.id); out.push(a); } }
     }
@@ -5044,7 +5046,7 @@ function createWorksView() {
       try {
         // En yeni aktif hizmetler; sağlayıcı başına önce bir hizmet (tek kişi alanı doldurmasın), eksik kalırsa
         // sıradaki en yenilerle tamamlanır. Öne Çıkan işareti olan hizmet (ileride) en üste alınır.
-        const { data, error } = await db.from('professional_services').select('id,user_id,title,service_region,service_mode,created_at,category:professional_service_categories(name),provider:profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class)').eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(CONFIG.railServices * 8);
+        const { data, error } = await db.from('professional_services').select('id,user_id,title,service_region,service_mode,created_at,category:professional_service_categories(name),provider:public_profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class)').eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(CONFIG.railServices * 8);
         if (error) throw error; s.services = pickRailServices(data || [], CONFIG.railServices); s.servicesFailed = false;
       } catch { s.services = []; s.servicesFailed = true; }
     })());
@@ -5536,7 +5538,7 @@ function createExpertsView() {
     return c.length ? 'and(' + c.join(',') + ')' : '';
   }
   function build(signal, search, filters, cursor, ids) {
-    let qy = SORTS[sort].order(db.from('profiles').select(BASE + (withCounts ? COUNTS : '')).eq('is_discoverable', true)).limit(CONFIG.catalogPageSize + 1);
+    let qy = SORTS[sort].order(db.from('public_profiles').select(BASE + (withCounts ? COUNTS : '')).eq('is_discoverable', true)).limit(CONFIG.catalogPageSize + 1);
     if (ids) qy = qy.in('id', ids.length ? ids : [newId()]);
     if (withCounts) qy = qy.eq('posts.status', 'active').eq('services.status', 'active');
     const cond = conditions(search, filters, cursor); if (cond) qy = qy.or(cond);
@@ -5674,7 +5676,7 @@ function serviceCard(v, { provider = true } = {}) {
 // Hizmet kayıt olayları: katalog, profil ve detay aynı hizmeti anında günceller.
 const serviceBus = new Set();
 const emitService = (kind, payload) => serviceBus.forEach(fn => { try { fn(kind, payload); } catch (e) { console.error(e); } });
-const SERVICE_SELECT = 'id,user_id,title,category_id,description,service_region,service_mode,status,created_at,updated_at,category:professional_service_categories(id,name,slug),provider:profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company)';
+const SERVICE_SELECT = 'id,user_id,title,category_id,description,service_region,service_mode,status,created_at,updated_at,category:professional_service_categories(id,name,slug),provider:public_profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company)';
 
 function createServicesView() {
   const el = $('[data-view="services"]');
@@ -5700,7 +5702,7 @@ function createServicesView() {
     afterRender: () => renderChips(),
     pageOf: r => ({ created_at: r.created_at, id: r.id }),
     async fetchPage({ search, filters, page, signal }) {
-      let qy = db.from('professional_services').select(SELECT + (search ? ',search_provider:profiles!professional_services_user_id_fkey(id)' : '')).eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(CONFIG.catalogPageSize + 1);
+      let qy = db.from('professional_services').select(SELECT + (search ? ',search_provider:public_profiles!professional_services_user_id_fkey(id)' : '')).eq('status', 'active').order('created_at', { ascending: false }).order('id', { ascending: false }).limit(CONFIG.catalogPageSize + 1);
       const clauses = [];
       if (search) { const p = quote(likePattern(search)); qy = qy.ilike('search_provider.full_name', likePattern(search)); clauses.push('or(title.ilike.' + p + ',description.ilike.' + p + ',service_region.ilike.' + p + ',search_provider.not.is.null)'); }
       if (filters.category) qy = qy.eq('category_id', filters.category);
@@ -5934,7 +5936,7 @@ function createServiceView() {
   const statusBox = $('[data-service-status]', el), main = $('[data-service-main]', el);
   const headBox = $('[data-service-head]', el), side = $('[data-service-side]', el), body = $('[data-service-body]', el), more = $('[data-service-more]', el);
   const owner = $('[data-service-owner]', el), reportBox = $('[data-service-report]', el);
-  const SELECT = 'id,user_id,title,category_id,description,service_region,service_mode,status,created_at,updated_at,category:professional_service_categories(id,name,slug),provider:profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company,city,show_phone_publicly)';
+  const SELECT = 'id,user_id,title,category_id,description,service_region,service_mode,status,created_at,updated_at,category:professional_service_categories(id,name,slug),provider:public_profiles!professional_services_user_id_fkey(id,full_name,avatar_url,profession,title,certificate_class,current_company,city)';
   const s = { id: '', rev: 0, service: null, phone: null, mounted: false };
   const owns = v => !!v && v.status === 'active' && v.user_id === session.user?.id;
   const date = v => { try { return new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(v)); } catch { return ''; } };
@@ -5996,8 +5998,9 @@ function createServiceView() {
       if (rev !== s.rev) return;
       if (error) throw error;
       if (!data || data.status !== 'active') { showStatus('Hizmet bulunamadı', 'Bu hizmet kaldırılmış veya artık yayında olmayabilir.'); return; }
-      let phone = null;
-      if (data.provider?.show_phone_publicly) phone = await readPublicPhone(data.user_id);
+      // K1: public_profiles'ta show_phone_publicly yok; RPC yalnız kişi izin verdiyse telefonu döndürür.
+      const phone = await readPublicPhone(data.user_id);
+      if (data.provider) data.provider.show_phone_publicly = !!phone;
       await session.ready;
       if (rev !== s.rev) return;
       s.service = data; s.phone = phone;
@@ -6583,7 +6586,10 @@ function createProfileView() {
 
   /* ---- Yükleme ---- */
   async function fetchProfile(id) {
-    const run = () => db.from('profiles').select(PROFILE_BASE + (s.withExperience ? ',experience_range' : '')).eq('id', id).maybeSingle();
+    // K1: başkasının profili public_profiles görünümünden (e-posta/telefon sütunu yok); kendi profili profiles'tan.
+    const own = id === session.user?.id;
+    const cols = (own ? PROFILE_BASE : PROFILE_BASE.replace(',show_phone_publicly', '')) + (s.withExperience ? ',experience_range' : '');
+    const run = () => db.from(own ? 'profiles' : 'public_profiles').select(cols).eq('id', id).maybeSingle();
     let res = await run();
     // experience_range kolonu yoksa profil yine açılır (alan gizlenir); başka bir sorgu kesintiye uğramaz.
     if (res.error && s.withExperience && /42703|PGRST204|experience_range/i.test(`${res.error.code} ${res.error.message}`)) { s.withExperience = false; res = await run(); }
@@ -6591,8 +6597,13 @@ function createProfileView() {
     return res.data;
   }
   async function publicPhone(p) {
-    if (!p?.show_phone_publicly) return null;
-    return readPublicPhone(p.id);
+    if (!p) return null;
+    const own = p.id === session.user?.id;
+    if (own && !p.show_phone_publicly) return null;
+    const phone = await readPublicPhone(p.id);
+    // Başkasının profilinde izin bilgisi görünümde yok: telefon dönmesi izin verildiği anlamına gelir.
+    if (!own) p.show_phone_publicly = !!phone;
+    return phone;
   }
   function setDocTitle() {
     if (!router.enabled || router.current !== 'profile' || !s.profile) return;
@@ -6606,15 +6617,14 @@ function createProfileView() {
     showStatus(''); renderSkeleton(); renderTabs(); composeRow.hidden = true; postsMore.hidden = true;
     if (!UUID_RE.test(id)) { showStatus('Profil bulunamadı', 'Geçerli bir profil bağlantısı bulunamadı.'); return; }
     try {
-      await dbReady;
+      // Oturum önce beklenir: kendi profili mi (profiles) başkasının mı (public_profiles) buna göre okunur.
+      await dbReady; await session.ready;
       const data = await fetchProfile(id);
       if (rev !== s.rev) return;
       if (!data) { showStatus('Profil bulunamadı', 'Bu profil kaldırılmış veya görüntülenemiyor olabilir.'); return; }
       const phone = await publicPhone(data);
       if (rev !== s.rev) return;
       s.profile = data; s.phone = phone;
-      await session.ready;
-      if (rev !== s.rev) return;
       renderCard(); renderTabs(); setDocTitle();
       loadCounts(rev);
       if (s.tab === 'hizmetler') loadServices();
@@ -7105,7 +7115,7 @@ function createTopicsView() {
   async function people(ids) {
     ids = ids.filter(id => !s.info.has(id)); if (!ids.length) return;
     try {
-      const { data, error } = await db.from('professional_posts').select('tag_id,content,created_at,author:profiles!professional_posts_user_id_fkey(id,full_name,avatar_url)')
+      const { data, error } = await db.from('professional_posts').select('tag_id,content,created_at,author:public_profiles!professional_posts_user_id_fkey(id,full_name,avatar_url)')
         .in('tag_id', ids).eq('status', 'active').order('created_at', { ascending: false }).limit(Math.min(300, ids.length * 8));
       if (error) return;
       for (const r of data || []) {

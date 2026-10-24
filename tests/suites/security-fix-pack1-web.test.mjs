@@ -32,7 +32,7 @@ const acts = f => f.evaluate(() => [...document.querySelectorAll('.kh-actions a'
   await page.goto(`https://isgcalisanplatformu.com/hizmet-detay?id=${SVC_U1}`); await settle(page, 1500);
   f = frameOf(page); await f.waitForSelector('#khTitle');
   a = await acts(f);
-  check(!rpcCalls.some(c => c.fn === 'get_public_phone') && !a.some(h => /^tel:|wa\.me/.test(h)), 'telefonu gizli sağlayıcı: RPC çağrılmaz, Ara/WhatsApp yok');
+  check(rpcCalls.some(c => c.fn === 'get_public_phone' && c.body.profile_id === U1) && !a.some(h => /^tel:|wa\.me/.test(h)) && phoneSelects.length === 0, 'telefonu gizli sağlayıcı: RPC boş döner (izin görünümde yok, K1), Ara/WhatsApp yok');
 
   rpcCalls.length = 0;
   await page.goto(`https://isgcalisanplatformu.com/profil?id=${U2}`); await settle(page, 1800);
@@ -60,12 +60,12 @@ const acts = f => f.evaluate(() => [...document.querySelectorAll('.kh-actions a'
 }
 
 {
-  // Migration henüz uygulanmamışken (veya rollback sonrası) web v4.15 eski okumaya döner
+  // RPC yoksa (PGRST202): K1 (v4.48.0) sonrası başkasının telefonu profiles'tan yedek okunmaz; sahibin kendi telefonu okunur
   const { ctx, page } = await open(true, 'missing');
   await page.goto(`https://isgcalisanplatformu.com/hizmet-detay?id=${SVC_U2}`); await settle(page, 1500);
   let f = frameOf(page); await f.waitForSelector('#khTitle');
   const a = await acts(f);
-  check(a.includes('tel:+905324445566') && phoneSelects.some(u => /show_phone_publicly=eq\.true/.test(u)), 'RPC yok (PGRST202) → hizmet detayı eski filtreli okumayla telefonu gösterir');
+  check(!a.some(h => /^tel:|wa\.me/.test(h)) && phoneSelects.length === 0, 'RPC yok (PGRST202) → hizmet detayı telefonu göstermez, profiles\'tan yedek okuma yok (K1)');
   await page.goto(`https://isgcalisanplatformu.com/profil?id=${U1}`); await settle(page, 1800);
   f = frameOf(page); await f.waitForSelector('#kpName');
   await f.click('.kp-card [data-profile-action="edit"] >> nth=0');
@@ -93,7 +93,7 @@ const acts = f => f.evaluate(() => [...document.querySelectorAll('.kh-actions a'
   const f = frameOf(page); await f.waitForSelector('[data-view="services"] .ks-card');
   await f.fill('#ksSearch', 'Mehmet'); await settle(page, 1200);
   const q = reqs.filter(u => /search_provider/.test(u)).pop() || '';
-  check(/search_provider:profiles!professional_services_user_id_fkey\(id\)/.test(q) && !/fkey\(\)/.test(q) && /search_provider\.full_name=ilike/.test(q), `arama: sağlayıcı gömülü okuması (id) (${(q.match(/search_provider:[^,&]*/) || [''])[0]})`);
+  check(/search_provider:public_profiles!professional_services_user_id_fkey\(id\)/.test(q) && !/fkey\(\)/.test(q) && /search_provider\.full_name=ilike/.test(q), `arama: sağlayıcı gömülü okuması (id) (${(q.match(/search_provider:[^,&]*/) || [''])[0]})`);
   check(await f.locator('[data-view="services"] .ks-card').count() > 0, 'arama sonuçları listeleniyor');
   const ver = await f.evaluate(() => /version:\s*["']4\.43\.0["']/.test(document.documentElement.outerHTML));
   check(ver, 'sürüm 4.43.0');

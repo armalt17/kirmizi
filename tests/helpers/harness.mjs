@@ -123,11 +123,16 @@ function handleRpc(route, fn) {
   if (fn === 'kisg_submit_verification' && db._verified) return db._submitErr ? json({ code: '42501', message: db._submitErr }, 400) : json('pending');
   return json({ code: 'PGRST202', message: 'unknown' }, 404);
 }
+const PUBLIC_PROFILE_COLS = ['id', 'full_name', 'avatar_url', 'title', 'profession', 'certificate_class', 'current_company', 'about', 'specialties', 'experience_range', 'social_links', 'linkedin_url', 'instagram_url', 'website_url', 'is_discoverable', 'last_post_at', 'city', 'extra_professions', 'certifications', 'created_at'];
+// Dizi değerli alanlar testlerin hazırladığı gömülü sayaçlardır (posts/services count); onlar korunur.
+const publicProfile = p => Object.fromEntries(Object.keys(p).filter(k => PUBLIC_PROFILE_COLS.includes(k) || (Array.isArray(p[k]) && /^(posts|services)$/.test(k))).map(k => [k, p[k]]));
 async function handleRest(route) {
   const req = route.request(), u = new URL(req.url()), table = u.pathname.split('/').pop();
   if (u.pathname.includes('/rest/v1/rpc/')) return handleRpc(route, table);
   const method = req.method(), accept = req.headers()['accept'] || '';
-  const rows = db[table] || (db[table] = []);
+  // K1: public_profiles görünümü = profiles'ın yalnız herkese açık sütunları (e-posta, telefon, izin, PRO yok).
+  if (table === 'public_profiles' && req.method() !== 'GET' && req.method() !== 'HEAD' && req.method() !== 'OPTIONS') return route.fulfill({ status: 405, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"code":"42809","message":"cannot change view"}' });
+  const rows = table === 'public_profiles' ? (db.profiles || []).map(publicProfile) : db[table] || (db[table] = []);
   const json = (body, status = 200, headers = {}) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', ...headers }, body: JSON.stringify(body) });
   if (method === 'OPTIONS') return route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
   if (method === 'HEAD') { const n = filterRows(rows, u.searchParams).length; return route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*', 'access-control-expose-headers': 'content-range', 'content-range': `0-0/${n}` } }); }

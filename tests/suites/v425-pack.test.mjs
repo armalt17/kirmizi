@@ -28,7 +28,7 @@ function seed() {
 
 // Ortak mock genel or=(…) imleçlerini yok sayar: Uzmanlar sorgusu için or + order + limit gerçek PostgREST gibi değerlendirilir.
 async function expertsRest(ctx) {
-  await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/profiles?*', route => {
+  await ctx.route(/^https:\/\/cglndmbjinzmmbimxqok\.supabase\.co\/rest\/v1\/public_profiles\?/, route => {
     const req = route.request(), u = new URL(req.url());
     if (req.method() !== 'GET' || u.searchParams.get('is_discoverable') !== 'eq.true' || !/services:/.test(u.searchParams.get('select') || '')) return route.fallback();
     let rows = db.profiles.filter(r => r.is_discoverable === true && u.searchParams.getAll('or').every(o => evalExpr('or' + o, r)));
@@ -46,7 +46,7 @@ try {
     await setup(ctx, true); await expertsRest(ctx);
     const page = await ctx.newPage();
     const errs = []; page.on('pageerror', e => errs.push(String(e)));
-    const restReqs = []; page.on('request', r => { if (r.url().includes('/rest/v1/profiles?')) restReqs.push(decodeURIComponent(r.url())); });
+    const restReqs = []; page.on('request', r => { if (/\/rest\/v1\/(public_)?profiles\?/.test(r.url())) restReqs.push(decodeURIComponent(r.url())); });
     const overflow = f => f.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
     // ================= 1) PROFİL V2 =================

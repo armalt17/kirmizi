@@ -7,10 +7,10 @@ const reqLog = [];
 async function logicRest(ctx) {
   await ctx.route('https://cglndmbjinzmmbimxqok.supabase.co/rest/v1/**', async route => {
     const req = route.request(), u = new URL(req.url()), table = u.pathname.split('/').pop();
-    if (req.method() !== 'GET' || !['profiles', 'professional_services'].includes(table) || !u.searchParams.getAll('or').length) return route.fallback();
+    if (req.method() !== 'GET' || !['public_profiles', 'professional_services'].includes(table) || !u.searchParams.getAll('or').length) return route.fallback();
     reqLog.push({ table, url: decodeURIComponent(u.search) });
     const ors = u.searchParams.getAll('or');
-    let rows = (db[table] || []).filter(r => ors.every(o => evalExpr('or' + o, r)));
+    let rows = (table === 'public_profiles' ? db.profiles : db[table] || []).filter(r => ors.every(o => evalExpr('or' + o, r)));
     for (const [k, v] of u.searchParams) { if (['select', 'order', 'limit', 'or', 'offset'].includes(k) || k.includes('.')) continue; if (v.startsWith('eq.')) rows = rows.filter(r => String(r[k]) === v.slice(3)); }
     if (table === 'professional_services') rows = rows.map(r => ({ ...r }));
     else rows = rows.map(({ phone, ...r }) => ({ ...r, posts: [{ count: db.professional_posts.filter(p => p.user_id === r.id && p.status === 'active').length }], services: [{ count: db.professional_services.filter(s => s.user_id === r.id && s.status === 'active').length }] }));
@@ -103,7 +103,7 @@ for (const vp of [{ name: 'desktop', width: 1366, height: 900 }, { name: 'mobile
   const cnt = await g.evaluate(() => [...document.querySelectorAll('[data-view="experts"] .ke-card')].map(x => (x.title.match(/(\d+ Post( · \d+ Hizmet)?|\d+ Hizmet)$/) || [])[0]).filter(Boolean));
   check(cnt.length > 0 && cnt.every(c => /^\d+ Post( · \d+ Hizmet)?$|^\d+ Hizmet$/.test(c)) && cnt.some(c => /Post/.test(c)), `${N} Uzmanlar kart sayacı "${cnt[0]}"`);
   check(r.sort().join() === expCity('İstanbul') && r.includes('Ayşe Yılmaz') && r.length === 4, `${N} Uzmanlar İstanbul → yalnız İstanbul/istanbul/ISTANBUL (${r.join(', ')})`);
-  check(reqLog.some(x => x.table === 'profiles' && /city\.ilike\."%İstanbul%"/.test(x.url) && /city\.ilike\."%istanbul%"/.test(x.url) && /city\.ilike\."%Istanbul%"/.test(x.url)), `${N} Uzmanlar sorgusu profiles.city üzerinde Türkçe yazım varyantlarıyla`);
+  check(reqLog.some(x => x.table === 'public_profiles' && /city\.ilike\."%İstanbul%"/.test(x.url) && /city\.ilike\."%istanbul%"/.test(x.url) && /city\.ilike\."%Istanbul%"/.test(x.url)), `${N} Uzmanlar sorgusu profiles.city üzerinde Türkçe yazım varyantlarıyla`);
   r = await run('Ankara'); check(r.join() === 'Burak Şen', `${N} Uzmanlar Ankara → ${r.join(', ')}`);
   r = await run('İzmir'); check(r.sort().join() === ['Cem Yıldız', 'Nur Ak'].sort().join(), `${N} Uzmanlar İzmir → İzmir/izmir (${r.join(', ')})`);
   r = await run('Şanlıurfa', 'urfa'); check(r.sort().join() === ['Ali Can', 'Hasan Er'].sort().join(), `${N} Uzmanlar Şanlıurfa → Şanlıurfa/Sanliurfa (${r.join(', ')})`);

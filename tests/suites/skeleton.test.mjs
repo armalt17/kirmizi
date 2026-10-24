@@ -11,7 +11,7 @@ try {
       resetDb();
       const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, isMobile: vp.isMobile, hasTouch: vp.hasTouch }); await setup(ctx, true);
       // Liste verisi gecikir: iskelet ekranda kalır
-      await ctx.route(/rest\/v1\/(professional_posts|profiles|professional_services)\?/, async r => { if (r.request().method() === 'GET' && !/avatar_url,is_discoverable&id=eq/.test(decodeURIComponent(r.request().url()))) await new Promise(x => setTimeout(x, 6000)); return r.fallback(); });
+      await ctx.route(/rest\/v1\/(professional_posts|profiles|public_profiles|professional_services)\?/, async r => { if (r.request().method() === 'GET' && !/avatar_url,is_discoverable&id=eq/.test(decodeURIComponent(r.request().url()))) await new Promise(x => setTimeout(x, 6000)); return r.fallback(); });
       const page = await ctx.newPage(); await page.goto(SITE + p);
       const f = await (async () => { for (let i = 0; i < 100; i++) { const x = frameOf(page); if (x) return x; await page.waitForTimeout(50); } })();
       await f.waitForSelector('.k-sk', { state: 'attached' });
